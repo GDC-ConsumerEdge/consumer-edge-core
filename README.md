@@ -6,6 +6,6 @@ This is a group of playbooks and ansible tools/scripts to provision and manage A
 # Running
 
 ```bash
-ansible-playbook site.yml -i group-a.yml -K
+ansible-playbook site.yml -i group_a.yml -K
 ```
 
