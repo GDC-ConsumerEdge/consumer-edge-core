@@ -1,6 +1,7 @@
 ---
 
-# roles and such
 - hosts: group-a
+  become: true
+  become_user: root
   roles:
     - common
