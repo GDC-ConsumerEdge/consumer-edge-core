@@ -1,0 +1,51 @@
+target/
+pkg/
+
+
+# Downloaded git repo
+serving/
+# Downloaded model
+models/**/
+
+# Generated configuration file
+k8s/overlays/**/configuration/*-hydrated.conf
+k8s/overlays/**/configuration/secrets/*.json
+
+### VS Code ###
+.vscode/
+
+### Python
+.pytest_cache
+__pycache__
+*.data
+
+## Mac
+.DS_Store
+
+# Terraform Compiled files
+*.tfstate
+*.tfstate.backup
+service-account-key.json
+
+# Module directory
+.terraform/
+terraform.tfvars
+tfplan
+
+*.crt
+*.key
+*.srl
+*.csr
+
+# direnv
+.envrc
+
+# Code Coverage
+coverage.out
+coverage.html
+test-report.xml
+coverage-report.xml
+
+docs/*.png
+docs/*.jpg
+docs/*.gif
