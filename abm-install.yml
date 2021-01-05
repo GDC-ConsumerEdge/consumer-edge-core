@@ -1,0 +1,6 @@
+---
+
+# roles and such
+- hosts: group-a
+  roles:
+    - common

@@ -1,0 +1,7 @@
+all:
+  hosts:
+    nuc-1.lan:
+    nuc-2.lan:
+    nuc-3.lan:
+    nuc-4.lan:
+    nuc-5.lan:
