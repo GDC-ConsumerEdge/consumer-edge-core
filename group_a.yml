@@ -5,6 +5,6 @@ group-a:
     nuc-3.lan:
     nuc-4.lan:
     nuc-5.lan:
-  vars:
+  # vars:
     # ansible_become: yes
     # ansible_become_method: sudo
