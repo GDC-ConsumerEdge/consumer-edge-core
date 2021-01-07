@@ -1,0 +1,27 @@
+
+---
+
+- hosts: group-a
+  become: true
+  become_user: root
+  roles:
+    - common
+    - google-tools
+  vars:
+    tools_base_path: /tmp/abm-setup
+  # vars_files:
+  #   - /vars/external_vars.yml
+
+# Setup tools
+# gcloud
+# gsutil
+# kubectl
+# bmctl
+
+# Provision KVM and 3 VMs
+
+# Setup KVM network
+
+# Install ABM
+
+# Validate ABM
