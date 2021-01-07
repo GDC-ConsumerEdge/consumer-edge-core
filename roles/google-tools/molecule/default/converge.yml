@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include google-tools"
+      include_role:
+        name: "google-tools"
