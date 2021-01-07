@@ -46,6 +46,5 @@ coverage.html
 test-report.xml
 coverage-report.xml
 
-docs/*.png
-docs/*.jpg
-docs/*.gif
+# Ignore key files
+gsa-key.json
