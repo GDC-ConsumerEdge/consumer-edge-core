@@ -71,6 +71,16 @@
     tags:
     - initial-install
 
+  - name: Enable services
+    shell: |
+      source ~/.bashrc
+      gcloud services enable anthos.googleapis.com anthosgke.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com gkeconnect.googleapis.com gkehub.googleapis.com serviceusage.googleapis.com stackdriver.googleapis.com monitoring.googleapis.com logging.googleapis.com
+      exit $?
+    args:
+      executable: /bin/bash
+    tags:
+    - initial-install
+
 ### kubectl
   - name: Install kubectl, nomos, kustomize and gsutil
     shell: |
