@@ -8,12 +8,13 @@
 # kubectl
 # bmctl
 # Docker and container.d
-- hosts: config_server
+- hosts: all
   become: true
   become_user: root
   roles:
     - common
     - google-tools
+    - ready-ubuntu
 
 
 # Provision KVM and 3 VMs
