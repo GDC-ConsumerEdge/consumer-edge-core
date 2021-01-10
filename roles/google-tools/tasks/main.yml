@@ -94,6 +94,7 @@
       bmctl
       exit $?
     args:
+      creates: /usr/bin/bmctl
       executable: /bin/bash
     environment:
         PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"

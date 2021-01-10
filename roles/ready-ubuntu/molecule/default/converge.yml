@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include ready-ubuntu"
+      include_role:
+        name: "ready-ubuntu"
