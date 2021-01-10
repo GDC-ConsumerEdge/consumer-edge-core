@@ -3,6 +3,8 @@
 - name: Run the equivalent of "apt-get update" as a separate step
   apt:
     update_cache: yes
+    upgrade: "yes"
+  tags: maintenance
 
 - name: be sure golang is installed
   apt:

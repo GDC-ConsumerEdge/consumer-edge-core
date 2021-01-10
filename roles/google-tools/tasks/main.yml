@@ -38,7 +38,7 @@
     file:
       path: '{{ tools_base_path }}'
       state: directory
-      mode: '0700'
+      mode: '0755'
     tags:
     - initial-install
 
@@ -51,50 +51,43 @@
     tags:
     - initial-install
 
-  - name: Add gcloud to PATH variable
-    blockinfile:
-      dest: "{{ ansible_env.HOME }}/.bashrc"
-      block: |
-        export GCLOUD_HOME='{{ tools_base_path }}/google-cloud-sdk'
-        export PATH=${GCLOUD_HOME}/bin:${PATH}
-      marker: '# {mark} Added for gcloud'
-      create: yes
-
   - name: Authenticate gcloud
     shell: |
-      source ~/.bashrc
       gcloud auth activate-service-account --key-file={{ remote_gsa_key }}/gsa-key.json --project {{ google_project_id }}
       gcloud config configurations list
       exit $?
     args:
       executable: /bin/bash
+    environment:
+        PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
 
   - name: Enable services
     shell: |
-      source ~/.bashrc
       gcloud services enable anthos.googleapis.com anthosgke.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com gkeconnect.googleapis.com gkehub.googleapis.com serviceusage.googleapis.com stackdriver.googleapis.com monitoring.googleapis.com logging.googleapis.com
       exit $?
     args:
       executable: /bin/bash
+    environment:
+        PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
 
 ### kubectl
   - name: Install kubectl, nomos, kustomize and gsutil
     shell: |
-      source ~/.bashrc
       gcloud components install kubectl kustomize nomos gsutil -q
       exit $?
     args:
       executable: /bin/bash
+    environment:
+        PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
 
   - name: Install Anthos Bare Metal CLI
     shell: |
-      source ~/.bashrc
       gsutil cp gs://anthos-baremetal-release/bmctl/1.6.0/linux-amd64/bmctl {{ tools_base_path }}
       chmod 777 {{ tools_base_path }}/bmctl
       mv {{ tools_base_path }}/bmctl /usr/bin/bmctl
@@ -102,5 +95,7 @@
       exit $?
     args:
       executable: /bin/bash
+    environment:
+        PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
