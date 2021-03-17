@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include anthos-bare-metal-install"
+      include_role:
+        name: "anthos-bare-metal-install"
