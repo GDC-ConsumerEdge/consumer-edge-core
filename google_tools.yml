@@ -1,21 +1,10 @@
-
 ---
 
-# Setup a baseline for all servers
-# Setup tools
-# gcloud
-# gsutil
-# kubectl
-# bmctl
-# Docker and container.d
 - hosts: workers
   become: true
   become_user: root
   roles:
-    - common
     - google-tools
-    - ready-ubuntu
-    # - abm-install
   vars:
     # Initial project ID to setup gcloud with
     - google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
