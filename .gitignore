@@ -1,6 +1,6 @@
 target/
 pkg/
-
+tmp/
 
 # Downloaded git repo
 serving/

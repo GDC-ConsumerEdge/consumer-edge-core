@@ -1,5 +1,10 @@
 ---
 
+- name: Dumping out vars for {{ cluster_name }}
+  debug:
+    msg: "Cluster name is {{ cluster_name }} "
+
+
 - name: Run the equivalent of "apt-get update" as a separate step
   apt:
     update_cache: yes
