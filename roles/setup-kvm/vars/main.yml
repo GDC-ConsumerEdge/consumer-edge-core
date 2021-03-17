@@ -1,0 +1,12 @@
+---
+# libvirt home folder
+libvirt_home: "/var/lib/libvirt/images"
+
+# Where to place the custom images
+image_base_dir: "{{ libvirt_home }}/base"
+
+vm_disk_size: "110G"
+vm_cpus: "4"
+vm_ram: "8192"
+
+root_ssh_key: "/root/.ssh/id_rsa"

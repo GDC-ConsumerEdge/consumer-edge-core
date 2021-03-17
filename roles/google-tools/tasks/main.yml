@@ -51,17 +51,48 @@
     tags:
     - initial-install
 
+### Setup Path & Auto-complete
+
+### TODO: If the requirement is to have all users access gcloud, kubectl, etc...then add the GOOGLE_APPLICATION_CREDENTIALS here along with common location & chmod
+  - name: Add gcloud and tools to PATH
+    blockinfile:
+      path: /etc/profile.d/bash_completion.sh
+      block: |
+        # The next line updates PATH for the Google Cloud SDK.
+        if [ -f '/var/google-tools-install/google-cloud-sdk/path.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/path.bash.inc'; fi
+
+        # The next line enables shell command completion for gcloud.
+        if [ -f '/var/google-tools-install/google-cloud-sdk/completion.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/completion.bash.inc'; fi
+      marker: "# { mark } Added by Ansible google-tools task"
+
+  - name: Add gcloud and tools to PATH for Root
+    blockinfile:
+      path: /root/.bashrc
+      block: |
+        # The next line updates PATH for the Google Cloud SDK.
+        if [ -f '/var/google-tools-install/google-cloud-sdk/path.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/path.bash.inc'; fi
+
+        # The next line enables shell command completion for gcloud.
+        if [ -f '/var/google-tools-install/google-cloud-sdk/completion.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/completion.bash.inc'; fi
+      marker: "# { mark } Added by Ansible google-tools task"
+
+### FIXME: this is a possible security issue to leave the key on the box
   - name: Authenticate gcloud
     shell: |
       gcloud auth activate-service-account --key-file={{ remote_gsa_key }}/gsa-key.json --project {{ google_project_id }}
+      mkdir -p ~/.gcloud
+      cp {{ remote_gsa_key }}/gsa-key.json ~/.gcloud/gsa-key.json
+      export GOOGLE_APPLICATION_CREDENTIALS=~/.gcloud/gsa-key.json
       gcloud config configurations list
       exit $?
     args:
       executable: /bin/bash
+      creates: /var/nothing
     environment:
         PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
+
 
   - name: Enable services
     shell: |
@@ -74,7 +105,7 @@
     tags:
     - initial-install
 
-### kubectl
+### Additional Tools
   - name: Install kubectl, nomos, kustomize and gsutil
     shell: |
       gcloud components install kubectl kustomize nomos gsutil -q
@@ -88,7 +119,7 @@
 
   - name: Install Anthos Bare Metal CLI
     shell: |
-      gsutil cp gs://anthos-baremetal-release/bmctl/1.6.0/linux-amd64/bmctl {{ tools_base_path }}
+      gsutil cp gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl {{ tools_base_path }}
       chmod 777 {{ tools_base_path }}/bmctl
       mv {{ tools_base_path }}/bmctl /usr/bin/bmctl
       bmctl
@@ -100,3 +131,5 @@
         PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
+
+### Setup Kubectl tools (kubectx, kubens, kubectl completion)

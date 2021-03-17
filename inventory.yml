@@ -1,0 +1,14 @@
+# Primary server that can be used as a config or a worker, but is counted out just-in-case
+# Represents all other physical machines in the cluster
+workers:
+  hosts:
+    store-1.lan:
+      cluster_name: "store-1"
+    store-2.lan:
+      cluster_name: "store-2"
+    store-3.lan:
+      cluster_name: "store-3"
+    store-4.lan:
+      cluster_name: "store-4"
+    store-5.lan:
+      cluster_name: "store-5"
