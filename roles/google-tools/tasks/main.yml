@@ -51,6 +51,25 @@
     tags:
     - initial-install
 
+  - name: Download and unarchive kubectx
+    unarchive:
+      src: 'https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_version }}/kubectx_v{{ kubectx_version }}_linux_x86_64.tar.gz'
+      dest: '{{ tools_base_path }}/google-cloud-sdk/bin/'
+      creates: '{{ tools_base_path }}/google-cloud-sdk/bin/kubectx'
+      remote_src: yes
+    tags:
+    - initial-install
+
+  - name: Download and unarchive kubens
+    unarchive:
+      src: 'https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_version }}/kubens_v{{ kubectx_version }}_linux_x86_64.tar.gz'
+      dest: '{{ tools_base_path }}/google-cloud-sdk/bin/'
+      creates: '{{ tools_base_path }}/google-cloud-sdk/bin/kubens'
+      remote_src: yes
+    tags:
+    - initial-install
+
+
 ### Setup Path & Auto-complete
 
 ### TODO: If the requirement is to have all users access gcloud, kubectl, etc...then add the GOOGLE_APPLICATION_CREDENTIALS here along with common location & chmod

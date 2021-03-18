@@ -17,3 +17,5 @@ local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
 remote_gsa_key: "/var/keys"
 
 bmctl_version: "1.6.2"
+
+kubectx_version: "0.9.3"
