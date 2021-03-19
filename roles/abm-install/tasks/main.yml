@@ -16,6 +16,7 @@
     debug:
       msg: "{{ gcloud.stdout }}"
 
+### Create install folder
   - name: Create isolated install folder
     file:
       path: '{{ abm_install_folder }}'
@@ -23,38 +24,21 @@
       mode: '0755'
 
   - name: Create configuration file
-    shell: |
-        bmctl create config -c {{ cluster_name }} --enable-apis --create-service-accounts --project-id={{ google_project_id }}
-        exit $?
-    args:
-      chdir: "{{ abm_install_folder }}"
+    command:
+      cmd: bmctl create config -c {{ cluster_name }} --enable-apis --create-service-accounts --project-id={{ google_project_id }}
       creates: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}.yaml"
-      executable: /bin/bash
-    environment:
-        PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-        GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json" # UGH, Ansible SUCKS!!!  Interactive shell doesn't pick up existing ENV variables
-
-  # # SSH Key for workers
-  # - name: Generate an OpenSSH rsa keypair for workers
-  #   community.crypto.openssh_keypair:
-  #     path: /tmp/id_ssh_rsa
-  #     size: 2048
-
-  - name: Change generated ABM cluster YAML file
-    template:
-      src: templates/abm-1.yaml
-      dest: '{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}.yaml'
-
-  - name: Validate configuration file updates
-    shell: |
-        bmctl check config --cluster={{ cluster_name }} # Does not work
-        exit $?
     args:
       chdir: "{{ abm_install_folder }}"
-      executable: /bin/bash
+    retries: 5
     environment:
-        PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-        GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json" # UGH, Ansible SUCKS!!!  Interactive shell doesn't pick up existing ENV variables
+
+  # - name: Validate configuration file updates
+  #   command: bmctl check config --cluster={{ cluster_name }} # Does not work
+  #   args:
+  #     chdir: "{{ abm_install_folder }}"
+  #   environment:
+  #     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
 
   - name: Store or do something with kubeconfig
     debug:
