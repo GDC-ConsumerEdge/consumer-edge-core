@@ -1,18 +1,16 @@
 ---
 
-- name: Dumping out vars for {{ cluster_name }}
-  debug:
-    msg: "Cluster name is {{ cluster_name }} "
-
-
 - name: Run the equivalent of "apt-get update" as a separate step
   apt:
     update_cache: yes
     upgrade: "yes"
   tags: maintenance
 
-- name: be sure golang is installed
-  apt:
-    name: golang
-    state: present
-  tags: golang
+- name: Update gcloud to latest
+  command:
+    cmd: gcloud components update --quiet
+  tags:
+    - maintenance
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
