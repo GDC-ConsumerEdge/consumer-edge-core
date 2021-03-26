@@ -1,51 +1,55 @@
----
-gcrKeyPath: {{ remote_gsa_key }}/{{ service_accounts|selectattr("name", "equalto", "abm-gke-connect-agent") }}.json
-sshPrivateKeyPath: {{ sshPrivateKeyPath }} # Created for access to worker nodes
-gkeConnectAgentServiceAccountKeyPath: {{ remote_gsa_key }}/{{ service_accounts|selectattr("name", "equalto", "abm-gcr-agent") }}.json
-gkeConnectRegisterServiceAccountKeyPath: {{ remote_gsa_key }}/{{ service_accounts|selectattr("name", "equalto", "abm-gke-register-agent") }}.json
-cloudOperationsServiceAccountKeyPath: {{ remote_gsa_key }}/{{ service_accounts|selectattr("name", "equalto", "abm-cloud-operations-agent") }}.json
+# bmctl configuration variables. Because this section is valid YAML but not a valid Kubernetes
+# resource, this section can only be included when using bmctl to
+# create the initial admin/hybrid cluster. Afterwards, when creating user clusters by directly
+# applying the cluster and node pool resources to the existing cluster, you must remove this
+# section.
+gcrKeyPath: <path to GCR service account key>
+sshPrivateKeyPath: <path to SSH private key, used for node access>
+gkeConnectAgentServiceAccountKeyPath: <path to Connect agent service account key>
+gkeConnectRegisterServiceAccountKeyPath: <path to Hub registration service account key>
+cloudOperationsServiceAccountKeyPath: <path to Cloud Operations service account key>
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ cluster_name }}
+  name: cluster-standalone1
 ---
 apiVersion: baremetal.cluster.gke.io/v1
 kind: Cluster
 metadata:
-  name: {{ cluster_name }}
-  namespace: {{ cluster_name }}
+  name: standalone1
+  namespace: cluster-standalone1
 spec:
   # Cluster type. This can be:
   #   1) admin:  to create an admin cluster. This can later be used to create user clusters.
   #   2) user:   to create a user cluster. Requires an existing admin cluster.
   #   3) hybrid: to create a hybrid cluster that runs admin cluster components and user workloads.
   #   4) standalone: to create a cluster that manages itself, runs user workloads, but does not manage other clusters.
-  type: {{ install_type }}
+  type: admin
   # Anthos cluster version.
   anthosBareMetalVersion: 1.6.0
   # GKE connect configuration
   gkeConnect:
-    projectID: {{ google_project_id }}
+    projectID: <GCP project ID>
   # Control plane configuration
   controlPlane:
     nodePoolSpec:
       nodes:
       # Control plane node pools. Typically, this is either a single machine
       # or 3 machines if using a high availability deployment.
-      - address: {{ control_plane_1_ip }}
+      - address: <Machine 1 IP>
   # Cluster networking configuration
   clusterNetwork:
     # Pods specify the IP ranges from which Pod networks are allocated.
     pods:
       cidrBlocks:
-      - {{ pod_1_cidr }} # LOOK HERE
+      - 192.168.0.0/16
     # Services specify the network ranges from which service VIPs are allocated.
     # This can be any RFC1918 range that does not conflict with any other IP range
     # in the cluster and node pool resources.
     services:
       cidrBlocks:
-      - {{ services_1_cidr }} # 10.96.0.0/12
+      - 10.96.0.0/12
   # Load balancer configuration
   loadBalancer:
     # Load balancer mode can be either 'bundled' or 'manual'.
@@ -70,20 +74,19 @@ spec:
     # AddressPools is a list of non-overlapping IP ranges for the data plane load balancer.
     # All addresses must be in the same subnet as the load balancer nodes.
     # Address pool configuration is only valid for 'bundled' LB mode in non-admin clusters.
-    # TODO: This was uncommented
-    addressPools: # TODO: How to uncomment in a file with template?
-    - name: pool1
-      addresses:
+    # addressPools:
+    # - name: pool1
+    #   addresses:
     #   # Each address must be either in the CIDR form (1.2.3.0/24)
     #   # or range form (1.2.3.1-1.2.3.5).
-      - 10.0.0.10-10.0.0.254
+    #   - 10.0.0.1-10.0.0.4
     # A load balancer nodepool can be configured to specify nodes used for load balancing.
     # These nodes are part of the kubernetes cluster and run regular workloads as well as load balancers.
     # If the node pool config is absent then the control plane nodes are used.
     # Node pool configuration is only valid for 'bundled' LB mode.
-    nodePoolSpec:
-     nodes:
-     - address: {{ services_1_cidr }}
+    # nodePoolSpec:
+    #  nodes:
+    #  - address: <Machine 1 IP>
   # Proxy configuration
   # proxy:
   #   url: http://[username:password@]domain
@@ -94,13 +97,13 @@ spec:
   # Logging and Monitoring
   clusterOperations:
     # Cloud project for logs and metrics.
-    projectID: {{ google_project_id }}
+    projectID: <GCP project ID>
     # Cloud location for logs and metrics.
     location: us-central1
     # Whether collection of application logs/metrics should be enabled (in addition to
     # collection of system logs/metrics which correspond to system components such as
     # Kubernetes control plane or cluster management agents).
-    enableApplication: {{ enable_application_logging_1 }}
+    # enableApplication: false
   # Storage configuration
   storage:
     # lvpNodeMounts specifies the config for local PersistentVolumes backed by mounted disks.
@@ -168,13 +171,13 @@ spec:
   #   loginUser: <login user name>
 ---
 # Node pools for worker nodes
-#apiVersion: baremetal.cluster.gke.io/v1
-#kind: NodePool
-#metadata:
-#  name: node-pool-1
-#  namespace: cluster-abm-1
-#spec:
-#  clusterName: abm-1
-#  nodes:
-#  - address: <Machine 2 IP>
-#  - address: <Machine 3 IP>
+apiVersion: baremetal.cluster.gke.io/v1
+kind: NodePool
+metadata:
+  name: node-pool-1
+  namespace: cluster-standalone1
+spec:
+  clusterName: standalone1
+  nodes:
+  - address: <Machine 2 IP>
+  - address: <Machine 3 IP>

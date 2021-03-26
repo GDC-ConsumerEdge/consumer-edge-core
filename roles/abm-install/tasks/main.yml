@@ -7,15 +7,6 @@
   #   loop: "{{ service_accounts | subelements('roles') }}"
   #   run_once: true
 
-# ### Create install folder
-#   - name: Create isolated install folder
-#     file:
-#       path: '{{ abm_install_folder }}'
-#       state: directory
-#       mode: '0755'
-#     tags:
-#     - abm-install
-
 ### Create or enable Google Service Accounts
   - name: Create or Enable Service Accounts
     shell: |
@@ -39,6 +30,17 @@
     tags:
     - abm-install
 
+  - name: Add roles to service accounts
+    command:
+      cmd: gcloud projects add-iam-policy-binding {{ google_project_id }} --member="serviceAccount:{{ item.0.name }}@{{ google_project_id }}.iam.gserviceaccount.com" --role="{{ item.1 }}"
+    loop: "{{ service_accounts | subelements('roles') }}"
+    run_once: true # only one machine to do this
+    environment:
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+    tags:
+    - abm-install
+
   - name: Create keys
     command:
       cmd: gcloud iam service-accounts keys create {{ remote_gsa_key }}/{{ item.name }}-creds.json --iam-account={{ item.name }}@{{ google_project_id }}.iam.gserviceaccount.com  --project={{ google_project_id }}
@@ -48,18 +50,20 @@
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
 
-# ### Create configuration file (TODO: Switch this to a template)
-#   - name: Create configuration file
-#     command:
-#       cmd: bmctl create config -c {{ cluster_name }} --enable-apis --create-service-accounts --project-id={{ google_project_id }}
-#       creates: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}.yaml"
-#     args:
-#       chdir: "{{ abm_install_folder }}"
-#     retries: 5
-#     environment:
-#       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json" # UGH, Ansible SUCKS!!!  Interactive shell doesn't pick up existing ENV variables
-#     tags:
-#     - abm-install
+### Create install folder
+  - name: Create isolated install folder
+    file:
+      path: '{{ abm_install_folder }}/bmctl-workspace'
+      state: directory
+      mode: '0755'
+    tags:
+    - abm-install
+
+### Create configuration file (TODO: Switch this to a template)
+  - name: "Place configuration file into ABM install folder"
+    template:
+      src: cluster-config.yaml.j2
+      dest: "{{ abm_install_folder }}/{{ cluster_name }}.yaml"
 
 #   # - name: Validate configuration file updates
 #   #   command: bmctl check config --cluster={{ cluster_name }} # Does not work
