@@ -33,21 +33,24 @@ control_plane_ip: [
 # Service Account Configuration
 service_accounts: [
   {
-    name: abm-gke-connect-agent,
-    description: "ABM GKE Connect Agent Service Account",
-    roles: [
-      "roles/gkehub.connect"
-    ]
-  },
-  {
     name: abm-gcr-agent,
+    keyfile: abm-gcr-agent-creds.json,
     description: "ABM GCR Agent Account",
     roles: [
       "roles/storage.objectViewer"
     ]
   },
   {
+    name: abm-gke-connect-agent,
+    keyfile: abm-gke-connect-agent-creds.json,
+    description: "ABM GKE Connect Agent Service Account",
+    roles: [
+      "roles/gkehub.connect"
+    ]
+  },
+  {
     name: abm-gke-register-agent,
+    keyfile: abm-gke-register-agent-creds.json,
     description: "ABM GKE Connect Register Account",
     roles: [
       "roles/gkehub.admin"
@@ -55,6 +58,7 @@ service_accounts: [
   },
   {
     name: abm-cloud-operations-agent,
+    keyfile: abm-cloud-operations-agent-creds.json,
     description: "ABM Cloud Operations Service Account",
     roles: [
       "roles/logging.logWriter",
