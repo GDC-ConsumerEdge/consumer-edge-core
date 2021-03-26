@@ -16,6 +16,6 @@ local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
 # location of the GSA credentials file for gcloud initialization
 remote_gsa_key: "/var/keys"
 
-bmctl_version: "1.6.2"
+bmctl_version: "1.7.0"
 
 kubectx_version: "0.9.3"
