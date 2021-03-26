@@ -6,13 +6,14 @@ google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
 
 # Folder to run installation out of
 abm_install_folder: "/var/abm-install"
+abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"
 
 # Match with Google-Tools (by convention, not required, but good idea)
 remote_gsa_key: "/var/keys"
-
 sshPrivateKeyPath: /root/.ssh/id_rsa
 
-pod_1_cidr: "192.168.0.0/16"
+pod_cidr: "192.168.0.0/16"
+# TODO: Should this be in the local network address space?
 services_1_cidr: "192.168.86.0/12" # 10.96.0.0/12 <-- orig value, new needs to be in VIP range
 enable_application_logging_1: false
 
@@ -21,13 +22,13 @@ install_type: standalone
 
 
 
-
-
-control_plane_1_ip: "{{ lookup('dig', 'store-1.lan') }}"
-control_plane_2_ip: "{{ lookup('dig', 'store-2.lan') }}"
-control_plane_3_ip: "{{ lookup('dig', 'store-3.lan') }}"
-control_plane_4_ip: "{{ lookup('dig', 'store-4.lan') }}"
-control_plane_5_ip: "{{ lookup('dig', 'store-5.lan') }}"
+control_plane_ip: [
+  "{{ lookup('dig', 'store-1.lan') }}",
+  "{{ lookup('dig', 'store-2.lan') }}",
+  "{{ lookup('dig', 'store-3.lan') }}",
+  "{{ lookup('dig', 'store-4.lan') }}",
+  "{{ lookup('dig', 'store-5.lan') }}"
+]
 
 # Service Account Configuration
 service_accounts: [
