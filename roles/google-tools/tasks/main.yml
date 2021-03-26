@@ -112,7 +112,6 @@
     tags:
     - initial-install
 
-
   - name: Enable services
     shell: |
       gcloud services enable anthos.googleapis.com anthosgke.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com gkeconnect.googleapis.com gkehub.googleapis.com serviceusage.googleapis.com stackdriver.googleapis.com monitoring.googleapis.com logging.googleapis.com
@@ -139,7 +138,7 @@
   - name: Install Anthos Bare Metal CLI
     shell: |
       gsutil cp gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl {{ tools_base_path }}
-      chmod 777 {{ tools_base_path }}/bmctl
+      chmod a+x {{ tools_base_path }}/bmctl
       mv {{ tools_base_path }}/bmctl /usr/bin/bmctl
       bmctl
       exit $?
