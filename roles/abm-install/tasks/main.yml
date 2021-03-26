@@ -29,6 +29,7 @@
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-install
+    - abm-once
 
   - name: Add roles to service accounts
     command:
@@ -40,6 +41,7 @@
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-install
+    - abm-once
 
   - name: Create keys
     command:
@@ -49,11 +51,13 @@
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+    tags:
+    - abm-once
 
 ### Create install folder
   - name: Create isolated install folder
     file:
-      path: '{{ abm_install_folder }}/bmctl-workspace'
+      path: '{{ abm_workspace_folder }}/{{ cluster_name }}'
       state: directory
       mode: '0755'
     tags:
@@ -63,14 +67,15 @@
   - name: "Place configuration file into ABM install folder"
     template:
       src: cluster-config.yaml.j2
-      dest: "{{ abm_install_folder }}/{{ cluster_name }}.yaml"
+      dest: "{{ abm_workspace_folder }}/{{ cluster_name }}/{{ cluster_name }}.yaml"
 
-#   # - name: Validate configuration file updates
-#   #   command: bmctl check config --cluster={{ cluster_name }} # Does not work
-#   #   args:
-#   #     chdir: "{{ abm_install_folder }}"
-#   #   environment:
-#   #     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+### Check cluster configuration
+  - name: Validate configuration file updates
+    command: bmctl check config --cluster={{ cluster_name }} # Does not work
+    args:
+      chdir: "{{ abm_install_folder }}"
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
 
 #   - name: Store or do something with kubeconfig
 #     debug:

@@ -4,11 +4,16 @@ workers:
   hosts:
     store-1.lan:
       cluster_name: "store-1"
+      cluster_index: 0
     store-2.lan:
       cluster_name: "store-2"
+      cluster_index: 1
     store-3.lan:
       cluster_name: "store-3"
+      cluster_index: 2
     store-4.lan:
       cluster_name: "store-4"
+      cluster_index: 3
     store-5.lan:
       cluster_name: "store-5"
+      cluster_index: 4
