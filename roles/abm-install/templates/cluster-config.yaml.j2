@@ -39,7 +39,7 @@ spec:
     # Pods specify the IP ranges from which Pod networks are allocated.
     pods:
       cidrBlocks:
-      - {{ pod_cidr }} # LOOK HERE
+      - {{ pod_cidr }}
     # Services specify the network ranges from which service VIPs are allocated.
     # This can be any RFC1918 range that does not conflict with any other IP range
     # in the cluster and node pool resources.
@@ -62,7 +62,7 @@ spec:
     vips:
       # ControlPlaneVIP specifies the VIP to connect to the Kubernetes API server.
       # This address must not be in the address pools below.
-      controlPlaneVIP: 10.0.0.8
+      controlPlaneVIP: {{ control_plane_ip }}
       # IngressVIP specifies the VIP shared by all services for ingress traffic.
       # Allowed only in non-admin clusters.
       # This address must be in the address pools below.
@@ -70,13 +70,12 @@ spec:
     # AddressPools is a list of non-overlapping IP ranges for the data plane load balancer.
     # All addresses must be in the same subnet as the load balancer nodes.
     # Address pool configuration is only valid for 'bundled' LB mode in non-admin clusters.
-    # TODO: This was uncommented
-    addressPools: # TODO: How to uncomment in a file with template?
-    - name: pool1
+    addressPools:
+    - name: lb-pool
       addresses:
     #   # Each address must be either in the CIDR form (1.2.3.0/24)
     #   # or range form (1.2.3.1-1.2.3.5).
-      - 10.0.0.10-10.0.0.254
+      - {{ load_balancer_pool_cidr }}
     # A load balancer nodepool can be configured to specify nodes used for load balancing.
     # These nodes are part of the kubernetes cluster and run regular workloads as well as load balancers.
     # If the node pool config is absent then the control plane nodes are used.

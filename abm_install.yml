@@ -5,7 +5,7 @@
   become: true
   become_user: root
   roles:
-    # - google-tools
+    - google-tools
     - abm-install
   vars:
     # Initial project ID to setup gcloud with

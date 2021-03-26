@@ -6,6 +6,18 @@
         - google_project_id != ""
       fail_msg: "The local environment variable 'PROJECT_ID' needs to be defined for the target Google Project ID"
 
+  - name: Fail if local REGION ENV is not defined
+    assert:
+      that:
+        - google_region != ""
+      fail_msg: "The local environment variable 'REGION' needs to be defined for the target Google Project default region"
+
+  - name: Fail if local ZONE ENV is not defined
+    assert:
+      that:
+        - google_zone != ""
+      fail_msg: "The local environment variable 'ZONE' needs to be defined for the target Google Project default zone"
+
   - name: Fail if local LOCAL_GSA_FILE ENV is not defined
     assert:
       that:
@@ -69,7 +81,6 @@
     tags:
     - initial-install
 
-
 ### Setup Path & Auto-complete
 
 ### TODO: If the requirement is to have all users access gcloud, kubectl, etc...then add the GOOGLE_APPLICATION_CREDENTIALS here along with common location & chmod
@@ -99,16 +110,16 @@
   - name: Authenticate gcloud
     shell: |
       gcloud auth activate-service-account --key-file={{ remote_gsa_key }}/gsa-key.json --project {{ google_project_id }}
-      mkdir -p ~/.gcloud
-      cp {{ remote_gsa_key }}/gsa-key.json ~/.gcloud/gsa-key.json
-      export GOOGLE_APPLICATION_CREDENTIALS=~/.gcloud/gsa-key.json
+      mkdir -p /root/.gcloud
+      cp {{ remote_gsa_key }}/gsa-key.json /root/.gcloud/gsa-key.json
+      export GOOGLE_APPLICATION_CREDENTIALS=/root/.gcloud/gsa-key.json
       gcloud config configurations list
       exit $?
     args:
       executable: /bin/bash
-      creates: /var/nothing
+      creates: /root/.gcloud/gsa-key.json
     environment:
-        PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
 
@@ -117,19 +128,33 @@
       cmd: gcloud services enable anthos.googleapis.com anthosgke.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com gkeconnect.googleapis.com gkehub.googleapis.com serviceusage.googleapis.com stackdriver.googleapis.com monitoring.googleapis.com logging.googleapis.com --project={{ google_project_id }}
     run_once: true # only one machine to do this
     environment:
-        PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    tags:
+    - initial-install
+
+  - name: Set Default Region
+    command:
+      cmd: gcloud config set compute/region {{ google_region }} --project={{ google_project_id }}
+    environment:
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    tags:
+    - initial-install
+
+  - name: Set Default Zone
+    command:
+      cmd: gcloud config set compute/zone {{ google_zone }} --project={{ google_project_id }}
+    environment:
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
 
 ### Additional Tools
   - name: Install kubectl, nomos, kustomize and gsutil
-    shell: |
-      gcloud components install kubectl kustomize nomos gsutil -q
-      exit $?
-    args:
-      executable: /bin/bash
+    command:
+      cmd: gcloud components install kubectl kustomize nomos gsutil -q
+      creates: "{{ tools_base_path }}/google-cloud-sdk/bin/kubectl"
     environment:
-        PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
 
@@ -144,7 +169,7 @@
       creates: /usr/bin/bmctl
       executable: /bin/bash
     environment:
-        PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
 

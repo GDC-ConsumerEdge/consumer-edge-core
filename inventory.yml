@@ -1,6 +1,12 @@
 # Primary server that can be used as a config or a worker, but is counted out just-in-case
 # Represents all other physical machines in the cluster
+
 workers:
+  vars:
+    # GCP Project to associate with
+    google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
+    google_region: "{{ lookup('env', 'REGION') | default('us-central1', True) }}"
+    google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}"
   hosts:
     store-1.lan:
       cluster_name: "store-1"

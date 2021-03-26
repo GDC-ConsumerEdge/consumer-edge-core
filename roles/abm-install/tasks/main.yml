@@ -7,18 +7,6 @@
     tags:
     - debug
 
-  - name: testing Jinja variable two
-    debug:
-      msg: "{{ remote_gsa_key }}/{{ (service_accounts | selectattr('name', 'equalto', 'abm-cloud-operations-agent') | first ).keyfile }}"
-    tags:
-    - debug
-
-  # - name: Print ServiceAccounts and Roles
-  #   debug:
-  #     msg: "{{ item.0.name }}\n-->{{ item.1 }}\n"
-  #   loop: "{{ service_accounts | subelements('roles') }}"
-  #   run_once: true
-
 ### Create or enable Google Service Accounts
   - name: Create or Enable Service Accounts
     shell: |
