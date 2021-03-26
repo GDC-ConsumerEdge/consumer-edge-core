@@ -1,0 +1,8 @@
+- hosts: workers
+  become: true
+  become_user: root
+  roles:
+    - common
+  vars:
+    - google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
+    - tools_base_path: "/var/google-tools-install"

@@ -9,7 +9,7 @@ abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"
 
 # Match with Google-Tools (by convention, not required, but good idea)
 remote_gsa_key: "/var/keys"
-ssh_key_path: /root/.ssh/abm_rsa
+ssh_key_path: /root/.ssh/abm_rsa-cert # NOTE "-cert" is appended for some reason
 
 # Cluster Configuration
 install_type: standalone

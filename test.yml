@@ -1,9 +1,0 @@
-- hosts: config_server
-  become: true
-  become_user: root
-  roles:
-    - abm-install
-  vars:
-    - google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
-    - tools_base_path: "/var/google-tools-install"
-    - sshPrivateKeyPath: "/root/.ssh/id_rsa"
