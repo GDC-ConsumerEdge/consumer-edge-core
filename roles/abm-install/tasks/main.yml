@@ -1,6 +1,18 @@
 ---
 # tasks file for abm-install
 
+  - name: testing Jinja variable
+    debug:
+      msg: "{{ remote_gsa_key }}/{{ (service_accounts | selectattr('name', 'equalto', 'abm-gke-connect-agent') | first ).keyfile }}"
+    tags:
+    - debug
+
+  - name: testing Jinja variable two
+    debug:
+      msg: "{{ remote_gsa_key }}/{{ (service_accounts | selectattr('name', 'equalto', 'abm-cloud-operations-agent') | first ).keyfile }}"
+    tags:
+    - debug
+
   # - name: Print ServiceAccounts and Roles
   #   debug:
   #     msg: "{{ item.0.name }}\n-->{{ item.1 }}\n"
@@ -45,8 +57,8 @@
 
   - name: Create keys
     command:
-      cmd: gcloud iam service-accounts keys create {{ remote_gsa_key }}/{{ item.name }}-creds.json --iam-account={{ item.name }}@{{ google_project_id }}.iam.gserviceaccount.com  --project={{ google_project_id }}
-      creates: "{{ remote_gsa_key }}/{{ item.name }}-creds.json"
+      cmd: gcloud iam service-accounts keys create {{ remote_gsa_key }}/{{ item.keyfile }} --iam-account={{ item.name }}@{{ google_project_id }}.iam.gserviceaccount.com  --project={{ google_project_id }}
+      creates: "{{ remote_gsa_key }}/{{ item.keyfile }}"
     loop: "{{ service_accounts }}"
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"

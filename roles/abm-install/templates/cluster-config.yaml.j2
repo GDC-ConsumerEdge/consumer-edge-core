@@ -1,9 +1,9 @@
 ---
-gcrKeyPath: {{ remote_gsa_key }}/{{ service_accounts | selectattr("name", "equalto", "abm-gke-connect-agent") }}.json
 sshPrivateKeyPath: {{ sshPrivateKeyPath }} # Created for access to worker nodes
-gkeConnectAgentServiceAccountKeyPath: {{ remote_gsa_key }}/{{ service_accounts|selectattr("name", "equalto", "abm-gcr-agent") }}.json
-gkeConnectRegisterServiceAccountKeyPath: {{ remote_gsa_key }}/{{ service_accounts|selectattr("name", "equalto", "abm-gke-register-agent") }}.json
-cloudOperationsServiceAccountKeyPath: {{ remote_gsa_key }}/{{ service_accounts|selectattr("name", "equalto", "abm-cloud-operations-agent") }}.json
+gcrKeyPath: {{ remote_gsa_key }}/{{ (service_accounts | selectattr('name', 'equalto', 'abm-gcr-agent') | first ).keyfile }}
+gkeConnectAgentServiceAccountKeyPath: {{ remote_gsa_key }}/{{ (service_accounts | selectattr('name', 'equalto', 'abm-gke-connect-agent') | first ).keyfile }}
+gkeConnectRegisterServiceAccountKeyPath: {{ remote_gsa_key }}/{{ (service_accounts | selectattr('name', 'equalto', 'abm-gke-register-agent') | first ).keyfile }}
+cloudOperationsServiceAccountKeyPath: {{ remote_gsa_key }}/{{ (service_accounts | selectattr('name', 'equalto', 'abm-cloud-operations-agent') | first ).keyfile }}
 ---
 apiVersion: v1
 kind: Namespace

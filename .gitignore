@@ -14,6 +14,9 @@ k8s/overlays/**/configuration/secrets/*.json
 ### VS Code ###
 .vscode/
 
+### Ansible ###
+ansible.cfg
+
 ### Python
 .pytest_cache
 __pycache__
