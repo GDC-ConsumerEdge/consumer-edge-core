@@ -7,15 +7,45 @@ google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
 # Folder to run installation out of
 abm_install_folder: "/var/abm-install"
 
-
-## In the future, setup these to be in an object or something
-control_plane_1_ip: "{{ lookup('dig', 'nuc-1.lan') }}"
+# Match with Google-Tools (by convention, not required, but good idea)
+remote_gsa_key: "/var/keys"
 
 pod_1_cidr: "192.168.0.0/16"
 services_1_cidr: "192.168.86.0/12" # 10.96.0.0/12 <-- orig value, new needs to be in VIP range
 enable_application_logging_1: false
 
-control_plane_2_ip: "{{ lookup('dig', 'nuc-2.lan')}"
-control_plane_3_ip: "{{ lookup('dig', 'nuc-3.lan')}"
-control_plane_4_ip: "{{ lookup('dig', 'nuc-4.lan')}"
-control_plane_5_ip: "{{ lookup('dig', 'nuc-5.lan')}"
+control_plane_1_ip: "{{ lookup('dig', 'store-1.lan')}"
+control_plane_2_ip: "{{ lookup('dig', 'store-2.lan')}"
+control_plane_3_ip: "{{ lookup('dig', 'store-3.lan')}"
+control_plane_4_ip: "{{ lookup('dig', 'store-4.lan')}"
+control_plane_5_ip: "{{ lookup('dig', 'store-5.lan')}"
+
+# Service accounts used
+service_accounts: [
+  {
+    name: abm-gke-connect-agent,
+    description: "ABM GKE Connect Agent Service Account",
+    roles: [
+      "roles/gkehub.connect",
+      "roles/viewer"
+    ]
+  },
+  {
+    name: abm-gke-register-agent,
+    description: "ABM GKE Connect Register Account",
+    roles: [
+      "roles/gkehub.admin",
+      "roles/viewer"
+    ]
+  },
+  {
+    name: abm-cloud-operations-agent,
+    description: "ABM Cloud Operations Service Account",
+    roles: [
+      "roles/logging.logWriter",
+      "roles/monitoring.metricWriter",
+      "roles/stackdriver.resourceMetadata.writer",
+      "roles/monitoring.dashboardEditor"
+    ]
+  }
+]
