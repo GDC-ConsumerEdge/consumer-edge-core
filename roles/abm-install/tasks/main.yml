@@ -7,6 +7,11 @@
     tags:
     - debug
 
+### Create a KeyPair for something
+  - name: Generate an OpenSSH keypair
+    community.crypto.openssh_keypair:
+      path: "{{ ssh_key_path }}"
+
 ### Create or enable Google Service Accounts
   - name: Create or Enable Service Accounts
     shell: |
@@ -53,6 +58,15 @@
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-once
+
+### Create Local PVC folder (future will be mounted or something)
+  - name: Create PVC Folder
+    file:
+      path: '{{ local_pvc_mount }}'
+      state: directory
+      mode: '0755'
+    tags:
+    - abm-install
 
 ### Create install folder
   - name: Create isolated install folder

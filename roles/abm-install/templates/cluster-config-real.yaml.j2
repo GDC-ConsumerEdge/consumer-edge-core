@@ -1,8 +1,4 @@
-# bmctl configuration variables. Because this section is valid YAML but not a valid Kubernetes
-# resource, this section can only be included when using bmctl to
-# create the initial admin/hybrid cluster. Afterwards, when creating user clusters by directly
-# applying the cluster and node pool resources to the existing cluster, you must remove this
-# section.
+
 gcrKeyPath: <path to GCR service account key>
 sshPrivateKeyPath: <path to SSH private key, used for node access>
 gkeConnectAgentServiceAccountKeyPath: <path to Connect agent service account key>
@@ -12,13 +8,13 @@ cloudOperationsServiceAccountKeyPath: <path to Cloud Operations service account 
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: cluster-standalone1
+  name: cluster-store-1
 ---
 apiVersion: baremetal.cluster.gke.io/v1
 kind: Cluster
 metadata:
-  name: standalone1
-  namespace: cluster-standalone1
+  name: store-1
+  namespace: cluster-store-1
 spec:
   # Cluster type. This can be:
   #   1) admin:  to create an admin cluster. This can later be used to create user clusters.
@@ -27,7 +23,7 @@ spec:
   #   4) standalone: to create a cluster that manages itself, runs user workloads, but does not manage other clusters.
   type: admin
   # Anthos cluster version.
-  anthosBareMetalVersion: 1.6.0
+  anthosBareMetalVersion: 1.7.0
   # GKE connect configuration
   gkeConnect:
     projectID: <GCP project ID>
@@ -40,16 +36,16 @@ spec:
       - address: <Machine 1 IP>
   # Cluster networking configuration
   clusterNetwork:
-    # Pods specify the IP ranges from which Pod networks are allocated.
+    # Pods specify the IP ranges from which pod networks are allocated.
     pods:
       cidrBlocks:
       - 192.168.0.0/16
-    # Services specify the network ranges from which service VIPs are allocated.
+    # Services specify the network ranges from which service virtual IPs are allocated.
     # This can be any RFC1918 range that does not conflict with any other IP range
     # in the cluster and node pool resources.
     services:
       cidrBlocks:
-      - 10.96.0.0/12
+      - 10.96.0.0/20
   # Load balancer configuration
   loadBalancer:
     # Load balancer mode can be either 'bundled' or 'manual'.
@@ -58,11 +54,12 @@ spec:
     mode: bundled
     # Load balancer port configuration
     ports:
-      # Specifies the port the LB serves the kubernetes control plane on.
+      # Specifies the port the load balancer serves the Kubernetes control plane on.
       # In 'manual' mode the external load balancer must be listening on this port.
       controlPlaneLBPort: 443
-    # There are two load balancer VIPs: one for the control plane and one for the L7 Ingress
-    # service. The VIPs must be in the same subnet as the load balancer nodes.
+    # There are two load balancer virtual IP (VIP) addresses: one for the control plane
+    # and one for the L7 Ingress service. The VIPs must be in the same subnet as the load balancer nodes.
+    # These IP addresses do not correspond to physical network interfaces.
     vips:
       # ControlPlaneVIP specifies the VIP to connect to the Kubernetes API server.
       # This address must not be in the address pools below.
@@ -80,8 +77,8 @@ spec:
     #   # Each address must be either in the CIDR form (1.2.3.0/24)
     #   # or range form (1.2.3.1-1.2.3.5).
     #   - 10.0.0.1-10.0.0.4
-    # A load balancer nodepool can be configured to specify nodes used for load balancing.
-    # These nodes are part of the kubernetes cluster and run regular workloads as well as load balancers.
+    # A load balancer node pool can be configured to specify nodes used for load balancing.
+    # These nodes are part of the Kubernetes cluster and run regular workloads as well as load balancers.
     # If the node pool config is absent then the control plane nodes are used.
     # Node pool configuration is only valid for 'bundled' LB mode.
     # nodePoolSpec:
@@ -127,6 +124,21 @@ spec:
       storageClassName: local-shared
       # numPVUnderSharedPath specifies the number of subdirectories to create under path.
       numPVUnderSharedPath: 5
+  # NodeConfig specifies the configuration that applies to all nodes in the cluster.
+  nodeConfig:
+    # podDensity specifies the pod density configuration.
+    podDensity:
+      # maxPodsPerNode specifies at most how many pods can be run on a single node.
+      maxPodsPerNode: 250
+    # containerRuntime specifies which container runtime to use for scheduling containers on nodes.
+    # containerd and docker are supported.
+    containerRuntime: docker
+  # KubeVirt configuration, uncomment this section if you want to install kubevirt to the cluster
+  # kubevirt:
+  #   # if useEmulation is enabled, hardware accelerator (i.e relies on cpu feature like vmx or svm)
+  #   # will not be attempted. QEMU will be used for software emulation.
+  #   # useEmulation must be specified for KubeVirt installation
+  #   useEmulation: false
   # Authentication; uncomment this section if you wish to enable authentication to the cluster with OpenID Connect.
   # authentication:
   #   oidc:
@@ -155,6 +167,9 @@ spec:
   #     # extraParams specifies additional key-value parameters to send to the OpenID provider as a comma-delimited
   #     # list.
   #     extraParams: <Additional key-value parameters to send to OIDC provider as a comma-separated list; optional>
+  #     # proxy specifies the proxy server to use for the cluster to connect to your OIDC provider, if applicable.
+  #     # Example: https://user:password@10.10.10.10:8888. If left blank, this defaults to no proxy.
+  #     proxy: <Proxy server to use for the cluster to connect to your OIDC provider; optional, default is no proxy>
   #     # deployCloudConsoleProxy specifies whether to deploy a reverse proxy in the cluster to allow Google Cloud
   #     # Console access to the on-premises OIDC provider for authenticating users. If your identity provider is not
   #     # reachable over the public internet, and you wish to authenticate using Google Cloud Console, then this field
@@ -175,9 +190,9 @@ apiVersion: baremetal.cluster.gke.io/v1
 kind: NodePool
 metadata:
   name: node-pool-1
-  namespace: cluster-standalone1
+  namespace: cluster-store-1
 spec:
-  clusterName: standalone1
+  clusterName: store-1
   nodes:
   - address: <Machine 2 IP>
   - address: <Machine 3 IP>

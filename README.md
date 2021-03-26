@@ -10,6 +10,10 @@ This is a group of playbooks and ansible tools/scripts to provision and manage A
 pip install dnspython
 ```
 
+```bash
+ansible-galaxy collection install community.crypto
+```
+
 # Running
 
 ```bash

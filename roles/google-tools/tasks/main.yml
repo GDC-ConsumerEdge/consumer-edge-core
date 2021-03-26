@@ -163,7 +163,7 @@
       gsutil cp gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl {{ tools_base_path }}
       chmod a+x {{ tools_base_path }}/bmctl
       mv {{ tools_base_path }}/bmctl /usr/bin/bmctl
-      bmctl
+      bmctl version
       exit $?
     args:
       creates: /usr/bin/bmctl
