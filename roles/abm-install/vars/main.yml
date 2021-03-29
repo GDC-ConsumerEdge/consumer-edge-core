@@ -9,15 +9,30 @@ abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"
 
 # Match with Google-Tools (by convention, not required, but good idea)
 remote_gsa_key: "/var/keys"
-ssh_key_path: /root/.ssh/abm_rsa
+ssh_key_name: "abm-key"
+ssh_user_home: "/home/{{ abm_install_user }}/.ssh"
+ssh_key_path: "{{ ssh_user_home }}/{{ ssh_key_name }}"
+ssh_key_path_pub: "{{ ssh_user_home }}/{{ ssh_key_name }}.pub"
+
+# User that has sudo, password less SSH access to control_plane_ip
+abm_install_user: "el-gato"
+
+### This may be needed
+# --bootstrap-cluster-pod-cidr string       Bootstrap cluster pod CIDR (default "192.168.122.0/24")
+# --bootstrap-cluster-service-cidr string   Bootstrap cluster service CIDR (default "10.96.0.0/27")
 
 # Cluster Configuration
 install_type: standalone
+# Common across all clusters
 pod_cidr: "172.2.0.0/16"
-services_1_cidr: "10.96.0.0/24"
-control_plane_vip: "192.168.86.241"
-ingress_vip: "192.168.86.245" # must be in LB pool
-load_balancer_pool_cidr: "192.168.86.245-192.168.86.254" # cannot overlap with control_plane_vip
+services_1_cidr: "10.90.0.0/24" # avoid overlap with KIND IPs
+
+## TODO: Write something that pings the ranges below to pre-maturely fail if used IPs
+## TODO: Setup an n-number cluster IP management variable (ControlPlaneVIP, IngressVIP, LB CIDR)
+# Unique per cluster, different than the machine's IP
+control_plane_vip: "192.168.86.220" # CREATED by process, cannot overlap with other VIPs in cluster group
+ingress_vip: "192.168.86.221" # must be in LB pool
+load_balancer_pool_cidr: "192.168.86.221-192.168.86.230" # CREATED(or at least used blindly) cannot overlap with control_plane_vip, cannot overlap with others on network
 
 enable_application_logging: false
 
