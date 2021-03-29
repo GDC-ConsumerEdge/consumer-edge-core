@@ -82,6 +82,9 @@
     template:
       src: cluster-config.yaml.j2
       dest: "{{ abm_workspace_folder }}/{{ cluster_name }}/{{ cluster_name }}.yaml"
+    tags:
+    - abm-install
+    - abm-config
 
 ### Check cluster configuration
   - name: Validate configuration file updates
@@ -90,6 +93,20 @@
       chdir: "{{ abm_install_folder }}"
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+    tags:
+    - abm-install
+    - abm-config
+
+### Create cluster configuration
+  - name: Create cluster
+    command: bmctl create cluster --cluster={{ cluster_name }} # Does not work
+    args:
+      chdir: "{{ abm_install_folder }}"
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+    tags:
+    - abm-install
+    - abm-create
 
 #   - name: Store or do something with kubeconfig
 #     debug:

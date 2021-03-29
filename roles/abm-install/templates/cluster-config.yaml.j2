@@ -99,7 +99,7 @@ spec:
     # Whether collection of application logs/metrics should be enabled (in addition to
     # collection of system logs/metrics which correspond to system components such as
     # Kubernetes control plane or cluster management agents).
-    enableApplication: {{ enable_application_logging_1 }}
+    enableApplication: {{ enable_application_logging }}
   # Storage configuration
   storage:
     # lvpNodeMounts specifies the config for local PersistentVolumes backed by mounted disks.
@@ -128,7 +128,7 @@ spec:
     # podDensity specifies the pod density configuration.
     podDensity:
       # maxPodsPerNode specifies at most how many pods can be run on a single node.
-      maxPodsPerNode: 250
+      maxPodsPerNode: 110
     # containerRuntime specifies which container runtime to use for scheduling containers on nodes.
     # containerd and docker are supported. #TODO: Look at containerd for this
     containerRuntime: docker
