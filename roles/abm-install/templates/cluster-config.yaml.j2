@@ -32,7 +32,7 @@ spec:
     nodePoolSpec:
       nodes:
       # Control plane node pools. Typically, this is either a single machine
-      # or 3 machines if using a high availability deployment.
+      # or 3 machines if using a high availability deployment. # Masters (phyical host)
       - address: {{ control_plane_ip[cluster_index] }}
   # Cluster networking configuration
   clusterNetwork:
@@ -182,8 +182,8 @@ spec:
   #     certificateAuthorityData: <Base64 PEM-encoded certificate authority certificate of your OIDC provider; optional>
   # Node access configuration; uncomment this section if you wish to use a non-root user
   # with passwordless sudo capability for machine login.
-  # nodeAccess:
-  #   loginUser: <login user name>
+  nodeAccess:
+    loginUser: {{ abm_install_user }}
 ---
 # Node pools for worker nodes
 #apiVersion: baremetal.cluster.gke.io/v1
