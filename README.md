@@ -11,7 +11,10 @@ pip install dnspython
 ```
 
 ```bash
+# TODO: THis MAY not be needed or used
 ansible-galaxy collection install community.crypto
+# Allows automation to move pub-key into authorized keys file
+ansible-galaxy collection install ansible.posix
 ```
 
 # Running
