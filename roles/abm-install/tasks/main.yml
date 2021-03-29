@@ -7,10 +7,58 @@
     tags:
     - debug
 
+## TODO: Remove me if not used
 ### Create a KeyPair for something
   - name: Generate an OpenSSH keypair
     community.crypto.openssh_keypair:
       path: "{{ ssh_key_path }}"
+
+## TODO: Move this to "ready-ubuntu"
+  - name: Create a user for ABM Control
+    ansible.builtin.user:
+      name: "{{ abm_install_user }}"
+      shell: /bin/bash
+      groups: sudo
+      append: yes
+      generate_ssh_key: yes
+      ssh_key_bits: 2048
+      ssh_key_file: .ssh/{{ ssh_key_name }}
+    tags:
+    - abm-install
+    - abm-ssh
+
+## Setup password less SSH into same box
+  - name: "Place ssh config with no-host-check turned on"
+    template:
+      src: ssh-config.j2
+      dest: "{{ ssh_user_home }}/config"
+      group: "{{ abm_install_user }}"
+      owner: "{{ abm_install_user }}"
+    tags:
+    - abm-install
+    - abm-ssh
+
+### Setup the authorized key for newly created user key allowing password-less login
+### cat {{ ssh_key_path }}.pub >> {{ ssh_user_home }}/authorized_keys
+  - name: Set authorized key taken from file
+    shell: |
+      # remove existing authorized_keys
+      rm -rf {{ ssh_user_home }}/authorized_keys || true
+      touch {{ ssh_user_home }}/authorized_keys
+      cat {{ ssh_key_path_pub }} >> {{ ssh_user_home }}/authorized_keys
+      # make files user access only
+      chown {{ abm_install_user }}.{{ abm_install_user }} {{ ssh_user_home }}/authorized_keys
+      # SSH Key itself, make only read/write from current user
+      chmod 400 {{ ssh_key_path }}
+    args:
+      executable: /bin/bash
+      creates: /var/nothing
+    environment:
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+    tags:
+    - abm-install
+    - abm-ssh
 
 ### Create or enable Google Service Accounts
   - name: Create or Enable Service Accounts
