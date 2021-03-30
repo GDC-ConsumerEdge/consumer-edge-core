@@ -95,6 +95,15 @@ You will need to define 3 Environment Variables, as well as making any environme
 | REGION               |  N       |  Google default region | us-central1 |
 | ZONE                 |  N       |  Google default zone | us-central1-a |
 
+### Environment IPs
+
+* control_plane_vip -- IP address that is addressable & available, not overlapping with other clusters, but not pre-allocated. This is created during the process
+* ingress_vip -- Must be in the Load Balancer pool for the cluster, same rules as control_plane_vip for availability
+* load_balancer_pool_cidr -- IP addresses for the LoadBalancers (bundled mode) can attach to, same rules as control_plane_vip
+* control_plane_ip -- different than the `control_plane_vip`, this is the IP of the box you are installing on
+
+> NOTE: The default inventory file sets up 9 LBs allocated per cluster, with 1 taken for Ingress (sufficient for POC and basic work)
+
 ### Running Ansible Install
 
 > NOTE: Be sure to copy/clone the `inventory.yml` file and verify variables are acceptable for YOUR environment. Watch out for Docker and KIND IP overlaps if changing the service or pod CIDR blocks
