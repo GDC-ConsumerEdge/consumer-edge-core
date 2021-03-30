@@ -99,6 +99,7 @@
     blockinfile:
       path: /root/.bashrc
       block: |
+        export GOOGLE_APPLICATION_CREDENTIALS="/var/keys/gsa-key.json"
         # The next line updates PATH for the Google Cloud SDK.
         if [ -f '/var/google-tools-install/google-cloud-sdk/path.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/path.bash.inc'; fi
 
