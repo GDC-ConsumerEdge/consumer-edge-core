@@ -1,6 +1,12 @@
 ---
 # tasks file for ready-ubuntu
 
+### Verify OS is approved (Ubuntu only at this point). Saves the pre-checks later
+- name: Fail if not running on Ubuntu 18.04 or 20.04
+  fail:
+    msg: "This playbook can only run on Ubuntu 18.04 or 20.04. Using {{ ansible_distribution }}:{{ ansible_distribution_version }}"
+  when: ansible_distribution != "Ubuntu" or (ansible_distribution_version != '18.04' and ansible_distribution_version != '20.04')
+
 #### Stop and disable apparmor
 - name: Stop apparmor
   systemd:
