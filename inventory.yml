@@ -8,6 +8,8 @@
 # load_balancer_pool_cidr: IP addresses for the LoadBalancers (bundled mode) can attach to, same rules as control_plane_vip
 # control_plane_ip: -- different than the control_plane_vip, this is the IP of the box you are installing on
 
+# NOTE: In this file, only 9 LBs are allocated per cluster, with 1 taken for Ingress
+
 # Comment out (or remove) any inventory that is not available
 
 workers:
@@ -16,34 +18,34 @@ workers:
       cluster_name: "store-1"
       cluster_index: 0
       control_plane_ip: "{{ lookup('dig', 'store-1.lan') }}"
-      control_plane_vip: "192.168.86.220"
-      ingress_vip: "192.168.86.221"
-      load_balancer_pool_cidr: "192.168.86.221-192.168.86.230"
+      control_plane_vip: "192.168.86.100"
+      ingress_vip: "192.168.86.101"
+      load_balancer_pool_cidr: "192.168.86.101-192.168.86.109"
     store-2.lan:
       cluster_name: "store-2"
       cluster_index: 1
       control_plane_ip: "{{ lookup('dig', 'store-2.lan') }}"
-      control_plane_vip: "192.168.86.220"
-      ingress_vip: "192.168.86.221"
-      load_balancer_pool_cidr: "192.168.86.221-192.168.86.230"
+      control_plane_vip: "192.168.86.110"
+      ingress_vip: "192.168.86.111"
+      load_balancer_pool_cidr: "192.168.86.111-192.168.86.119"
     store-3.lan:
       cluster_name: "store-3"
       cluster_index: 2
       control_plane_ip: "{{ lookup('dig', 'store-3.lan') }}"
-      control_plane_vip: "192.168.86.220"
-      ingress_vip: "192.168.86.221"
-      load_balancer_pool_cidr: "192.168.86.221-192.168.86.230"
+      control_plane_vip: "192.168.86.120"
+      ingress_vip: "192.168.86.121"
+      load_balancer_pool_cidr: "192.168.86.121-192.168.86.129"
     store-4.lan:
       cluster_name: "store-4"
       cluster_index: 3
       control_plane_ip: "{{ lookup('dig', 'store-4.lan') }}"
-      control_plane_vip: "192.168.86.220"
-      ingress_vip: "192.168.86.221"
-      load_balancer_pool_cidr: "192.168.86.221-192.168.86.230"
+      control_plane_vip: "192.168.86.130"
+      ingress_vip: "192.168.86.131"
+      load_balancer_pool_cidr: "192.168.86.131-192.168.86.139"
     store-5.lan:
       cluster_name: "store-5"
       cluster_index: 4
       control_plane_ip: "{{ lookup('dig', 'store-5.lan') }}"
-      control_plane_vip: "192.168.86.220"
-      ingress_vip: "192.168.86.221"
-      load_balancer_pool_cidr: "192.168.86.221-192.168.86.230"
+      control_plane_vip: "192.168.86.140"
+      ingress_vip: "192.168.86.141"
+      load_balancer_pool_cidr: "192.168.86.241-192.168.86.149"
