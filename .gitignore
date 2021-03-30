@@ -7,6 +7,10 @@ serving/
 # Downloaded model
 models/**/
 
+# Ansible building playbooks
+build.yml
+build.yaml
+
 # Generated configuration file
 k8s/overlays/**/configuration/*-hydrated.conf
 k8s/overlays/**/configuration/secrets/*.json
