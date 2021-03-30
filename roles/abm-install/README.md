@@ -16,3 +16,13 @@ Role Variables
 --------------
 
 See `vars/main.yml` for information
+
+Tags
+--------------
+
+Tasks associated with:
+* abm-install - all tasks in the role
+* abm-ssh - SSH keys and AMB installation user
+* abm-once - Creation of the Google Service Accounts
+* abm-config - Configuration for the ABM Cluster
+* abm-create - Cluster creation

@@ -48,9 +48,6 @@
     args:
       executable: /bin/bash
       creates: /var/nothing
-    environment:
-      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-install
     - abm-ssh
@@ -101,6 +98,7 @@
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-once
+    - abm-install
 
 ### Create Local PVC folder (future will be mounted or something)
   - name: Create PVC Folder
@@ -110,6 +108,7 @@
       mode: '0755'
     tags:
     - abm-install
+    - abm-config
 
 ### Create install folder
   - name: Create isolated install folder
