@@ -33,7 +33,7 @@ spec:
       nodes:
       # Control plane node pools. Typically, this is either a single machine
       # or 3 machines if using a high availability deployment. # Masters (phyical host)
-      - address: {{ control_plane_ip[cluster_index] }}
+      - address: {{ control_plane_ip }}
   # Cluster networking configuration
   clusterNetwork:
     # Pods specify the IP ranges from which Pod networks are allocated.
@@ -45,7 +45,7 @@ spec:
     # in the cluster and node pool resources.
     services:
       cidrBlocks:
-      - {{ services_1_cidr }}
+      - {{ services_cidr }}
   # Load balancer configuration
   loadBalancer:
     # Load balancer mode can be either 'bundled' or 'manual'.

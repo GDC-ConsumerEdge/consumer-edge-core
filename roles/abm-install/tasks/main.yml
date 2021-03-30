@@ -1,24 +1,12 @@
 ---
 # tasks file for abm-install
 
-  - name: testing Jinja variable
-    debug:
-      msg: "{{ remote_gsa_key }}/{{ (service_accounts | selectattr('name', 'equalto', 'abm-gke-connect-agent') | first ).keyfile }}"
-    tags:
-    - debug
-
-## TODO: Remove me if not used
-### Create a KeyPair for something
-  - name: Generate an OpenSSH keypair
-    community.crypto.openssh_keypair:
-      path: "{{ ssh_key_path }}"
-
 ## TODO: Move this to "ready-ubuntu"
   - name: Create a user for ABM Control
     ansible.builtin.user:
       name: "{{ abm_install_user }}"
       shell: /bin/bash
-      groups: sudo
+      groups: "sudo"
       append: yes
       generate_ssh_key: yes
       ssh_key_bits: 2048
@@ -38,12 +26,17 @@
     - abm-install
     - abm-ssh
 
-### Setup the authorized key for newly created user key allowing password-less login
+### TODO: Make this an inline file plugin, not task
+  - name: Add user to sudoers list
+    command:
+      cmd: 'echo -e "{{ abm_install_user }}\tALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/{{ abm_install_user }}'
+    tags:
+    - abm-install
+    - abm-ssh
+
 ### cat {{ ssh_key_path }}.pub >> {{ ssh_user_home }}/authorized_keys
   - name: Set authorized key taken from file
     shell: |
-      # DOUBLE FUNCTIONALITY HERE
-      echo -e "{{ abm_install_user }}\tALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/{{ abm_install_user }}
       # remove existing authorized_keys
       rm -rf {{ ssh_user_home }}/authorized_keys || true
       touch {{ ssh_user_home }}/authorized_keys
@@ -90,7 +83,7 @@
     command:
       cmd: gcloud projects add-iam-policy-binding {{ google_project_id }} --member="serviceAccount:{{ item.0.name }}@{{ google_project_id }}.iam.gserviceaccount.com" --role="{{ item.1 }}"
     loop: "{{ service_accounts | subelements('roles') }}"
-    run_once: true # only one machine to do this
+    run_once: true
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
