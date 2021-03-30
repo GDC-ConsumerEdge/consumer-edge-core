@@ -6,26 +6,37 @@
   fail:
     msg: "This playbook can only run on Ubuntu 18.04 or 20.04. Using {{ ansible_distribution }}:{{ ansible_distribution_version }}"
   when: ansible_distribution != "Ubuntu" or (ansible_distribution_version != '18.04' and ansible_distribution_version != '20.04')
+  tags:
+  - verify
 
 #### Stop and disable apparmor
 - name: Stop apparmor
   systemd:
     state: stopped
     name: apparmor
+  tags:
+  - remove
 
 - name: Disable apparmor
   systemd:
     name: apparmor
     enabled: no
+  tags:
+  - remove
 
 #### Disable ufw
 - name: Disable wfw
   command: ufw disable
   register: ufw
+  tags:
+  - remove
 
 - name: Show output for firewall stopping
   debug:
     msg: "{{ ufw.stdout }}"
+  tags:
+  - remove
+  - debug
 
 #### Setup Docker
 - name: Remove all docker-based existing packages
@@ -37,7 +48,9 @@
     - containerd
     - run
     state: absent
-  tags: docker
+  tags:
+  - docker
+  - remove
 
 - name: Install Docker 19+ packages
   apt:
@@ -50,19 +63,27 @@
     - docker.io
     state: present
     update_cache: yes
-  tags: docker
+  tags:
+  - docker
+  - install
 
 - name: Get Docker version
   command: docker version
   register: docker
-  tags: docker
+  tags:
+  - docker
+  - debug
 
 - name: Show output with docker version
   debug:
     msg: "{{ docker.stdout }}"
-  tags: docker
+  tags:
+  - docker
+  - debug
 
-- name: Add the docker group (NOTE, users will need to be manually added with `usermod`)
+- name: Add the docker group (NOTE, users will need to be manually added with `usermod` if needed)
   group:
     name: docker
     state: present
+  tags:
+  - docker

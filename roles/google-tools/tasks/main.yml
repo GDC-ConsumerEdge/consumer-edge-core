@@ -5,24 +5,32 @@
       that:
         - google_project_id != ""
       fail_msg: "The local environment variable 'PROJECT_ID' needs to be defined for the target Google Project ID"
+    tags:
+    - verify
 
   - name: Fail if local REGION ENV is not defined
     assert:
       that:
         - google_region != ""
       fail_msg: "The local environment variable 'REGION' needs to be defined for the target Google Project default region"
+    tags:
+    - verify
 
   - name: Fail if local ZONE ENV is not defined
     assert:
       that:
         - google_zone != ""
       fail_msg: "The local environment variable 'ZONE' needs to be defined for the target Google Project default zone"
+    tags:
+    - verify
 
   - name: Fail if local LOCAL_GSA_FILE ENV is not defined
     assert:
       that:
         - local_gsa_key != ""
       fail_msg: "The local environment variable 'LOCAL_GSA_FILE' needs to be set to the local filesystem GSA JSON key"
+    tags:
+    - verify
 
   # Credentials
 
@@ -62,6 +70,7 @@
       remote_src: yes
     tags:
     - initial-install
+    - tool-install
 
   - name: Download and unarchive kubectx
     unarchive:
@@ -71,6 +80,7 @@
       remote_src: yes
     tags:
     - initial-install
+    - tool-install
 
   - name: Download and unarchive kubens
     unarchive:
@@ -80,6 +90,7 @@
       remote_src: yes
     tags:
     - initial-install
+    - tool-install
 
 ### Setup Path & Auto-complete
 
@@ -94,20 +105,25 @@
         # The next line enables shell command completion for gcloud.
         if [ -f '/var/google-tools-install/google-cloud-sdk/completion.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/completion.bash.inc'; fi
       marker: "# { mark } Added by Ansible google-tools task"
+    tags:
+    - profile
+    - initial-install
 
   - name: Add gcloud and tools to PATH for Root
     blockinfile:
       path: /root/.bashrc
       block: |
-        export GOOGLE_APPLICATION_CREDENTIALS="/var/keys/gsa-key.json"
+        export GOOGLE_APPLICATION_CREDENTIALS=/root/.gcloud/gsa-key.json
         # The next line updates PATH for the Google Cloud SDK.
         if [ -f '/var/google-tools-install/google-cloud-sdk/path.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/path.bash.inc'; fi
 
         # The next line enables shell command completion for gcloud.
         if [ -f '/var/google-tools-install/google-cloud-sdk/completion.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/completion.bash.inc'; fi
       marker: "# { mark } Added by Ansible google-tools task"
+    tags:
+    - profile
+    - initial-install
 
-### FIXME: this is a possible security issue to leave the key on the box
   - name: Authenticate gcloud
     shell: |
       gcloud auth activate-service-account --key-file={{ remote_gsa_key }}/gsa-key.json --project {{ google_project_id }}
@@ -123,6 +139,7 @@
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
+    - tool-install
 
   - name: Enable services
     command:
@@ -140,6 +157,7 @@
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
+    - tool-install
 
   - name: Set Default Zone
     command:
@@ -147,9 +165,10 @@
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
+    - tool-install
     - initial-install
 
-### Additional Tools
+### All other tools
   - name: Install kubectl, nomos, kustomize and gsutil
     command:
       cmd: gcloud components install kubectl kustomize nomos gsutil -q
@@ -158,6 +177,7 @@
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
+    - tool-install
 
   - name: Install Anthos Bare Metal CLI
     shell: |
@@ -173,5 +193,4 @@
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
-
-### Setup Kubectl tools (kubectx, kubens, kubectl completion)
+    - tool-install

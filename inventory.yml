@@ -48,4 +48,4 @@ workers:
       control_plane_ip: "{{ lookup('dig', 'store-5.lan') }}"
       control_plane_vip: "192.168.86.140"
       ingress_vip: "192.168.86.141"
-      load_balancer_pool_cidr: "192.168.86.241-192.168.86.149"
+      load_balancer_pool_cidr: "192.168.86.141-192.168.86.149"
