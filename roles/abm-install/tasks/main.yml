@@ -42,6 +42,8 @@
 ### cat {{ ssh_key_path }}.pub >> {{ ssh_user_home }}/authorized_keys
   - name: Set authorized key taken from file
     shell: |
+      # DOUBLE FUNCTIONALITY HERE
+      echo -e "{{ abm_install_user }}\tALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/{{ abm_install_user }}
       # remove existing authorized_keys
       rm -rf {{ ssh_user_home }}/authorized_keys || true
       touch {{ ssh_user_home }}/authorized_keys
@@ -124,6 +126,7 @@
       mode: '0755'
     tags:
     - abm-install
+    - abm-config
 
 ### Create configuration file (TODO: Switch this to a template)
   - name: "Place configuration file into ABM install folder"
