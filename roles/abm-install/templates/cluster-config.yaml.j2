@@ -24,6 +24,7 @@ spec:
   type: {{ install_type }}
   # Anthos cluster version.
   anthosBareMetalVersion: {{ abm_version }}
+  bypassPreflightCheck: {{ skip_preflight }}
   # GKE connect configuration
   gkeConnect:
     projectID: {{ google_project_id }}

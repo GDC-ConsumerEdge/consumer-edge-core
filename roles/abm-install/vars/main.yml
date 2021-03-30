@@ -19,6 +19,8 @@ abm_install_user: "el-gato"
 
 # Cluster Configuration
 install_type: standalone
+# Skip preflight checks?
+skip_preflight: false
 
 # Common across all clusters
 pod_cidr: "172.2.0.0/16"
