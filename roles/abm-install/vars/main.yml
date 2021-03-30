@@ -17,34 +17,16 @@ ssh_key_path_pub: "{{ ssh_user_home }}/{{ ssh_key_name }}.pub"
 # User that has sudo, password less SSH access to control_plane_ip
 abm_install_user: "el-gato"
 
-### This may be needed
-# --bootstrap-cluster-pod-cidr string       Bootstrap cluster pod CIDR (default "192.168.122.0/24")
-# --bootstrap-cluster-service-cidr string   Bootstrap cluster service CIDR (default "10.96.0.0/27")
-
 # Cluster Configuration
 install_type: standalone
+
 # Common across all clusters
 pod_cidr: "172.2.0.0/16"
-services_1_cidr: "10.90.0.0/24" # avoid overlap with KIND IPs
-
-## TODO: Write something that pings the ranges below to pre-maturely fail if used IPs
-## TODO: Setup an n-number cluster IP management variable (ControlPlaneVIP, IngressVIP, LB CIDR)
-# Unique per cluster, different than the machine's IP
-control_plane_vip: "192.168.86.220" # CREATED by process, cannot overlap with other VIPs in cluster group
-ingress_vip: "192.168.86.221" # must be in LB pool
-load_balancer_pool_cidr: "192.168.86.221-192.168.86.230" # CREATED(or at least used blindly) cannot overlap with control_plane_vip, cannot overlap with others on network
-
+services_cidr: "10.90.0.0/24" # avoid overlap with KIND IPs (10.96.0.0/16)
+local_pvc_mount: "/opt/pvc-disk"
 enable_application_logging: false
 
-local_pvc_mount: "/opt/pvc-disk"
-
-control_plane_ip: [
-  "{{ lookup('dig', 'store-1.lan') }}",
-  "{{ lookup('dig', 'store-2.lan') }}",
-  "{{ lookup('dig', 'store-3.lan') }}",
-  "{{ lookup('dig', 'store-4.lan') }}",
-  "{{ lookup('dig', 'store-5.lan') }}"
-]
+# NOTE: Cluster-specific variables are in the inventory file
 
 # Service Account Configuration
 service_accounts: [

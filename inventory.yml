@@ -1,20 +1,49 @@
 # Primary server that can be used as a config or a worker, but is counted out just-in-case
 # Represents all other physical machines in the cluster
 
+# NOTE: These WILL be different based on the network availability. Configure each node
+
+# control_plane_vip -- IP address that is addressable & available, not overlapping with other clusters, but not pre-allocated. This is created during the process
+# ingress_vip: Must be in the Load Balancer pool for the cluster, same rules as control_plane_vip for availability
+# load_balancer_pool_cidr: IP addresses for the LoadBalancers (bundled mode) can attach to, same rules as control_plane_vip
+# control_plane_ip: -- different than the control_plane_vip, this is the IP of the box you are installing on
+
+# Comment out (or remove) any inventory that is not available
+
 workers:
   hosts:
     store-1.lan:
       cluster_name: "store-1"
       cluster_index: 0
+      control_plane_ip: "{{ lookup('dig', 'store-1.lan') }}"
+      control_plane_vip: "192.168.86.220"
+      ingress_vip: "192.168.86.221"
+      load_balancer_pool_cidr: "192.168.86.221-192.168.86.230"
     store-2.lan:
       cluster_name: "store-2"
       cluster_index: 1
+      control_plane_ip: "{{ lookup('dig', 'store-2.lan') }}"
+      control_plane_vip: "192.168.86.220"
+      ingress_vip: "192.168.86.221"
+      load_balancer_pool_cidr: "192.168.86.221-192.168.86.230"
     store-3.lan:
       cluster_name: "store-3"
       cluster_index: 2
+      control_plane_ip: "{{ lookup('dig', 'store-3.lan') }}"
+      control_plane_vip: "192.168.86.220"
+      ingress_vip: "192.168.86.221"
+      load_balancer_pool_cidr: "192.168.86.221-192.168.86.230"
     store-4.lan:
       cluster_name: "store-4"
       cluster_index: 3
+      control_plane_ip: "{{ lookup('dig', 'store-4.lan') }}"
+      control_plane_vip: "192.168.86.220"
+      ingress_vip: "192.168.86.221"
+      load_balancer_pool_cidr: "192.168.86.221-192.168.86.230"
     store-5.lan:
       cluster_name: "store-5"
       cluster_index: 4
+      control_plane_ip: "{{ lookup('dig', 'store-5.lan') }}"
+      control_plane_vip: "192.168.86.220"
+      ingress_vip: "192.168.86.221"
+      load_balancer_pool_cidr: "192.168.86.221-192.168.86.230"

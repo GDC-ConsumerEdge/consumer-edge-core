@@ -1,18 +1,11 @@
 
 ---
 
-# Setup a baseline for all servers
-# Setup tools
-# gcloud
-# gsutil
-# kubectl
-# bmctl
-# Docker and container.d
+# Installs Anthos Bare Metal on inventory of "workers"
 - hosts: workers
   become: true
   become_user: root
   roles:
-    - common
     - google-tools
     - ready-ubuntu
     - abm-install
