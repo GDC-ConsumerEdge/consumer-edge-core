@@ -14,6 +14,9 @@ ssh_user_home: "/home/{{ abm_install_user }}/.ssh"
 ssh_key_path: "{{ ssh_user_home }}/{{ ssh_key_name }}"
 ssh_key_path_pub: "{{ ssh_user_home }}/{{ ssh_key_name }}.pub"
 
+kubeconfig_shared_root: "/var/kubeconfig"
+kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
+
 # User that has sudo, password less SSH access to control_plane_ip
 abm_install_user: "el-gato"
 

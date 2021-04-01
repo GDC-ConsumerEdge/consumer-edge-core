@@ -146,16 +146,40 @@
     command: bmctl create cluster --cluster={{ cluster_name }} # Does not work
     args:
       chdir: "{{ abm_install_folder }}"
+      creates: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-install
     - abm-create
 
-#   - name: Store or do something with kubeconfig
-#     debug:
-#       msg: "do something with the config -- kubectl --kubeconfig bmctl-workspace/cluster1/cluster1-kubeconfig get nodes"
-#     tags:
-#     - abm-install
+#### Post Install Activities
+  - name: Create PVC Folder
+    file:
+      path: '{{ kubeconfig_shared_root }}'
+      state: directory
+      mode: '0755'
+    tags:
+    - abm-install
+    - abm-post-install
+
+  - name: "Setup profile.d for kubeconfig"
+    template:
+      src: profile-user.sh.j2
+      dest: "/etc/profile.d/kubeconfig.sh"
+    tags:
+    - abm-install
+    - abm-post-install
+
+  - name: Symbolic link to kubeconfig
+    ansible.builtin.file:
+      src: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
+      dest: "{{ kubeconfig_shared_location }}"
+      owner: mensor
+      group: sudo
+      state: link
+    tags:
+    - abm-post-install
+    - abm-install
 
 # DONE
