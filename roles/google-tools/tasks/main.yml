@@ -171,7 +171,7 @@
 ### All other tools
   - name: Install kubectl, nomos, kustomize and gsutil
     command:
-      cmd: gcloud components install kubectl kustomize nomos gsutil -q
+      cmd: gcloud components install kubectl kustomize anthos-auth kpt nomos gsutil alpha beta -q
       creates: "{{ tools_base_path }}/google-cloud-sdk/bin/kubectl"
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
