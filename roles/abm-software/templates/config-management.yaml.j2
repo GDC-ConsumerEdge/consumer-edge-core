@@ -1,0 +1,11 @@
+apiVersion: configmanagement.gke.io/v1
+kind: ConfigManagement
+metadata:
+  name: config-management
+spec:
+  clusterName: my-cluster
+  git:
+    syncRepo: {{ root-sync }}
+    syncBranch: 1.0.0
+    secretType: none
+    policyDir: "foo-corp"
