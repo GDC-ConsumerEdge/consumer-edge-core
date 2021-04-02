@@ -4,17 +4,17 @@
 #
 - name: Folder for ACM configurations
   file:
-    path: '{{ config_files }}'
+    path: '{{ acm_config_files }}'
     state: directory
     mode: '0755'
   tags:
-  - abm-install
+  - abm-software
   - abm-config
 
 - name: "Enable ACM"
   command:
     cmd: gcloud alpha container hub config-management enable
-  run_once: true
+  run_once: true # only needs to run once
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
@@ -22,18 +22,25 @@
   - abm-software
   - enable-acm
 
-- name: "Install ACM"
+### TODO: Add a check and fact for ACM operator
+
+- name: "Install ACM Operator"
   shell: |
       # Install ACM (Config Management base operator)
       gsutil cp gs://config-management-release/released/{{ acm_version }}/config-management-operator.yaml {{ config_files }}/config-management-operator.yaml
 
       kubectl apply -f {{ config_files }}/config-management-operator.yaml
+      kubectl wait --for=condition=established --timeout=120s crd rootsyncs.configsync.gke.io
+      exit $?
   args:
     executable: /bin/bash
-    creates: /var/nothing
+    creates: "{{ config_files }}/config-management-operator.yaml"
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   tags:
   - abm-software
+  - abm-config
+
+### Create ConfigSync configuration objects
