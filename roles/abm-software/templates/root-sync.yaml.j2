@@ -1,0 +1,14 @@
+# root-sync.yaml
+apiVersion: configsync.gke.io/v1alpha1
+kind: RootSync
+metadata:
+  name: root-sync
+  namespace: config-management-system
+spec:
+    sourceFormat: hierarchy
+    git:
+        repo: "{{ root_repository_url }}"
+        branch: "{{ root_repository_branch }}"
+        dir: "{{ root_repository_policy_dir }}"
+        auth: ssh
+
