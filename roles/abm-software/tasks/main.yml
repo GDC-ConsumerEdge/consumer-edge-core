@@ -57,7 +57,8 @@
     name: "config-management"
     type: "configmanagements.configmanagement.gke.io"
     namespace: "config-management-system"
-    kubeconfig: "/var/kubeconfig/kubeconfig"
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+    fact_name: "has_acm_operator"
   tags:
   - acm-operator
 
@@ -70,7 +71,7 @@
     executable: /bin/bash
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  when: kubectl.stdout == "FAILED" # only run if operator has not been installed
+  when: has_acm_operator == false
   tags:
   - acm-operator
 
@@ -89,13 +90,14 @@
     type: "configmanagements.configmanagement.gke.io"
     namespace: "config-management-system"
     kubeconfig: "{{ kubeconfig_shared_location }}"
+    fact_name: "has_config_management"
   tags:
   - acm-config-management
 
 - name: "Create Config Management Configuration"
   command:
     cmd: "kubectl apply -f {{ acm_config_files }}/config-management-configuration.yaml"
-  when: kubectl.stdout == "FAILED" # only run if config-management has not been created
+  when: has_config_management == false
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   tags:
@@ -119,13 +121,14 @@
 #     type: "secrets"
 #     namespace: "config-management-system"
 #     kubeconfig: "{{ kubeconfig_shared_location }}"
+#     fact_name: "has_root_repo"
 #   tags:
 #   - acm-root-repo
 
 # - name: "Create secret token for Root Repo"
 #   command:
 #     cmd: "kubectl create ns config-management-system && kubectl create secret generic {{ root_repository_git_secret_name }} --namespace='config-management-system' --from-literal='username={{ scm_token_user }}''  --from-literal='token={{ scm_token_token }}'"
-#   when: kubectl.stdout == "FAILED" # only run if secret has not been created
+#   when: has_root_repo == false
 #   environment:
 #     KUBECONFIG: "{{ kubeconfig_shared_location }}"
 #   tags:
@@ -134,7 +137,7 @@
 # - name: "Apply Root Repo configuration"
 #   command:
 #     cmd: "kubectl apply -f {{ acm_config_files }}/root-sync.yaml"
-#   when: kubectl.stdout == "FAILED" # only run if root-sync has not been created
+#   when: has_root_repo == false
 #   environment:
 #     KUBECONFIG: "{{ kubeconfig_shared_location }}"
 #   tags:
