@@ -7,3 +7,5 @@ kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
 acm_config_files: "/var/acm-configs"
 
 root_repository_policy_dir: "/config"
+root_repository_git_auth_type: "token"
+root_repository_git_secret_name: "git-creds"
