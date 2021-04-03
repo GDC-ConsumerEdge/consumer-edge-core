@@ -38,79 +38,97 @@
   - abm-software
   - enable-acm
 
-### TODO: Add a check and fact for ACM operator
-
-- name: "Install ACM Operator"
-  shell: |
-      # Install ACM (Config Management base operator)
-      gsutil cp gs://config-management-release/released/{{ acm_version }}/config-management-operator.yaml {{ acm_config_files }}/config-management-operator.yaml
-
-      kubectl apply -f {{ acm_config_files }}/config-management-operator.yaml
-      # Wait for ConfigManagement & RootSync CRDs
-      kubectl wait --for=condition=established --timeout=60s crd configmanagements.configmanagement.gke.io
-
-      exit $?
-  args:
-    executable: /bin/bash
+########## Start installing software
+- name: "Download ACM Operator"
+  command:
+    cmd: "gsutil cp gs://config-management-release/released/{{ acm_version }}/config-management-operator.yaml {{ acm_config_files }}/config-management-operator.yaml"
     creates: "{{ acm_config_files }}/config-management-operator.yaml"
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
   tags:
   - abm-software
-  - abm-kubectl
 
-### Create ConfigSync configuration objects
-- name: "Create secret token for Root Repo"
+### Operator
+# Check for ACM Operator
+- name: "Test for config-management operator presence"
+  include: kubectl-presence.yml
+  vars:
+    name: "config-management"
+    type: "configmanagements.configmanagement.gke.io"
+    namespace: "config-management-system"
+    kubeconfig: "/var/kubeconfig/kubeconfig"
+  tags:
+  - acm-operator
+
+- name: "Install ACM Operator"
   shell: |
-    EXISTS=$(kubectl describe ns config-management-system > /dev/null 2>&1 )
-    if [[ $? -gt 0 ]]; then
-      # create
-      kubectl create ns config-management-system
-    fi
-    EXISTS=$(kubectl get secret git-creds -n config-management-system > /dev/null 2>&1 )
-    if [[ $? -gt 0 ]]; then
-      kubectl create secret generic git-creds \
-        --namespace="config-management-system" \
-        --from-literal=username={{ scm_token_user }} \
-        --from-literal=token={{ scm_token_token }}
-    fi
+      kubectl apply -f {{ acm_config_files }}/config-management-operator.yaml
+      kubectl wait --for=condition=established --timeout=120s crd configmanagements.configmanagement.gke.io # Wait for ConfigManagement & RootSync CRDs
+      exit $?
   args:
     executable: /bin/bash
   environment:
-    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  when: kubectl.stdout == "FAILED" # only run if operator has not been installed
   tags:
-  - abm-software
-  - abm-kubectl
+  - acm-operator
 
-- name: Config management configuration
+### Create ConfigSync configuration objects
+- name: Copy config management configuration
   template:
     src: config-management.yaml.j2
     dest: "{{ acm_config_files }}/config-management-configuration.yaml"
   tags:
-  - abm-software
-  - abm-kubectl
+  - acm-config-management
 
-- name: "Create secret token for Root Repo"
-  shell: |
-    EXISTS=$(kubectl get configmanagement config-management -n config-management-system > /dev/null 2>&1 )
-    if [[ $? -gt 0 ]]; then
-      # create
-      kubectl apply -f "{{ acm_config_files }}/config-management-configuration.yaml"
-    fi
-  args:
-    executable: /bin/bash
+- name: "Test for config-management"
+  include: kubectl-presence.yml
+  vars:
+    name: "config-management"
+    type: "configmanagements.configmanagement.gke.io"
+    namespace: "config-management-system"
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+  tags:
+  - acm-config-management
+
+- name: "Create Config Management Configuration"
+  command:
+    cmd: "kubectl apply -f {{ acm_config_files }}/config-management-configuration.yaml"
+  when: kubectl.stdout == "FAILED" # only run if config-management has not been created
   environment:
-    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   tags:
-  - abm-software
-  - abm-kubectl
+  - acm-config-management
 
+#### Root Repo
+- name: "Test for Root Repo secret"
+  include: kubectl-presence.yml
+  vars:
+    name: "{{ root_repository_git_secret_name }}"
+    type: "secrets"
+    namespace: "config-management-system"
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+  tags:
+  - acm-root-repo
+
+- name: "Create secret token for Root Repo"
+  command:
+    cmd: "kubectl create ns config-management-system && kubectl create secret generic {{ root_repository_git_secret_name }} --namespace='config-management-system' --from-literal='username={{ scm_token_user }}''  --from-literal='token={{ scm_token_token }}'"
+  when: kubectl.stdout == "FAILED" # only run if secret has not been created
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - acm-root-repo
+
+# - name: "Apply Root Sync Configuration"
+#   command:
+#     cmd: "kubectl apply -f {{ acm_config_files }}/config-management-configuration.yaml"
+#   when: kubectl.stdout == "FAILED" # only run if config-management has not been created
+#   environment:
+#     KUBECONFIG: "{{ kubeconfig_shared_location }}"
+#   tags:
+#   - acm-config-management
 
 # kubectl get -n config-management-system deployment/root-reconciler
 # kubectl wait --for=condition=established --timeout=120s crd rootsyncs.configsync.gke.io
