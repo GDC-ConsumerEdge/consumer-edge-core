@@ -8,4 +8,7 @@ spec:
   clusterName: {{ cluster_name }}
   enableMultiRepo: true
   policyController:
-    enabled: true
+    enabled: false
+    # exemptableNamespaces: ["default"]
+    logDeniesEnabled: true
+    templateLibraryInstalled: false
