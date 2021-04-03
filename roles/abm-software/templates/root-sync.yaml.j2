@@ -10,5 +10,7 @@ spec:
         repo: "{{ root_repository_url }}"
         branch: "{{ root_repository_branch }}"
         dir: "{{ root_repository_policy_dir }}"
-        auth: ssh
+        auth: token
+          secretRef:
+            name: "git-creds"
 

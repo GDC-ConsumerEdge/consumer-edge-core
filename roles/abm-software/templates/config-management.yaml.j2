@@ -4,8 +4,8 @@ metadata:
   name: config-management
   namespace: config-management-system
 spec:
-  enableMultiRepo: true
   # Unique across all clusters using the same ConfigSync repo. Name is used in Cluster Selectors
   clusterName: {{ cluster_name }}
+  enableMultiRepo: true
   policyController:
     enabled: true
