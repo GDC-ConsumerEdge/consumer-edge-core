@@ -5,12 +5,11 @@ metadata:
   name: root-sync
   namespace: config-management-system
 spec:
-    sourceFormat: hierarchy
-    git:
-        repo: "{{ root_repository_url }}"
-        branch: "{{ root_repository_branch }}"
-        dir: "{{ root_repository_policy_dir }}"
-        auth: "{{ root_repository_git_auth_type }}
-          secretRef:
-            name: "{{ root_repository_git_secret_name }}"
-
+  sourceFormat: hierarchy
+  git:
+    repo: "{{ acm_root_repo }}"
+    branch: "{{ root_repository_branch }}"
+    dir: "{{ root_repository_policy_dir }}"
+    auth: "{{ root_repository_git_auth_type }}"
+    secretRef:
+      name: "{{ root_repository_git_secret_name }}"
