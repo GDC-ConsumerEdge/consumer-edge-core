@@ -12,6 +12,12 @@
   environment:
     KUBECONFIG: "{{ kubeconfig }}"
 
+- name: Debug kube finder
+  debug:
+    msg: "{{ result }}"
+  tags:
+  - debug
+
 - name: Set {{ fact_name }} to True
   set_fact:
     "{{ fact_name }}": True
