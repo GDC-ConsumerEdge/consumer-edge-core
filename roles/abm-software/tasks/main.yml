@@ -101,34 +101,45 @@
   tags:
   - acm-config-management
 
-#### Root Repo
-- name: "Test for Root Repo secret"
-  include: kubectl-presence.yml
-  vars:
-    name: "{{ root_repository_git_secret_name }}"
-    type: "secrets"
-    namespace: "config-management-system"
-    kubeconfig: "{{ kubeconfig_shared_location }}"
-  tags:
-  - acm-root-repo
+#### Root Repo Configuration
 
-- name: "Create secret token for Root Repo"
-  command:
-    cmd: "kubectl create ns config-management-system && kubectl create secret generic {{ root_repository_git_secret_name }} --namespace='config-management-system' --from-literal='username={{ scm_token_user }}''  --from-literal='token={{ scm_token_token }}'"
-  when: kubectl.stdout == "FAILED" # only run if secret has not been created
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  tags:
-  - acm-root-repo
+# - name: Copy config management configuration
+#   template:
+#     src: root-sync.yaml.j2
+#     dest: "{{ acm_config_files }}/root-sync.yaml"
+#   tags:
+#   - acm-root-repo
 
-# - name: "Apply Root Sync Configuration"
+### Root Repo Secrets
+
+# - name: "Test for Root Repo secret"
+#   include: kubectl-presence.yml
+#   vars:
+#     name: "{{ root_repository_git_secret_name }}"
+#     type: "secrets"
+#     namespace: "config-management-system"
+#     kubeconfig: "{{ kubeconfig_shared_location }}"
+#   tags:
+#   - acm-root-repo
+
+# - name: "Create secret token for Root Repo"
 #   command:
-#     cmd: "kubectl apply -f {{ acm_config_files }}/config-management-configuration.yaml"
-#   when: kubectl.stdout == "FAILED" # only run if config-management has not been created
+#     cmd: "kubectl create ns config-management-system && kubectl create secret generic {{ root_repository_git_secret_name }} --namespace='config-management-system' --from-literal='username={{ scm_token_user }}''  --from-literal='token={{ scm_token_token }}'"
+#   when: kubectl.stdout == "FAILED" # only run if secret has not been created
 #   environment:
 #     KUBECONFIG: "{{ kubeconfig_shared_location }}"
 #   tags:
-#   - acm-config-management
+#   - acm-root-repo
+
+# - name: "Apply Root Repo configuration"
+#   command:
+#     cmd: "kubectl apply -f {{ acm_config_files }}/root-sync.yaml"
+#   when: kubectl.stdout == "FAILED" # only run if root-sync has not been created
+#   environment:
+#     KUBECONFIG: "{{ kubeconfig_shared_location }}"
+#   tags:
+#   - acm-root-repo
+
 
 # kubectl get -n config-management-system deployment/root-reconciler
 # kubectl wait --for=condition=established --timeout=120s crd rootsyncs.configsync.gke.io
