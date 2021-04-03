@@ -64,14 +64,45 @@
 ### Create ConfigSync configuration objects
 - name: "Create secret token for Root Repo"
   shell: |
-    kubectl create ns config-management-system && \
-    kubectl create secret generic git-creds \
-      --namespace="config-management-system" \
-      --from-literal=username={{ scm_token_user }} \
-      --from-literal=token={{ scm_token_token }}
+    EXISTS=$(kubectl describe ns config-management-system > /dev/null 2>&1 )
+    if [[ $? -gt 0 ]]; then
+      # create
+      kubectl create ns config-management-system
+    fi
+    EXISTS=$(kubectl get secret git-creds -n config-management-system > /dev/null 2>&1 )
+    if [[ $? -gt 0 ]]; then
+      kubectl create secret generic git-creds \
+        --namespace="config-management-system" \
+        --from-literal=username={{ scm_token_user }} \
+        --from-literal=token={{ scm_token_token }}
+    fi
   args:
     executable: /bin/bash
-    creates: "{{ acm_config_files }}/config-management-operator.yaml"
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - abm-software
+  - abm-kubectl
+
+- name: Config management configuration
+  template:
+    src: config-management.yaml.j2
+    dest: "{{ acm_config_files }}/config-management-configuration.yaml"
+  tags:
+  - abm-software
+  - abm-kubectl
+
+- name: "Create secret token for Root Repo"
+  shell: |
+    EXISTS=$(kubectl get configmanagement config-management -n config-management-system > /dev/null 2>&1 )
+    if [[ $? -gt 0 ]]; then
+      # create
+      kubectl apply -f "{{ acm_config_files }}/config-management-configuration.yaml"
+    fi
+  args:
+    executable: /bin/bash
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
