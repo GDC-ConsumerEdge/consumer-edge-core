@@ -130,3 +130,12 @@ python -m pip install --user "molecule[ansible,docker,lint,gce]"
 # not 100% sure that the above installs the gce provisioner for molecule, so repeat just in case
 pip install molecule-gce
 ```
+
+## Little helpers
+
+1. Remove ACM. NOTE: This hangs because the K8s API hangs due to namespace existing in listing but not existing in cluster. Cancel after about 30 seconds (ctrl+c) and re-run to verify gone. (not going to provide the 'dump-to-file, patch, run patch' fix here)
+
+```bash
+ansible workers -i inventory.yml --become -m shell -a "export KUBECONFIG=/var/kubeconfig/kubeconfig && kubectl delete -f /var/acm-configs/config-management-operator.yaml" -K
+```
+
