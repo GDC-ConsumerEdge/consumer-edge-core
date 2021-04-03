@@ -7,9 +7,10 @@ serving/
 # Downloaded model
 models/**/
 
-# Ansible building playbooks
+# Debugging & Testing Ansible
 build.yml
 build.yaml
+roles/test-*/
 
 # Generated configuration file
 k8s/overlays/**/configuration/*-hydrated.conf
