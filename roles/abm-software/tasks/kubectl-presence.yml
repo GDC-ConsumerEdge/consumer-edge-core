@@ -1,0 +1,29 @@
+---
+
+# Possibly look into:
+# - name: Register a variable, ignore errors and continue
+#   ansible.builtin.command: /bin/false
+#   register: result
+#   ignore_errors: true
+
+# - name: Run only if the task that registered the "result" variable fails
+#   ansible.builtin.command: /bin/something
+#   when: result is failed
+
+- name: "Test presence of {{ type }}.{{ name }} in {{ namespace }}"
+  shell: |
+    STATUS=$(kubectl get {{ type }} {{ name }} -n {{ namespace }} > /dev/null 2>&1 )
+    if [[ $? -gt 0 ]]; then
+      echo "FAILED"
+    else
+      echo "SUCCESS"
+    fi
+  args:
+    executable: /bin/bash
+  register: "kubectl"
+  vars:
+    name: ""
+    type: ""
+    namespace: "default" # Default namespace is used IF not defined
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
