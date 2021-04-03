@@ -1,7 +1,23 @@
 #
 # Install ACM
-# Setup Root Repository
 #
+
+- name: Fail if local SCM_TOKEN_USER ENV is not defined
+  assert:
+    that:
+      - scm_token_user != ""
+    fail_msg: "The local environment variable 'SCM_TOKEN_USER' needs to be defined for the target Google Project ID"
+  tags:
+  - verify
+
+- name: Fail if local SCM_TOKEN_TOKEN ENV is not defined
+  assert:
+    that:
+      - scm_token_token != ""
+    fail_msg: "The local environment variable 'SCM_TOKEN_TOKEN' needs to be defined for the target Google Project ID"
+  tags:
+  - verify
+
 - name: Folder for ACM configurations
   file:
     path: '{{ acm_config_files }}'
@@ -27,20 +43,43 @@
 - name: "Install ACM Operator"
   shell: |
       # Install ACM (Config Management base operator)
-      gsutil cp gs://config-management-release/released/{{ acm_version }}/config-management-operator.yaml {{ config_files }}/config-management-operator.yaml
+      gsutil cp gs://config-management-release/released/{{ acm_version }}/config-management-operator.yaml {{ acm_config_files }}/config-management-operator.yaml
 
-      kubectl apply -f {{ config_files }}/config-management-operator.yaml
-      kubectl wait --for=condition=established --timeout=120s crd rootsyncs.configsync.gke.io
+      kubectl apply -f {{ acm_config_files }}/config-management-operator.yaml
+      # Wait for ConfigManagement & RootSync CRDs
+      kubectl wait --for=condition=established --timeout=60s crd configmanagements.configmanagement.gke.io
+
       exit $?
   args:
     executable: /bin/bash
-    creates: "{{ config_files }}/config-management-operator.yaml"
+    creates: "{{ acm_config_files }}/config-management-operator.yaml"
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   tags:
   - abm-software
-  - abm-config
+  - abm-kubectl
 
 ### Create ConfigSync configuration objects
+- name: "Create secret token for Root Repo"
+  shell: |
+    kubectl create ns config-management-system && \
+    kubectl create secret generic git-creds \
+      --namespace="config-management-system" \
+      --from-literal=username={{ scm_token_user }} \
+      --from-literal=token={{ scm_token_token }}
+  args:
+    executable: /bin/bash
+    creates: "{{ acm_config_files }}/config-management-operator.yaml"
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - abm-software
+  - abm-kubectl
+
+
+# kubectl get -n config-management-system deployment/root-reconciler
+# kubectl wait --for=condition=established --timeout=120s crd rootsyncs.configsync.gke.io
