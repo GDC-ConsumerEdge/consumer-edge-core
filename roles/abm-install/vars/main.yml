@@ -27,7 +27,7 @@ skip_preflight: false
 
 # Common across all clusters
 pod_cidr: "172.2.0.0/16"
-services_cidr: "10.90.0.0/24" # avoid overlap with KIND IPs (10.96.0.0/16)
+services_cidr: "10.90.0.0/24"    # avoid overlap with KIND IPs (10.96.0.0/16)
 local_pvc_mount: "/opt/pvc-disk"
 enable_application_logging: false
 
