@@ -1,4 +1,3 @@
-
 acm_version: "latest"
 
 kubeconfig_shared_root: "/var/kubeconfig"
