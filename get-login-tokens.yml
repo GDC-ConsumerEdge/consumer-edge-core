@@ -1,0 +1,6 @@
+
+- hosts: workers
+  roles:
+    - abm-login-token
+  vars:
+    kubeconfig_shared_location: "/var/kubeconfig/kubeconfig"
