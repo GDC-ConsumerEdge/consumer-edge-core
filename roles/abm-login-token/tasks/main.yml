@@ -1,0 +1,16 @@
+- name: "Test for Root Repo Ready"
+  include: kubectl-presence.yml
+  vars:
+    name: "root-reconciler"
+    type: "deployment"
+    namespace: "config-management-system"
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+    fact_name: "has_root_repo_ready"
+  tags:
+  - login-token
+
+- name: Display login token for server
+  include: get-login-token.yml
+  when: has_root_repo_ready == true
+  tags:
+  - login-token
