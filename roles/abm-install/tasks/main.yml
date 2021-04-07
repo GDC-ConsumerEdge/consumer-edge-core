@@ -177,7 +177,6 @@
     ansible.builtin.file:
       src: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
       dest: "{{ kubeconfig_shared_location }}"
-      owner: mensor
       group: sudo
       state: link
     tags:
