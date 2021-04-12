@@ -1,37 +1,5 @@
 ---
 
-  - name: Fail if local PROJECT_ID ENV is not defined
-    assert:
-      that:
-        - google_project_id != ""
-      fail_msg: "The local environment variable 'PROJECT_ID' needs to be defined for the target Google Project ID"
-    tags:
-    - verify
-
-  - name: Fail if local REGION ENV is not defined
-    assert:
-      that:
-        - google_region != ""
-      fail_msg: "The local environment variable 'REGION' needs to be defined for the target Google Project default region"
-    tags:
-    - verify
-
-  - name: Fail if local ZONE ENV is not defined
-    assert:
-      that:
-        - google_zone != ""
-      fail_msg: "The local environment variable 'ZONE' needs to be defined for the target Google Project default zone"
-    tags:
-    - verify
-
-  - name: Fail if local LOCAL_GSA_FILE ENV is not defined
-    assert:
-      that:
-        - local_gsa_key != ""
-      fail_msg: "The local environment variable 'LOCAL_GSA_FILE' needs to be set to the local filesystem GSA JSON key"
-    tags:
-    - verify
-
   # Credentials
 
   - name: Create the temp keys directory
@@ -143,6 +111,7 @@
 
   - name: Enable services
     command:
+      # https://cloud.google.com/anthos/clusters/docs/bare-metal/1.6/installing/install-prereq#project_prerequisites
       cmd: gcloud services enable anthos.googleapis.com anthosgke.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com gkeconnect.googleapis.com gkehub.googleapis.com serviceusage.googleapis.com stackdriver.googleapis.com monitoring.googleapis.com logging.googleapis.com --project={{ google_project_id }}
     run_once: true # only one machine to do this
     environment:
@@ -193,4 +162,13 @@
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
+    - tool-install
+
+  - name: Unarchive a file that needs to be downloaded (added in 2.0)
+    ansible.builtin.unarchive:
+      src: https://github.com/derailed/k9s/releases/download/v0.24.7/k9s_Linux_x86_64.tar.gz
+      dest: /usr/local/bin
+      remote_src: yes
+    tags:
+    - optional
     - tool-install

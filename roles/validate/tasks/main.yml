@@ -1,0 +1,38 @@
+
+- name: Verify IP address resolves
+  debug:
+    msg: "{{ cluster_name }} is {{ control_plane_ip }}"
+  tags:
+  - verify
+
+- name: Fail if local PROJECT_ID ENV is not defined
+  assert:
+    that:
+      - google_project_id != ""
+    fail_msg: "The local environment variable 'PROJECT_ID' needs to be defined for the target Google Project ID"
+  tags:
+  - verify
+
+- name: Fail if local REGION ENV is not defined
+  assert:
+    that:
+      - google_region != ""
+    fail_msg: "The local environment variable 'REGION' needs to be defined for the target Google Project default region"
+  tags:
+  - verify
+
+- name: Fail if local ZONE ENV is not defined
+  assert:
+    that:
+      - google_zone != ""
+    fail_msg: "The local environment variable 'ZONE' needs to be defined for the target Google Project default zone"
+  tags:
+  - verify
+
+- name: Fail if local LOCAL_GSA_FILE ENV is not defined
+  assert:
+    that:
+      - local_gsa_key != ""
+    fail_msg: "The local environment variable 'LOCAL_GSA_FILE' needs to be set to the local filesystem GSA JSON key"
+  tags:
+  - verify
