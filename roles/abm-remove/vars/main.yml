@@ -1,0 +1,6 @@
+
+kubeconfig_shared_root: "/var/kubeconfig"
+kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
+
+abm_install_folder: "/var/abm-install"
+abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"

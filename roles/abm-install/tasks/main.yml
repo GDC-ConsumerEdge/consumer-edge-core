@@ -130,13 +130,25 @@
     - abm-install
     - abm-config
 
+### Check if cluster is installed already (kubeconfig file would exist)
+  - name: Check to see if ABM has been installed already
+    stat:
+      path: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
+    register: abm_installed
+    tags:
+    - abm-install
+    - abm-create
+
 ### Check cluster configuration
   - name: Validate configuration file updates
-    command: bmctl check config --cluster={{ cluster_name }} # Does not work
+    command:
+      cmd: bmctl check config --cluster={{ cluster_name }}
     args:
       chdir: "{{ abm_install_folder }}"
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+    when:
+      - abm_installed.stat.exists == False
     tags:
     - abm-install
     - abm-config
@@ -146,14 +158,17 @@
     command: bmctl create cluster --cluster={{ cluster_name }} # Does not work
     args:
       chdir: "{{ abm_install_folder }}"
+      # REMEMBER TO REMOVE THIS if resetting cluster
       creates: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
-    async: 1800 # run for up to 30 minutes
-    poll: 5 # poll status every x min
+    async: 3600 # run for up to 60 minutes
+    poll: 1 # poll status every x min
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-install
     - abm-create
+
+### TODO: Add a "if fails" then remove the cluster `bmctl reset -c {{ cluster_name }}`
 
 #### Post Install Activities
   - name: Create PVC Folder
@@ -172,6 +187,14 @@
     tags:
     - abm-install
     - abm-post-install
+
+  - name: Set insecure permissions to allow kubens to modify configuration when not root
+    ansible.builtin.file:
+      path: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
+      mode: '0666' # allow read/write to all (yes, this is maybe not great, but useful for kubens)
+    tags:
+    - abm-post-install
+    - abm-install
 
   - name: Symbolic link to kubeconfig
     ansible.builtin.file:

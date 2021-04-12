@@ -1,0 +1,26 @@
+
+- name: Prompt reminding about tags
+  debug:
+    msg: "IF you are trying to run this and do not see any progress, perhaps you forgot the '--tags never'"
+  tags:
+    - abm-remove
+
+- name: "Remove the ABM installation (cluster removal only)"
+  command:
+    cmd: bmctl reset -c {{ cluster_name }}
+  args:
+    chdir: "{{ abm_install_folder }}"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+  tags:
+    - abm-remove
+    - never # must specify `--tags never` on the CLI to run this
+
+- name: Remove install folder (bmctl_workspace)
+  ansible.builtin.file:
+    path: "{{ abm_workspace_folder }}"
+    state: absent
+  tags:
+    - abm-remove
+    - never # must specify `--tags never` on the CLI to run this
