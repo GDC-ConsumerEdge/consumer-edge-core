@@ -2,6 +2,10 @@ target/
 pkg/
 tmp/
 
+# local Inventory files are not stored
+inventory.yml
+inventory.yaml
+
 # Downloaded git repo
 serving/
 # Downloaded model

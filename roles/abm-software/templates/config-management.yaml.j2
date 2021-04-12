@@ -5,7 +5,7 @@ metadata:
   namespace: config-management-system
 spec:
   # Unique across all clusters using the same ConfigSync repo. Name is used in Cluster Selectors
-  clusterName: {{ cluster_name }}
+  clusterName: {{ acm_cluster_name }}
   enableMultiRepo: true
   policyController:
     enabled: false
