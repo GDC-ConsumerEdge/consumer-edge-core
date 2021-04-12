@@ -4,13 +4,20 @@
   apt:
     update_cache: yes
     upgrade: "yes"
-  tags: maintenance
+  tags:
+    - maintenance
+
+- name: Has gcloud been installed yet
+  ansible.builtin.stat:
+    path: "{{ tools_base_path }}/google-cloud-sdk"
+  register: gc_exists
 
 - name: Update gcloud to latest
   command:
     cmd: gcloud components update --quiet
   tags:
     - maintenance
+  when: gc_exists.stat.isdir is defined and gc_exists.stat.isdir
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
