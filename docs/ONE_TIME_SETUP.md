@@ -36,7 +36,7 @@ The following are performed from the **provisioning machine**.
     export MACHINE_COUNT=5
     for i in `seq $MACHINE_COUNT`; do
         HOSTNAME="nuc-$i"
-        ping -c 3 ${STORENAME}.lan # See comment on .lan TLD below
+        ping -c 3 ${HOSTNAME}.lan # See comment on .lan TLD below
     done
     ```
     > Check that your router provides `<hostname>.lan` naming, if not, adjust to match
