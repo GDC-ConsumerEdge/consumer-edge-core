@@ -71,3 +71,8 @@ ansible-playbook -K -i group_a.yml update-servers.yml
 ansible workers -i inventory.yml --become -m shell -a "export KUBECONFIG=/var/kubeconfig/kubeconfig && kubectl delete -f /var/acm-configs/config-management-operator.yaml" -K
 ```
 
+1. Create `git-creds` for the namespaces (FUTURE: this will be handled with `ExternalSecrets` and Secrets Manager)
+
+```bash
+    kubectl create secret generic git-creds --from-literal=username=${SCM_TOKEN_USER} --from-literal=token=${SCM_TOKEN_TOKEN} --namspace="xyz" # xyz = namespace
+```
