@@ -173,3 +173,13 @@
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   tags:
   - acm-root-repo
+
+- name: "Create secret for External Secrets"
+  shell: |
+    kubectl create ns external-secrets || true
+    kubectl create secret generic gcp-creds --from-file=/var/keys/external-secrets-k8s-creds.json -n external-secrets || true
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - abm-software
+  - external-secrets
