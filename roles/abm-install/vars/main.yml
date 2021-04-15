@@ -70,5 +70,14 @@ service_accounts: [
       "roles/stackdriver.resourceMetadata.writer",
       "roles/monitoring.dashboardEditor"
     ]
+  },
+  {
+    name: external-secrets-k8s,
+    keyfile: external-secrets-k8s-creds.json,
+    description: "External Secrets Service Account",
+    roles: [
+      "roles/secretmanager.secretAccessor",
+      "roles/secretmanager.viewer"
+    ]
   }
 ]
