@@ -155,10 +155,9 @@
 
 ### Create cluster configuration
   - name: Create cluster
-    command: bmctl create cluster --cluster={{ cluster_name }} # Does not work
+    command: bmctl create cluster --cluster={{ cluster_name }}
     args:
       chdir: "{{ abm_install_folder }}"
-      # REMEMBER TO REMOVE THIS if resetting cluster
       creates: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
     async: 3600 # run for up to 60 minutes
     poll: 1 # poll status every x min
