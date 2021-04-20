@@ -112,7 +112,7 @@
 - name: "Create Config Management Configuration"
   shell: |
     kubectl apply -f {{ acm_config_files }}/config-management-configuration.yaml
-    sleep 10s
+    sleep 10s # just enough for the API to pick up the changes, then wait can take over
     kubectl wait --for=condition=established --timeout=600s crd rootsyncs.configsync.gke.io
     exit $?
   when:
@@ -165,7 +165,7 @@
 - name: "Apply Root Repo configuration"
   shell: |
     kubectl apply -f {{ acm_config_files }}/root-sync.yaml
-    sleep 10s
+    sleep 10s # just enough for the API to pick up the changes, then wait can take over
     kubectl wait --for=condition=established --timeout=600s crd rootsyncs.configsync.gke.io
     exit $?
   when: has_root_repo_installed == false
