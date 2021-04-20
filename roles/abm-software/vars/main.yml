@@ -1,4 +1,6 @@
-acm_version: "latest"
+
+# gsutil ls -al gs://config-management-release/released/
+acm_version: "1.6.2"
 
 kubeconfig_shared_root: "/var/kubeconfig"
 kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
