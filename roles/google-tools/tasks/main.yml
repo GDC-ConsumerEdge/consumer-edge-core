@@ -172,3 +172,13 @@
     tags:
     - optional
     - tool-install
+
+  - name: Download foo.conf
+    get_url:
+      url: https://github.com/kubevirt/kubevirt/releases/download/v0.40.0/virtctl-v0.40.0-linux-amd64
+      dest: /usr/local/bin/virtctl
+      mode: '0555' # Read & Executable by all
+    tags:
+    - optional
+    - tool-install
+    - onetime
