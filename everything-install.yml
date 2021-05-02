@@ -6,6 +6,9 @@
   become: true
   become_user: root
   roles:
+    - validate
+    - google-tools
+    - ready-ubuntu
     - abm-install
     - abm-software
     - abm-login-token
