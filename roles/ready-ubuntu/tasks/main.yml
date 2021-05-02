@@ -38,6 +38,14 @@
   - remove
   - debug
 
+- name: Stop docker, if started
+  ansible.builtin.service:
+    name: docker
+    state: stopped
+  ignore_errors: yes
+  tags:
+  - docker
+
 #### Setup Docker
 - name: Remove all docker-based existing packages
   apt:
@@ -50,6 +58,7 @@
     state: absent
   tags:
   - docker
+  - docker-remove # allow to skip removal of docker if known to be in good state
   - remove
 
 - name: Install Docker 19+ packages
@@ -65,7 +74,14 @@
     update_cache: yes
   tags:
   - docker
-  - install
+  - docker-install # allows to skip docker install if known to be in good state
+
+- name: Start docker, if not started
+  ansible.builtin.service:
+    name: docker
+    state: started
+  tags:
+  - docker
 
 - name: Get Docker version
   command: docker version

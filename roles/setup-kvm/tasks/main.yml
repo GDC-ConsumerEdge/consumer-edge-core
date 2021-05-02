@@ -1,179 +1,174 @@
 ---
-# tasks file for anthos-bare-metal-install
 
-  - name: Installing ABM
-    debug:
-      msg: "installing abm"
+- name: Install kvm dependencies
+  apt:
+    pkg:
+    - jq
+    - uml-utilities
+    - qemu-kvm
+    - bridge-utils
+    - virtinst
+    - libvirt-daemon
+    - libvirt-daemon-system
+    - libvirt-clients
+    update_cache: yes
 
-  - name: Install kvm
-    apt:
-      pkg:
-      - jq
-      - uml-utilities
-      - qemu-kvm
-      - bridge-utils
-      - virtinst
-      - libvirt-daemon
-      - libvirt-daemon-system
-      - libvirt-clients
-      update_cache: yes
+- name: Reboot machine so
+  reboot:
+    reboot_timeout: 300
 
-  - name: Reboot machine so
-    reboot:
-      reboot_timeout: 300
+- name: Verify libvirtd daemon is running
+  service:
+    name: libvirtd
+    enabled: yes
 
-  - name: Verify libvirtd daemon is running
-    service:
-      name: libvirtd
-      enabled: yes
-
-  - name: Setup qemu permissions to allow for root since apparmor is down
-    shell: |
-      sed -i "s|#user = \"root\"|user=\"root\"|g" /etc/libvirt/qemu.conf
-      sed -i "s|#group = \"root\"|group=\"root\"|g" /etc/libvirt/qemu.conf
-      systemctl restart libvirtd
-      exit $?
-    args:
-      executable: /bin/bash
+- name: Setup qemu permissions to allow for root since apparmor is down
+  shell: |
+    sed -i "s|#user = \"root\"|user=\"root\"|g" /etc/libvirt/qemu.conf
+    sed -i "s|#group = \"root\"|group=\"root\"|g" /etc/libvirt/qemu.conf
+    systemctl restart libvirtd
+    exit $?
+  args:
+    executable: /bin/bash
 
 ##### NETWORKING
 
-  - name: Setting up the networking for the KVM VMs
-    shell: |
-      virsh net-dumpxml default > net-default.xml
-      sed -i 's/192.168.122.1/10.200.0.1/g' net-default.xml
-      sed -i "s/192.168.122.2'/10.200.0.100'/g" net-default.xml
-      sed -i "s/192.168.122.254'/10.200.0.254'/g" net-default.xml
-      virsh net-destroy default
-      virsh net-define net-default.xml
-      virsh net-start default
-      virsh net-autostart default
+# - name: Setting up the networking for the KVM VMs
+#   shell: |
+#     virsh net-dumpxml default > net-default.xml
+#     sed -i 's/192.168.122.1/10.200.0.1/g' net-default.xml
+#     sed -i "s/192.168.122.2'/10.200.0.100'/g" net-default.xml
+#     sed -i "s/192.168.122.254'/10.200.0.254'/g" net-default.xml
+#     virsh net-destroy default
+#     virsh net-define net-default.xml
+#     virsh net-start default
+#     virsh net-autostart default
 
-      exit $?
-    args:
-      creates: "net-default.xml"
-      executable: /bin/bash
+#     exit $?
+#   args:
+#     creates: "net-default.xml"
+#     executable: /bin/bash
 
 ##### IMAGE Creation
 # wget -O ${IMAGE_BASE_DIR}/ubuntu-20.04.qcow2 https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
 
-  - name: Create local system image folder
-    file:
-      # image_base_dir
-      path: '{{ image_base_dir }}'
-      state: directory
-      mode: '0744'
+- name: Create local system image folder
+  file:
+    # image_base_dir
+    path: '{{ image_base_dir }}'
+    state: directory
+    mode: '0744'
 
-  - name: Download ubuntu 20.04 cloud image for VM base
-    get_url:
-      url: 'https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img'
-      dest: "{{ image_base_dir }}/ubuntu-20.04.qcow2"
-      mode: '0644'
+# - name: Download ubuntu 20.04 cloud image for VM base
+#   get_url:
+#     url: 'https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img'
+#     dest: "{{ image_base_dir }}/ubuntu-20.04.qcow2"
+#     mode: '0644'
 
-  - name: Create VM directories
-    file:
-      path: "{{ item }}"
-      state: directory
-      mode: 0775
-    loop:
-      - "{{ libvirt_home }}/vm1"
-      - "{{ libvirt_home }}/vm2"
+# - name: Create VM directories
+#   file:
+#     path: "{{ item }}"
+#     state: directory
+#     mode: 0775
+#   loop:
+#     - "{{ libvirt_home }}/vm1"
+#     - "{{ libvirt_home }}/vm2"
 
-  # qemu-img create -f qcow2 -F qcow2 \
-  #   -o backing_file=${IMAGE_BASE_DIR}/ubuntu-20.04.qcow2 \
-  #   ${LIBVIRT_HOME}/vm1/disk.qcow2
-  - name: Setting up the networking for the KVM VMs
-    shell: |
-      qemu-img create -f qcow2 -F qcow2 -o backing_file={{ image_base_dir }}/ubuntu-20.04.qcow2 {{ item }}
-      exit $?
-    args:
-      creates: "{{ item }}"
-      executable: /bin/bash
-    loop:
-      - "{{ libvirt_home }}/vm1/disk.qcow2"
-      - "{{ libvirt_home }}/vm2/disk.qcow2"
+# qemu-img create -f qcow2 -F qcow2 \
+#   -o backing_file=${IMAGE_BASE_DIR}/ubuntu-20.04.qcow2 \
+#   ${LIBVIRT_HOME}/vm1/disk.qcow2
+# - name: Setting up the networking for the KVM VMs
+#   shell: |
+#     qemu-img create -f qcow2 -F qcow2 -o backing_file={{ image_base_dir }}/ubuntu-20.04.qcow2 {{ item }}
+#     exit $?
+#   args:
+#     creates: "{{ item }}"
+#     executable: /bin/bash
+#   loop:
+#     - "{{ libvirt_home }}/vm1/disk.qcow2"
+#     - "{{ libvirt_home }}/vm2/disk.qcow2"
 
-  # qemu-img resize ${LIBVIRT_HOME}/vm1/disk.qcow2 110G
-  # qemu-img resize ${LIBVIRT_HOME}/vm2/disk.qcow2 110G
-  - name: Setting the VM disk size
-    shell: |
-      qemu-img resize {{ item }} {{ vm_disk_size }}
-      exit $?
-    args:
-      executable: /bin/bash
-    loop:
-      - "{{ libvirt_home }}/vm1/disk.qcow2"
-      - "{{ libvirt_home }}/vm2/disk.qcow2"
+# qemu-img resize ${LIBVIRT_HOME}/vm1/disk.qcow2 110G
+# qemu-img resize ${LIBVIRT_HOME}/vm2/disk.qcow2 110G
+# - name: Setting the VM disk size
+#   shell: |
+#     qemu-img resize {{ item }} {{ vm_disk_size }}
+#     exit $?
+#   args:
+#     executable: /bin/bash
+#   loop:
+#     - "{{ libvirt_home }}/vm1/disk.qcow2"
+#     - "{{ libvirt_home }}/vm2/disk.qcow2"
 
-  # ssh-keygen -t rsa -b 4096 -C "root@local" -f "{{ root_ssh_key }}" -q -N ""
-  - name: Create an SSH key for communication with VMs
-    shell: ssh-keygen -t rsa -b 4096 -C "root@local" -f "{{ root_ssh_key }}" -q -N ""
-    args:
-      executable: /bin/bash
-      creates: "{{ root_ssh_key }}"
+# # ssh-keygen -t rsa -b 4096 -C "root@local" -f "{{ root_ssh_key }}" -q -N ""
+# - name: Create an SSH key for communication with VMs
+#   shell: ssh-keygen -t rsa -b 4096 -C "root@local" -f "{{ root_ssh_key }}" -q -N ""
+#   args:
+#     executable: /bin/bash
+#     creates: "{{ root_ssh_key }}"
 
-  - name: Create a cloud-init startup for use by VMs
-    shell: |
-      export PUB_KEY=$(cat "{{ root_ssh_key }}")
-      executable: /bin/bash
-      creates: "user-data"
+# - name: Create a cloud-init startup for use by VMs
+#   shell: |
+#     export PUB_KEY=$(cat "{{ root_ssh_key }}")
+#     executable: /bin/bash
+#     creates: "user-data"
 
-  - name: Create the VMs
-    shell: |
-      cat >meta-data <<EOF
-      local-hostname: {{ item }}
-      instance-id: {{ item }}
-      EOF
-      genisoimage -output "{{ libvirt_home }}/{{ item }}/cidata.iso" -volid cidata -joliet -rock user-data meta-data
-      exit $?
-    args:
-      executable: /bin/bash
-      creates: "{{ libvirt_home }}/{{ item }}/cidata.iso"
-    loop:
-      - "vm1"
-      - "vm2"
+# - name: Create the VMs
+#   shell: |
+#     cat >meta-data <<EOF
+#     local-hostname: {{ item }}
+#     instance-id: {{ item }}
+#     EOF
+#     genisoimage -output "{{ libvirt_home }}/{{ item }}/cidata.iso" -volid cidata -joliet -rock user-data meta-data
+#     exit $?
+#   args:
+#     executable: /bin/bash
+#     creates: "{{ libvirt_home }}/{{ item }}/cidata.iso"
+#   loop:
+#     - "vm1"
+#     - "vm2"
 
-  # TODO: Change this to an array/list based task and registered variable
-  - name: See if VM has already started
-    shell: |
-      virsh domblkstat "vm1"
-    register: vm1_status
-    args:
-      executable: /bin/bash
+# TODO: Change this to an array/list based task and registered variable
+# - name: See if VM has already started
+#   shell: |
+#     virsh domblkstat "vm1"
+#   register: vm1_status
+#   args:
+#     executable: /bin/bash
 
-  - name: See if VM has already started
-    shell: |
-      virsh domblkstat "vm2"
-    register: vm2_status
-    args:
-      executable: /bin/bash
+# - name: See if VM has already started
+#   shell: |
+#     virsh domblkstat "vm2"
+#   register: vm2_status
+#   args:
+#     executable: /bin/bash
 
-  - name: Start the VMs
-    shell: |
-      virt-install --connect qemu:///system --virt-type kvm --name {{ item }} \
-        --ram {{ vm_ram }} --vcpus {{ vm_cpus }} --os-type linux --os-variant ubuntu20.04 \
-        --disk path={{ libvirt_home }}/{{ item }}/disk.qcow2,format=qcow2 \
-        --disk {{ libvirt_home }}/{{ item }}/cidata.iso,device=cdrom \
-        --import --network network=default --noautoconsole
-      exit $?
-    register: "virt_install"
-    args:
-      executable: /bin/bash
-    loop:
-      - "vm1"
-      - "vm2"
+# - name: Start the VMs
+#   shell: |
+#     virt-install --connect qemu:///system --virt-type kvm --name {{ item }} \
+#       --ram {{ vm_ram }} --vcpus {{ vm_cpus }} --os-type linux --os-variant ubuntu20.04 \
+#       --disk path={{ libvirt_home }}/{{ item }}/disk.qcow2,format=qcow2 \
+#       --disk {{ libvirt_home }}/{{ item }}/cidata.iso,device=cdrom \
+#       --import --network network=default --noautoconsole
+#     exit $?
+#   register: "virt_install"
+#   args:
+#     executable: /bin/bash
+#   loop:
+#     - "vm1"
+#     - "vm2"
 
-  - name: Display output of installation
-    debug:
-      msg: "{{ item.stdout_lines }}"
-    loop: "{{ virt_install.results }}"
+# - name: Display output of installation
+#   debug:
+#     msg: "{{ item.stdout_lines }}"
+#   loop: "{{ virt_install.results }}"
 
-  - name: Ensure starting
-    shell: |
-      virsh autostart {{ item }}
-      exit $?
-    args:
-      executable: /bin/bash
-    loop:
-      - "vm1"
-      - "vm2"
+# - name: Ensure starting
+#   shell: |
+#     virsh autostart {{ item }}
+#     exit $?
+#   args:
+#     executable: /bin/bash
+#   loop:
+#     - "vm1"
+#     - "vm2"
