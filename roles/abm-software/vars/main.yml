@@ -10,4 +10,8 @@ acm_config_files: "/var/acm-configs"
 root_repository_branch: "main"
 root_repository_policy_dir: "/config"
 root_repository_git_auth_type: "token"
+# NOTE: This is a tight coupling with the "Root Repo" that contains "ExternalSecret" instances with the `git-creds` name
+#       IF changed, both the ACM root-repo and this field need to match
 root_repository_git_secret_name: "git-creds"
+# this is used to create a GCP Secret that is then used in RootRepo's "ExternalSecret" for the Namespace repos of each franchise
+git_creds_gcp_secret_name: "franchise-{{ franchise_number }}-git-creds"

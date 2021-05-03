@@ -183,3 +183,27 @@
   tags:
   - abm-software
   - external-secrets
+
+# - name: "Create git-cred secrets in GCP Secret Manager"
+#   command:
+#     cmd: gcloud secrets create {{ git_creds_gcp_secret_name }} --replication-policy="automatic" --project={{ google_project_id }}
+#   run_once: true # only needs to run once
+#   environment:
+#     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+#     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+#   loop:
+#     - {{ something }}
+#   tags:
+#   - abm-software
+#   - enable-acm
+
+# - name: "Add version to git-cred franchise secret in GCP Secret Manager"
+#   command:
+#     cmd: echo -n "{\"token\"{{':'}} \"{{ namespace_repo_scm_token_value }}\", \"username\"{{':'}} \"{{ namespace_repo_scm_user_value }}\"}" | gcloud secrets versions add ${SECRET_NAME} --project=${PROJECT_ID} --data-file=-
+#   run_once: true # only needs to run once
+#   environment:
+#     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+#     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+#   tags:
+#   - abm-software
+#   - enable-acm
