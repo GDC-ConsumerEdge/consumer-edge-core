@@ -22,7 +22,10 @@ workers:
   hosts:
     nuc-1.lan:
       cluster_name: "nuc-1"
+      franchise_number: "1"
       acm_cluster_name: "store-1-1"
+      namespace_repo_scm_token_value: "< ADD YOUR VALUE >"
+      namespace_repo_scm_user_value: "< ADD YOUR VALUE >"
       cluster_index: 0
       control_plane_ip: "{{ lookup('dig', 'nuc-1.lan') }}"
       control_plane_vip: "192.168.2.100"
@@ -30,7 +33,10 @@ workers:
       load_balancer_pool_cidr: "192.168.2.101-192.168.2.109"
     nuc-2.lan:
       cluster_name: "nuc-2"
+      franchise_number: "1"
       acm_cluster_name: "store-1-2"
+      namespace_repo_scm_token_value: "< ADD YOUR VALUE >"
+      namespace_repo_scm_user_value: "< ADD YOUR VALUE >"
       cluster_index: 1
       control_plane_ip: "{{ lookup('dig', 'nuc-2.lan') }}"
       control_plane_vip: "192.168.2.110"
@@ -38,7 +44,10 @@ workers:
       load_balancer_pool_cidr: "192.168.2.111-192.168.2.119"
     nuc-3.lan:
       cluster_name: "nuc-3"
+      franchise_number: "2"
       acm_cluster_name: "store-2-1"
+      namespace_repo_scm_token_value: "< ADD YOUR VALUE >"
+      namespace_repo_scm_user_value: "< ADD YOUR VALUE >"
       cluster_index: 2
       control_plane_ip: "{{ lookup('dig', 'nuc-3.lan') }}"
       control_plane_vip: "192.168.2.120"
@@ -46,7 +55,10 @@ workers:
       load_balancer_pool_cidr: "192.168.2.121-192.168.2.129"
     nuc-4.lan:
       cluster_name: "nuc-4"
+      franchise_number: "2"
       acm_cluster_name: "store-2-2"
+      namespace_repo_scm_token_value: "< ADD YOUR VALUE >"
+      namespace_repo_scm_user_value: "< ADD YOUR VALUE >"
       cluster_index: 3
       control_plane_ip: "{{ lookup('dig', 'nuc-4.lan') }}"
       control_plane_vip: "192.168.2.130"
@@ -54,7 +66,10 @@ workers:
       load_balancer_pool_cidr: "192.168.2.131-192.168.2.139"
     nuc-5.lan:
       cluster_name: "nuc-5"
+      franchise_number: "3"
       acm_cluster_name: "store-3-1"
+      namespace_repo_scm_token_value: "< ADD YOUR VALUE >"
+      namespace_repo_scm_user_value: "< ADD YOUR VALUE >"
       cluster_index: 4
       control_plane_ip: "{{ lookup('dig', 'nuc-5.lan') }}"
       control_plane_vip: "192.168.2.140"
