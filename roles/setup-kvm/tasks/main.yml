@@ -1,5 +1,21 @@
 ---
 
+- name: Check if KVM is installed
+  shell: |
+    RESULTS=$(apt list -qq qemu-kvm --installed 2>/dev/null) # ignore errors, stdout is the only thing we care about
+    if [ -z "${RESULTS}" ]; then
+      # results are empty, the package does NOT exist
+      exit 1
+    fi
+  args:
+    executable: /bin/bash
+  ignore_errors: true
+  register: kvm_check
+  changed_when: "kvm_check.rc > 0"
+  tags:
+    - kvm-install
+    - kvm-packages
+
 - name: Install kvm dependencies
   apt:
     pkg:
@@ -12,24 +28,47 @@
     - libvirt-daemon-system
     - libvirt-clients
     update_cache: yes
+  when: kvm_check.rc > 0
+  tags:
+    - kvm-install
+    - kvm-packages
 
 - name: Reboot machine so
   reboot:
     reboot_timeout: 300
+  when: kvm_check.rc > 0
+  tags:
+    - kvm-install
+    - kvm-packages
 
 - name: Verify libvirtd daemon is running
   service:
     name: libvirtd
     enabled: yes
+  tags:
+    - kvm-install
+    - kvm-packages
+    - kvm-setup
+
+# - name: Ensure host is able to able to support KVM
+#   command:
+#     cmd: virt-host-validate qemu
+#   ignore_errors: true # the guest support fails
+#   tags:
+#     - kvm-install
+#     - kvm-packages
+#     - kvm-setup
 
 - name: Setup qemu permissions to allow for root since apparmor is down
   shell: |
     sed -i "s|#user = \"root\"|user=\"root\"|g" /etc/libvirt/qemu.conf
     sed -i "s|#group = \"root\"|group=\"root\"|g" /etc/libvirt/qemu.conf
     systemctl restart libvirtd
-    exit $?
   args:
     executable: /bin/bash
+  tags:
+    - kvm-install
+    - kvm-setup
 
 ##### NETWORKING
 
