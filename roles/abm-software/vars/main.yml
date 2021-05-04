@@ -13,3 +13,10 @@ root_repository_git_auth_type: "token"
 # NOTE: This is a tight coupling with the "Root Repo" that contains "ExternalSecret" instances with the `git-creds` name
 #       IF changed, both the ACM root-repo and this field need to match
 root_repository_git_secret_name: "git-creds"
+
+franchises: [
+  {
+    git_creds_gcp_secret_name: franchise1secname,
+    stores: [ 'nuc-1','nuc-2','nuc-3','nuc-4','nuc-5']
+  }
+]
