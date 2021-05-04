@@ -2,21 +2,21 @@
 # Install ACM
 #
 
-# - name: Fail if local SCM_TOKEN_USER ENV is not defined
-#   assert:
-#     that:
-#       - scm_token_user != ""
-#     fail_msg: "The local environment variable 'SCM_TOKEN_USER' needs to be defined for the target Google Project ID"
-#   tags:
-#   - verify
+- name: Fail if local SCM_TOKEN_USER ENV is not defined
+  assert:
+    that:
+      - scm_token_user != ""
+    fail_msg: "The local environment variable 'SCM_TOKEN_USER' needs to be defined for the target Google Project ID"
+  tags:
+  - verify
 
-# - name: Fail if local SCM_TOKEN_TOKEN ENV is not defined
-#   assert:
-#     that:
-#       - scm_token_token != ""
-#     fail_msg: "The local environment variable 'SCM_TOKEN_TOKEN' needs to be defined for the target Google Project ID"
-#   tags:
-#   - verify
+- name: Fail if local SCM_TOKEN_TOKEN ENV is not defined
+  assert:
+    that:
+      - scm_token_token != ""
+    fail_msg: "The local environment variable 'SCM_TOKEN_TOKEN' needs to be defined for the target Google Project ID"
+  tags:
+  - verify
 
 - name: Remove taint from master node
   command:
@@ -184,26 +184,44 @@
   - abm-software
   - external-secrets
 
-# - name: "Create git-cred secrets in GCP Secret Manager"
-#   command:
-#     cmd: gcloud secrets create {{ git_creds_gcp_secret_name }} --replication-policy="automatic" --project={{ google_project_id }}
-#   run_once: true # only needs to run once
-#   environment:
-#     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-#     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
-#   loop:
-#     - {{ something }}
-#   tags:
-#   - abm-software
-#   - enable-acm
+################# Setup secrets for git-creds and namespace repos per each franchise
 
-# - name: "Add version to git-cred franchise secret in GCP Secret Manager"
-#   command:
-#     cmd: echo -n "{\"token\"{{':'}} \"{{ namespace_repo_scm_token_value }}\", \"username\"{{':'}} \"{{ namespace_repo_scm_user_value }}\"}" | gcloud secrets versions add ${SECRET_NAME} --project=${PROJECT_ID} --data-file=-
-#   run_once: true # only needs to run once
-#   environment:
-#     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-#     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
-#   tags:
-#   - abm-software
-#   - enable-acm
+- name: "Create git-cred secrets in GCP Secret Manager"
+  shell: |
+    EXISTS=$(gcloud secrets list --filter="{{ item.git_creds_gcp_secret_name }}" --format="value(name)" --project="{{ google_project_id }}")
+    if [ -z "${EXISTS}" ]]; then
+      gcloud secrets create {{ item.git_creds_gcp_secret_name }} --replication-policy="automatic" --project="{{ google_project_id }}"
+      echo "ADDED"
+    fi
+  register: out
+  changed_when: '"ADDED" in out.stdout_lines'
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+  loop: "{{ franchises }}"
+  when:
+    - cluster_name == item.stores[0]
+  tags:
+  - abm-software
+  - enable-acm
+  - post-acm
+
+- name: "Add new version to git-cred franchise secret in GCP Secret Manager IF no current or active versions exists"
+  shell: |
+    EXISTS=$(gcloud secrets versions list {{ item.git_creds_gcp_secret_name }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
+    if [ -z "${EXISTS}" ]; then
+      echo -n "{\"token\"{{':'}} \"{{ scm_token_token }}\", \"username\"{{':'}} \"{{ scm_token_user }}\"}" | gcloud secrets versions add {{ item.git_creds_gcp_secret_name }} --project="{{ google_project_id }}" --data-file=-
+      echo "ADDED"
+    fi
+  register: out
+  changed_when: '"ADDED" in out.stdout_lines'
+  loop: "{{ franchises }}"
+  when:
+    - cluster_name == item.stores[0]
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+  tags:
+  - abm-software
+  - enable-acm
+  - post-acm
