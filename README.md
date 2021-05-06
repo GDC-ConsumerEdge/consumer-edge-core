@@ -7,7 +7,7 @@ This is a group of playbooks and ansible tools/scripts to provision and manage A
 The following steps include one-time and repeatable steps to provision the ***target machine(s)***
 
 1. Clone or Fork this repository
-1. Create or review Google Servie Account
+1. Create or review Google Service Account
     1. Run `scripts/create-primary-gsa.sh` to create or enable a GSA used on the ***target machine(s)*** and generate the key
 1. Review and run the [one-time setup](docs/ONE_TIME_SETUP.md)
 1. Setup `inventory.yml` file to match your environment
