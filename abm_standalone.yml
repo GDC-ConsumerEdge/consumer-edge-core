@@ -9,17 +9,4 @@
     - abm-install
     - abm-software
     - abm-login-token
-  vars:
-    # Initial project ID to setup gcloud with
-    - google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
-    - google_region: "{{ lookup('env', 'REGION') | default('us-central1', True) }}"
-    - google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}"
-
-    # ACM (using 'token' method)
-    - acm_root_repo: "https://gitlab.com/mike-ensor/acm-multi-root-demo.git"
-    # SCM (GitLab, GitHub access token)
-    - scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') }}"
-    - scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
-
-    # Scratch directory for tool installation
-    - tools_base_path: "/var/google-tools-install"
+  vars: []
