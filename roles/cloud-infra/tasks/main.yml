@@ -1,0 +1,14 @@
+---
+# tasks file for gce-abm-install
+
+
+
+# Setup GCE Instance(s)
+- name: Setup GCE Instances
+  debug:
+    msg: "Setting up GCE Instances"
+
+# Get SSH Access
+- name: Gain SSH access to GCE instances
+  debug:
+    msg: "Gaining access to GCE Instances"

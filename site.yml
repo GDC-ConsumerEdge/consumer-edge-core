@@ -1,3 +1,26 @@
 ---
 
-- import_playbook: abm_standalone.yml
+- hosts: localhost
+  vars_prompt:
+    - name: "cleanup"
+      prompt: "Do you want to run cleanup? Enter [yes/no]"
+      private: no
+  tasks:
+    - set_fact:
+          cleanup: "{{cleanup}}"
+    - debug:
+          msg: 'cleanup is available in the play using: {{cleanup}}'
+    - debug:
+          msg: 'cleanup is also available globally using: {{hostvars["localhost"]["cleanup"]}}'
+
+
+- name: Just the testing playbook
+  import_playbook: build.yaml
+  tags:
+    - cloud-only
+  when: hostvars["localhost"]["cleanup"] == True
+
+- name: Update the ubuntu OS
+  import_playbook: update-servers.yml
+  tags:
+    - cloud-only
