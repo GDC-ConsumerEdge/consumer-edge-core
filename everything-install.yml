@@ -9,6 +9,7 @@
     - validate
     - google-tools
     - ready-ubuntu
+    - setup-kvm
     - abm-install
     - abm-software
     - abm-login-token
