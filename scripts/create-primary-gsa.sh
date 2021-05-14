@@ -7,7 +7,7 @@ GSA_EMAIL="${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 KEY_LOCATION="./remote-gsa-key.json"
 
 EXISTS=$(gcloud iam service-accounts list --filter="email=${GSA_EMAIL}" --format="value(name, disabled)" --project="${PROJECT_ID}")
-if [[ -z ${EXISTS} ]]; then
+if [[ -z "${EXISTS}" ]]; then
     # GSA does NOT exist, create
     gcloud iam service-accounts create ${GSA_NAME} \
         --description="GSA used on each Target machine to make gcloud commands" \

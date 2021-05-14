@@ -1,6 +1,6 @@
 ####
 #
-#   MAKE A COPY OF THIS AND NAME IT `inventory.yaml` or `inventory.yml`. Update for your situation
+#   MAKE A COPY OF THIS AND NAME IT `inventory/01-inventory.yaml` or `inventory/01-inventory.yml`. Update for your situation
 #
 ####
 

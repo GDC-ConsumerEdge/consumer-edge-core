@@ -1,0 +1,24 @@
+# NOTE: This is a template YAML file that dynamically creates inventory based on the below parameters
+# To use this, type the following (will create file inventory/02-gcp.yaml). Optionally, just copy the file and manually change environment variables
+
+# envsubt < gcp-inventory-example.yaml > inventory/02-gcp.yaml
+
+plugin: google.cloud.gcp_compute
+projects:
+  - "${PROJECT_ID}"
+regions:
+  - "${REGION}"
+filters:
+  - labels.type = abm
+  - labels.category = edge-server
+keyed_groups:
+  - key: labels
+    prefix: cloud
+auth_kind: serviceaccount
+service_account_file: ${LOCAL_GSA_FILE}
+hostnames:
+  # Hostname so host_vars can be used
+  - name
+compose:
+  # ansible to use IP instead of hostname, but list using hostname
+  ansible_host: "networkInterfaces[0].accessConfigs[0].natIP"
