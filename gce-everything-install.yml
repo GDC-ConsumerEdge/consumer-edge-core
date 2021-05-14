@@ -1,0 +1,16 @@
+
+---
+
+- hosts: cloud_type_abm
+  become: true
+  become_user: root
+  roles:
+    - validate
+    - cloud-infra
+    - google-tools
+    - ready-ubuntu
+    - abm-install
+    - abm-software
+    - abm-login-token
+  # vars:
+
