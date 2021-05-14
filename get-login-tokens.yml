@@ -4,3 +4,13 @@
     - abm-login-token
   vars:
     kubeconfig_shared_location: "/var/kubeconfig/kubeconfig"
+  tags:
+    - nuc
+
+- hosts: cloud_type_abm
+  roles:
+    - abm-login-token
+  vars:
+    kubeconfig_shared_location: "/var/kubeconfig/kubeconfig"
+  tags:
+    - cloud

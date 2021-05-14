@@ -50,7 +50,17 @@ You will need to define 3 Environment Variables, as well as making any environme
 > NOTE: Be sure to copy/clone the `inventory.yml` file and verify variables are acceptable for YOUR environment. Watch out for Docker and KIND IP overlaps if changing the service or pod CIDR blocks
 
 ```bash
-ansible-playbook -K -i inventory.yml abm_standalone.yml
+ansible-playbook -K -i inventory.yml everything-install.yml
+```
+
+### Setting up inventory for Cloud
+<!-- TODO: Create a "Cloud" only install document -->
+
+#### Create the GCP Inventory file
+
+In order to create a GCP inventory file, take the example one and replace with environment variables (or manually adjust)
+```bash
+envsubst < gcp-example.yaml > gcp.yaml
 ```
 
 ## Update/Upgrade OS

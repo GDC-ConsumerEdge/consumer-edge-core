@@ -5,6 +5,11 @@ tmp/
 # local Inventory files are not stored
 inventory.yml
 inventory.yaml
+# GCP inventory files generated
+gcp.yaml
+gcp.yml
+
+inventory/*.yaml
 
 # Downloaded git repo
 serving/

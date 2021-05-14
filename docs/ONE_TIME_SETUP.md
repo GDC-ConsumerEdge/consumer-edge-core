@@ -17,7 +17,7 @@ TOC: [Provision Target Machines](#provision-target-machines) | [ Access Target M
 1. Use whatever method desired to put Ubuntu 20.04 LTS on the machine (NOTE: 20.10 will NOT work). PXE or Bootable USB are most common methods.
 1. Start setup for Ubuntu (USB may need to adjust UEFI/BIOS to boot from USB drive)
     1. During setup, select a hostname using some convention. In this repo, `nuc-x` is the convention. For example, Store 1's NUC would be hostname `nuc-1`, Store 2 would be `nuc-2`, etc.
-    1. (Optional, but recommende) If your router can reserve hostname->IP, reserve an IP but let Ubuntu use DHCP to acquire IP addresses
+    1. (Optional, but recommended) If your router can reserve hostname->IP, reserve an IP but let Ubuntu use DHCP to acquire IP addresses
     1. Create a new `user` and set a password (both will be used to access the target box). It's best to keep the same username and password for all *target machines* for automation purposes.
         > Remember this `user` and `password`
     1. Install "OpenSSH" and no other software during initial setup
@@ -102,18 +102,56 @@ The following are performed from the **provisioning machine**.
 1. Provisioning machine needs to have Python 3.x (3.7+ is recommended).
     > Command `python` needs to be Python 3.x
 
+#### Set em' all up
+1. Run this if you don't care about precise used/unused libraries
+    ```bash
+    pip install ansible
+    pip install dnspython
+    pip install requests
+    pip install google-auth
+    ```
+
+#### Step-by-Step
 1. Install Ansible
     ```bash
     pip install ansible
     ```
-1. Install dnspython
+1. Optional-ish: Install dnspython (Required if using `lookup('dig'...)` in inventory.yaml, which is a default setting)
     ```bash
     pip install dnspython
     ```
+1. Optional unless using the cloud-version
+    ```bash
+    pip install requests
+    pip install google-auth
+    ```
+
+    * IF using WSL2 on Windows and Ubuntu, a known bug within WSL and clock synchronization exists (https://www.reddit.com/r/bashonubuntuonwindows/comments/ihq7ar/clock_for_wsl_is_different_than_windows_how_to/).  This will manifest as an error `invalid_grant` on the JWT token, despite a fresh GSA key.
+
+    Sync clocks using:
+    ```bash
+    sudo hwclock -s
+    ```
+
+    * Additionally, you may get errors with JWT refresh and need to setup the default login. Test by running:
+        ```bash
+        gcloud auth application-default print-access-token
+        ```
+
+    * Fix by setting the default credentials
+        ``bash
+        gcloud auth application-default login
+        ```
+
+1. Create the GCP Inventory file for `gcp_compute` Ansible dynamic inventory
+    ```bash
+    # Create a file called `gcp.yaml` with the environment variables replaced
+    envsubst < gcp-example.yaml > gcp.yaml
+    ```
+
+    > NOTE: If the `envsubst` is missing, install using `apt-get install gettext-base`
 
 ### Using Molecule
-
-
 
 If you wish to use Molecule to develop the roles, install the following:
 
