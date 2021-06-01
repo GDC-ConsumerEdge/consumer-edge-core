@@ -2,7 +2,7 @@
 # vars file for abm-install
 
 # Version can be found:
-abm_version: "1.7.0"
+abm_version: "1.7.1"
 
 # Folder to run installation out of
 abm_install_folder: "/var/abm-install"
