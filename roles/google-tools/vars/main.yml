@@ -7,8 +7,8 @@ google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
 # Scratch directory for tool installation
 tools_base_path: "/var/google-tools-install"
 
-# gcloud version to download (gcloud version)
-gcloud_version: "335.0.0"
+# gcloud version to download (gcloud version) -- roughly kept up-to-date, the system will update when installed, keeping up-to-date just makes the install a little faster
+gcloud_version: "342.0.0"
 
 # Local GSA Key (needs to be provided via command line vars)
 local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
@@ -18,6 +18,6 @@ remote_gsa_key: "/var/keys"
 
 # Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
 # bmctl binary version
-bmctl_version: "1.7.0" # ABM-Install role has this setting too, watch out if one changes
+bmctl_version: "1.7.1" # ABM-Install role has this setting too, watch out if one changes
 
 kubectx_version: "0.9.3"
