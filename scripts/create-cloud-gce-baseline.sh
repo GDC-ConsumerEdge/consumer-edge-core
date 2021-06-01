@@ -28,19 +28,30 @@ usage()
   exit 2
 }
 
-echo "PREEMPT: Main -> $PREEMPTIBLE_OPTION"
-
 if [[ -z "${GCE_COUNT}" || ${GCE_COUNT} -le 0 ]]; then
     echo "Missing count variable"
     usage
     exit 0
 fi
 
+if [[ ! -z "$PREEMPTIBLE_OPTION" ]]; then
+    echo "NOTE: USING PREEMPTIBLE MACHINE. The GCE will be up at most 24h and will need to be re-created and re-provisioned. This option keeps the costs of testing/trying ABM Retail Edge to a minimum"
+fi
+
+## Determine if running from project root or from within the "script/" folder
+CWD=$(pwd)
+PREFIX_DIR="./scripts"
+
+if [[ "${CWD}" == *"/scripts"* ]]; then
+    PREFIX_DIR="./"
+fi
+
+
 # Starting (used for offset starting)
 # TODO: setup use of offset above
 CLUSTER_START_INDEX=1
 
-source ./gce-helper.vars
+source ${PREFIX_DIR}/gce-helper.vars
 
 ###############################
 #####   MAIN   ################
