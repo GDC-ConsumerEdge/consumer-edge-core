@@ -21,3 +21,9 @@ remote_gsa_key: "/var/keys"
 bmctl_version: "1.7.1" # ABM-Install role has this setting too, watch out if one changes
 
 kubectx_version: "0.9.3"
+
+# KubeVirt CLI tool
+virtctl_version: "v0.41.0"
+
+# K9s binary version (https://github.com/derailed/k9s/releases)
+k9s_version: "v0.24.10"
