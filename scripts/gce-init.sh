@@ -24,12 +24,13 @@ gcloud secrets versions access latest --secret=${PROVISION_KEY_PUB_KEY} > /tmp/i
 # 3. Setup a common password for root (or setup user to be sudoer)
 mkdir -p /home/${ANSIBLE_USER}/.ssh
 cat /tmp/install-pub-key.pub >> /home/${ANSIBLE_USER}/.ssh/authorized_keys
+chown -R ${ANSIBLE_USER}.users /home/${ANSIBLE_USER}/.ssh
 
 # 4. Setup VXLAN configuration
 ip link add vxlan0 type vxlan id 42 dev ens4 dstport 0
-current_ip=$(ip --json a show dev ens4 | jq '.[0].addr_info[0].local' -r)
+export current_ip=$(ip --json a show dev ens4 | jq '.[0].addr_info[0].local' -r)
 # not really needed, but handy just in case
-echo $current_ip
+echo "Current IP: ${current_ip}"
 
 # IP=2
 # 10.200.0.2/24 TODO: Save for later. This could be used to link 2 GCE instances via vxlan together, then one would be 2 and the other would be 3...
@@ -40,5 +41,53 @@ echo $current_ip
 #     fi
 # done
 
+
+################## NETWORK (vxlan)
+
 ip addr add 10.200.0.2/24 dev vxlan0
 ip link set up dev vxlan0
+
+ping -c3 10.200.0.2
+if [[ $? -gt 0 ]]; then
+    echo "Cannot ping the vxlan IP address"
+    exit 1
+fi
+
+cat > ~/.ssh/config <<EOF
+# allow SSH without checking fingerprint
+Host 10.200.0.2
+    StrictHostKeyChecking no
+EOF
+
+chmod 400 ~/.ssh/config
+
+### Setup the service to restart vxlan when rebooting
+
+cat > ${SETUP_VXLAN_SCRIPT} <<EOF
+#!/bin/sh
+
+ip link add vxlan0 type vxlan id 42 dev ens4 dstport 0
+ip link add 10.200.0.2 type vxlan id 24 dev ens4 dstport 0
+ip addr add 10.200.0.2/24 dev vxlan0
+EOF
+
+cat > ${SYSTEM_SERVICE_VXLAN} <<EOF
+[Unit]
+
+After=network.service
+
+[Service]
+
+ExecStart=${SETUP_VXLAN_SCRIPT}
+
+[Install]
+
+WantedBy=default.target
+EOF
+
+chmod 644 ${SYSTEM_SERVICE_VXLAN}
+chmod 744 ${SETUP_VXLAN_SCRIPT}
+
+# Start service
+systemctl enable ${SYSTEM_SERVICE_NAME}
+

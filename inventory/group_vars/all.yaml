@@ -6,6 +6,7 @@ google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
 google_region: "{{ lookup('env', 'REGION') | default('us-central1', True) }}"
 google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}"
 local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
+tools_base_path: "/var/google-tools-install"
 
 # SCM (GitLab, GitHub access token)
 scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') }}"

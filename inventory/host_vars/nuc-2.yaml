@@ -1,7 +1,7 @@
 cluster_name: "nuc-2"
 cluster_index: 1
 acm_cluster_name: "store-1-2"
-control_plane_ip: "192.168.2.3"
-control_plane_vip: "192.168.2.110"
-ingress_vip: "192.168.2.111"
-load_balancer_pool_cidr: "192.168.2.111-192.168.2.119"
+control_plane_ip: "192.168.1.12"
+control_plane_vip: "192.168.1.110"
+ingress_vip: "192.168.1.111"
+load_balancer_pool_cidr: "192.168.1.111-192.168.1.119"

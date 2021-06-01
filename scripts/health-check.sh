@@ -19,5 +19,13 @@ case "$1" in
         ;;
     esac
 
+CWD=$(pwd)
+INVENTORY_DIR="./inventory"
 
-ansible ${GROUP} -i ../inventory -m ansible.builtin.ping --one-line
+if [[ "${CWD}" == *"/scripts"* ]]; then
+    INVENTORY_DIR="../inventory"
+fi
+
+echo $INVENTORY_DIR
+
+ansible ${GROUP} -i ${INVENTORY_DIR} -m ansible.builtin.ping --one-line
