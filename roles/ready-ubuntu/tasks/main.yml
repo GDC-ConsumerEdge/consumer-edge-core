@@ -80,10 +80,10 @@
   ansible.builtin.service:
     name: docker
     state: started
-    register: task_result
-    until: task_result.rc == 0
-    retries: 10
-    delay: 1
+  register: task_result
+  until: task_result is succeeded
+  retries: 10
+  delay: 1
   tags:
   - docker
 
@@ -107,3 +107,53 @@
     state: present
   tags:
   - docker
+  - docker-user
+
+# sudo usermod -aG docker root
+- name: Add ansible_user user to "docker" group
+  user:
+    name: "{{ ansible_user }}"
+    group: "docker"
+    append: yes
+  tags:
+  - docker
+  - docker-user
+
+# - name: Re-establish shell with new group
+#   command:
+#     cmd: sudo su -l $USER
+#   tags:
+#   - docker
+#   - docker-user
+
+## UGH, hate that this has to happen (will check if using --become makes this no longer needed since root is in Docker group)
+- name: Reboot machine to get new session with updated docker group
+  reboot:
+    reboot_timeout: 300
+  tags:
+  - docker
+  - docker-user
+
+- name: Verify docker can be run
+  command:
+    cmd: docker ps
+  register: docker_output
+  ignore_errors: yes
+  tags:
+  - docker
+  - docker-user
+
+- name: Output of Docker PS run
+  debug:
+    msg: "{{ docker_output.stdout }}"
+  tags:
+  - docker
+  - debug
+  - docker-user
+
+- name: Set GCloud to authenticate docker
+  command:
+    cmd: gcloud auth configure-docker -q
+  tags:
+  - docker
+  - docker-user
