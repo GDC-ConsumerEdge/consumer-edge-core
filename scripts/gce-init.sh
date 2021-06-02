@@ -9,6 +9,9 @@ echo "Starting GCE Init script"
 ## The purpose of this script is to establish a baseline
 ## that is semantically the same as the NUCs for ABM Consumer Edge
 
+if [[ -f /etc/startup_was_launched ]]; then exit 0; fi
+# touch a file to indicate init script has been launched
+touch /etc/startup_was_launched
 
 # 0. Very baseline libraries/apps used for this portion only (please use the Ansible roles to baseline the full image)
 apt-get -qq update > /dev/null
@@ -27,7 +30,16 @@ cat /tmp/install-pub-key.pub >> /home/${ANSIBLE_USER}/.ssh/authorized_keys
 chown -R ${ANSIBLE_USER}.users /home/${ANSIBLE_USER}/.ssh
 
 # 4. Setup VXLAN configuration
-ip link add vxlan0 type vxlan id 42 dev ens4 dstport 0
+### TODO: Get the VXLAN ID from metadata server or default to "42"
+VXLAN_ID=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/vxlanid -H "Metadata-Flavor: Google")
+
+if [[ -z "${VXLAN_ID}" ]]; then
+    VXLAN_ID="42"
+fi
+
+echo "VXLAN ID => ${VXLAN_ID}"
+
+ip link add vxlan0 type vxlan id ${VXLAN_ID} dev ens4 dstport 0
 export current_ip=$(ip --json a show dev ens4 | jq '.[0].addr_info[0].local' -r)
 # not really needed, but handy just in case
 echo "Current IP: ${current_ip}"

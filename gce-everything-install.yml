@@ -8,6 +8,7 @@
     - validate
     - cloud-infra
     - google-tools
+    - update
     - ready-ubuntu
     - setup-kvm
     - abm-install

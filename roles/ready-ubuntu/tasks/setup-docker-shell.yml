@@ -1,0 +1,34 @@
+
+- name: Get docker output
+  command:
+    cmd: docker version
+  ignore_errors: true
+  register: docker_output
+
+- name: Install docker with shell
+  shell: |
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
+  when: docker_output is failed
+
+- name: Start docker, if not started
+  ansible.builtin.service:
+    name: docker
+    state: started
+  register: task_result
+  until: task_result is succeeded
+  retries: 10
+  delay: 1
+
+- name: Get Docker version
+  command: docker version
+  register: docker
+
+- name: Show output with docker version
+  debug:
+    msg: "{{ docker.stdout }}"
+
+- name: Add the docker group (NOTE, users will need to be manually added with `usermod` if needed)
+  group:
+    name: docker
+    state: present

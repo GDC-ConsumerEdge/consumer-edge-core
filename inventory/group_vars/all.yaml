@@ -52,5 +52,13 @@ franchises: [
     stores: [
       "cnuc-1"
     ]
+  },
+  {
+    franchise_name: "MassLitre",
+    franchise_number: "5",
+    git_creds_gcp_secret_name: "franchise-3-git-creds",
+    stores: [
+      "cnuc-2"
+    ]
   }
 ]
