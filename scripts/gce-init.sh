@@ -30,29 +30,13 @@ cat /tmp/install-pub-key.pub >> /home/${ANSIBLE_USER}/.ssh/authorized_keys
 chown -R ${ANSIBLE_USER}.users /home/${ANSIBLE_USER}/.ssh
 
 # 4. Setup VXLAN configuration
-### TODO: Get the VXLAN ID from metadata server or default to "42"
 VXLAN_ID=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/vxlanid -H "Metadata-Flavor: Google")
 
 if [[ -z "${VXLAN_ID}" ]]; then
     VXLAN_ID="42"
 fi
 
-echo "VXLAN ID => ${VXLAN_ID}"
-
 ip link add vxlan0 type vxlan id ${VXLAN_ID} dev ens4 dstport 0
-export current_ip=$(ip --json a show dev ens4 | jq '.[0].addr_info[0].local' -r)
-# not really needed, but handy just in case
-echo "Current IP: ${current_ip}"
-
-# IP=2
-# 10.200.0.2/24 TODO: Save for later. This could be used to link 2 GCE instances via vxlan together, then one would be 2 and the other would be 3...
-### this would be the other IPs in the cluster group
-# for ip in ${IPs[@]}; do
-#     if [ "\$ip" != "\$current_ip" ]; then
-#         bridge fdb append to 00:00:00:00:00:00 dst \$ip dev vxlan0
-#     fi
-# done
-
 
 ################## NETWORK (vxlan)
 
@@ -78,9 +62,9 @@ chmod 400 ~/.ssh/config
 cat > ${SETUP_VXLAN_SCRIPT} <<EOF
 #!/bin/sh
 
-ip link add vxlan0 type vxlan id 42 dev ens4 dstport 0
-ip link add 10.200.0.2 type vxlan id 24 dev ens4 dstport 0
+ip link add vxlan0 type vxlan id ${VXLAN_ID} dev ens4 dstport 0
 ip addr add 10.200.0.2/24 dev vxlan0
+ip link set up dev vxlan0
 EOF
 
 cat > ${SYSTEM_SERVICE_VXLAN} <<EOF
