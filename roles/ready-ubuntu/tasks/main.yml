@@ -9,6 +9,20 @@
   tags:
   - verify
 
+- name: Install dependencies used in provisioning
+  apt:
+    pkg:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - wget
+    - gnupg-agent
+    - software-properties-common
+    state: present
+    update_cache: yes
+  tags:
+    - update-dependencies
+
 #### Stop and disable apparmor
 - name: Stop apparmor
   systemd:
@@ -38,122 +52,8 @@
   - remove
   - debug
 
-- name: Stop docker, if started
-  ansible.builtin.service:
-    name: docker
-    state: stopped
-  ignore_errors: yes
+- name: "Setup docker on host machine"
+  include: setup-docker-apt.yml
   tags:
   - docker
-
-#### Setup Docker
-- name: Remove all docker-based existing packages
-  apt:
-    pkg:
-    - docker
-    - docker-engine
-    - docker.io
-    - containerd
-    - run
-    state: absent
-  tags:
-  - docker
-  - docker-remove # allow to skip removal of docker if known to be in good state
-  - remove
-
-- name: Install Docker 19+ packages
-  apt:
-    pkg:
-    - apt-transport-https
-    - ca-certificates
-    - curl
-    - gnupg-agent
-    - software-properties-common
-    - docker.io
-    state: present
-    update_cache: yes
-  tags:
-  - docker
-  - docker-install # allows to skip docker install if known to be in good state
-
-- name: Start docker, if not started
-  ansible.builtin.service:
-    name: docker
-    state: started
-  register: task_result
-  until: task_result is succeeded
-  retries: 10
-  delay: 1
-  tags:
-  - docker
-
-- name: Get Docker version
-  command: docker version
-  register: docker
-  tags:
-  - docker
-  - debug
-
-- name: Show output with docker version
-  debug:
-    msg: "{{ docker.stdout }}"
-  tags:
-  - docker
-  - debug
-
-- name: Add the docker group (NOTE, users will need to be manually added with `usermod` if needed)
-  group:
-    name: docker
-    state: present
-  tags:
-  - docker
-  - docker-user
-
-# sudo usermod -aG docker root
-- name: Add ansible_user user to "docker" group
-  user:
-    name: "{{ ansible_user }}"
-    group: "docker"
-    append: yes
-  tags:
-  - docker
-  - docker-user
-
-# - name: Re-establish shell with new group
-#   command:
-#     cmd: sudo su -l $USER
-#   tags:
-#   - docker
-#   - docker-user
-
-## UGH, hate that this has to happen (will check if using --become makes this no longer needed since root is in Docker group)
-- name: Reboot machine to get new session with updated docker group
-  reboot:
-    reboot_timeout: 300
-  tags:
-  - docker
-  - docker-user
-
-- name: Verify docker can be run
-  command:
-    cmd: docker ps
-  register: docker_output
-  ignore_errors: yes
-  tags:
-  - docker
-  - docker-user
-
-- name: Output of Docker PS run
-  debug:
-    msg: "{{ docker_output.stdout }}"
-  tags:
-  - docker
-  - debug
-  - docker-user
-
-- name: Set GCloud to authenticate docker
-  command:
-    cmd: gcloud auth configure-docker -q
-  tags:
-  - docker
-  - docker-user
+  # - never
