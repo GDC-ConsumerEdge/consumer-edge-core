@@ -1,29 +1,34 @@
 # Overview
 
-This is a group of playbooks and ansible tools/scripts to provision and manage Anthos Bare Metal on a given inventory list (SSH addressable servers)
+This is a group of Ansible playbooks and bash scripts that are used to provision and manage Anthos bare metal given a physical or cloud inventory.
 
-## Provision
+There are two deployment types: Physical and Cloud. Both deployment types can co-exist. Communication between any of the ABM instances are supported over the LAN supporting the hardware or cloud instances. Networking is not configured to communicate cross network boundaries (nothing prevents this being built, just not in the scope of this project)
 
-The following steps include one-time and repeatable steps to provision the ***target machine(s)***
+> **Physical** - Scripts and Playbooks designed to deploy onto physical servers meeting requirements
 
-1. Clone or Fork this repository
-1. Create or review Google Service Account
-    1. Run `scripts/create-primary-gsa.sh` to create or enable a GSA used on the ***target machine(s)*** and generate the key
-1. Review and run the [one-time setup](docs/ONE_TIME_SETUP.md)
-1. Setup `inventory.yml` file to match your environment
+> **Cloud** - Scripts and Playbooks designed to be deployed into GCE Virtual Machines
 
-## Terms
+## Terms to know
 
-> **Target machine(s)** - The machine that the cluster is being installed into/onto (ie, NUC, GCE, etc)
+> **Target machine(s)** - The machine that the cluster is being installed into/onto (ie, NUC, GCE, etc). This is often called the "host" in public documentation.
 
-> **Provisioning box** - The machine that initiates the `ansible` run. Typically a laptop or cloud-console if GCE (must be able to reach target machines)
+> **Provisioning machine** - The machine that initiates the `ansible` run. This is typically a laptop or the cloud shell within the GCP console
 
+## Provisioning Solution
+
+The following steps are broken into one-time and repeatable steps used to provision the ***target machine(s)***. Most of the steps are common scross both Physical and Cloud deployment options, but will note when a specific step is needed for either.
+
+### Starting Steps
+1. Fork or clone this repository
+1. Review and complete the [one-time setup](docs/ONE_TIME_SETUP.md) steps
+    1. Result should be baseline provisioned inventory resources (ie, GCE instances and/or physical machines with passwordless SSH access)
+1. Provision inventory using Playbooks
 
 ## Installing Anthos Bare Metal
 
-The Ansible script installs Ansible Bare Metal on all of the inventory hosts.
+The Ansible script installs Ansible Bare Metal on all of the inventory hosts and on any Cloud GCE instance created with the `scripts/create-cloud-gce-baseline.sh` script
 
-You will need to define 3 Environment Variables, as well as making any environment-specific change (like IP ranges)
+You will need to define 4 Environment Variables, as well as making any environment-specific change (like IP ranges). It is recommended to use [direnv](https://direnv.net/) to manage local environment variables. Storing each of the below variables in a `.envrc` file.
 
 ### Required Environment Variables
 
@@ -36,7 +41,30 @@ You will need to define 3 Environment Variables, as well as making any environme
 
 ¹ - GSA Permissions should include: Editor (roles/editor) or Owner (roles/owner), and Storage Object Viewer (roles/storage.objectViewer) (NOTE: This is not necessarily the minimal-roles, further work will refine this). Please use `scripts/create-primary-gsa.sh` to generate the GSA and key if unfamilar on how to do this.
 
+### Running Ansible Install
+
+This is intended to be used for the initial installation. Upgrades are not included in the `site.yml` playbook
+
+```bash
+ansible-playbook -K -i inventory/ site.yml
+```
+
+## Playbooks
+
+### Update/Upgrade OS
+
+Equivalent of `apt-get update && apt-get upgrade` and `gcloud components update` (both without requiring human input)
+
+```bash
+# Update all servers ()
+ansible-playbook -K -i inventory/ update-servers.yml
+```
+
+## Configurations
+
 ### Environment IPs
+
+The below are IPs used in the installation process. The configuration for these exists in the `inventory/host_vars/<host>.yaml` files.
 
 * control_plane_vip -- IP address that is addressable & available, not overlapping with other clusters, but not pre-allocated. This is created during the process
 * ingress_vip -- Must be in the Load Balancer pool for the cluster, same rules as control_plane_vip for availability
@@ -44,34 +72,6 @@ You will need to define 3 Environment Variables, as well as making any environme
 * control_plane_ip -- different than the `control_plane_vip`, this is the IP of the box you are installing on
 
 > NOTE: The default inventory file sets up 9 LBs allocated per cluster, with 1 taken for Ingress (sufficient for POC and basic work)
-
-### Running Ansible Install
-
-> NOTE: Be sure to copy/clone the `inventory.yml` file and verify variables are acceptable for YOUR environment. Watch out for Docker and KIND IP overlaps if changing the service or pod CIDR blocks
-
-```bash
-ansible-playbook -K -i inventory.yml everything-install.yml
-```
-
-### Setting up inventory for Cloud
-<!-- TODO: Create a "Cloud" only install document -->
-
-#### Create the GCP Inventory file
-
-In order to create a GCP inventory file, take the example one and replace with environment variables (or manually adjust)
-```bash
-envsubst < gcp-example.yaml > gcp.yaml
-```
-
-## Update/Upgrade OS
-
-Equivalent of `apt-get update && apt-get upgrade` and `gcloud components update` (both without requiring human input)
-
-```bash
-# Update all servers ()
-ansible-playbook -K -i group_a.yml update-servers.yml
-```
-
 
 ## Little helpers
 
