@@ -8,14 +8,36 @@ TOC: [Provision Target Machines](#provision-target-machines) | [ Access Target M
 
 ---
 
-## Provision Target Machines
+## Establishing a Baseline
 
-#### GOAL: Install operating System, provision & install OpenSSH on Target Machine(s)
+[Target machines](../README.md#terms-to-know) are the physical or cloud machines that will be running the solution. The one-time installation process is necessary to establish a baseline that is common between both the Cloud and Physical machines. This baseline is then used by Ansible playbooks to provision a target machine.
+
+These steps will need to be followed for the first installation, or any subsquent refreshing of the installation (ie, wiping and starting from scratch)
+
+In this "one-time-setup", you will perform four primary goals:
+
+1. Setup a bootable USB stick<sup>†</sup> containing Ubuntu 20.04 LTS
+1. Setup SSH keys to allow passwordless access to the remote machine
+1. Setup the **provisioning** machine with Ansible and Ansible dependencies
+1. Setup inventory files
+
+<sup>†</sup> PXE is out of scope, but follows similar concept.
+
+## Goal 1 - Setup operating system on target machine(s)
 
 > NOTE: Each of these steps are performed for each target machine
 
-1. Use whatever method desired to put Ubuntu 20.04 LTS on the machine (NOTE: 20.10 will NOT work). PXE or Bootable USB are most common methods.
-1. Start setup for Ubuntu (USB may need to adjust UEFI/BIOS to boot from USB drive)
+1. Create a bootable USB stick with Ubuntu 20.04 LTS
+    * USB Boot Stick (Ubuntu option) -- https://ubuntu.com/tutorials/create-a-usb-stick-on-ubuntu#1-overview
+    * USB Boot Stick (Windows option) -- https://ubuntu.com/tutorials/create-a-usb-stick-on-windows#1-overview
+    * USB Boot Stick (MacOS option) -- https://ubuntu.com/tutorials/create-a-usb-stick-on-macos#1-overview
+
+    > NOTE: 20.10 will NOT work, only 18.04 LTS or 20.04 LTS is supported
+
+1. Insert USB and install Ubuntu 20.04 LTS
+
+    > NOTE: USB may need to adjust UEFI/BIOS to boot from USB drive. Depending on BIOS/UEFI, this is found in the "boot" menu. For some BIOS, `F7` pressed during initial boot provides a quick `boot option` without editing the entire BIOS
+
     1. During setup, select a hostname using some convention. In this repo, `nuc-x` is the convention. For example, Store 1's NUC would be hostname `nuc-1`, Store 2 would be `nuc-2`, etc.
     1. (Optional, but recommended) If your router can reserve hostname->IP, reserve an IP but let Ubuntu use DHCP to acquire IP addresses
     1. Create a new `user` and set a password (both will be used to access the target box). It's best to keep the same username and password for all *target machines* for automation purposes.
@@ -25,22 +47,29 @@ TOC: [Provision Target Machines](#provision-target-machines) | [ Access Target M
     1. Reboot as prompted.
     1. Login with the *username* and *password* created durin the setup. If any errors, restart process
 
-## Access Target Machines
+1. At the completion of this provisioning, you should be able to SSH into each of the target machine(s) using the same `username` and `password` established in the setup using the hostname convention `nuc-x`. Some domains/routers will automatically postfix `.lan` or `.localdomain`, so try these options if `nuc-x` does not resolve.
+    * Example
+        ```bash
+        # Prompted for password
+        ssh myusername@nuc-1
+        ```
 
-### Goal: Create passwordless access to target machines
+## Goal 2 - Establishing Passwordless SSH
 
 The following are performed from the **provisioning machine**.
 
-1. Ping each machine (note, if failures, try once again before getting nervous)
+1. Ping each machine (note, if failures, try once again before getting nervous). Also, see note below about `.lan` or `.localdomain` suffix that some routers automatically append for hostname resolution.
     ```bash
+    # Set however many machines you have provisioned. This example is 5
     export MACHINE_COUNT=5
     for i in `seq $MACHINE_COUNT`; do
         HOSTNAME="nuc-$i"
-        ping -c 3 ${HOSTNAME}.lan # See comment on .lan TLD below
+        ping -c 3 ${HOSTNAME}
     done
     ```
-    > Check that your router provides `<hostname>.lan` naming, if not, adjust to match
-    > NOTE: If this fails, you might want to add each hostname to your /etc/hosts file. This is beyond the scope of this document.
+    > Check that your router provides `<hostname>.lan` or `<hostname>.localdomain` naming, if not, adjust to match
+
+    > NOTE: If this fails, you might want to add each hostname to your /etc/hosts file matching the `IP` of the target machine. There are many documents on the internet and furhter description is beyond the scope of this document.
 
 1. Create (or use) SSH key on provisioning box (your laptop, another machine, etc).
     ```bash
@@ -95,68 +124,100 @@ The following are performed from the **provisioning machine**.
     * Repeat for all machines
 1. Done! If you can SSH into all target machines without using a password or referencing an identity file, then you're ready to setup Ansible.
 
-## Setup Ansible
+## Goal 3 - Setup Ansible on the provisioning machine
 
-### Goal: Setup Ansible on the provisioning machine
+1. Provisioning machine needs to have Python 3.x (3.7+ is recommended)
 
-1. Provisioning machine needs to have Python 3.x (3.7+ is recommended).
-    > Command `python` needs to be Python 3.x
+    1. Test python version:
 
-#### Set em' all up
+        ```bash
+        python --version
+        ```
+
+1. Sometimes systems have `python` and `python3`. Reference https://docs.ansible.com/ansible/latest/reference_appendices/python_3_support.html for reference on how to support `python3` (often adding `ansible_python_interpreter=/usr/bin/python3` to the Ansible config is required, along with all depenedencies installed with `pip3`)
+
+### Fast "install all depencencies"
 1. Run this if you don't care about precise used/unused libraries
     ```bash
+    pip install --upgrade pip # upgrade pip just-in-case
     pip install ansible
     pip install dnspython
     pip install requests
     pip install google-auth
     ```
 
-#### Step-by-Step
-1. Install Ansible
+## Goal 4 - Setting up Inventory files
+
+Inventory files contain information about how to connect to target machines and variables specific to the type of inventory. There are two types of files that correspond to `physical` and `cloud`. One inventory file is required for each type, so if you want to use both physical and cloud, you will have 2 inventory files.
+
+### Cloud inventory file
+
+Inventory for GCP is dynamic, meaning the GCP module will query the project + region for cloud resources to use as inventory. As far as Ansible is concerned, GCP inventory is dynamic so the example inventory has placeholders that are replaced using `envsubst` (NOTE: `envsubst` may need to be added to the **provisioning machine**). When running playbooks, Ansible will use the pre-provisioned GCE instances. The inventory file does NOT build new GCE machines.
+
+1. Setup Environment Variables
+
+    Review the [required environment variables](../README.me#required-environment-variables) on the primary README documentation. Establish the required variables and proceed.
+
+1. Create a service account key and set an environment varaible (`LOCAL_GSA_FILE`) to that location
+
+    1. A helper script is provided to generate, provision with IAM roles and download the key
+
+        ```bash
+        # Follow prompts
+        ./scripts/create-primary-gsa.sh
+
+        export LOCAL_GSA_FILE="./remote-gsa-key.json"
+        ```
+
+    > NOTE: Add the `export LOCAL_GSA_FILE=...` line to `.bashrc` or `.envrc` (if using `direnv`) so new shells can establish this required environment variable
+
+1. Establish GCP Inventory File "inventory/gcp.yaml"
+
     ```bash
-    pip install ansible
-    ```
-1. Optional-ish: Install dnspython (Required if using `lookup('dig'...)` in inventory.yaml, which is a default setting)
-    ```bash
-    pip install dnspython
-    ```
-1. Optional unless using the cloud-version
-    ```bash
-    pip install requests
-    pip install google-auth
+    # note "gcp.yaml", this name convention is required for the gcp module plugin
+    envsubst < inventory-cloud-example.yaml > inventory/gcp.yaml
     ```
 
-    * IF using WSL2 on Windows and Ubuntu, a known bug within WSL and clock synchronization exists (https://www.reddit.com/r/bashonubuntuonwindows/comments/ihq7ar/clock_for_wsl_is_different_than_windows_how_to/).  This will manifest as an error `invalid_grant` on the JWT token, despite a fresh GSA key.
+> NOTE: If the `envsubst` dependency is missing, install using `apt-get install gettext-base`
 
-    Sync clocks using:
+### Physical Inventory file
+
+In order to create an inventory file, use the example file `inventory-physical-example.yml` and place the contents in `inventory/inventory.yaml`
+
+```bash
+# Example using envsubst (not required unless the example file has environment variables)
+envsubst < inventory-physical-example.yaml > inventory/inventory.yaml
+```
+
+> NOTE: Check the contents and make sure the quantity of hostnames is correct for your situation
+
+### Validating Inventory Files
+
+1. Test inventory integration
+
+    1. Run the `scripts/health-check.sh` script to test inventory.
+
+    1. If any errors, see below section on "Troubleshooting Inventory"
+
+#### Troubleshooting Inventory
+
+* **IF** using WSL2 on Windows and Ubuntu, a known bug within WSL and clock synchronization exists (https://www.reddit.com/r/bashonubuntuonwindows/comments/ihq7ar/clock_for_wsl_is_different_than_windows_how_to/).  This will manifest as an error `invalid_grant` on the JWT token, despite a fresh GSA key.
+
     ```bash
+    # Sync HW Clock (this will not work with chromebook/crostini)
     sudo hwclock -s
     ```
 
-    * Additionally, you may get errors with JWT refresh and need to setup the default login. Test by running:
-        ```bash
-        gcloud auth application-default print-access-token
-        ```
+* Try SSH to the failed connections
 
-    * Fix by setting the default credentials
-        ``bash
-        gcloud auth application-default login
-        ```
-
-1. Create the GCP Inventory file for `gcp_compute` Ansible dynamic inventory
     ```bash
-    # Create a file called `gcp.yaml` with the environment variables replaced
-    envsubst < gcp-example.yaml > gcp.yaml
+    ssh -i ~/.ssh/nuc <username>@<hostname>
+    ## IF not successful, verify SSH key has been established and copied to target machine(s)
+
+    ssh <username>
+    ## If not successful, check the SSH Config for proper HOST, HOSTNAME, and USER configuration
     ```
 
-    > NOTE: If the `envsubst` is missing, install using `apt-get install gettext-base`
+## Ready to provision
 
-### Using Molecule
-
-If you wish to use Molecule to develop the roles, install the following:
-
-```bash
-python -m pip install --user "molecule[ansible,docker,lint,gce]"
-# not 100% sure that the above installs the gce provisioner for molecule, so repeat just in case
-pip install molecule-gce
-```
+After completing all of these steps, you are ready to proceed with provisioning.
