@@ -1,26 +1,15 @@
 ---
 
-- hosts: localhost
-  vars_prompt:
-    - name: "cleanup"
-      prompt: "Do you want to run cleanup? Enter [yes/no]"
-      private: no
-  tasks:
-    - set_fact:
-          cleanup: "{{cleanup}}"
-    - debug:
-          msg: 'cleanup is available in the play using: {{cleanup}}'
-    - debug:
-          msg: 'cleanup is also available globally using: {{hostvars["localhost"]["cleanup"]}}'
-
-
-- name: Just the testing playbook
-  import_playbook: build.yaml
-  tags:
-    - cloud-only
-  when: hostvars["localhost"]["cleanup"] == True
-
-- name: Update the ubuntu OS
+- name: Update all inventory
   import_playbook: update-servers.yml
-  tags:
-    - cloud-only
+
+## Only runs IF there are cloud resources
+- hosts: cloud_type_abm
+  become: true
+  become_user: root
+  roles:
+    - cloud-infra
+  vars: []
+
+- name: Install ABM on all inventory
+  import_playbook: everything-install.yml
