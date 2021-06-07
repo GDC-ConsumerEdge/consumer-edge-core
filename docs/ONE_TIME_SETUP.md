@@ -23,9 +23,11 @@ In this "one-time-setup", you will perform four primary goals:
 
 <sup>†</sup> PXE is out of scope, but follows similar concept.
 
-## Goal 1 - Setup operating system on target machine(s)
+## Goal 1 - Setup OS on Physical target machine(s)
 
-> NOTE: Each of these steps are performed for each target machine
+> NOTE: Each of these steps are performed for each target machine.
+
+> NOTE: This step is required for Physical targets and is not (cannot) be applied to Cloud targets
 
 1. Create a bootable USB stick with Ubuntu 20.04 LTS
     * USB Boot Stick (Ubuntu option) -- https://ubuntu.com/tutorials/create-a-usb-stick-on-ubuntu#1-overview
@@ -56,14 +58,16 @@ In this "one-time-setup", you will perform four primary goals:
 
 ## Goal 2 - Establishing Passwordless SSH
 
+> NOTE: Some steps are required for both target types unless indicated.
+
 The following are performed from the **provisioning machine**.
 
-1. Ping each machine (note, if failures, try once again before getting nervous). Also, see note below about `.lan` or `.localdomain` suffix that some routers automatically append for hostname resolution.
+1. Ping each machine (note, if failures, try once again before getting nervous). Also, see note below about `.lan` or `.localdomain` suffix that some routers automatically append for hostname resolution. NOTE: `nuc` or `cnuc` may need to be adjusted based on Physical (`nuc`) or Cloud (`cnuc`)
     ```bash
     # Set however many machines you have provisioned. This example is 5
     export MACHINE_COUNT=5
     for i in `seq $MACHINE_COUNT`; do
-        HOSTNAME="nuc-$i"
+        HOSTNAME="nuc-$i.lan" # chose 'cnuc' or 'nuc' according to your scenario
         ping -c 3 ${HOSTNAME}
     done
     ```
@@ -73,14 +77,22 @@ The following are performed from the **provisioning machine**.
 
 1. Create (or use) SSH key on provisioning box (your laptop, another machine, etc).
     ```bash
+    # Physical targets
     ssh-keygen -t ed25519 -f ~/.ssh/nucs
+    ```
+    ```bash
+    # Cloud targets
+    ssh-keygen -t ed25519 -f ~/.ssh/cnucs-cloud
     ```
     > :warning: **DO NOT** use a passphrase
 
 1. Setup SSH for passwordless access using SSH Configuration
     * Create or add to ~/.ssh/config
     * Replace `<user>` with the username created in step 1
+        * > NOTE: If working with cloud instances, see second SSH config file example
     * Repeat block as needed to match the target machine count.
+
+    #### Physical SSH Config
     ```yaml
     Host nuc-1.lan
     HostName nuc-1.lan
@@ -108,12 +120,29 @@ The following are performed from the **provisioning machine**.
     IdentityFile ~/.ssh/nucs
     ```
 
+    #### Cloud SSH Config (optional)
+
+    > NOTE: The cloud and physical SSH Configs need to co-exist in same file IF you're using both options. Cloud is not required and it is recommended to use `gcloud compute ssh abm-admin@<IP of machine>` due to ephemeral nature of Cloud machines.
+
+    ```yaml
+    # NOTE: hostname resolution is required (ie, use /etc/hosts with IP address corresponding to `cnuc-x`)
+    Host cnuc-1.lan
+    HostName cnuc-1.lan
+    User abm-admin
+    IdentityFile ~/.ssh/cnucs-cloud
+    ```
+
     > NOTE: The SSH key MUST be permissions `600` (rw owner only) and the config must be minimally `644` (rw owner, read other), but `600` is ok too
 
 1. OPTIONAL - Some routers and/or systems may not have `.lan` suffix name resolution. Entries can be made to the `/etc/hosts` file (linux only) for DNS resolution for `nuc-x.lan`. Below is an example where the resolution is to the Router's gateway (may not be your destination depending on local router)
 
-    ```
-    192.168.1.1     nuc-1.lan nuc-2.lan nuc-3.lan nuc-4.lan nuc-5.lan
+    ```yaml
+    # Example /etc/hosts file where each
+    192.168.2.2     nuc-1.lan
+    192.168.2.3     nuc-2.lan
+    192.168.2.4     nuc-3.lan
+    192.168.2.5     nuc-4.lan
+    192.168.2.6     nuc-5.lan
     ```
 
 1. Copy SSH keys to all target machines
@@ -124,7 +153,7 @@ The following are performed from the **provisioning machine**.
     * Repeat for all machines
 1. Done! If you can SSH into all target machines without using a password or referencing an identity file, then you're ready to setup Ansible.
 
-## Goal 3 - Setup Ansible on the provisioning machine
+## Goal 3 - Setup Ansible on the Provisioning machine
 
 1. Provisioning machine needs to have Python 3.x (3.7+ is recommended)
 
