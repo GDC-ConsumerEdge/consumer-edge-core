@@ -4,9 +4,11 @@ This is a group of Ansible playbooks and bash scripts that are used to provision
 
 There are two deployment types: Physical and Cloud. Both deployment types can co-exist. Communication between any of the ABM instances are supported over the LAN supporting the hardware or cloud instances. Networking is not configured to communicate cross network boundaries (nothing prevents this being built, just not in the scope of this project)
 
-> **Physical** - Scripts and Playbooks designed to deploy onto physical servers meeting requirements
+> **Physical** - Scripts and Playbooks designed to deploy onto physical servers meeting requirements.
+* In this project, all physical machines will have "nuc" as a prefix for hostname and varaible names.
 
-> **Cloud** - Scripts and Playbooks designed to be deployed into GCE Virtual Machines
+> **Cloud** - Scripts and Playbooks designed to be deployed into GCE Virtual Machines.
+* In this project, all cloud machines will have "cnuc" as a prefix for hostname and varaible names.
 
 ## Terms to know
 
