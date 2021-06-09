@@ -20,7 +20,7 @@ fi
 
 echo -e "\nRemoving '${#INSTANCES[@]}' instances"
 
-if [[ ${#INSTANCES[@]} -lt 2 ]]; then
+if [[ ${#INSTANCES[@]} -lt 1 ]]; then
     echo -e "\nNo instances found...\n"
     exit 0
 fi
