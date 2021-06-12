@@ -1,0 +1,2 @@
+kubeconfig_shared_root: "/var/kubeconfig"
+kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
