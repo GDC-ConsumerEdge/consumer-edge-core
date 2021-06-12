@@ -1,0 +1,33 @@
+---
+
+- name: Stop stackdriver-operator
+  command:
+    cmd: kubectl -n kube-system scale deploy stackdriver-operator --replicas=0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - stop-stackdriver
+  - reset-logs
+
+- name: Stop damonset forwarder
+  command:
+    cmd: kubectl -n kube-system delete daemonset stackdriver-log-forwarder
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - stop-forwarder
+  - reset-logs
+
+- name: Remove buffered log files
+  ansible.builtin.file:
+    path: /var/log/fluent-bit-buffers/
+    state: absent
+
+- name: Start stackdriver
+  command:
+    cmd: kubectl -n kube-system scale deploy stackdriver-operator --replicas=1
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - start-stackdriver
+  - reset-logs
