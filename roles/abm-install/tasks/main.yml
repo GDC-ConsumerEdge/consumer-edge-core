@@ -89,9 +89,63 @@
     - abm-install
     - abm-once
 
-  - name: Create keys
-    command:
-      cmd: gcloud iam service-accounts keys create {{ remote_gsa_key }}/{{ item.keyfile }} --iam-account={{ item.name }}@{{ google_project_id }}.iam.gserviceaccount.com  --project={{ google_project_id }}
+### Check if the GSA keys exists in Secrets Manager
+  - name: "Look to see if GSA keys exists in secrets manager"
+    run_once: true # only one machine to do this
+    shell: |
+      export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.name }}" --format="value(name)" --project="{{ google_project_id }}")
+      if [ -z "$HAS_SECRET" ]; then
+        gcloud secrets create {{ item.name }} --replication-policy="automatic" --project={{ google_project_id }}
+        echo "NO SECRET {{ item.name }}"
+        exit 1 # exit early, no chance there's a version since there wasn't a secret
+      fi
+
+      gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_project_id }}" &>/dev/null
+      if [ $? -gt 0 ]; then
+        echo "NO SECRET {{ item.name }}"
+        exit 1
+      fi
+    args:
+      executable: /bin/bash
+    register: secret_exists
+    changed_when: "'NO SECRET' in secret_exists.stdout"
+    ignore_errors: true
+    loop: "{{ service_accounts }}"
+    environment:
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+    tags:
+    - abm-once
+    - abm-debug
+    - abm-gsa-keys
+    - abm-install
+
+  - name: Create new GSA keys for all service accounts in configuration and push to Secret Manager
+    run_once: true # only one machine to do this
+    shell: |
+      gcloud iam service-accounts keys create /tmp/{{ entry.item.keyfile }} --iam-account={{ entry.item.name }}@{{ google_project_id }}.iam.gserviceaccount.com --project={{ google_project_id }}
+      gcloud secrets versions add {{ entry.item.name }} --data-file="/tmp/{{ entry.item.keyfile }}"
+      rm -rf /tmp/{{ entry.item.keyfile }} # delete temp file
+    args:
+      executable: /bin/bash
+    when: entry.rc != 0
+    loop: "{{ secret_exists.results }}"
+    loop_control:
+      loop_var: entry
+    environment:
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+    tags:
+    - abm-once
+    - abm-debug
+    - abm-gsa-keys
+    - abm-install
+
+  - name: Write GSA key files from secret manager
+    shell: |
+      gcloud secrets versions access latest --secret="{{ item.name }}" >> {{ remote_gsa_key }}/{{ item.keyfile }}
+    args:
+      executable: /bin/bash
       creates: "{{ remote_gsa_key }}/{{ item.keyfile }}"
     loop: "{{ service_accounts }}"
     environment:
@@ -99,6 +153,8 @@
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-once
+    - abm-debug
+    - abm-gsa-keys
     - abm-install
 
 ### Create Local PVC folder (future will be mounted or something)
