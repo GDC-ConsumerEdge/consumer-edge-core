@@ -57,3 +57,11 @@
   tags:
   - docker
   # - never
+
+## TODO: Take this out after the official fix has been committed
+- name: Setup kernel in response to b/192342102
+  command:
+    cmd: cat /proc/sys/net/netfilter/nf_conntrack_max 262144
+  tags:
+  - temp-fix
+  - ubuntu-setup

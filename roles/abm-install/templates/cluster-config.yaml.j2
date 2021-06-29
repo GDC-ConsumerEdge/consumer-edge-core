@@ -22,6 +22,7 @@ spec:
   #   3) hybrid: to create a hybrid cluster that runs admin cluster components and user workloads.
   #   4) standalone: to create a cluster that manages itself, runs user workloads, but does not manage other clusters.
   type: {{ install_type }}
+  profile: edge
   # Anthos cluster version.
   anthosBareMetalVersion: {{ abm_version }}
   bypassPreflightCheck: {{ skip_preflight }}
@@ -138,7 +139,7 @@ spec:
   #   # if useEmulation is enabled, hardware accelerator (i.e relies on cpu feature like vmx or svm)
   #   # will not be attempted. QEMU will be used for software emulation.
   #   # useEmulation must be specified for KubeVirt installation
-    useEmulation: false
+    useEmulation: true
 
   # Authentication; uncomment this section if you wish to enable authentication to the cluster with OpenID Connect.
   # authentication:
