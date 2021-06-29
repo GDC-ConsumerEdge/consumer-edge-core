@@ -33,6 +33,14 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${GSA_EMAIL}" \
     --role="roles/resourcemanager.projectIamAdmin"
 
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${GSA_EMAIL}" \
+    --role="roles/secretmanager.admin"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${GSA_EMAIL}" \
+    --role="roles/secretmanager.secretAccessor"
+
 # We should have a GSA enabled or created or ready-to-go by here
 
 echo -e "\n====================\n"
