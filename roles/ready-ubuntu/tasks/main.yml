@@ -52,16 +52,17 @@
   - remove
   - debug
 
+## TODO: Take this out after the official fix has been committed
+- name: Setup kernel in response to b/192342102
+  template:
+    src: 24-nf_conntrack_max.conf.j2
+    dest: "/etc/sysctl.d/24-nf_conntrack_max.conf"
+  tags:
+  - temp-fix
+  - ubuntu-setup
+
 - name: "Setup docker on host machine"
   include: setup-docker-apt.yml
   tags:
   - docker
   # - never
-
-## TODO: Take this out after the official fix has been committed
-- name: Setup kernel in response to b/192342102
-  command:
-    cmd: sysctl net.netfilter.nf_conntrack_max=393216
-  tags:
-  - temp-fix
-  - ubuntu-setup
