@@ -210,7 +210,7 @@
     - abm-config
 
 ### Create cluster configuration
-  - name: Create cluster
+  - name: "Create cluster {{ cluster_name }} -- (be patient, this takes 20-40 minutes)"
     command: bmctl create cluster --cluster={{ cluster_name }}
     args:
       chdir: "{{ abm_install_folder }}"
