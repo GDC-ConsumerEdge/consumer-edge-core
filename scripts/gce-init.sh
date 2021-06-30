@@ -13,6 +13,9 @@ if [[ -f /etc/startup_was_launched ]]; then exit 0; fi
 # touch a file to indicate init script has been launched
 touch /etc/startup_was_launched
 
+# Disable warning about dpkg not being available for interaction
+export DEBIAN_FRONTEND=noninteractive
+
 # 0. Very baseline libraries/apps used for this portion only (please use the Ansible roles to baseline the full image)
 apt-get -qq update > /dev/null
 apt-get -qq install -y jq > /dev/null
