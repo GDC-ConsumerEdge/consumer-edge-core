@@ -1,56 +1,115 @@
-#/bin/bash
+#!/bin/bash
 
 # Create n-number of GCE instances with named conventions to be picked up by Ansible
 
 #### TODO: gcloud compute config-ssh  (on the host computer after GCEs are setup?)
 
-unset GCE_COUNT
-unset REGION_OVERRIDE
-unset STARTING_INDEX
+# Defaults
+GCE_COUNT=1
+CLUSTER_START_INDEX=1
 unset PREEMPTIBLE_OPTION
 
-while getopts 'c:s:r:p:': option
+while getopts 'c:p:s:tz:': option
 do
+    # #*= allows for c=1 and strips out the c= in addition to -c 1
     case "${option}" in
-        c) GCE_COUNT="${OPTARG}";;
-        s) STARTING_INDEX="${OPTARG}";;
-        r) REGION_OVERRIDE="${OPTARG}";;
-        p) PREEMPTIBLE_OPTION="--preemptible";;
+        c) GCE_COUNT="${OPTARG#*=}";;
+        k) SSH_PUB_KEY_LOCATION="${OPTARG#*=}";;
+        p) PROJECT_ID="${OPTARG#*=}";;
+        s) CLUSTER_START_INDEX="${OPTARG#*=}";;
+        t) PREEMPTIBLE_OPTION="--preemptible";;
+        z) ZONE="${OPTARG#*=}";;
     esac
 done
 
 usage()
 {
-  echo "Usage: $0 -c 1
-            [ -r us-west1 ]
-            [ -s 1 ]
-            [ -p true ]"
-  exit 2
+    echo "Usage: $0
+        [ -c NUM_INSTANCES ]
+        [ -k SSH_PUB_KEY_LOCATION ]
+        [ -p PROJECT_ID]
+        [ -s STARTING_INDEX ]
+        [ -t ]
+        [ -z ZONE ]"
+    echo "-c: Number of instances to create. Defaults to 1. Example: -c 1"
+    echo "-k: SSH public key location. Defaults to '${HOME}/.ssh/cnucs-cloud.pub'. Creates the key if it doesn't exist."
+    echo "-p: project ID. Can be set with PROJECT_ID environment variable. Defaults to gcloud config if not set."
+    echo "-s: Starting index. Defaults to 1. Example: -s 10."
+    echo "-t: Use temporary preemptible instances."
+    echo "-z: Zone. Can be set with ZONE environment variable. Defaults to gcloud config zone if not set."
+    exit 2
 }
 
-if [[ -z "${GCE_COUNT}" || ${GCE_COUNT} -le 0 ]]; then
-    echo "Missing count variable"
-    usage
-    exit 0
+ERROR=0
+if [[ ! -x $(command -v gcloud) ]]; then
+    echo "Error: gcloud (Google Cloud SDK) command is required, but not installed."
+    ERROR=1
 fi
+
+if [[ ! -x $(command -v envsubst) ]]; then
+    echo "Error: envsubst (gettext) command is required, but not installed."
+    ERROR=1
+fi
+
+if [[ ! -x $(command -v ssh-keygen) ]]; then
+    echo "Error: ssh-keygen (SSH) command is required, but not installed."
+    ERROR=1
+fi
+
+if [[ "${ERROR}" -eq 1 ]]; then
+    exit 1
+fi
+
+ERROR=0
+# Default to gcloud if not set
+if [[ -z "${PROJECT_ID}" ]]; then
+    PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
+fi
+
+if [[ -z "${PROJECT_ID}" ]]; then
+    echo "Error: No project ID set"
+    ERROR=1
+fi
+
+# Default to gcloud if not set
+if [[ -z "${ZONE}" ]]; then
+    ZONE=$(gcloud config get-value compute/zone 2>/dev/null)
+fi
+
+if [[ -z "${ZONE}" ]]; then
+    echo "Error: No zone set"
+    ERROR=1
+fi
+
+if [[ -z "${GCE_COUNT}" || ! "${GCE_COUNT}" =~ ^[0-9]+$ || "${GCE_COUNT}" -le 0 ]]; then
+    echo "Error: Missing or invalid count variable"
+    ERROR=1
+fi
+
+if [[ -z "${CLUSTER_START_INDEX}" || ! "${CLUSTER_START_INDEX}" =~ ^[0-9]+$ || "${CLUSTER_START_INDEX}" -le 0 ]]; then
+    echo "Error: Missing or invalid starting index"
+    ERROR=1
+fi
+
+# SSH_PUB_KEY_LOCATION is handled in gce-helper.vars
+
+if [[ "${ERROR}" -eq 1 ]]; then
+    usage
+    exit 1
+fi
+
+echo "GCE_COUNT: ${GCE_COUNT}"
+echo "PROJECT_ID: ${PROJECT_ID}"
+echo "START_INDEX: ${CLUSTER_START_INDEX}"
+echo "ZONE: ${ZONE}"
 
 if [[ ! -z "$PREEMPTIBLE_OPTION" ]]; then
     echo "NOTE: USING PREEMPTIBLE MACHINE. The GCE will be up at most 24h and will need to be re-created and re-provisioned. This option keeps the costs of testing/trying ABM Retail Edge to a minimum"
 fi
 
-## Determine if running from project root or from within the "script/" folder
-CWD=$(pwd)
-PREFIX_DIR="./scripts"
-
-if [[ "${CWD}" == *"/scripts"* ]]; then
-    PREFIX_DIR="./"
-fi
-
-
-# Starting (used for offset starting)
-# TODO: setup use of offset above
-CLUSTER_START_INDEX=1
-
+## Get directory this script was run from. gce-helpers.vars is in the same directory.
+## -- is used in case the directory name starts with a -
+PREFIX_DIR=$(dirname -- "$0")
 source ${PREFIX_DIR}/gce-helper.vars
 
 ###############################
@@ -67,9 +126,10 @@ gcloud services enable secretmanager.googleapis.com
 
 # setup default compute to view secrets
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+echo "Adding roles/secretmanager.secretAccessor to default compute service account..."
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-    --role="roles/secretmanager.secretAccessor"
+    --role="roles/secretmanager.secretAccessor" --no-user-output-enabled
 
 # Store the SSH pub key as a secret
 store_public_key_secret ${SSH_PUB_KEY_LOCATION}

@@ -31,6 +31,9 @@ k8s/overlays/**/configuration/secrets/*.json
 ### VS Code ###
 .vscode/
 
+### IntelliJ ###
+.idea/
+
 ### Ansible ###
 ansible.cfg
 
