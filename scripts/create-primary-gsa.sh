@@ -21,25 +21,30 @@ else
     # otherwise, no need to do anything
 fi
 
+echo "Adding roles/editor"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${GSA_EMAIL}" \
-    --role="roles/editor"
+    --role="roles/editor" --no-user-output-enabled
 
+echo "Adding roles/storage.objectViewer"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${GSA_EMAIL}" \
-    --role="roles/storage.objectViewer"
+    --role="roles/storage.objectViewer" --no-user-output-enabled
 
+echo "Adding roles/resourcemanager.projectIamAdmin"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${GSA_EMAIL}" \
-    --role="roles/resourcemanager.projectIamAdmin"
+    --role="roles/resourcemanager.projectIamAdmin" --no-user-output-enabled
 
+echo "Adding roles/secretmanager.admin"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${GSA_EMAIL}" \
-    --role="roles/secretmanager.admin"
+    --role="roles/secretmanager.admin" --no-user-output-enabled
 
+echo "Adding roles/secretmanager.secretAccessor"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${GSA_EMAIL}" \
-    --role="roles/secretmanager.secretAccessor"
+    --role="roles/secretmanager.secretAccessor" --no-user-output-enabled
 
 # We should have a GSA enabled or created or ready-to-go by here
 
