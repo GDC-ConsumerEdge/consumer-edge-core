@@ -2,6 +2,5 @@ cluster_name: "nuc-5"
 cluster_index: 4
 acm_cluster_name: "store-2-2"
 control_plane_ip: "192.168.1.15"
-control_plane_vip: "192.168.1.140"
-ingress_vip: "192.168.1.141"
-load_balancer_pool_cidr: "192.168.1.141-192.168.1.149"
+
+primary_ip: "192.168.1.14"

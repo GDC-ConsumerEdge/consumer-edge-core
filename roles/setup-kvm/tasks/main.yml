@@ -33,7 +33,7 @@
     - kvm-install
     - kvm-packages
 
-- name: Reboot machine so
+- name: Reboot machine so KVM dependencies are active
   reboot:
     reboot_timeout: 300
   when: kvm_check.rc > 0

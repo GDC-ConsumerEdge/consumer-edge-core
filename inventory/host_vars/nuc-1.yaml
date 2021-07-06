@@ -1,8 +1,13 @@
 cluster_name: "nuc-1"
 cluster_index: 0
-location_primary: true
+primary_cluster_machine: true
 acm_cluster_name: "store-1-1"
-control_plane_ip: "10.200.0.3"
-control_plane_vip: "10.200.0.9"
-ingress_vip: "10.200.0.10"
-load_balancer_pool_cidr: "10.200.0.10-10.200.0.30"
+control_plane_ip: "192.168.1.11" # FIXME: This is tied to the "primary_ip" in all of the worker machines
+control_plane_ips: [
+  "192.168.1.11",
+  "192.168.1.12",
+  "192.168.1.13"
+]
+control_plane_vip: "192.168.1.120"
+ingress_vip: "192.168.1.121"
+load_balancer_pool_cidr: "192.168.1.121-192.168.1.129"

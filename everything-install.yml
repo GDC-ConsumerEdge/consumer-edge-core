@@ -2,7 +2,7 @@
 ---
 
 # Installs Anthos Bare Metal on all inventory
-- hosts: all
+- hosts: workers
   become: true
   become_user: root
   roles:
