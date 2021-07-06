@@ -1,3 +1,4 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
 
 sshPrivateKeyPath: {{ ssh_key_path }} # Created for access to worker nodes
 gcrKeyPath: {{ remote_gsa_key }}/{{ (service_accounts | selectattr('name', 'equalto', 'abm-gcr-agent') | first ).keyfile }}
@@ -16,11 +17,6 @@ metadata:
   name: {{ cluster_name }}
   namespace: {{ cluster_name }}
 spec:
-  # Cluster type. This can be:
-  #   1) admin:  to create an admin cluster. This can later be used to create user clusters.
-  #   2) user:   to create a user cluster. Requires an existing admin cluster.
-  #   3) hybrid: to create a hybrid cluster that runs admin cluster components and user workloads.
-  #   4) standalone: to create a cluster that manages itself, runs user workloads, but does not manage other clusters.
   type: {{ install_type }}
   profile: edge
   # Anthos cluster version.
@@ -33,58 +29,28 @@ spec:
   controlPlane:
     nodePoolSpec:
       nodes:
-      # Control plane node pools. Typically, this is either a single machine
-      # or 3 machines if using a high availability deployment. # Masters (phyical host)
-      - address: {{ control_plane_ip }}
+      {% for ipaddr in control_plane_ips %}
+      - address: {{ ipaddr }}
+      {% endfor %}
   # Cluster networking configuration
   clusterNetwork:
-    # Pods specify the IP ranges from which Pod networks are allocated.
     pods:
       cidrBlocks:
       - {{ pod_cidr }}
-    # Services specify the network ranges from which service VIPs are allocated.
-    # This can be any RFC1918 range that does not conflict with any other IP range
-    # in the cluster and node pool resources.
     services:
       cidrBlocks:
       - {{ services_cidr }}
-  # Load balancer configuration
   loadBalancer:
-    # Load balancer mode can be either 'bundled' or 'manual'.
-    # In 'bundled' mode a load balancer will be installed on load balancer nodes during cluster creation.
-    # In 'manual' mode the cluster relies on a manually-configured external load balancer.
     mode: bundled
-    # Load balancer port configuration
     ports:
-      # Specifies the port the LB serves the kubernetes control plane on.
-      # In 'manual' mode the external load balancer must be listening on this port.
       controlPlaneLBPort: 443
-    # There are two load balancer VIPs: one for the control plane and one for the L7 Ingress
-    # service. The VIPs must be in the same subnet as the load balancer nodes.
     vips:
-      # ControlPlaneVIP specifies the VIP to connect to the Kubernetes API server.
-      # This address must not be in the address pools below.
       controlPlaneVIP: {{ control_plane_vip }}
-      # IngressVIP specifies the VIP shared by all services for ingress traffic.
-      # Allowed only in non-admin clusters.
-      # This address must be in the address pools below.
       ingressVIP: {{ ingress_vip }}
-    # AddressPools is a list of non-overlapping IP ranges for the data plane load balancer.
-    # All addresses must be in the same subnet as the load balancer nodes.
-    # Address pool configuration is only valid for 'bundled' LB mode in non-admin clusters.
     addressPools:
     - name: load-balance-pool
       addresses:
-    #   # Each address must be either in the CIDR form (1.2.3.0/24)
-    #   # or range form (1.2.3.1-1.2.3.5).
       - {{ load_balancer_pool_cidr }}
-    # A load balancer nodepool can be configured to specify nodes used for load balancing.
-    # These nodes are part of the kubernetes cluster and run regular workloads as well as load balancers.
-    # If the node pool config is absent then the control plane nodes are used.
-    # Node pool configuration is only valid for 'bundled' LB mode.
-    # nodePoolSpec:
-      # nodes:
-      #- address: {{ services_cidr }}
   # Proxy configuration
   # proxy:
   #   url: http://[username:password@]domain
@@ -98,47 +64,23 @@ spec:
     projectID: {{ google_project_id }}
     # Cloud location for logs and metrics.
     location: {{ google_region }}
-    # Whether collection of application logs/metrics should be enabled (in addition to
-    # collection of system logs/metrics which correspond to system components such as
-    # Kubernetes control plane or cluster management agents).
     enableApplication: {{ enable_application_logging }}
   # Storage configuration
   storage:
-    # lvpNodeMounts specifies the config for local PersistentVolumes backed by mounted disks.
-    # These disks need to be formatted and mounted by the user, which can be done before or after
-    # cluster creation.
     lvpNodeMounts:
-      # path specifies the host machine path where mounted disks will be discovered and a local PV
-      # will be created for each mount.
       path: {{ local_pvc_mount }}
-      # storageClassName specifies the StorageClass that PVs will be created with. The StorageClass
-      # is created during cluster creation.
       storageClassName: local-disks
-    # lvpShare specifies the config for local PersistentVolumes backed by subdirectories in a shared filesystem.
-    # These subdirectories are automatically created during cluster creation.
     lvpShare:
-      # path specifies the host machine path where subdirectories will be created on each host. A local PV
-      # will be created for each subdirectory.
       path: {{ local_share_pvc_mount }}
-      # storageClassName specifies the StorageClass that PVs will be created with. The StorageClass
-      # is created during cluster creation.
       storageClassName: local-shared
-      # numPVUnderSharedPath specifies the number of subdirectories to create under path.
       numPVUnderSharedPath: 5
   # NodeConfig specifies the configuration that applies to all nodes in the cluster.
   nodeConfig:
-    # podDensity specifies the pod density configuration.
     podDensity:
-      # maxPodsPerNode specifies at most how many pods can be run on a single node.
       maxPodsPerNode: 110
-    # containerRuntime specifies which container runtime to use for scheduling containers on nodes.
-    # containerd and docker are supported. #TODO: Look at containerd for this
     containerRuntime: {{ container_runtime }}
   # KubeVirt configuration, uncomment this section if you want to install kubevirt to the cluster
   kubevirt:
-  #   # if useEmulation is enabled, hardware accelerator (i.e relies on cpu feature like vmx or svm)
-  #   # will not be attempted. QEMU will be used for software emulation.
-  #   # useEmulation must be specified for KubeVirt installation
     useEmulation: true
 
   # Authentication; uncomment this section if you wish to enable authentication to the cluster with OpenID Connect.

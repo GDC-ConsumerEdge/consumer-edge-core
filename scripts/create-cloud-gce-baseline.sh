@@ -135,6 +135,6 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 store_public_key_secret ${SSH_PUB_KEY_LOCATION}
 
 # Create the GCE instances
-create_gce_vms
+create_gce_vms $GCE_COUNT
 
 display_gce_vms_ips

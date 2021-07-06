@@ -11,6 +11,9 @@ gcp.yml
 
 inventory/*.yaml
 
+# never check in any public keys
+*.pub
+
 # Downloaded git repo
 serving/
 # Downloaded model

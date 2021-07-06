@@ -3,7 +3,7 @@
 
 # Installs Anthos Bare Metal on inventory of "workers"
 # must specify `--tags never` on the CLI to run this
-- hosts: cloud_type_abm
+- hosts: all
   become: true
   become_user: root
   roles:
