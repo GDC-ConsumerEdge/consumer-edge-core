@@ -34,40 +34,30 @@ chown -R ${ANSIBLE_USER}.users /home/${ANSIBLE_USER}/.ssh
 
 # 4. Setup VXLAN configuration
 VXLAN_ID=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/vxlanid -H "Metadata-Flavor: Google")
+INSTANCE_ID=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/instance -H "Metadata-Flavor: Google")
 
-if [[ -z "${VXLAN_ID}" ]]; then
-    VXLAN_ID="42"
-fi
-
-ip link add vxlan0 type vxlan id ${VXLAN_ID} dev ens4 dstport 0
-
-################## NETWORK (vxlan)
-
-ip addr add 10.200.0.2/24 dev vxlan0
-ip link set up dev vxlan0
-
-ping -c3 10.200.0.2
-if [[ $? -gt 0 ]]; then
-    echo "Cannot ping the vxlan IP address"
-    exit 1
-fi
-
-cat > ~/.ssh/config <<EOF
-# allow SSH without checking fingerprint
-Host 10.200.0.2
-    StrictHostKeyChecking no
-EOF
-
-chmod 400 ~/.ssh/config
+VXLANIP="10.200.0.$(( INSTANCE_ID + 1 ))"
+MACHINE_NAME="cnuc-${INSTANCE_ID}"
 
 ### Setup the service to restart vxlan when rebooting
 
 cat > ${SETUP_VXLAN_SCRIPT} <<EOF
-#!/bin/sh
+#!/bin/bash
 
 ip link add vxlan0 type vxlan id ${VXLAN_ID} dev ens4 dstport 0
-ip addr add 10.200.0.2/24 dev vxlan0
+ip addr add ${VXLANIP}/24 dev vxlan0
+
+# Private IPs for all cnuc's on internal GCP network
+IPs=( \$(gcloud compute instances list --filter="labels.vxlanid=${VXLAN_ID} AND name!=${MACHINE_NAME}" --format="value(networkInterfaces[0].networkIP)") )
+
+# Loop over all IPs in group and bridge to VXLAN
+for ip in \${IPs[@]}; do
+    bridge fdb append to 00:00:00:00:00:00 dst \$ip dev vxlan0
+done
+
+# Enable VXLAN
 ip link set up dev vxlan0
+
 EOF
 
 cat > ${SYSTEM_SERVICE_VXLAN} <<EOF
@@ -87,6 +77,23 @@ EOF
 chmod 644 ${SYSTEM_SERVICE_VXLAN}
 chmod 744 ${SETUP_VXLAN_SCRIPT}
 
-# Start service
+# Start vxlan service service
 systemctl enable ${SYSTEM_SERVICE_NAME}
 
+# setup SSH config to skip key checking
+cat >> ~/.ssh/config <<EOF
+
+# allow SSH without checking fingerprint
+Host ${VXLANIP}
+    StrictHostKeyChecking no
+
+EOF
+
+chmod 400 ~/.ssh/config
+
+# Verify VXLAN IP works
+ping -c3 ${VXLANIP}
+if [[ $? -gt 0 ]]; then
+    echo "Cannot ping the vxlan IP address"
+    exit 1
+fi
