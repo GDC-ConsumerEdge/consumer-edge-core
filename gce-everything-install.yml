@@ -1,6 +1,7 @@
 
 ---
 
+# Setup everything and install ABM (but not install software on top)
 - hosts: cloud_type_abm
   become: true
   become_user: root

@@ -1,58 +1,6 @@
 ---
 # tasks file for abm-install
 
-## TODO: Move this to "ready-ubuntu"
-  - name: Create a user for ABM Control
-    ansible.builtin.user:
-      name: "{{ abm_install_user }}"
-      shell: /bin/bash
-      groups: "sudo"
-      append: yes
-      generate_ssh_key: yes
-      ssh_key_bits: 2048
-      ssh_key_file: .ssh/{{ ssh_key_name }}
-    tags:
-    - abm-install
-    - abm-ssh
-
-## Setup password less SSH into same box
-  - name: "Place ssh config with no-host-check turned on"
-    template:
-      src: ssh-config.j2
-      dest: "{{ ssh_user_home }}/config"
-      group: "{{ abm_install_user }}"
-      owner: "{{ abm_install_user }}"
-    tags:
-    - abm-install
-    - abm-ssh
-
-### Add the new user to the no-password sudoers list
-  - name: Add user to sudoers list
-    template:
-      src: sudoers.j2
-      dest: "/etc/sudoers.d/{{ abm_install_user }}"
-    tags:
-    - abm-install
-    - abm-ssh
-
-### cat {{ ssh_key_path }}.pub >> {{ ssh_user_home }}/authorized_keys
-  - name: Set authorized key taken from file
-    shell: |
-      # remove existing authorized_keys
-      rm -rf {{ ssh_user_home }}/authorized_keys || true
-      touch {{ ssh_user_home }}/authorized_keys
-      cat {{ ssh_key_path_pub }} >> {{ ssh_user_home }}/authorized_keys
-      # make files user access only
-      chown {{ abm_install_user }}.{{ abm_install_user }} {{ ssh_user_home }}/authorized_keys
-      # SSH Key itself, make only read/write from current user
-      chmod 400 {{ ssh_key_path }}
-    args:
-      executable: /bin/bash
-      creates: /var/nothing
-    tags:
-    - abm-install
-    - abm-ssh
-
 ### Create or enable Google Service Accounts
   - name: Create or Enable Service Accounts
     shell: |
@@ -176,24 +124,29 @@
     tags:
     - abm-install
     - abm-config
+    - build-config
 
 ### Create configuration file (TODO: Switch this to a template)
   - name: "Place configuration file into ABM install folder"
     template:
       src: cluster-config.yaml.j2
       dest: "{{ abm_workspace_folder }}/{{ cluster_name }}/{{ cluster_name }}.yaml"
+    when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
     tags:
     - abm-install
     - abm-config
+    - build-config
 
 ### Check if cluster is installed already (kubeconfig file would exist)
   - name: Check to see if ABM has been installed already
     stat:
       path: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
     register: abm_installed
+    when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
     tags:
     - abm-install
     - abm-create
+    - build-config
 
 ### Check cluster configuration
   - name: Validate configuration file updates
@@ -204,14 +157,18 @@
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     when:
+      - primary_cluster_machine is defined
       - abm_installed.stat.exists == False
+      - primary_cluster_machine == True
     tags:
     - abm-install
     - abm-config
+    - build-config
 
 ### Create cluster configuration
   - name: "Create cluster {{ cluster_name }} -- (be patient, this takes 20-40 minutes)"
     command: bmctl create cluster --cluster={{ cluster_name }}
+    when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
     args:
       chdir: "{{ abm_install_folder }}"
       creates: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
