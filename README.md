@@ -22,7 +22,8 @@ The following steps are broken into one-time and repeatable steps used to provis
 
 ### Starting Steps
 1. Fork or clone this repository
-2. [Add a token](https://docs.gitlab.com/ee/user/project/deploy_tokens/) to the Git repo with **read_repository** privilege. Remember the token name that will be used for env var **SCM_TOKEN_USER**. Copy the token string that will be uesd for env var **SCM_TOKEN_TOKEN**.
+2. [Add a token](https://docs.gitlab.com/ee/user/project/deploy_tokens/) to the Git repo with **read_repository** privilege. Remember the token name that will be used for env var **SCM_TOKEN_USER**. Copy the token string that will be uesd for env var **SCM_TOKEN_TOKEN**. Go to user **Preferences** on the top right corner.
+   ![gitlab token](docs/Gitlab_token.png)
 3. Review and complete the [one-time setup](docs/ONE_TIME_SETUP.md) steps
     1. Result should be baseline provisioned inventory resources (ie, GCE instances and/or physical machines with passwordless SSH access)
 4. Provision inventory using Playbooks
