@@ -106,7 +106,7 @@
 
 # Copy the public key to all other cluster machines
 - name: Pull {{ ssh_user_home }}/{{ ssh_key_name }}.pub to local box
-  fetch: src={{ ssh_user_home }}/{{ ssh_key_name }}.pub dest=./ flat=yes
+  fetch: src={{ ssh_user_home }}/{{ ssh_key_name }}.pub dest=/tmp/{{ ssh_key_name }}-{{ control_plane_ip }}.pub flat=yes
   when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
   tags:
   - abm-install
@@ -114,7 +114,10 @@
   - debug-ssh
 
 - name: Copy the ssh pub file to the other users
-  copy: src={{ ssh_key_name }}.pub dest={{ ssh_user_home }}/{{ ssh_key_name }}.pub.other
+  ansible.builtin.copy:
+    src: "/tmp/{{ ssh_key_name }}-{{ primary_ip }}.pub"
+    dest: "{{ ssh_user_home }}/{{ ssh_key_name }}.pub.other"
+    remote_src: no
   when: "(primary_cluster_machine is not defined) or (primary_cluster_machine == false)"
   tags:
   - abm-install
