@@ -64,7 +64,19 @@ This is intended to be used for the initial installation. Upgrades are not inclu
 ```bash
 ansible-playbook -K -i inventory/ site.yml
 ```
+The script will ask for ```BECOME password: ```
+Leave it blank and enter. This is the password for the target hosts, not the local machine. 
 
+## Get token and login to cluster on Anthos console
+You need a token to be able to connect the cluster to Anthos. 
+Run following command to retrieve the token for CNUCs
+```
+ansible-playbook get-login-tokens.yml --tags cloud -i inventory/ 
+```
+and following for NUCs
+```
+ansible-playbook get-login-tokens.yml --tags nuc -i inventory/
+```
 ## Playbooks
 
 ### Update/Upgrade OS
