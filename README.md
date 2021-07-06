@@ -22,9 +22,10 @@ The following steps are broken into one-time and repeatable steps used to provis
 
 ### Starting Steps
 1. Fork or clone this repository
-1. Review and complete the [one-time setup](docs/ONE_TIME_SETUP.md) steps
+2. [Add a token](https://docs.gitlab.com/ee/user/project/deploy_tokens/) to the Git repo with **read_repository** privilege. Remember the token name that will be used for env var **SCM_TOKEN_USER**. Copy the token string that will be uesd for env var **SCM_TOKEN_TOKEN**.
+3. Review and complete the [one-time setup](docs/ONE_TIME_SETUP.md) steps
     1. Result should be baseline provisioned inventory resources (ie, GCE instances and/or physical machines with passwordless SSH access)
-1. Provision inventory using Playbooks
+4. Provision inventory using Playbooks
 
 ## Installing Anthos Bare Metal
 
@@ -40,6 +41,8 @@ It is recommended to use [direnv](https://direnv.net/) to manage local environme
 | PROJECT_ID           |  N       |  Google Project ID to put clusters, Service Accounts and API services into | gcloud config |
 | SSH_PUB_KEY_LOCATION |  N       |  SSH public key location for Ansible | `$HOME/.ssh/cnucs-cloud.pub` |
 | ZONE                 |  N       |  Google default zone | gcloud config  |
+| SCM_TOKEN_USER       |  Y       |  Git repo token user/name | none  |
+| SCM_TOKEN_TOKEN      |  Y       |  Git repo token string | none  |
 
 Most scripts use the project ID set in gcloud config. The create-cloud-gce-baseline.sh can also take the project ID on the command line or as an environment variable.
 Region defaults to the gcloud config region.
