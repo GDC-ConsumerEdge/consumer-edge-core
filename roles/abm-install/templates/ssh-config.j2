@@ -1,7 +1,0 @@
-{# ssh -o StrictHostKeyChecking=no "$user@$host" #}
-Host {{ control_plane_ip }}
-    HostName {{ control_plane_ip }}
-    User {{ abm_install_user }}
-    Port 22
-    StrictHostKeyChecking no
-    IdentityFile ~/.ssh/{{ ssh_key_name }}

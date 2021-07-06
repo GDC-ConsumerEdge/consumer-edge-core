@@ -1,1 +1,2 @@
 # Variables associated with the physical NUC installation inventory
+ansible_user: abm-admin
