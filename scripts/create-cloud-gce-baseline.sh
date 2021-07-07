@@ -22,6 +22,11 @@ do
     esac
 done
 
+## Get directory this script was run from. gce-helpers.vars is in the same directory.
+## -- is used in case the directory name starts with a -
+PREFIX_DIR=$(dirname -- "$0")
+source ${PREFIX_DIR}/gce-helper.vars
+
 usage()
 {
     echo "Usage: $0
@@ -107,10 +112,14 @@ if [[ ! -z "$PREEMPTIBLE_OPTION" ]]; then
     echo "NOTE: USING PREEMPTIBLE MACHINE. The GCE will be up at most 24h and will need to be re-created and re-provisioned. This option keeps the costs of testing/trying ABM Retail Edge to a minimum"
 fi
 
-## Get directory this script was run from. gce-helpers.vars is in the same directory.
-## -- is used in case the directory name starts with a -
-PREFIX_DIR=$(dirname -- "$0")
-source ${PREFIX_DIR}/gce-helper.vars
+# Check to make sure that the # of VMs is divisible by 3 (need 3 per location)
+if [[ $((GCE_COUNT%REQUIRED_CLUSTER_SIZE)) != 0 ]]; then
+    echo "The count ( $GCE_COUNT ) requested CNUCs needs to be multiples of 3"
+    exit 1
+fi
+
+CLUSTER_COUNT=$(( GCE_COUNT/REQUIRED_CLUSTER_SIZE ))
+echo "Final Cluster Count = $CLUSTER_COUNT"
 
 ###############################
 #####   MAIN   ################
