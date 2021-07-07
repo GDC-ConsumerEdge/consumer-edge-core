@@ -35,8 +35,9 @@ chown -R ${ANSIBLE_USER}.users /home/${ANSIBLE_USER}/.ssh
 # 4. Setup VXLAN configuration
 VXLAN_ID=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/vxlanid -H "Metadata-Flavor: Google")
 INSTANCE_ID=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/instance -H "Metadata-Flavor: Google")
+CLUSTER_ID=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/cluster_id -H "Metadata-Flavor: Google")
 
-VXLANIP="10.200.0.$(( INSTANCE_ID + 1 ))"
+VXLANIP="10.200.0.${CLUSTER_ID}"
 MACHINE_NAME="cnuc-${INSTANCE_ID}"
 
 ### Setup the service to restart vxlan when rebooting
@@ -77,22 +78,29 @@ EOF
 chmod 644 ${SYSTEM_SERVICE_VXLAN}
 chmod 744 ${SETUP_VXLAN_SCRIPT}
 
-# Start vxlan service service
+# Setup vxlan service
 systemctl enable ${SYSTEM_SERVICE_NAME}
+# Start the vxlan service
+systemctl status ${SYSTEM_SERVICE_NAME}
 
 # setup SSH config to skip key checking
 cat >> ~/.ssh/config <<EOF
 
-# allow SSH without checking fingerprint
-Host ${VXLANIP}
+# allow SSH without checking fingerprint for the 10.200.0.0/24 addresses
+Host 10.200.0.*
     StrictHostKeyChecking no
 
 EOF
 
+# re-use the same SSH config for the ansible user
+cp ~/.ssh/config /home/${ANSIBLE_USER}/.ssh/config
+chmod 400 /home/${ANSIBLE_USER}/.ssh/config
+
+# Set ownership and permissions
 chmod 400 ~/.ssh/config
 
 # Verify VXLAN IP works
-ping -c3 ${VXLANIP}
+ping -c 3 ${VXLANIP}
 if [[ $? -gt 0 ]]; then
     echo "Cannot ping the vxlan IP address"
     exit 1
