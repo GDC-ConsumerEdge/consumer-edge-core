@@ -81,7 +81,7 @@ chmod 744 ${SETUP_VXLAN_SCRIPT}
 # Setup vxlan service
 systemctl enable ${SYSTEM_SERVICE_NAME}
 # Start the vxlan service
-systemctl status ${SYSTEM_SERVICE_NAME}
+systemctl start ${SYSTEM_SERVICE_NAME}
 
 # setup SSH config to skip key checking
 cat >> ~/.ssh/config <<EOF
@@ -94,6 +94,7 @@ EOF
 
 # re-use the same SSH config for the ansible user
 cp ~/.ssh/config /home/${ANSIBLE_USER}/.ssh/config
+chown ${ANSIBLE_USER} /home/${ANSIBLE_USER}/.ssh/config # note, just assigning owner since group is 0 anyway
 chmod 400 /home/${ANSIBLE_USER}/.ssh/config
 
 # Set ownership and permissions

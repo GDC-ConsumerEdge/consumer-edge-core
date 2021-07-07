@@ -106,7 +106,10 @@
 
 # Copy the public key to all other cluster machines
 - name: Pull {{ ssh_user_home }}/{{ ssh_key_name }}.pub to local box
-  fetch: src={{ ssh_user_home }}/{{ ssh_key_name }}.pub dest=/tmp/{{ ssh_key_name }}-{{ control_plane_ip }}.pub flat=yes
+  fetch:
+    src: "{{ ssh_user_home }}/{{ ssh_key_name }}.pub"
+    dest: "/tmp/{{ ssh_key_name }}-{{ control_plane_ip }}.pub"
+    flat: yes
   when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
   tags:
   - abm-install
