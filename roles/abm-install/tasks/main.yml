@@ -214,8 +214,33 @@
       dest: "{{ kubeconfig_shared_location }}"
       group: sudo
       state: link
+    when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
     tags:
     - abm-post-install
     - abm-install
+
+  # Copy the kubeconfig to local via primary machine
+  - name: Copy generated kubeconfig to local
+    fetch:
+      src: "{{ kubeconfig_shared_location }}"
+      dest: "/tmp/kubeconfig"
+      flat: yes
+    when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
+    tags:
+    - abm-post-install
+    - abm-install
+    - kubeconfig-share
+
+  - name: Copy the kubeconfig to other machines in cluster
+    ansible.builtin.copy:
+      src: "/tmp/kubeconfig"
+      dest: "{{ kubeconfig_shared_location }}"
+      remote_src: no
+    when: "(primary_cluster_machine is not defined) or (primary_cluster_machine == false)"
+    tags:
+    - abm-post-install
+    - abm-install
+    - kubeconfig-share
+
 
 # DONE
