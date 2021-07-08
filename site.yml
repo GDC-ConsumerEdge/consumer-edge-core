@@ -1,15 +1,9 @@
 ---
 
-- name: Update all inventory
-  import_playbook: update-servers.yml
+# Used as a simple entry to install ABM on ALL inventory
 
-## Only runs IF there are cloud resources
-- hosts: cloud_type_abm
-  become: true
-  become_user: root
-  roles:
-    - cloud-infra
-  vars: []
+- name: Install ABM on hardware inventory
+  import_playbook: hardware-full-install.yml
 
-- name: Install ABM on all inventory
-  import_playbook: everything-install.yml
+- name: Install ABM on cloud inventory
+  import_playbook: cloud-full-install.yml
