@@ -5,7 +5,7 @@
   vars:
     kubeconfig_shared_location: "/var/kubeconfig/kubeconfig"
   tags:
-    - nuc
+    - hardware
 
 - hosts: cloud_type_abm
   roles:

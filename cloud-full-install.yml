@@ -1,0 +1,19 @@
+
+---
+
+# Setup everything and install ABM (but not install software on top)
+- hosts: cloud_type_abm
+  become: true
+  become_user: root
+  roles:
+    - validate
+    - google-tools
+    - update
+    - ready-ubuntu
+    - setup-kvm
+    - abm-install
+    - abm-software
+    - abm-login-token
+  vars: []
+  tags:
+    - cloud

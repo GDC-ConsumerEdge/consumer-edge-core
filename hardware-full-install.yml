@@ -1,13 +1,12 @@
 
 ---
 
-# Setup everything and install ABM (but not install software on top)
-- hosts: cloud_type_abm
+# Installs Anthos Bare Metal on all inventory
+- hosts: workers
   become: true
   become_user: root
   roles:
     - validate
-    - cloud-infra
     - google-tools
     - update
     - ready-ubuntu
@@ -16,4 +15,5 @@
     - abm-software
     - abm-login-token
   vars: []
-
+  tags:
+    - hardware
