@@ -1,8 +1,8 @@
 
 ---
 
-# Installs Anthos Bare Metal on all inventory
-- hosts: workers
+# Setup everything and install ABM (but not install software on top)
+- hosts: all
   become: true
   become_user: root
   roles:

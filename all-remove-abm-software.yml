@@ -1,0 +1,24 @@
+
+---
+
+# Removes ABM from targeted machines and unregisters from GKE Hub
+
+# NOTE: must specify `--tags never` on the CLI to run this
+
+- hosts: workers
+  become: true
+  become_user: root
+  roles:
+    - abm-remove
+  vars: []
+  tags:
+  - hardware
+
+- hosts: cloud_type_abm
+  become: true
+  become_user: root
+  roles:
+    - abm-remove
+  vars: []
+  tags:
+  - cloud
