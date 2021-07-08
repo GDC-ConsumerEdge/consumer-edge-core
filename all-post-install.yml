@@ -1,0 +1,9 @@
+
+---
+
+# This playbook is used to run post-installation of the solution, typically for bug fixes and little changes
+- hosts: all
+  roles:
+    - abm-post-install
+  vars:
+    kubeconfig_shared_location: "/var/kubeconfig/kubeconfig"
