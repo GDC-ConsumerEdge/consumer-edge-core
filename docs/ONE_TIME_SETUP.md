@@ -23,38 +23,28 @@ In this "one-time-setup", you will perform four primary goals:
 
 <sup>†</sup> PXE is out of scope, but follows similar concept.
 
-## Goal 1 - Setup OS on Physical target machine(s)
+## Goal 1 - Provision target machine(s)
 
-> NOTE: Each of these steps are performed for each target machine.
+### Step 1 - Create asymetric keys for SSH
 
-> NOTE: This step is required for Physical targets and is not (cannot) be applied to Cloud targets
+1. Create (or use an existing) asymetric key-pair to SSH into all inventory. NOTE: the names of the keys below are defaults, so if you want to use different names, you will need to adjust ENV variables to match (not recommended).
 
-1. Create a bootable USB stick with Ubuntu 20.04 LTS
-    * USB Boot Stick (Ubuntu option) -- https://ubuntu.com/tutorials/create-a-usb-stick-on-ubuntu#1-overview
-    * USB Boot Stick (Windows option) -- https://ubuntu.com/tutorials/create-a-usb-stick-on-windows#1-overview
-    * USB Boot Stick (MacOS option) -- https://ubuntu.com/tutorials/create-a-usb-stick-on-macos#1-overview
+    > :warning: **DO NOT** use a passphrase, just hit [enter]
 
-    > NOTE: 20.10 will NOT work, only 18.04 LTS or 20.04 LTS is supported
+    ```bash
+    # SSH key-pair for physical machines
+    ssh-keygen -t ed25519 -f ~/.ssh/nucs
+    ```
+    ```bash
+    # SSH key-pair for Cloud machines
+    ssh-keygen -t ed25519 -f ~/.ssh/cnucs-cloud
+    ```
 
-1. Insert USB and install Ubuntu 20.04 LTS
+### Step 2 - Create and Provision Hardware or Cloud machines
 
-    > NOTE: USB may need to adjust UEFI/BIOS to boot from USB drive. Depending on BIOS/UEFI, this is found in the "boot" menu. For some BIOS, `F7` pressed during initial boot provides a quick `boot option` without editing the entire BIOS
+* Hardware Option - [this document details the provisioning of hardware](HARDWARE_PROVISION.md)
+* Cloud Option - [this document details the creation and baseline installation of GCE cloud machines](CLOUD_PROVISION.md)
 
-    1. During setup, select a hostname using some convention. In this repo, `nuc-x` is the convention. For example, Store 1's NUC would be hostname `nuc-1`, Store 2 would be `nuc-2`, etc.
-    1. (Optional, but recommended) If your router can reserve hostname->IP, reserve an IP but let Ubuntu use DHCP to acquire IP addresses
-    1. Create a new `user` and set a password (both will be used to access the target box). It's best to keep the same username and password for all *target machines* for automation purposes.
-        > Remember this `user` and `password`
-    1. Install "OpenSSH" and no other software during initial setup
-    1. Double check, you only set "hostname", created a user (use the same username and password for all machines) and you added OpenSSH
-    1. Reboot as prompted.
-    1. Login with the *username* and *password* created durin the setup. If any errors, restart process
-
-1. At the completion of this provisioning, you should be able to SSH into each of the target machine(s) using the same `username` and `password` established in the setup using the hostname convention `nuc-x`. Some domains/routers will automatically postfix `.lan` or `.localdomain`, so try these options if `nuc-x` does not resolve.
-    * Example
-        ```bash
-        # Prompted for password
-        ssh myusername@nuc-1
-        ```
 
 ## Goal 2 - Establishing Passwordless SSH
 
@@ -62,99 +52,59 @@ In this "one-time-setup", you will perform four primary goals:
 
 The following are performed from the **provisioning machine**.
 
-1. Ping each machine (note, if failures, try once again before getting nervous). Also, see note below about `.lan` or `.localdomain` suffix that some routers automatically append for hostname resolution. NOTE: `nuc` or `cnuc` may need to be adjusted based on Physical (`nuc`) or Cloud (`cnuc`)
+1. Ping each machine (note, if failures, try once again before getting nervous). Also, see note below about `.lan` or `.localdomain` suffix that some routers automatically append for hostname resolution.
+    > NOTE: At this point, `cnuc` has not been setup for hostname references.
+
+    > NOTE: First time run will prompt you to accept the new `fingerprint`.  Please type "yes" when prompted. If there is an SSH error, please see [Troubleshooting Inventory](#troubleshooting-inventory). Most of the time, you can run the suggested `ssh-keygen` command (ie: `ssh-keygen -f "/home/<user>/.ssh/known_hosts" -R "nuc-1"`) to remove the old fingerprint
+
     ```bash
-    # Set however many machines you have provisioned. This example is 5
-    export MACHINE_COUNT=5
+    # Set however many machines you have provisioned. This example is 3
+    export MACHINE_COUNT=3
     for i in `seq $MACHINE_COUNT`; do
-        HOSTNAME="nuc-$i.lan" # chose 'cnuc' or 'nuc' according to your scenario
-        ping -c 3 ${HOSTNAME}
+        HOSTNAME="nuc-$i" # chose 'cnuc' or 'nuc' according to your scenario
+        ssh abm-admin@${HOSTNAME} 'ping -c 3 google.com'
     done
     ```
-    > Check that your router provides `<hostname>.lan` or `<hostname>.localdomain` naming, if not, adjust to match
-
-    > NOTE: If this fails, you might want to add each hostname to your /etc/hosts file matching the `IP` of the target machine. There are many documents on the internet and furhter description is beyond the scope of this document.
-
-1. Create (or use) SSH key on provisioning box (your laptop, another machine, etc).
-    ```bash
-    # Physical targets
-    ssh-keygen -t ed25519 -f ~/.ssh/nucs
-    ```
-    ```bash
-    # Cloud targets
-    ssh-keygen -t ed25519 -f ~/.ssh/cnucs-cloud
-    ```
-    > :warning: **DO NOT** use a passphrase
 
 1. Setup SSH for passwordless access using SSH Configuration
-    * Create or add to ~/.ssh/config
-    * Replace `<user>` with the username created in step 1
-        * > NOTE: If working with cloud instances, see second SSH config file example
-    * Repeat block as needed to match the target machine count.
+    * Create or add configuration to your `~/.ssh/config` file
 
     #### Physical SSH Config
-    ```yaml
-    Host nuc-1.lan
-    HostName nuc-1.lan
-    User <user>
-    IdentityFile ~/.ssh/nucs
-
-    Host nuc-2.lan
-    HostName nuc-2.lan
-    User <user>
-    IdentityFile ~/.ssh/nucs
-
-    Host nuc-3.lan
-    HostName nuc-3.lan
-    User <user>
-    IdentityFile ~/.ssh/nucs
-
-    Host nuc-4.lan
-    HostName nuc-4.lan
-    User <user>
-    IdentityFile ~/.ssh/nucs
-
-    Host nuc-5.lan
-    HostName nuc-5.lan
-    User <user>
-    IdentityFile ~/.ssh/nucs
-    ```
-
-    #### Cloud SSH Config (optional)
-
-    > NOTE: The cloud and physical SSH Configs need to co-exist in same file IF you're using both options. Cloud is not required and it is recommended to use `gcloud compute ssh abm-admin@<IP of machine>` due to ephemeral nature of Cloud machines.
 
     ```yaml
-    # NOTE: hostname resolution is required (ie, use /etc/hosts with IP address corresponding to `cnuc-x`)
-    Host cnuc-1.lan
-    HostName cnuc-1.lan
-    User abm-admin
-    IdentityFile ~/.ssh/cnucs-cloud
+    ### Host configuration for all physical nucs
+    Host nuc-*
+        User abm-admin
+        StrictHostKeyChecking no
+        IdentityFile ~/.ssh/nucs
     ```
 
     > NOTE: The SSH key MUST be permissions `600` (rw owner only) and the config must be minimally `644` (rw owner, read other), but `600` is ok too
 
-1. OPTIONAL - Some routers and/or systems may not have `.lan` suffix name resolution. Entries can be made to the `/etc/hosts` file (linux only) for DNS resolution for `nuc-x.lan`. Below is an example where the resolution is to the Router's gateway (may not be your destination depending on local router)
+    #### Cloud SSH Config (optional)
+
+    > NOTE: The ansible playbooks use a Google Cloud plugin to [dynamically build the inventory file](#cloud-inventory-file), so SSH access isn't required, but it is very helpful for debugging and it is required (for now) when running `kubectl` commands on the cluster. There are a few options for setting up SSH to `cnuc` machines.
+
+    * Option 1 - Use the `gcloud compute ssh abm-admin@<IP of machine>`. You only need to know the IP of the machine (see [Verifying Inventory Status](#verifying-inventory-status) for an easy way to find CNUC->IP listing)
+
+    * Option 2 - Use SSH config just like physical NUCs. Any hostname references in the `~/.ssh/config` file need to be translated in `/etc/hosts` with the IP address to `cnuc-x`. See [cnuc Hostname Setup](#cnuc-hostname-setup) for scripts that assist in this process.
 
     ```yaml
-    # Example /etc/hosts file where each
-    192.168.2.2     nuc-1.lan
-    192.168.2.3     nuc-2.lan
-    192.168.2.4     nuc-3.lan
-    192.168.2.5     nuc-4.lan
-    192.168.2.6     nuc-5.lan
+    ### Host configuration for cnucs
+    Host cnuc-*
+        User <user>
+        StrictHostKeyChecking no
+        IdentityFile ~/.ssh/cnucs-cloud
     ```
 
-1. Copy SSH keys to all target machines
-    ```
-    ssh-copy-id ${user}@nuc-x.lan
-    ```
-    * Use the password and user created in step 1.
-    * Repeat for all machines
 1. Done! If you can SSH into all target machines without using a password or referencing an identity file, then you're ready to setup Ansible.
 
-## Goal 3 - Setup Ansible on the Provisioning machine
 
+## Goal 3 - Setup the Provisioning machine
+
+Setting up the machine has 4 steps, setting up python, instaling dependencies, provisioning a Google Service Account, and establishing some required environment variables.
+
+### Step 1 - Setup Python 3
 1. Provisioning machine needs to have Python 3.x (3.7+ is recommended)
 
     1. Test python version:
@@ -165,7 +115,7 @@ The following are performed from the **provisioning machine**.
 
 1. Sometimes systems have `python` and `python3`. Reference https://docs.ansible.com/ansible/latest/reference_appendices/python_3_support.html for reference on how to support `python3` (often adding `ansible_python_interpreter=/usr/bin/python3` to the Ansible config is required, along with all depenedencies installed with `pip3`)
 
-### Fast "install all depencencies"
+### Step 2 - Install all python depencencies
 1. Run this if you don't care about precise used/unused libraries
     ```bash
     pip install --upgrade pip # upgrade pip just-in-case
@@ -175,17 +125,9 @@ The following are performed from the **provisioning machine**.
     pip install google-auth
     ```
 
-## Goal 4 - Setting up Inventory files
+### Step 3 - Setting up GCP Service Account for provisioning
 
-Inventory files contain information about how to connect to target machines and variables specific to the type of inventory. There are two types of files that correspond to `physical` and `cloud`. One inventory file is required for each type, so if you want to use both physical and cloud, you will have 2 inventory files.
-
-### Cloud inventory file
-
-Inventory for GCP is dynamic, meaning the GCP module will query the project + region for cloud resources to use as inventory. As far as Ansible is concerned, GCP inventory is dynamic so the example inventory has placeholders that are replaced using `envsubst` (NOTE: `envsubst` may need to be added to the **provisioning machine**). When running playbooks, Ansible will use the pre-provisioned GCE instances. The inventory file does NOT build new GCE machines.
-
-1. Setup Environment Variables
-
-    Review the [required environment variables](../README.me#required-environment-variables) on the primary README documentation. Establish the required variables and proceed.
+Both `physical` and `cloud` installations use a GSA (`target-machine-gsa@<project-id>.iam.gserviceaccount.com`) to run commands inside the **target machines**. The installation process needs keys to securely pass (via Secrets Manager) the keys to each target machine. Follow the steps below to generate (or update) the GSA and create or re-create a set of keys for use.
 
 1. Create a service account key and set an environment varaible (`LOCAL_GSA_FILE`) to that location
 
@@ -200,11 +142,41 @@ Inventory for GCP is dynamic, meaning the GCP module will query the project + re
 
     > NOTE: Add the `export LOCAL_GSA_FILE=...` line to `.bashrc` or `.envrc` (if using `direnv`) so new shells can establish this required environment variable
 
+### Step 4 - Required environment variables
+
+> RECOMMENDATION: use [direnv](https://direnv.net/) to manage local environment variables per project. You would then store each of the below variables in a `.envrc` file at the root of the project.
+
+| Environment Variable | Required | Description | Default Value |
+|:---------------------|:--------:|:------------|:-------------:|
+| LOCAL_GSA_FILE       |  Y       |  Google Service Account key to a GSA that is used to provision and activate all Google-based services (all `gcloud` commands) from inside the Target machine(s) | N/A |
+| PROJECT_ID           |  N       |  Google Project ID to put clusters, Service Accounts and API services into | gcloud config |
+| SSH_PUB_KEY_LOCATION |  N       |  SSH public key location for Ansible | `$HOME/.ssh/cnucs-cloud.pub` |
+| ZONE                 |  N       |  Google default zone | gcloud config  |
+| SCM_TOKEN_USER       |  Y       |  Git repo token user/name | none  |
+| SCM_TOKEN_TOKEN      |  Y       |  Git repo token string | none  |
+
+GSA Permissions should include:
+- Editor (roles/editor) or Owner (roles/owner)
+- Storage Object Viewer (roles/storage.objectViewer)
+- Project IAM Admin (roles/resourcemanager.projectIamAdmin)
+- Secret Manager Admin (roles/secretmanager.admin)
+- Secret Manager Secret Accessor (secretmanager.secretAccessor)
+
+> NOTE: This is not necessarily the minimal-roles, further work will refine this). Please use `scripts/create-primary-gsa.sh` to generate the GSA and key.
+
+## Goal 4 - Setting up Inventory files
+
+Inventory files contain information about how to connect to target machines and variables specific to the type of inventory. There are two types of files that correspond to `physical` and `cloud`. One inventory file is required for each type, so if you want to use both physical and cloud, you will have 2 inventory files.
+
+### Cloud inventory file
+
+Inventory for GCP is dynamic, meaning the GCP module will query the project + region for cloud resources to use as inventory. As far as Ansible is concerned, GCP inventory is dynamic so the example inventory has placeholders that are replaced using `envsubst` (NOTE: `envsubst` may need to be added to the **provisioning machine**). When running playbooks, Ansible will use the pre-provisioned GCE instances. The inventory file does NOT build new GCE machines.
+
 1. Establish GCP Inventory File "inventory/gcp.yaml"
 
     ```bash
     # note "gcp.yaml", this name convention is required for the gcp module plugin
-    envsubst < inventory-cloud-example.yaml > inventory/gcp.yaml
+    envsubst < templates/inventory-cloud-example.yaml > inventory/gcp.yaml
     ```
 
 > NOTE: If the `envsubst` dependency is missing, install using `apt-get install gettext-base`
@@ -215,20 +187,30 @@ In order to create an inventory file, use the example file `inventory-physical-e
 
 ```bash
 # Example using envsubst (not required unless the example file has environment variables)
-envsubst < inventory-physical-example.yaml > inventory/inventory.yaml
+envsubst < templates/inventory-physical-example.yaml > inventory/inventory.yaml
 ```
 
 > NOTE: Check the contents and make sure the quantity of hostnames is correct for your situation
 
-### Validating Inventory Files
 
-1. Test inventory integration
+## Verifying Inventory Status
 
-    1. Run the `scripts/health-check.sh` script to test inventory.
+1. The script `scripts/health-check.sh` was created to ensure that passwordless SSH access is functional, and Ansible inventory is properly setup. Running this script should output a one-line per machine response to a "ping" and should succeed. If there are any failures, validate and possibly repeat the steps above.
 
-    1. If any errors, see below section on "Troubleshooting Inventory"
+## CNUC Hostname Setup
 
-#### Troubleshooting Inventory
+1. If you have any `cnuc`s in use, there is a second script that provides additional helpers like cut-copy-paste ready SSH strings and `/etc/hosts` configuration. This script uses `gcloud` to query the machines and outputs their IP addresses.
+    1. You can safely cut-copy-paste the SSH commands.
+    1. You can also safely cut-copy-paste the lower section that correlates cnuc IPs to their hostname. This can be placed into your `/etc/hosts` file.
+
+    > NOTE: IPs are ephemeral, so the `/etc/hosts` file may need updated over time as IPs shift
+
+## Ready to provision
+
+After completing all of these steps, you are ready to proceed with provisioning.
+
+
+## Troubleshooting Inventory
 
 * **IF** using WSL2 on Windows and Ubuntu, a known bug within WSL and clock synchronization exists (https://www.reddit.com/r/bashonubuntuonwindows/comments/ihq7ar/clock_for_wsl_is_different_than_windows_how_to/).  This will manifest as an error `invalid_grant` on the JWT token, despite a fresh GSA key.
 
@@ -237,16 +219,19 @@ envsubst < inventory-physical-example.yaml > inventory/inventory.yaml
     sudo hwclock -s
     ```
 
+* Sometimes the JWT token used in the Ansible GCP plugin may expire and you will need to re-auth the `default application` credentials. Sometimes this also requires a reboot of the machine.
+    * `gcloud auth application-default login`
+
 * Try SSH to the failed connections
 
     ```bash
-    ssh -i ~/.ssh/nuc <username>@<hostname>
+    ssh -i ~/.ssh/nuc abm-admin@<hostname>
     ## IF not successful, verify SSH key has been established and copied to target machine(s)
 
-    ssh <username>
+    ssh <hostname>
     ## If not successful, check the SSH Config for proper HOST, HOSTNAME, and USER configuration
     ```
 
-## Ready to provision
+* Very possible to hit `fingerprint` issues with SSH. Most of the time, you can run the suggested command and then SSH back into the machine and accept the new fingerprint.
 
-After completing all of these steps, you are ready to proceed with provisioning.
+    * Most of the time, you can run the suggested `ssh-keygen` command (ie: `ssh-keygen -f "/home/<user>/.ssh/known_hosts" -R "nuc-1"`) to remove the old fingerprint

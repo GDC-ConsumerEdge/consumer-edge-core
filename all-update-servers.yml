@@ -1,0 +1,20 @@
+
+# Runs apt-get update & apt-get upgrade (and some other tools like gcloud update) on ALL inventory
+
+- hosts: workers
+  become: true
+  become_user: root
+  roles:
+    - update
+  vars: []
+  tags:
+  - hardware
+
+- hosts: cloud_type_abm
+  become: true
+  become_user: root
+  roles:
+    - update
+  vars: []
+  tags:
+  - cloud

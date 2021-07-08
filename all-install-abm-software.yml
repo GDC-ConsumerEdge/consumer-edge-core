@@ -1,0 +1,22 @@
+
+---
+
+- hosts: workers
+  become: true
+  become_user: root
+  roles:
+    - abm-software
+    - abm-login-token
+  vars: []
+  tags:
+    - hardware
+
+- hosts: cloud_type_abm
+  become: true
+  become_user: root
+  roles:
+    - abm-software
+    - abm-login-token
+  vars: []
+  tags:
+    - cloud

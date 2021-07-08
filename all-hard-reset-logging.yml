@@ -1,0 +1,22 @@
+---
+
+# This playbook is ONLY used to clean/reset logging when ABM fills logs and starts to evacuate pods due to space concerns
+# This is going to be fixed with ABM 1.9+ where control on how large the logs can get will be configurable
+
+- hosts: workers
+  become: true
+  become_user: root
+  roles:
+    - reset-logs
+  vars: []
+  tags:
+  - hardware
+
+- hosts: cloud_type_abm
+  become: true
+  become_user: root
+  roles:
+    - reset-logs
+  vars: []
+  tags:
+  - cloud
