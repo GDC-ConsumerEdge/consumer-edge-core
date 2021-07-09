@@ -57,6 +57,7 @@ for ip in \${IPs[@]}; do
 done
 
 # Enable VXLAN
+ip link set down dev vxlan0
 ip link set up dev vxlan0
 
 EOF
