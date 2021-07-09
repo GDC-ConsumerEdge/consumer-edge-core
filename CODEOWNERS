@@ -13,5 +13,8 @@
 # limitations under the License.
 
 # Root code owner
-* @ensor
-/** @ensor
+* @default-codeowner
+
+# Ansible roles
+/roles/ @ensor @sekhrivijay1 @matt-frederick
+
