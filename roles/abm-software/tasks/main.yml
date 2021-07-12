@@ -223,6 +223,7 @@
 ################# Setup secrets for git-creds and namespace repos per each franchise
 
 - name: "Create git-cred secrets in GCP Secret Manager"
+  run_once: true # only need to run on one machine, create all of the secets
   shell: |
     EXISTS=$(gcloud secrets list --filter="{{ item.git_creds_gcp_secret_name }}" --format="value(name)" --project="{{ google_project_id }}")
     if [ -z "${EXISTS}" ]]; then
@@ -238,13 +239,13 @@
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
-    - (cluster_name == item.stores[0])
   tags:
   - abm-software
   - enable-acm
   - post-acm
 
 - name: "Add new version to git-cred franchise secret in GCP Secret Manager IF no current or active versions exists"
+  run_once: true # only need to run on one machine, create all of the secets
   shell: |
     EXISTS=$(gcloud secrets versions list {{ item.git_creds_gcp_secret_name }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
     if [ -z "${EXISTS}" ]; then
@@ -255,7 +256,6 @@
   changed_when: '"ADDED" in out.stdout_lines'
   loop: "{{ franchises }}"
   when:
-    - (cluster_name == item.stores[0])
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
   environment:
