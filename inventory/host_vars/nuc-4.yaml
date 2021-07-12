@@ -1,7 +1,7 @@
 cluster_name: "nuc-4"
 cluster_index: 3
 primary_cluster_machine: true
-acm_cluster_name: "store-2-1"
+acm_cluster_name: "store-usa-234-2"
 control_plane_ip: "192.168.1.14"
 control_plane_ips: [
   "192.168.1.14",

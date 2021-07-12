@@ -1,6 +1,6 @@
 cluster_name: "nuc-5"
 cluster_index: 4
-acm_cluster_name: "store-2-2"
+
 control_plane_ip: "192.168.1.15"
 
 primary_ip: "192.168.1.14"
