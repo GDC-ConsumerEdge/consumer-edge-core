@@ -1,2 +1,5 @@
 ---
 # vars file for ready-ubuntu
+
+# User that has sudo, password less SSH access to control_plane_ip
+abm_install_user: "el-gato"
