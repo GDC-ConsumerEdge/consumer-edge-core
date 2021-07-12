@@ -1,8 +1,8 @@
 cluster_name: "nuc-1"
 cluster_index: 0
 primary_cluster_machine: true
-acm_cluster_name: "store-1-1"
-control_plane_ip: "192.168.1.11" # FIXME: This is tied to the "primary_ip" in all of the worker machines
+acm_cluster_name: "store-usa-123-2"
+control_plane_ip: "192.168.1.11"
 control_plane_ips: [
   "192.168.1.11",
   "192.168.1.12",

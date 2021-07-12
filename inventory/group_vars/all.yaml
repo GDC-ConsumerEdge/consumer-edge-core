@@ -21,17 +21,17 @@ vm_guest_image: "windows-server-2016-eval-en-us.iso"
 # ACM (using 'token' method)
 acm_root_repo: "https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/root-repo-usa-market.git"
 
-
 # git_creds_gcp_secret_name is the secret created to hold the Git PAT info corresponding to that Namespace Repo
 # franchise_name, franchise_number aren't used
-# Stores: only the (c)nuc machine (primary machine) that matches will setup the secret on that machine
+# Stores: not used now, secrets are created for all franchises in GCP Secrets Manager, ExternalSecrets are controlled in the root-repo for each franchise
+#      Associations of franchise/store -> cluster is done at the inventory level on "acm_cluster_name" (an unique name across the cluster space)
 franchises: [
   {
     franchise_number: "123",
     git_creds_gcp_secret_name: "franchise-123-git-creds", # Secret to access the namespace repo containing the franchise's information
     franchise_name: "ACME",
     stores: [
-      "cnuc-1"
+      "cnuc-1" # store-usa-123-1
     ]
   },
   {
@@ -39,23 +39,23 @@ franchises: [
     franchise_number: "234",
     git_creds_gcp_secret_name: "franchise-234-git-creds",
     stores: [
-      "cnuc-4"
+      "nuc-1" # store-usa-234-3
     ]
   },
   {
     franchise_name: "Penatrode",
-    franchise_number: "345",
+    franchise_number: "123",
     git_creds_gcp_secret_name: "franchise-123-git-creds",
     stores: [
-      "nuc-1"
+      "cnuc-4" # store-usa-123-2
     ]
   },
   {
     franchise_name: "UberTrinken",
-    franchise_number: "456",
-    git_creds_gcp_secret_name: "franchise-456-git-creds",
+    franchise_number: "234",
+    git_creds_gcp_secret_name: "franchise-234-git-creds",
     stores: [
-      "nuc-4"
+      "nuc-4" # store-usa-234-2
     ]
   }
 ]

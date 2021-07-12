@@ -3,7 +3,7 @@
 
 cluster_name: "cnuc-1"
 primary_cluster_machine: true
-acm_cluster_name: "store-4-1"
+acm_cluster_name: "store-usa-123-1"
 control_plane_ip: "10.200.0.2"
 control_plane_ips: [
   "10.200.0.2",
