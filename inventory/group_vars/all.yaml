@@ -23,12 +23,12 @@ acm_root_repo: "https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/con
 
 
 # git_creds_gcp_secret_name is the secret created to hold the Git PAT info corresponding to that Namespace Repo
-# franchise_name isn't really used
+# franchise_name, franchise_number aren't used
 # Stores: only the (c)nuc machine (primary machine) that matches will setup the secret on that machine
 franchises: [
   {
-    franchise_number: "1",
-    git_creds_gcp_secret_name: "franchise-1-git-creds",
+    franchise_number: "123",
+    git_creds_gcp_secret_name: "franchise-123-git-creds", # Secret to access the namespace repo containing the franchise's information
     franchise_name: "ACME",
     stores: [
       "cnuc-1"
@@ -36,24 +36,24 @@ franchises: [
   },
   {
     franchise_name: "Innotec",
-    franchise_number: "2",
-    git_creds_gcp_secret_name: "franchise-2-git-creds",
+    franchise_number: "234",
+    git_creds_gcp_secret_name: "franchise-234-git-creds",
     stores: [
       "cnuc-4"
     ]
   },
   {
     franchise_name: "Penatrode",
-    franchise_number: "3",
-    git_creds_gcp_secret_name: "franchise-3-git-creds",
+    franchise_number: "345",
+    git_creds_gcp_secret_name: "franchise-123-git-creds",
     stores: [
       "nuc-1"
     ]
   },
   {
     franchise_name: "UberTrinken",
-    franchise_number: "4",
-    git_creds_gcp_secret_name: "franchise-4-git-creds",
+    franchise_number: "456",
+    git_creds_gcp_secret_name: "franchise-456-git-creds",
     stores: [
       "nuc-4"
     ]
