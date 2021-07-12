@@ -1,0 +1,8 @@
+#!/bin/bash
+
+nmap -sn 10.200.0.$START-$END
+
+if [[ "$?" -gt 0 ]]; then
+    echo "There were errors"
+    exit 1
+fi

@@ -18,7 +18,7 @@ remote_gsa_key: "/var/keys"
 
 # Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
 # bmctl binary version
-bmctl_version: "1.8.0" # ABM-Install role has this setting too, watch out if one changes
+bmctl_version: "1.8.1" # ABM-Install role has this setting too, watch out if one changes
 
 kubectx_version: "0.9.3"
 
