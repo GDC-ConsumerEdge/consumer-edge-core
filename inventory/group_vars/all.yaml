@@ -8,6 +8,9 @@ google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}"
 local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
 tools_base_path: "/var/google-tools-install"
 
+kubeconfig_shared_root: "/var/kubeconfig"
+kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
+
 # SCM (GitLab, GitHub access token)
 scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') }}"
 scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
@@ -16,16 +19,19 @@ gcs_bucket_guest_vm: "anthos-consumer-edge-vm-isos"
 vm_guest_image: "windows-server-2016-eval-en-us.iso"
 
 # ACM (using 'token' method)
-acm_root_repo: "https://gitlab.com/mike-ensor/acm-multi-root-demo.git"
+acm_root_repo: "https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/root-repo-usa-market.git"
 
+
+# git_creds_gcp_secret_name is the secret created to hold the Git PAT info corresponding to that Namespace Repo
+# franchise_name isn't really used
+# Stores: only the (c)nuc machine (primary machine) that matches will setup the secret on that machine
 franchises: [
   {
     franchise_number: "1",
     git_creds_gcp_secret_name: "franchise-1-git-creds",
     franchise_name: "ACME",
     stores: [
-      "nuc-1",
-      "nuc-2"
+      "cnuc-1"
     ]
   },
   {
@@ -33,8 +39,7 @@ franchises: [
     franchise_number: "2",
     git_creds_gcp_secret_name: "franchise-2-git-creds",
     stores: [
-      "nuc-3",
-      "nuc-4"
+      "cnuc-4"
     ]
   },
   {
@@ -42,23 +47,15 @@ franchises: [
     franchise_number: "3",
     git_creds_gcp_secret_name: "franchise-3-git-creds",
     stores: [
-      "nuc-5"
+      "nuc-1"
     ]
   },
   {
     franchise_name: "UberTrinken",
     franchise_number: "4",
-    git_creds_gcp_secret_name: "franchise-3-git-creds",
+    git_creds_gcp_secret_name: "franchise-4-git-creds",
     stores: [
-      "cnuc-1"
-    ]
-  },
-  {
-    franchise_name: "MassLitre",
-    franchise_number: "5",
-    git_creds_gcp_secret_name: "franchise-3-git-creds",
-    stores: [
-      "cnuc-2"
+      "nuc-4"
     ]
   }
 ]
