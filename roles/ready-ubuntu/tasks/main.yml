@@ -14,6 +14,8 @@
     pkg:
     - apt-transport-https
     - ca-certificates
+    - net-tools
+    - nmap
     - curl
     - wget
     - gnupg-agent
@@ -158,6 +160,24 @@
     dest: "/etc/sysctl.d/24-nf_conntrack_max.conf"
   tags:
   - temp-fix
+  - ubuntu-setup
+
+# Copy over the vxlan status verify script
+- name: Copy VXLAN status script
+  template:
+    src: vxlan-status-check.sh.j2
+    dest: "/var/vxlan-status-check.sh"
+    mode: '0755' # read/write/execute owner, everyone else read/execute
+  tags:
+  - network-vxlan
+  - ubuntu-setup
+
+# Run VXLAN script
+- name: Run script for vxlan status
+  command:
+    cmd: "/var/vxlan-status-check.sh"
+  tags:
+  - network-vxlan
   - ubuntu-setup
 
 - name: "Setup docker on host machine"
