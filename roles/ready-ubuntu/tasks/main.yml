@@ -189,7 +189,7 @@
 
 
 - name: install ops agent 
-  script: install-agents.sh > /var/log/agent-logs.txt
+  script: files/install-agents.sh > /var/log/agent-logs.txt
   args:
     creates: /var/log/agent-logs.txt
   tags:
