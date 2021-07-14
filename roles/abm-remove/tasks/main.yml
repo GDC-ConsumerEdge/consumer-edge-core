@@ -39,7 +39,7 @@
 - name: Remove kubeconfig folder
   ansible.builtin.file:
     path: "{{ kubeconfig_shared_root }}"
-    state: "absent"
+    state: absent
   tags:
   - abm-remove
   - kubeconfig-remove
