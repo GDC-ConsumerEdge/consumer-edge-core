@@ -11,6 +11,16 @@ tools_base_path: "/var/google-tools-install"
 kubeconfig_shared_root: "/var/kubeconfig"
 kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
 
+# Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
+# Version of Anthos Bare Metal to install
+abm_version: "1.8.1" # verify coupling of ABM to BMCTL versions
+# bmctl binary version
+#TODO: set this up to query for the version, then upgrade automatically if updated
+bmctl_version: "1.8.1" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
+
+# Force Upgrade of tools (typically used when updating the ABM version above)
+force_tools_upgrade: false
+
 # SCM (GitLab, GitHub access token)
 scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') }}"
 scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"

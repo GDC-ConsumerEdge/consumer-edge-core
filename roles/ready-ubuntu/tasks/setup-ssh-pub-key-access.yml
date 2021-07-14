@@ -1,0 +1,69 @@
+### Add pub-key to facts by name
+- name: Get Public Key
+  shell: "cat {{ ssh_user_home }}/{{ ssh_key_name }}.pub"
+  become_user: "{{ abm_install_user }}"
+  register: key_value
+  tags:
+  - abm-ssh
+  - debug-ssh
+
+- name: Add key to dictionary
+  set_fact:
+    keys: "{{ keys | default({}) | combine( { cluster_name: key_value.stdout } ) }}"
+    cacheable: true
+  tags:
+  - abm-ssh
+  - debug-ssh
+
+- name: Create tmp authorized_keys file contain all pub keys
+  local_action:
+    module: lineinfile
+    line: "{{ item.value }}"
+    dest: /tmp/ssh-keys
+    create: true
+  loop:
+    - "{{ lookup('dict', keys) }}"
+  tags:
+  - abm-ssh
+  - debug-ssh
+
+### Loop pub-key facts and add all of them to {{ ssh_user_home }}/authorized_keys
+- name: Copy authorized_keys to remote
+  become_user: "{{ abm_install_user }}"
+  ansible.builtin.copy:
+    src: /tmp/ssh-keys
+    dest: "{{ ssh_user_home }}/authorized_keys"
+    mode: '0500'
+  tags:
+  - abm-ssh
+  - debug-ssh
+
+- name: Setup keyless SSH from primary to all others in group
+  command:
+    cmd: ssh-keyscan {{ machine }} >> {{ ssh_user_home }}/known_hosts
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+    - (control_plane_ip != machine)
+  loop: "{{ control_plane_ips }}"
+  loop_control:
+    loop_var: machine
+  tags:
+  - abm-ssh
+  - debug-ssh
+
+### Test by ssh 10.200.0.x 'echo hi'
+- name: verify SSH access to other machines
+  become_user: "{{ abm_install_user }}"
+  command:
+    cmd: ssh {{ machine }} 'echo this-works'
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+    - (control_plane_ip != machine)
+  loop: "{{ control_plane_ips }}"
+  loop_control:
+    loop_var: machine
+  tags:
+  - abm-ssh
+  - debug-ssh
