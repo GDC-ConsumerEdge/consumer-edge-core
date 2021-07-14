@@ -61,8 +61,15 @@
     - tool-install
 
 ### Setup Path & Auto-complete
+  - name: Setting up Google App Creds for non-interactive shells
+    lineinfile:
+      path: /etc/environment
+      line: 'GOOGLE_APPLICATION_CREDENTIALS="/var/keys/gsa-key.json"'
+    tags:
+    - profile
+    - initial-install
+    - non-interactive-shell
 
-### TODO: If the requirement is to have all users access gcloud, kubectl, etc...then add the GOOGLE_APPLICATION_CREDENTIALS here along with common location & chmod
   - name: Add gcloud and tools to PATH
     blockinfile:
       path: /etc/profile.d/bash_completion.sh
