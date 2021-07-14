@@ -155,15 +155,28 @@
     - initial-install
     - tool-install
 
+### IF upgrading BMCTL, remove existing
+  - name: Remove bmctl
+    ansible.builtin.file:
+      path: "/usr/local/bin/bmctl"
+      state: absent
+    when:
+      - force_tools_upgrade is defined
+      - force_tools_upgrade == True
+    tags:
+      - initial-install
+      - tool-install
+
+### Find versions with:  gsutil ls -al gs://anthos-baremetal-release/bmctl
   - name: Install Anthos Bare Metal CLI
     shell: |
       gsutil cp gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl {{ tools_base_path }}
       chmod a+x {{ tools_base_path }}/bmctl
-      mv {{ tools_base_path }}/bmctl /usr/bin/bmctl
+      mv {{ tools_base_path }}/bmctl /usr/local/bin/bmctl
       bmctl version
       exit $?
     args:
-      creates: /usr/bin/bmctl
+      creates: /usr/local/bin/bmctl
       executable: /bin/bash
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
