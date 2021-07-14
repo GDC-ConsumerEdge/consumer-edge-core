@@ -1,9 +1,6 @@
 ---
 # vars file for abm-install
 
-# Version can be found:
-abm_version: "1.8.1"
-
 # Folder to run installation out of
 abm_install_folder: "/var/abm-install"
 abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"
@@ -32,7 +29,7 @@ services_cidr: "10.50.0.0/16"    # avoid overlap with KIND IPs (10.96.0.0/16)
 local_pvc_mount: "/opt/pvc-disk"
 local_share_pvc_mount: "/opt/localpv-share" # Default value
 enable_application_logging: true
-container_runtime: "docker" # default
+container_runtime: "containerd" # docker or containerd
 
 # NOTE: Cluster-specific variables are in the inventory file
 
