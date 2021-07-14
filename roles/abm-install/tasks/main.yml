@@ -148,6 +148,31 @@
     - abm-create
     - build-config
 
+### For caution, re-run setup of VXLAN
+  - name: Run startup for vxlan
+    command:
+      cmd: "/var/setup-vxlan.sh"
+    when:
+      - is_cloud_resource is defined
+      - is_cloud_resource == True
+    tags:
+    - network-vxlan
+    - abm-install
+    - abm-config
+    - mike-one-time
+
+### Run VXLAN is up script (only for cloud resources)
+  - name: Run script for vxlan status
+    command:
+      cmd: "/var/vxlan-status-check.sh"
+    when:
+      - is_cloud_resource is defined
+      - is_cloud_resource == True
+    tags:
+    - network-vxlan
+    - abm-install
+    - abm-config
+
 ### Check cluster configuration
   - name: Validate configuration file updates
     command:
@@ -168,7 +193,10 @@
 ### Create cluster configuration
   - name: "Create cluster {{ cluster_name }} -- (be patient, this takes 20-40 minutes)"
     command: bmctl create cluster --cluster={{ cluster_name }}
-    when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
+    when:
+      - primary_cluster_machine is defined
+      - abm_installed.stat.exists == False
+      - primary_cluster_machine == True
     args:
       chdir: "{{ abm_install_folder }}"
       creates: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
@@ -200,47 +228,10 @@
     - abm-install
     - abm-post-install
 
-  - name: Set insecure permissions to allow kubens to modify configuration when not root
-    ansible.builtin.file:
-      path: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
-      mode: '0666' # allow read/write to all (yes, this is maybe not great, but useful for kubens)
-    tags:
-    - abm-post-install
-    - abm-install
-
-  - name: Symbolic link to kubeconfig
-    ansible.builtin.file:
-      src: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
-      dest: "{{ kubeconfig_shared_location }}"
-      group: sudo
-      state: link
-    when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
-    tags:
-    - abm-post-install
-    - abm-install
-
-  # Copy the kubeconfig to local via primary machine
-  - name: Copy generated kubeconfig to local
-    fetch:
-      src: "{{ kubeconfig_shared_location }}"
-      dest: "/tmp/kubeconfig"
-      flat: yes
-    when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
+### Share kubeconfig with others in the cluster
+  - name: "Share kubeconfig with others in cluster"
+    include: share-kubeconfig.yml
     tags:
     - abm-post-install
     - abm-install
     - kubeconfig-share
-
-  - name: Copy the kubeconfig to other machines in cluster
-    ansible.builtin.copy:
-      src: "/tmp/kubeconfig"
-      dest: "{{ kubeconfig_shared_location }}"
-      remote_src: no
-    when: "(primary_cluster_machine is not defined) or (primary_cluster_machine == false)"
-    tags:
-    - abm-post-install
-    - abm-install
-    - kubeconfig-share
-
-
-# DONE
