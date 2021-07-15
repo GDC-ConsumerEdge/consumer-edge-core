@@ -42,6 +42,50 @@
   - abm-software
   - abm-config
 
+### Add External Secrets
+
+- name: Create folder for External Secrets files
+  file:
+    path: '{{ external_secrets_files }}'
+    state: directory
+    mode: '0755'
+  tags:
+  - external-secrets-operator
+  - external-secrets-copy
+
+# Copy over the external secrets operator and CRD to all inventory
+- name: Copy External Secrets Operator and CRD files
+  copy:
+    src: "{{ item }}"
+    dest: "{{ external_secrets_files }}"
+    mode: '0444' # read/write/execute owner, everyone else read/execute
+  with_fileglob: "external-secrets-c*.yaml"
+  tags:
+  - external-secrets-operator
+  - external-secrets-copy
+
+- name: "Install External Secrets Operator (b/185519826)"
+  shell: |
+      kubectl apply -f {{ external_secrets_files }}/external-secrets-crd.yaml
+      # Allow for the API to register the API
+      sleep 5s
+      kubectl wait --for=condition=established --timeout=600s crd externalsecrets.kubernetes-client.io
+      exit $?
+  args:
+    executable: /bin/bash
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  retries: 3
+  register: result
+  until: result.rc == 0
+  tags:
+  - external-secrets-operator
+  - external-secrets-apply
+
+### ACM
 - name: "Enable ACM"
   command:
     cmd: gcloud alpha container hub config-management enable
