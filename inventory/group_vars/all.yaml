@@ -18,6 +18,16 @@ abm_version: "1.8.1" # verify coupling of ABM to BMCTL versions
 #TODO: set this up to query for the version, then upgrade automatically if updated
 bmctl_version: "1.8.1" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
 
+####
+#### Anthos Config Management
+####
+
+# gsutil ls -al gs://config-management-release/released/
+acm_version: "1.8.0"
+# ACM (using 'token' method)
+acm_root_repo: "https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/root-repo-usa-market.git"
+
+
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
 
@@ -27,9 +37,6 @@ scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
 
 gcs_bucket_guest_vm: "anthos-consumer-edge-vm-isos"
 vm_guest_image: "windows-server-2016-eval-en-us.iso"
-
-# ACM (using 'token' method)
-acm_root_repo: "https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/root-repo-usa-market.git"
 
 # git_creds_gcp_secret_name is the secret created to hold the Git PAT info corresponding to that Namespace Repo
 # franchise_name, franchise_number aren't used

@@ -1,8 +1,9 @@
 
-# gsutil ls -al gs://config-management-release/released/
-acm_version: "1.8.0"
-
+# Home directory for ACM download and operations
 acm_config_files: "/var/acm-configs"
+
+# Home directory for external secrets download and operations
+external_secrets_files: "/var/external-secrets"
 
 root_repository_branch: "main"
 root_repository_policy_dir: "/config"
