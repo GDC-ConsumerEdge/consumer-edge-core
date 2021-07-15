@@ -220,6 +220,14 @@
     - abm-install
     - abm-post-install
 
+### Setup kubeconfig for all clusters
+  - name: "Share kubeconfig with others in cluster"
+    include: share-kubeconfig.yml
+    tags:
+    - abm-post-install
+    - abm-install
+    - kubeconfig-share
+
   - name: "Setup profile.d for kubeconfig"
     template:
       src: profile-user.sh.j2
@@ -227,11 +235,3 @@
     tags:
     - abm-install
     - abm-post-install
-
-### Share kubeconfig with others in the cluster
-  - name: "Share kubeconfig with others in cluster"
-    include: share-kubeconfig.yml
-    tags:
-    - abm-post-install
-    - abm-install
-    - kubeconfig-share
