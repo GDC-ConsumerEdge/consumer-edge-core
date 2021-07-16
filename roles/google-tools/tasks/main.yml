@@ -6,7 +6,9 @@
     file:
       path: '{{ remote_gsa_key }}'
       state: directory
-      mode: '0700'
+      mode: '0750'
+      group: 'sudo'
+      owner: 'root'
     tags:
     - initial-install
     - tool-authentication
@@ -15,7 +17,9 @@
     copy:
       src: '{{ local_gsa_key }}'
       dest: '{{ remote_gsa_key }}/gsa-key.json'
-      mode: '0400' # read only by user
+      mode: '0440' # read only by sudo and root, no guest
+      group: 'sudo'
+      owner: 'root'
     tags:
     - initial-install
     - tool-authentication
@@ -70,51 +74,39 @@
     - initial-install
     - non-interactive-shell
 
-  - name: Add gcloud and tools to PATH
-    blockinfile:
+#### Setting up non-interactive PATH for gcloud
+  - name: Add gcloud to PATH on all shells (including non-interactive)
+    lineinfile:
+      path: /etc/environment
+      regexp: 'PATH="(\/usr\/local\/sbin:\/usr\/local\/bin:\/usr\/sbin:\/usr\/bin:\/sbin:\/bin:\/usr\/games:\/usr\/local\/games:\/snap\/bin)"$' #uugghhly...but works
+      line: 'PATH="\1:/var/google-tools-install/google-cloud-sdk/bin"'
+      backrefs: yes
+      state: present
+    tags:
+    - profile
+    - initial-install
+    - non-interactive-shell
+
+  - name: Add gcloud BASH completion
+    lineinfile:
       path: /etc/profile.d/bash_completion.sh
-      block: |
-        # The next line updates PATH for the Google Cloud SDK.
-        if [ -f '/var/google-tools-install/google-cloud-sdk/path.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/path.bash.inc'; fi
-
-        # The next line enables shell command completion for gcloud.
-        if [ -f '/var/google-tools-install/google-cloud-sdk/completion.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/completion.bash.inc'; fi
-      marker: "# { mark } Added by Ansible google-tools task"
+      line: "if [ -f '/var/google-tools-install/google-cloud-sdk/completion.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/completion.bash.inc'; fi"
     tags:
     - profile
     - initial-install
+    - non-interactive-shell
 
-  - name: Add gcloud and tools to PATH for Root
-    blockinfile:
-      path: /root/.bashrc
-      block: |
-        export GOOGLE_APPLICATION_CREDENTIALS=/root/.gcloud/gsa-key.json
-        # The next line updates PATH for the Google Cloud SDK.
-        if [ -f '/var/google-tools-install/google-cloud-sdk/path.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/path.bash.inc'; fi
-
-        # The next line enables shell command completion for gcloud.
-        if [ -f '/var/google-tools-install/google-cloud-sdk/completion.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/completion.bash.inc'; fi
-      marker: "# { mark } Added by Ansible google-tools task"
+  - name: Add gcloud BASH completion
+    lineinfile:
+      path: /etc/profile.d/gcloud_auth.sh
+      line: "gcloud auth activate-service-account --key-file={{ remote_gsa_key }}/gsa-key.json --project {{ google_project_id }}"
+      state: present
+      create: yes
     tags:
     - profile
     - initial-install
-
-  - name: Authenticate gcloud
-    shell: |
-      gcloud auth activate-service-account --key-file={{ remote_gsa_key }}/gsa-key.json --project {{ google_project_id }}
-      mkdir -p /root/.gcloud
-      cp {{ remote_gsa_key }}/gsa-key.json /root/.gcloud/gsa-key.json
-      export GOOGLE_APPLICATION_CREDENTIALS=/root/.gcloud/gsa-key.json
-      gcloud config configurations list
-      exit $?
-    args:
-      executable: /bin/bash
-      creates: /root/.gcloud/gsa-key.json
-    environment:
-      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-    tags:
-    - initial-install
-    - tool-install
+    - non-interactive-shell
+    - gcloud-setup
 
   - name: Enable services
     command:
@@ -154,6 +146,56 @@
     tags:
     - initial-install
     - tool-install
+
+## Create download directory for KubePS1
+
+  - name: Create directory for kube-ps1
+    file:
+      path: '/var/kube-ps1'
+      state: directory
+      mode: '0755'
+      group: 'sudo'
+      owner: 'root'
+    tags:
+    - optional
+    - tool-install
+    - kube-ps1
+
+## Download kube_ps1
+  - name: Download kube-kube_ps1
+    ansible.builtin.unarchive:
+      src: "https://github.com/jonmosco/kube-ps1/archive/refs/tags/v{{ kube_ps1_version }}.tar.gz"
+      dest: /var/kube-ps1
+      remote_src: yes
+      creates: "/var/kube-ps1/kube-ps1-{{ kube_ps1_version }}"
+    tags:
+    - optional
+    - tool-install
+    - kube-ps1
+
+  - name: Add source of kube-ps1 to bashrc
+    lineinfile:
+      path: "/home/{{ item }}/.bashrc"
+      line: 'source "/var/kube-ps1/kube-ps1-{{ kube_ps1_version }}/kube-ps1.sh"'
+    loop:
+      - "{{ ansible_user }}"
+      - "{{ abm_install_user }}"
+    tags:
+    - optional
+    - tool-install
+    - kube-ps1
+
+  - name: Add kube_ps1 to PS1 line
+    lineinfile:
+      path: "/home/{{ item }}/.bashrc"
+      line: PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\] $(kube_ps1):\[\033[01;34m\]\w\[\033[00m\]\$ '
+    loop:
+      - "{{ ansible_user }}"
+      - "{{ abm_install_user }}"
+    tags:
+    - optional
+    - tool-install
+    - kube-ps1
 
 ### IF upgrading BMCTL, remove existing
   - name: Remove bmctl
