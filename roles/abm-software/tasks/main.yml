@@ -93,7 +93,6 @@
   when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
   tags:
   - abm-software
   - enable-acm
@@ -105,7 +104,6 @@
     creates: "{{ acm_config_files }}/config-management-operator.yaml"
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
   when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
   tags:
   - abm-software
@@ -278,7 +276,6 @@
   changed_when: '"ADDED" in out.stdout_lines'
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
   loop: "{{ franchises }}"
   when:
     - (primary_cluster_machine is defined)
@@ -304,7 +301,6 @@
     - (primary_cluster_machine == true)
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
   tags:
   - abm-software
   - enable-acm
