@@ -12,7 +12,7 @@ This step is intended to describe how to create a CNUC machine that is a replica
 
     * -c {number of machines in multiples of 3}
     * -z {GCP Zone} (optional)
-    * -p {create Preemptive machines} (optional)
+    * -t {create Preemptive machines} (optional)
 
     > NOTE: The count of machines needs to be a multiple of 3. Any other configuration will/should fail
 
