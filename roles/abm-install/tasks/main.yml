@@ -1,6 +1,8 @@
 ---
 # tasks file for abm-install
 
+### gcloud auth to target-machine-gsa done in google-tools
+
 ### Create or enable Google Service Accounts
   - name: Create or Enable Service Accounts
     shell: |
@@ -20,7 +22,6 @@
       creates: /var/nothing
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-install
     - abm-once
@@ -32,7 +33,6 @@
     run_once: true
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-install
     - abm-once
@@ -61,7 +61,6 @@
     loop: "{{ service_accounts }}"
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-once
     - abm-debug
@@ -82,7 +81,6 @@
       loop_var: entry
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-once
     - abm-debug
@@ -98,7 +96,6 @@
     loop: "{{ service_accounts }}"
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-once
     - abm-debug
