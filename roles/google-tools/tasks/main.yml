@@ -2,29 +2,31 @@
 
   # Credentials
 
+### The /etc/profile.d/gcloud_auth.sh requires it readable for all users
   - name: Create the temp keys directory
     file:
       path: '{{ remote_gsa_key }}'
       state: directory
-      mode: '0750'
-      group: 'sudo'
+      mode: '0755'
+      group: 'root'
       owner: 'root'
     tags:
     - initial-install
     - tool-authentication
 
+### The /etc/profile.d/gcloud_auth.sh requires it readable for all users
   - name: Get the SA key to initialize gcloud with
     copy:
       src: '{{ local_gsa_key }}'
       dest: '{{ remote_gsa_key }}/gsa-key.json'
-      mode: '0440' # read only by sudo and root, no guest
-      group: 'sudo'
+      mode: '0444' # read only
+      group: 'root'
       owner: 'root'
     tags:
     - initial-install
     - tool-authentication
 
-  ##### gcloud
+##### gcloud
 
   - name: Create the tools temp directory
     file:
@@ -64,7 +66,7 @@
     - initial-install
     - tool-install
 
-### Setup Path & Auto-complete
+### Set up application default credentials
   - name: Setting up Google App Creds for non-interactive shells
     lineinfile:
       path: /etc/environment
@@ -87,6 +89,7 @@
     - initial-install
     - non-interactive-shell
 
+## Set up auto-complete
   - name: Add gcloud BASH completion
     lineinfile:
       path: /etc/profile.d/bash_completion.sh
@@ -107,6 +110,15 @@
     - initial-install
     - non-interactive-shell
     - gcloud-setup
+
+### Switch current session to target-machine-gsa
+  - name: Switch to target-machine-gsa
+    command:
+      cmd: bash /etc/profile.d/gcloud_auth.sh
+    environment:
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    tags:
+      - initial-install
 
   - name: Enable services
     command:
