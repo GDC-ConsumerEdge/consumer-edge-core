@@ -1,8 +1,12 @@
-#
+# These are post-installation steps that address defects/bugs or are needed after the system has been fully setup
 
+#TODO use kubectl wait command instead of brute force 'sleep'
 - name: "Stackdriver patch for bug b/193159157"
   shell: |
-    kubectl patch stackdriver stackdriver --type=merge -p '{"spec":{"scalableMonitoring": "false"}}' -n kube-system
+    kubectl -n kube-system scale deploy stackdriver-operator --replicas=0
+    sleep 5s # wait for stop
+    kubectl patch stackdriver stackdriver --type=merge -p '{"spec":{"scalableMonitoring": false}}' -n kube-system
+    kubectl -n kube-system scale deploy stackdriver-operator --replicas=1
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   when:
