@@ -23,6 +23,3 @@ virtctl_version: "v0.42.1"
 
 # K9s binary version (https://github.com/derailed/k9s/releases)
 k9s_version: "v0.24.12"
-
-# Kube PS1 
-kube_ps1_version: "0.7.0"

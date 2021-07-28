@@ -159,14 +159,6 @@
     - initial-install
     - tool-install
 
-### Add Kube PS1
-  # - name: "Add Kube PS1 to all known users"
-  #   include: share-kubeconfig.yml
-  #   tags:
-  #   - optional
-  #   - tool-install
-  #   - kube-ps1
-
 ### IF upgrading BMCTL, remove existing
   - name: Remove bmctl
     ansible.builtin.file:
