@@ -38,6 +38,7 @@
   - create-local-temp
 
 - name: Create tmp authorized_keys file contain all pub keys
+  become: no
   local_action:
     module: lineinfile
     line: "{{ item.value }}"
