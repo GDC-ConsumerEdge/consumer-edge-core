@@ -9,7 +9,6 @@
       owner: 'root'
     tags:
     - optional
-    - tool-install
     - kube-ps1
 
 ## Download kube_ps1
@@ -21,7 +20,6 @@
       creates: "/var/kube-ps1/kube-ps1-{{ kube_ps1_version }}"
     tags:
     - optional
-    - tool-install
     - kube-ps1
 
   - name: Add source of kube-ps1 to bashrc
@@ -33,7 +31,6 @@
       - "{{ abm_install_user }}"
     tags:
     - optional
-    - tool-install
     - kube-ps1
 
   - name: Add kube_ps1 to PS1 line
@@ -45,5 +42,4 @@
       - "{{ abm_install_user }}"
     tags:
     - optional
-    - tool-install
     - kube-ps1
