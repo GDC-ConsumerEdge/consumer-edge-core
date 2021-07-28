@@ -88,6 +88,8 @@
   - abm-install
   - abm-user
 
+## TODO: This does not allow for multiple cnucs to be setup at one time
+## TODO: This also does not skip non cnucs
 - name: "SSH Key access to other nodes"
   include: setup-ssh-pub-key-access.yml
   tags:
