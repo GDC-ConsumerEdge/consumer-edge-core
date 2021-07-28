@@ -86,7 +86,7 @@
   - external-secrets-apply
 
 ### ACM
-- name: "Enable ACM"
+- name: "Enable ACM API in GCP"
   command:
     cmd: gcloud alpha container hub config-management enable
   run_once: true # only needs to run once
@@ -113,7 +113,7 @@
 - name: "Test for config-management operator presence"
   include: kubectl-presence.yml
   vars:
-    name: "crds"
+    name: "config-management"
     type: "configmanagements.configmanagement.gke.io"
     namespace: ""
     kubeconfig: "{{ kubeconfig_shared_location }}"
@@ -177,6 +177,9 @@
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
     - (has_config_management == false)
+  retries: 3
+  register: cmc_result
+  until: cmc_result.rc == 0
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   tags:
