@@ -74,5 +74,14 @@ service_accounts: [
       "roles/secretmanager.secretAccessor",
       "roles/secretmanager.viewer"
     ]
+  },
+  {
+    name: longhorn-cloud-storage,
+    keyfile: longhorn-cloud-storage-creds.json,
+    description: "Longhorn taking volume backups on cloud stoarge ",
+    roles: [
+      "roles/storage.objectAdmin"
+    ]
   }
 ]
+
