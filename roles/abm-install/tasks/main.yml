@@ -104,13 +104,21 @@
 
   - name: Create new HMAC key for longhorn backup to cloud stoarge and push to Secret Manager
     run_once: true # only one machine to do this
-    script: files/create-hmac-key-for-longhorn.sh > /var/log/create-hmac-key-for-longhorn-logs.txt
+    shell: |
+      gsutil hmac create longhorn-cloud-storage@{{ google_project_id }}.iam.gserviceaccount.com > /tmp/hmackey.txt
+      access_key=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $1}'`
+      access_secret=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $2}'`
+      echo "{\"access_key\": \"${access_key}\",  \"access_secret\": \"${access_secret}\" , \"endpoint\" : \"https://storage.googleapis.com\" }" > /tmp/hmacsecret.json
+      gcloud secrets create {{ longhorn_secret_name }} --replication-policy="automatic" --project="{{ google_project_id }}"
+      gcloud secrets versions add {{ longhorn_secret_name }} --data-file="/tmp/hmacsecret.json"
+      rm -rf /tmp/hmacsecret.json /tmp/hmackey.txt # delete temp file
+      exit $?
     args:
-      creates: /var/log/create-hmac-key-for-longhorn-logs.txt
+      executable: /bin/bash
     tags:
     - abm-once
     - longhorn-hmac-keys
-    - abm-install
+    - abm-install  
 
 
 ### Create Local PVC folder (future will be mounted or something)

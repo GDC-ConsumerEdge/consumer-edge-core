@@ -85,3 +85,4 @@ service_accounts: [
   }
 ]
 
+longhorn_secret_name: "longhorn-cloud-storage-hmac"
