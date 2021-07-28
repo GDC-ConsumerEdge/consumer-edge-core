@@ -85,6 +85,36 @@
   - external-secrets-operator
   - external-secrets-apply
 
+ ###  Longhorn
+ #
+- name: Copy Longhorn namespace and configmap
+  template:
+    src: longhorn-default-setting.yml.j2
+    dest: "{{ acm_config_files }}/longhorn-default-setting.yml"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  tags:
+  - longhorn-config-management
+
+
+- name: Create Longhorn namespace and configmap
+  shell: |
+    kubectl apply -f {{ acm_config_files }}/longhorn-default-setting.yml
+    exit $?
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  retries: 3
+  register: cmc_result
+  until: cmc_result.rc == 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - longhorn-config-management
+
+
+
 ### ACM
 - name: "Enable ACM API in GCP"
   command:
@@ -308,3 +338,6 @@
   - abm-software
   - enable-acm
   - post-acm
+
+
+   

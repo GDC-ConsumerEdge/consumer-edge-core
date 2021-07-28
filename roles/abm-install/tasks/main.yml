@@ -102,6 +102,17 @@
     - abm-gsa-keys
     - abm-install
 
+  - name: Create new HMAC key for longhorn backup to cloud stoarge and push to Secret Manager
+    run_once: true # only one machine to do this
+    script: files/create-hmac-key-for-longhorn.sh > /var/log/create-hmac-key-for-longhorn-logs.txt
+    args:
+      creates: /var/log/create-hmac-key-for-longhorn-logs.txt
+    tags:
+    - abm-once
+    - longhorn-hmac-keys
+    - abm-install
+
+
 ### Create Local PVC folder (future will be mounted or something)
   - name: Create PVC Folder
     file:

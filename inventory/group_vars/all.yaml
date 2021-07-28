@@ -38,6 +38,9 @@ scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
 gcs_bucket_guest_vm: "anthos-consumer-edge-vm-isos"
 vm_guest_image: "windows-server-2016-eval-en-us.iso"
 
+#Secret name for longhorn to take backups of volumes and send to cloud storage bucket 
+volume_backup_secret_name: gcp-cloud-storage-backup-secret
+
 # git_creds_gcp_secret_name is the secret created to hold the Git PAT info corresponding to that Namespace Repo
 # franchise_name, franchise_number aren't used
 # Stores: not used now, secrets are created for all franchises in GCP Secrets Manager, ExternalSecrets are controlled in the root-repo for each franchise

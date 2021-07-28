@@ -128,6 +128,9 @@ echo "Final Cluster Count = $CLUSTER_COUNT"
 # Create init script bucket for GCE instances to use
 setup_init_bucket
 
+# Create backup bucket for volume backups
+setup_init_bucket ${BACKUP_BUCKET_NAME} ${PROJECT_ID}
+
 copy_init_script
 
 # enable any services needed
