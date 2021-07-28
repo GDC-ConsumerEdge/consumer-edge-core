@@ -15,3 +15,11 @@
   tags:
   - abm-post-install
   - active-bug-fix
+
+### Add Kube PS1
+- name: "Add Kube PS1 to all known users"
+  include: add-kube-ps1.yml
+  become: true
+  tags:
+  - abm-post-install
+  - kube-ps1
