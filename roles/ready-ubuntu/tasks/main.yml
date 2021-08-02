@@ -130,10 +130,59 @@
   tags:
   - docker
 
+
+# TODO Do this only for cnucs
 - name: install ops agent
   script: files/install-agents.sh > /var/log/agent-logs.txt
   args:
     creates: /var/log/agent-logs.txt
   tags:
   - ops-agent
+
+# TODO Do this for physical nucs 
+ ###  Monitoring agent
+ #
+- name: Copy collectd config
+  template:
+    src: collectd.conf.j2
+    dest: "/tmp/collectd.conf"
+  tags:
+  - collectd-config
+
+- name: Copy stackdriver initd script
+  template:
+    src: stackdriver-agent.j2
+    dest: "/tmp/stackdriver-agent"
+  tags:
+  - stackdriver-initd
+
+- name: install monitoring agent
+  script: files/install-monitoring-agent.sh > /var/log/monitoring-agent-logs.txt
+  args:
+    creates: /var/log/monitoring-agent-logs.txt
+  tags:
+  - monitoring-agent
+
+ ###  Logging agent
+ #
+- name: Copy fluend config
+  template:
+    src: google-fluentd.conf.j2
+    dest: "/tmp/google-fluentd.conf"
+  tags:
+  - fluentd-config
+
+- name: Copy fluent initd script
+  template:
+    src: google-fluentd.j2
+    dest: "/tmp/google-fluentd"
+  tags:
+  - fluentd-initd
+
+- name: install logging agent
+  script: files/install-logging-agent.sh > /var/log/logging-agent-logs.txt
+  args:
+    creates: /var/log/logging-agent-logs.txt
+  tags:
+  - logging-agent
 
