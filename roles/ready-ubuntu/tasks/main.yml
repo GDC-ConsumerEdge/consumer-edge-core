@@ -136,16 +136,20 @@
   script: files/install-agents.sh > /var/log/agent-logs.txt
   args:
     creates: /var/log/agent-logs.txt
+  when:
+      - is_cloud_resource is defined
+      - is_cloud_resource == True
   tags:
   - ops-agent
 
-# TODO Do this for physical nucs 
+#  Do this for physical nucs 
  ###  Monitoring agent
  #
 - name: Copy collectd config
   template:
     src: collectd.conf.j2
-    dest: "/tmp/collectd.conf"
+    dest: "/tmp/collectd.conf" 
+  when: is_cloud_resource is undefined or is_cloud_resource == False
   tags:
   - collectd-config
 
@@ -153,6 +157,7 @@
   template:
     src: stackdriver-agent.j2
     dest: "/tmp/stackdriver-agent"
+  when: is_cloud_resource is undefined or is_cloud_resource == False
   tags:
   - stackdriver-initd
 
@@ -160,6 +165,7 @@
   script: files/install-monitoring-agent.sh > /var/log/monitoring-agent-logs.txt
   args:
     creates: /var/log/monitoring-agent-logs.txt
+  when: is_cloud_resource is undefined or is_cloud_resource == False
   tags:
   - monitoring-agent
 
@@ -169,6 +175,7 @@
   template:
     src: google-fluentd.conf.j2
     dest: "/tmp/google-fluentd.conf"
+  when: is_cloud_resource is undefined or is_cloud_resource == False
   tags:
   - fluentd-config
 
@@ -176,6 +183,7 @@
   template:
     src: google-fluentd.j2
     dest: "/tmp/google-fluentd"
+  when: is_cloud_resource is undefined or is_cloud_resource == False
   tags:
   - fluentd-initd
 
@@ -183,6 +191,7 @@
   script: files/install-logging-agent.sh > /var/log/logging-agent-logs.txt
   args:
     creates: /var/log/logging-agent-logs.txt
+  when: is_cloud_resource is undefined or is_cloud_resource == False
   tags:
   - logging-agent
 
