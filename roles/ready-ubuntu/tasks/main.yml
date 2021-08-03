@@ -20,6 +20,8 @@
     - wget
     - gnupg-agent
     - software-properties-common
+    - network-manager
+    - vlan
     state: present
     update_cache: yes
   tags:
@@ -142,13 +144,13 @@
   tags:
   - ops-agent
 
-#  Do this for physical nucs 
+#  Do this for physical nucs
  ###  Monitoring agent
  #
 - name: Copy collectd config
   template:
     src: collectd.conf.j2
-    dest: "/tmp/collectd.conf" 
+    dest: "/tmp/collectd.conf"
   when: is_cloud_resource is undefined or is_cloud_resource == False
   tags:
   - collectd-config
@@ -195,3 +197,9 @@
   tags:
   - logging-agent
 
+- name: "Setup VLAN Interfaces on Physical Hosts"
+  include: setup-vlan-interfaces.yml
+  when:
+  - (is_cloud_resource is undefined or is_cloud_resource == False)
+  tags:
+  - vlan-setup
