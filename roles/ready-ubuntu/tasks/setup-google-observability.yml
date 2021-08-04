@@ -1,0 +1,60 @@
+- name: install ops agent
+  script: files/install-agents.sh > /var/log/agent-logs.txt
+  args:
+    creates: /var/log/agent-logs.txt
+  when: is_cloud_resource is undefined or is_cloud_resource == False
+  tags:
+  - ops-agent
+
+ ###  Monitoring agent
+- name: Copy collectd config
+  template:
+    src: collectd.conf.j2
+    dest: "/tmp/collectd.conf"
+  when: is_cloud_resource is undefined or is_cloud_resource == False
+  tags:
+  - collectd-config
+
+- name: Copy stackdriver initd script
+  template:
+    src: stackdriver-agent.j2
+    dest: "/tmp/stackdriver-agent"
+  when: is_cloud_resource is undefined or is_cloud_resource == False
+  tags:
+  - stackdriver-initd
+
+- name: install monitoring agent
+  script: files/install-monitoring-agent.sh > /var/log/monitoring-agent-logs.txt
+  args:
+    creates: /var/log/monitoring-agent-logs.txt
+  when: is_cloud_resource is undefined or is_cloud_resource == False
+  tags:
+  - monitoring-agent
+
+# ## Logging
+- name: Copy fluend config
+  template:
+    src: google-fluentd.conf.j2
+    dest: "/tmp/google-fluentd.conf"
+  when: is_cloud_resource is undefined or is_cloud_resource == False
+  tags:
+  - fluentd-config
+  - fluentd
+
+- name: Copy fluent initd script
+  template:
+    src: google-fluentd.j2
+    dest: "/tmp/google-fluentd"
+  when: is_cloud_resource is undefined or is_cloud_resource == False
+  tags:
+  - fluentd-initd
+  - fluentd
+
+- name: install logging agent
+  script: files/install-logging-agent.sh > /var/log/logging-agent-logs.txt
+  args:
+    creates: /var/log/logging-agent-logs.txt
+  when: is_cloud_resource is undefined or is_cloud_resource == False
+  tags:
+  - logging-agent
+

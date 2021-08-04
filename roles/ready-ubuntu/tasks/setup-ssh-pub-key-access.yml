@@ -96,6 +96,8 @@
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
     - (control_plane_ip != machine)
+    - (is_cloud_resource is defined)
+    - (is_cloud_resource == True)
   loop: "{{ control_plane_ips }}"
   loop_control:
     loop_var: machine
