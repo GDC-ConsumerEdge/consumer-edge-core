@@ -34,6 +34,7 @@ spec:
       {% endfor %}
   # Cluster networking configuration
   clusterNetwork:
+    multipleNetworkInterfaces: true
     pods:
       cidrBlocks:
       - {{ pod_cidr }}

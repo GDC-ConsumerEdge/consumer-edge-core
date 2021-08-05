@@ -82,6 +82,15 @@ service_accounts: [
     roles: [
       "roles/storage.objectAdmin"
     ]
+  },
+  {
+    name: gateway-connect-agent,
+    keyfile: gateway-connect-agent-creds.json,
+    description: "Agent used for Gateway Connect",
+    roles: [
+      "roles/gkehub.gatewayAdmin",
+      "roles/gkehub.viewer"
+    ]
   }
 ]
 
