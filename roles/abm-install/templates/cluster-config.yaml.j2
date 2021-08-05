@@ -34,7 +34,7 @@ spec:
       {% endfor %}
   # Cluster networking configuration
   clusterNetwork:
-    multipleNetworkInterfaces: true
+    multipleNetworkInterfaces: {{ multi_network_enabled }}
     pods:
       cidrBlocks:
       - {{ pod_cidr }}
@@ -141,4 +141,3 @@ spec:
 #  nodes:
 #  - address: <Machine 2 IP>
 #  - address: <Machine 3 IP>
-
