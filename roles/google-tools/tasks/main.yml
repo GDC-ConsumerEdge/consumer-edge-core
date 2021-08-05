@@ -123,7 +123,7 @@
   - name: Enable services
     command:
       # https://cloud.google.com/anthos/clusters/docs/bare-metal/1.6/installing/install-prereq#project_prerequisites
-      cmd: gcloud services enable anthos.googleapis.com anthosgke.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com gkeconnect.googleapis.com gkehub.googleapis.com serviceusage.googleapis.com stackdriver.googleapis.com monitoring.googleapis.com logging.googleapis.com secretmanager.googleapis.com --project={{ google_project_id }}
+      cmd: gcloud services enable anthos.googleapis.com connectgateway.googleapis.com anthosgke.googleapis.com cloudresourcemanager.googleapis.com container.googleapis.com gkeconnect.googleapis.com gkehub.googleapis.com serviceusage.googleapis.com stackdriver.googleapis.com monitoring.googleapis.com logging.googleapis.com secretmanager.googleapis.com --project={{ google_project_id }}
     run_once: true # only one machine to do this
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
