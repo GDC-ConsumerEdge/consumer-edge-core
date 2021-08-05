@@ -32,6 +32,28 @@
   - abm-config
   - onetime
 
+### TODO: This is a fix for a pre-release functionality targeted for 1.8.3
+- name: "Update CDI deployment for future software release"
+  shell: |
+    kubectl get deployment -n cdi cdi-operator -o yaml > cdi-operator-change.yaml
+
+    sed -i "s|v1.34.0-gke.1|v1.34.1-gke.5|" cdi-operator-change.yaml
+    sed -i "s|anthos-baremetal-release|{{ google_project_id }}|" cdi-operator-change.yaml
+
+    kubectl apply -f cdi-operator-change.yaml
+    kubectl delete po -n cdi --all
+    touch /var/.has-cdi-update
+    rm -rf cdi-operator-change.yaml
+  args:
+    executable: /bin/bash
+    creates: /var/.has-cdi-update
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+  tags:
+  - abm-software
+  - future-bug-fix
+  - cdi-install
+
 - name: Folder for ACM configurations
   file:
     path: '{{ acm_config_files }}'
@@ -340,4 +362,4 @@
   - post-acm
 
 
-   
+
