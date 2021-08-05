@@ -16,6 +16,9 @@ abm_install_user: "el-gato"
 
 # Cluster Configuration
 install_type: standalone
+multi_network_enabled: true
+enable_application_logging: true
+
 # Skip preflight checks?
 skip_preflight: false
 
@@ -24,7 +27,6 @@ pod_cidr: "172.24.0.0/16"
 services_cidr: "10.50.0.0/16"    # avoid overlap with KIND IPs (10.96.0.0/16)
 local_pvc_mount: "/opt/pvc-disk"
 local_share_pvc_mount: "/opt/localpv-share" # Default value
-enable_application_logging: true
 container_runtime: "containerd" # docker or containerd
 
 # NOTE: Cluster-specific variables are in the inventory file
