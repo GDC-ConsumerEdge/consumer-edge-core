@@ -185,7 +185,6 @@
     - network-vxlan
     - abm-install
     - abm-config
-    - mike-one-time
 
 ### Run VXLAN is up script (only for cloud resources)
   - name: Run script for vxlan status
