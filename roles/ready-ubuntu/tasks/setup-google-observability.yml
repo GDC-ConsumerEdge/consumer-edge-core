@@ -83,7 +83,18 @@
   - logging-agent-config
   - observability-setup
 
-
+- name: Enable the syslog plugin
+  copy:
+    src:  /etc/google-fluentd/config.d/syslog.conf.dpkg-new
+    dest: /etc/google-fluentd/config.d/syslog.conf
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+  - fluentd-config
+  - logging-agent-config
+  - observability-setup
 
 ### Restart both agents after config changes
 - name: Restart observability services
@@ -96,7 +107,7 @@
     - { service: 'google-fluentd', script: 'add-logging-agent-repo.sh' }
   tags:
   - observability-agent-install
-  - ops-agent
+  - observability-service-reset
   - observability-setup
 
 
