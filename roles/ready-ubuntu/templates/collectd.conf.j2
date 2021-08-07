@@ -49,6 +49,13 @@ LoadPlugin match_regex
 LoadPlugin match_throttle_metadata_keys
 LoadPlugin stackdriver_agent
 
+<Plugin "interface">
+  Interface "eno1"
+  Interface "eno1.410"
+  Interface "eno1.460"
+  IgnoreSelected false
+</Plugin>
+
 <Plugin "processes">
   ProcessMatch "all" ".*"
   Detail "ps_cputime"
@@ -81,9 +88,9 @@ LoadPlugin "match_regex"
 
 <Plugin "write_gcm">
   PrettyPrintJSON false
-  # #EnableMetadataAgent true
-  # # cluster-name_[0..3]_[10000 max random number]
-  Instance "{{ '_'.join((cluster_name, cluster_index|string, 10000|random(seed=cluster_name)|string)) }}"
+  # EnableMetadataAgent false
+  # { { '_'.join((cluster_name, cluster_index|string, 10000|random(seed=cluster_name)|string)) } }
+  Instance "{{ cluster_name }}"
   Zone "{{ google_zone }}"
   Project "{{ google_project_id }}"
   CloudProvider "GCP"
