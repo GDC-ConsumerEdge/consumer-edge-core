@@ -82,7 +82,8 @@ LoadPlugin "match_regex"
 <Plugin "write_gcm">
   PrettyPrintJSON false
   # #EnableMetadataAgent true
-  Instance "{{ '_'.join((cluster_name, 10000|random(seed=cluster_name)|string)) }}"
+  # # cluster-name_[0..3]_[10000 max random number]
+  Instance "{{ '_'.join((cluster_name, cluster_index|string, 10000|random(seed=cluster_name)|string)) }}"
   Zone "{{ google_zone }}"
   Project "{{ google_project_id }}"
   CloudProvider "GCP"
