@@ -1,7 +1,7 @@
 Interval 60
 
 # Explicitly set hostname to "" to indicate the default resource.
-Hostname "{{ansible_hostname}}"
+Hostname "{{ ansible_hostname }}"
 
 # The Stackdriver agent does not use fully qualified domain names.
 FQDNLookup false
@@ -82,8 +82,8 @@ LoadPlugin "match_regex"
 <Plugin "write_gcm">
   PrettyPrintJSON false
   # #EnableMetadataAgent true
-  Instance "INSTANCE_ID"
-  Zone "us-west1-b"
+  Instance "{{ '_'.join((cluster_name, 10000|random(seed=cluster_name)|string)) }}"
+  Zone "{{ google_zone }}"
   Project "{{ google_project_id }}"
   CloudProvider "GCP"
 </Plugin>

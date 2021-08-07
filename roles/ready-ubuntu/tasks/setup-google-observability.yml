@@ -1,37 +1,48 @@
-- name: install ops agent
-  script: files/install-agents.sh > /var/log/agent-logs.txt
-  args:
-    creates: /var/log/agent-logs.txt
-  when: is_cloud_resource is undefined or is_cloud_resource == False
+- name: Get service facts
+  service_facts:
   tags:
-  - ops-agent
+  - observability-agent-install
 
- ###  Monitoring agent
+- debug:
+    msg: "{{ ansible_facts.services['stackdriver-agent.service'].status }}"
+  when: "ansible_facts.services['stackdriver-agent.service'] is defined"
+  tags:
+  - observability-agent-install
+
+- name: Download Monitoring Agent script
+  ansible.builtin.get_url:
+    url: https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh
+    dest: /var/add-monitoring-agent-repo.sh
+    mode: '0700'
+  when: (ansible_facts.services['stackdriver-agent.service'] is undefined) or
+        (ansible_facts.services['stackdriver-agent.service'].status != "enabled")
+  tags:
+  - observability-agent-install
+
+- name: Run Monitoring Agent install script
+  script:
+    cmd: /var/add-monitoring-agent-repo.sh --also-install
+  when: (ansible_facts.services['stackdriver-agent.service'] is undefined) or
+        (ansible_facts.services['stackdriver-agent.service'].status != "enabled")
+  tags:
+  - observability-agent-install
+
+  ### Configure Monitoring agent
 - name: Copy collectd config
   template:
     src: collectd.conf.j2
-    dest: "/tmp/collectd.conf"
-  when: is_cloud_resource is undefined or is_cloud_resource == False
+    dest: "/etc/stackdriver/collectd.conf"
   tags:
   - collectd-config
 
 - name: Copy stackdriver initd script
   template:
     src: stackdriver-agent.j2
-    dest: "/tmp/stackdriver-agent"
-  when: is_cloud_resource is undefined or is_cloud_resource == False
+    dest: "/etc/init.d/stackdriver-agent"
   tags:
   - stackdriver-initd
 
-- name: install monitoring agent
-  script: files/install-monitoring-agent.sh > /var/log/monitoring-agent-logs.txt
-  args:
-    creates: /var/log/monitoring-agent-logs.txt
-  when: is_cloud_resource is undefined or is_cloud_resource == False
-  tags:
-  - monitoring-agent
-
-# ## Logging
+### Configure Logging agent
 - name: Copy fluend config
   template:
     src: google-fluentd.conf.j2
@@ -57,4 +68,16 @@
   when: is_cloud_resource is undefined or is_cloud_resource == False
   tags:
   - logging-agent
+
+### Restart both agents after config changes
+- name: Restart stackdriver-agent service
+  ansible.builtin.service:
+    name: stackdriver-agent
+    state: restarted
+  when: (ansible_facts.services['stackdriver-agent.service'] is undefined) or
+        (ansible_facts.services['stackdriver-agent.service'].status != "enabled")
+  tags:
+  - observability-agent-install
+  - ops-agent
+
 
