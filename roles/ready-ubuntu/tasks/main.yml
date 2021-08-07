@@ -133,12 +133,11 @@
   - docker
 
  ### Install Obeservability agents
- #TODO: Re-enable this later
-# - name: "Setup Obeservability Agents on Physical"
-#   include: setup-google-observability.yml
-#   when: is_cloud_resource is undefined or is_cloud_resource == False
-#   tags:
-#   - observability-setup
+- name: "Setup Obeservability Agents on Physical"
+  include: setup-google-observability.yml
+  when: is_cloud_resource is undefined or is_cloud_resource == False
+  tags:
+  - observability-setup
 
 - name: "Setup VLAN Interfaces on Physical Hosts"
   include: setup-vlan-interfaces.yml
