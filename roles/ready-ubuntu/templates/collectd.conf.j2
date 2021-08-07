@@ -1,7 +1,7 @@
 Interval 60
 
 # Explicitly set hostname to "" to indicate the default resource.
-Hostname "{{ ansible_hostname }}"
+Hostname "{{ cluster_name }}"
 
 # The Stackdriver agent does not use fully qualified domain names.
 FQDNLookup false
