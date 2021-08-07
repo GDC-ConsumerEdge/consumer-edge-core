@@ -33,14 +33,14 @@
     src: collectd.conf.j2
     dest: "/etc/stackdriver/collectd.conf"
   tags:
-  - collectd-config
+  - monitoring-agent-config
 
 - name: Copy stackdriver initd script
   template:
     src: stackdriver-agent.j2
     dest: "/etc/init.d/stackdriver-agent"
   tags:
-  - stackdriver-initd
+  - monitoring-agent-config
 
 ### Configure Logging agent
 - name: Copy fluend config
