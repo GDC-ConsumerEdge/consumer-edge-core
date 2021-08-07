@@ -15,6 +15,18 @@
   @type prometheus_monitor
 </source>
 
+# <source>
+#   @type tail
+
+#   # Parse the timestamp, but still collect the entire line as 'message'
+#   format syslog
+
+#   path /var/log/syslog,/var/log/messages
+#   pos_file /var/lib/google-fluentd/pos/syslog.pos
+#   read_from_head true
+#   tag syslog
+# </source>
+
 # Analyze config usage and report to Stackdriver.
 <filter **>
   @type analyze_config
@@ -60,11 +72,20 @@
   use_grpc true
   # If a request is a mix of valid log entries and invalid ones, ingest the
   # valid ones and drop the invalid ones instead of dropping everything.
-  partial_success true
+
+  # Disable the metadata server
+  enable_metadata_agent false
+  use_metadata_service false
+  # Look to see if VM is owned by AppEngine or other service (not in this case)
+  detect_subservice false
+
   # Enable monitoring via Prometheus integration.
   enable_monitoring true
   monitoring_type opencensus
+
+  # Set the VM ID
   vm_id {{ '_'.join((cluster_name, cluster_index|string, 10000|random(seed=cluster_name)|string)) }}
+  vm_name {{ cluster_name }}
   zone {{ google_zone }}
   project {{ google_project_id }}
 </match>

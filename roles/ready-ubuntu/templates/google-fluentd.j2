@@ -26,7 +26,7 @@ TD_AGENT_OPTIONS="--use-v1-config --suppress-repeated-stacktrace"
 
 # timeout can be overridden from /etc/default/google-fluentd
 STOPTIMEOUT=120
-GOOGLE_APPLICATION_CREDENTIALS="{{ remote_gsa_key }}/{{ (service_accounts | selectattr('name', 'equalto', 'abm-cloud-operations-agent') | first ).keyfile }}"
+export GOOGLE_APPLICATION_CREDENTIALS="{{ remote_gsa_key }}/{{ (service_accounts | selectattr('name', 'equalto', 'abm-cloud-operations-agent') | first ).keyfile }}"
 
 
 # Read configuration variable file if it is present
