@@ -64,7 +64,7 @@
   # Enable monitoring via Prometheus integration.
   enable_monitoring true
   monitoring_type opencensus
-  vm_id {{ '_'.join((cluster_name, 10000|random(seed=cluster_name)|string)) }}
+  vm_id {{ '_'.join((cluster_name, cluster_index|string, 10000|random(seed=cluster_name)|string)) }}
   zone {{ google_zone }}
   project {{ google_project_id }}
 </match>

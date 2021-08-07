@@ -2,30 +2,7 @@
   service_facts:
   tags:
   - observability-agent-install
-
-- debug:
-    msg: "{{ ansible_facts.services['stackdriver-agent.service'].status }}"
-  when: "ansible_facts.services['stackdriver-agent.service'] is defined"
-  tags:
-  - observability-agent-install
-
-- name: Download Monitoring Agent script
-  ansible.builtin.get_url:
-    url: https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh
-    dest: /var/add-monitoring-agent-repo.sh
-    mode: '0700'
-  when: (ansible_facts.services['stackdriver-agent.service'] is undefined) or
-        (ansible_facts.services['stackdriver-agent.service'].status != "enabled")
-  tags:
-  - observability-agent-install
-
-- name: Run Monitoring Agent install script
-  script:
-    cmd: /var/add-monitoring-agent-repo.sh --also-install
-  when: (ansible_facts.services['stackdriver-agent.service'] is undefined) or
-        (ansible_facts.services['stackdriver-agent.service'].status != "enabled")
-  tags:
-  - observability-agent-install
+  - observability-setup
 
   ### Configure Monitoring agent
 - name: Copy collectd config
@@ -34,6 +11,7 @@
     dest: "/etc/stackdriver/collectd.conf"
   tags:
   - monitoring-agent-config
+  - observability-setup
 
 - name: Copy stackdriver initd script
   template:
@@ -41,43 +19,107 @@
     dest: "/etc/init.d/stackdriver-agent"
   tags:
   - monitoring-agent-config
+  - observability-setup
 
 ### Configure Logging agent
-- name: Copy fluend config
+- name: Copy fluent.d config
   template:
     src: google-fluentd.conf.j2
-    dest: "/tmp/google-fluentd.conf"
-  when: is_cloud_resource is undefined or is_cloud_resource == False
+    dest: "/etc/google-fluentd/google-fluentd.conf"
   tags:
   - fluentd-config
-  - fluentd
+  - logging-agent-config
+  - observability-setup
 
 - name: Copy fluent initd script
   template:
     src: google-fluentd.j2
-    dest: "/tmp/google-fluentd"
-  when: is_cloud_resource is undefined or is_cloud_resource == False
+    dest: "/etc/init.d/google-fluentd"
   tags:
   - fluentd-initd
-  - fluentd
+  - logging-agent-config
+  - observability-setup
 
-- name: install logging agent
-  script: files/install-logging-agent.sh > /var/log/logging-agent-logs.txt
-  args:
-    creates: /var/log/logging-agent-logs.txt
-  when: is_cloud_resource is undefined or is_cloud_resource == False
+# - name: Copy Syslog config from default install
+#   ansible.builtin.copy:
+#     src: /etc/google-fluentd/config.d/syslog.conf.dpkg-new
+#     dest: /etc/google-fluentd/config.d/syslog.conf
+#     owner: root
+#     group: root
+#     mode: '0600'
+#   tags:
+#   - fluentd-initd
+#   - logging-agent-config
+#   - observability-setup
+
+- name: Download Agent scripts
+  ansible.builtin.get_url:
+    url: "https://dl.google.com/cloudagents/{{ item.script }}"
+    dest: "/tmp/{{ item.script }}"
+    mode: '0744'
+  when: (ansible_facts.services[item.service + '.service'] is undefined) or
+        (ansible_facts.services[item.service + '.service'].status != "enabled")
+  with_items:
+    - { service: 'stackdriver-agent', script: 'add-monitoring-agent-repo.sh' }
+    - { service: 'google-fluent', script: 'add-logging-agent-repo.sh' }
   tags:
-  - logging-agent
+  - observability-agent-install
+  - observability-setup
+
+- name: Run Agent install scripts
+  command:
+    cmd: "bash /tmp/{{ item.script }} --also-install"
+  when: (ansible_facts.services[item.service + '.service'] is undefined) or
+        (ansible_facts.services[item.service + '.service'].status != "enabled")
+  with_items:
+    - { service: 'stackdriver-agent', script: 'add-monitoring-agent-repo.sh' }
+    - { service: 'google-fluent', script: 'add-logging-agent-repo.sh' }
+  tags:
+  - observability-agent-install
+  - observability-setup
 
 ### Restart both agents after config changes
 - name: Restart stackdriver-agent service
   ansible.builtin.service:
-    name: stackdriver-agent
+    name: "{{ item.service }}"
+    enabled: yes
     state: restarted
-  when: (ansible_facts.services['stackdriver-agent.service'] is undefined) or
-        (ansible_facts.services['stackdriver-agent.service'].status != "enabled")
+  with_items:
+    - { service: 'stackdriver-agent', script: 'add-monitoring-agent-repo.sh' }
+    - { service: 'google-fluent', script: 'add-logging-agent-repo.sh' }
   tags:
   - observability-agent-install
   - ops-agent
+  - observability-setup
 
+
+##############################
+##############################
+- name: Uninstall packages
+  apt:
+    name: google-fluentd
+    state: absent
+  tags:
+  - observability-removal
+
+- name: Remove agents
+  command:
+    cmd: "bash /tmp/{{ item.script }} --uninstall"
+  with_items:
+    - { service: 'stackdriver-agent', script: 'add-monitoring-agent-repo.sh' }
+    - { service: 'google-fluent', script: 'add-logging-agent-repo.sh' }
+  tags:
+  - observability-removal
+
+- name: Remove all of the config files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - '/etc/init.d/google-fluentd'
+    - '/etc/init.d/stackdriver-agent'
+    - '/etc/stackdriver/collectd.conf'
+    - '/etc/init.d/google-fluentd'
+  tags:
+  - observability-removal
 
