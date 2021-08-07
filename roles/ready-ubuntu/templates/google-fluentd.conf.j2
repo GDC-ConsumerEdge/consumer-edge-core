@@ -60,11 +60,20 @@
   use_grpc true
   # If a request is a mix of valid log entries and invalid ones, ingest the
   # valid ones and drop the invalid ones instead of dropping everything.
-  partial_success true
+
+  # Disable the metadata server
+  enable_metadata_agent false
+  use_metadata_service false
+  # Look to see if VM is owned by AppEngine or other service (not in this case)
+  detect_subservice false
+
   # Enable monitoring via Prometheus integration.
   enable_monitoring true
   monitoring_type opencensus
-  vm_id INSTANCE_ID
-  zone us-west1-b
-  project {{ google_project_id }}
+
+  # Set the VM ID
+  vm_name {{ '_'.join((cluster_name, cluster_index|string, 10000|random(seed=cluster_name)|string)) }}
+  vm_id {{ cluster_name }}
+  zone {{ google_zone }}
+  project_id {{ google_project_id }}
 </match>
