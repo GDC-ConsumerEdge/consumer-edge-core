@@ -9,6 +9,9 @@
   template:
     src: collectd.conf.j2
     dest: "/etc/stackdriver/collectd.conf"
+    owner: root
+    group: root
+    mode: '0644'
   tags:
   - monitoring-agent-config
   - observability-setup
@@ -17,6 +20,9 @@
   template:
     src: stackdriver-agent.j2
     dest: "/etc/init.d/stackdriver-agent"
+    owner: root
+    group: root
+    mode: '0755'
   tags:
   - monitoring-agent-config
   - observability-setup
@@ -26,6 +32,9 @@
   template:
     src: google-fluentd.conf.j2
     dest: "/etc/google-fluentd/google-fluentd.conf"
+    owner: root
+    group: root
+    mode: '0644'
   tags:
   - fluentd-config
   - logging-agent-config
@@ -35,8 +44,11 @@
   template:
     src: google-fluentd.j2
     dest: "/etc/init.d/google-fluentd"
+    owner: root
+    group: root
+    mode: '0755'
   tags:
-  - fluentd-initd
+  - fluentd-config
   - logging-agent-config
   - observability-setup
 
