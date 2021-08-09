@@ -225,7 +225,7 @@
     args:
       chdir: "{{ abm_install_folder }}"
       creates: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
-    async: 3600 # run for up to 60 minutes
+    async: 7200 # run for up to 60 minutes
     #poll: 30 # poll status every 30 seconds
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
