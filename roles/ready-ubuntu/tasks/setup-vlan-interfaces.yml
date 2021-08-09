@@ -32,17 +32,6 @@
   tags:
   - vlan-setup
 
-- name: Add VLAN interface 460 in linux
-  nmcli:
-    type: vlan
-    conn_name: '{{ prinetint }}.460'
-    method4: auto
-    vlanid: '460'
-    vlandev: '{{ prinetint }}'
-    state: present
-  tags:
-  - vlan-setup
-
 - name: Reload service network-manager, post VLAN creation
   ansible.builtin.service:
     name: network-manager
