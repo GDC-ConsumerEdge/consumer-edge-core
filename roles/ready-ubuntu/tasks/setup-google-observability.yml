@@ -94,6 +94,7 @@
   - observability-setup
 
 - name: Enable the syslog plugin
+  ignore_errors: yes
   copy:
     src:  /etc/google-fluentd/config.d/syslog.conf.dpkg-new
     dest: /etc/google-fluentd/config.d/syslog.conf
