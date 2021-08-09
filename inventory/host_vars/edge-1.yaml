@@ -1,0 +1,13 @@
+cluster_name: "edge-1"
+cluster_index: 0
+primary_cluster_machine: true
+acm_cluster_name: "store-chicago"
+control_plane_ip: "10.223.62.231"
+control_plane_ips: [
+  "10.223.62.231",
+  "10.223.62.232",
+  "10.223.62.233"
+]
+control_plane_vip: "10.223.62.230"
+ingress_vip: "10.223.62.227"
+load_balancer_pool_cidr: "10.223.62.227-10.23.62.229"
