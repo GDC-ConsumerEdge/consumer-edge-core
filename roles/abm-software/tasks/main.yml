@@ -38,7 +38,7 @@
     kubectl get deployment -n cdi cdi-operator -o yaml > cdi-operator-change.yaml
 
     sed -i "s|v1.34.0-gke.1|v1.34.1-gke.5|" cdi-operator-change.yaml
-    sed -i "s|anthos-baremetal-release|{{ google_project_id }}|" cdi-operator-change.yaml
+    sed -i "s|{{ google_project_id }}|mcdonalds-edge-poc|" cdi-operator-change.yaml
 
     kubectl apply -f cdi-operator-change.yaml
     kubectl delete po -n cdi --all

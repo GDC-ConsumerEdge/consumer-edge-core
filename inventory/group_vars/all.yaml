@@ -25,7 +25,7 @@ bmctl_version: "1.8.2" # If changed, set the `force_tools_upgrade` to true so ne
 # gsutil ls -al gs://config-management-release/released/
 acm_version: "1.8.1"
 # ACM (using 'token' method)
-acm_root_repo: "https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/root-repo-usa-market.git"
+acm_root_repo: "https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/root-repo-edge-poc.git"
 
 
 # Force Upgrade of tools (typically used when updating the ABM version above)
@@ -45,37 +45,23 @@ volume_backup_secret_name: gcp-cloud-storage-backup-secret
 # franchise_name, franchise_number aren't used
 # Stores: not used now, secrets are created for all franchises in GCP Secrets Manager, ExternalSecrets are controlled in the root-repo for each franchise
 #      Associations of franchise/store -> cluster is done at the inventory level on "acm_cluster_name" (an unique name across the cluster space)
+
+## All this does is create the git-creds for the different ExternalSecrets used in Namespace Repos
 franchises: [
   {
-    franchise_number: "123",
-    git_creds_gcp_secret_name: "franchise-123-git-creds", # Secret to access the namespace repo containing the franchise's information
-    franchise_name: "ACME",
+    franchise_number: "123", # DEPRECATED
+    git_creds_gcp_secret_name: "global-lab-git-creds", # Secret to access the namespace repo containing the franchise's information
+    franchise_name: "Global McD", # DEPRECATED
     stores: [
-      "cnuc-1" # store-usa-123-1
+      "edge-2" # store-usa-123-1
     ]
   },
   {
-    franchise_name: "Innotec",
+    franchise_name: "Chicago McD",
     franchise_number: "234",
-    git_creds_gcp_secret_name: "franchise-234-git-creds",
+    git_creds_gcp_secret_name: "northam-lab-git-creds",
     stores: [
-      "nuc-1" # store-usa-234-3
-    ]
-  },
-  {
-    franchise_name: "Penatrode",
-    franchise_number: "123",
-    git_creds_gcp_secret_name: "franchise-123-git-creds",
-    stores: [
-      "cnuc-4" # store-usa-123-2
-    ]
-  },
-  {
-    franchise_name: "UberTrinken",
-    franchise_number: "234",
-    git_creds_gcp_secret_name: "franchise-234-git-creds",
-    stores: [
-      "nuc-4" # store-usa-234-2
+      "edge-1" # store-usa-234-3
     ]
   }
 ]

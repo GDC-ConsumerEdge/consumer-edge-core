@@ -4,6 +4,14 @@
   - observability-agent-install
   - observability-setup
 
+- name: Create stackdriver config folder if not exist
+  ansible.builtin.file:
+    path: /etc/stackdriver
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
   ### Configure Monitoring agent
 - name: Copy collectd config
   template:
@@ -53,6 +61,8 @@
   with_items:
     - { service: 'stackdriver-agent', script: 'add-monitoring-agent-repo.sh' }
     - { service: 'google-fluentd', script: 'add-logging-agent-repo.sh' }
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
   tags:
   - observability-agent-install
   - observability-setup
