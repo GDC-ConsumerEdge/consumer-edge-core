@@ -1,0 +1,6 @@
+cluster_name: "edge-1"
+cluster_index: 1
+
+control_plane_ip: "10.223.62.232"
+
+primary_ip: "10.223.62.231"
