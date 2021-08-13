@@ -82,7 +82,7 @@ spec:
     containerRuntime: {{ container_runtime }}
   # KubeVirt configuration, uncomment this section if you want to install kubevirt to the cluster
   kubevirt:
-    useEmulation: true
+    useEmulation: {{ kubevirt_use_emulation }}
 
   # Authentication; uncomment this section if you wish to enable authentication to the cluster with OpenID Connect.
   # authentication:

@@ -1,5 +1,8 @@
 ---
 
+# All ansible interactions are using this user during provisioning
+ansible_user: abm-admin
+
 # Variables assigned to all inventory
 
 google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
