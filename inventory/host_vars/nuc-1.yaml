@@ -10,4 +10,6 @@ control_plane_ips: [
 ]
 control_plane_vip: "192.168.1.120"
 ingress_vip: "192.168.1.121"
-load_balancer_pool_cidr: "192.168.1.121-192.168.1.129"
+load_balancer_pool_cidr: [
+  "192.168.1.121-192.168.1.129"
+]
