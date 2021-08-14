@@ -34,11 +34,12 @@
 
 ### TODO: This is a fix for a pre-release functionality targeted for 1.8.3
 - name: "Update CDI deployment for future software release"
+  run_once: true
   shell: |
     kubectl get deployment -n cdi cdi-operator -o yaml > cdi-operator-change.yaml
 
     sed -i "s|v1.34.0-gke.1|v1.34.1-gke.5|" cdi-operator-change.yaml
-    sed -i "s|{{ google_project_id }}|mcdonalds-edge-poc|" cdi-operator-change.yaml
+    sed -i "s|{{ cdi_staging_project }}|{{ google_project_id }}|" cdi-operator-change.yaml
 
     kubectl apply -f cdi-operator-change.yaml
     kubectl delete po -n cdi --all
@@ -49,6 +50,7 @@
     creates: /var/.has-cdi-update
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
   tags:
   - abm-software
   - future-bug-fix
