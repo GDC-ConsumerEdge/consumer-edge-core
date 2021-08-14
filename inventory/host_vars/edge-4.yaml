@@ -1,0 +1,13 @@
+cluster_name: "edge-4"
+cluster_index: 0
+primary_cluster_machine: true
+acm_cluster_name: "store-global"
+control_plane_ip: "192.168.1.150"
+control_plane_ips: [
+  "192.168.1.150",
+  "192.168.1.168",
+  "192.168.1.62"
+]
+control_plane_vip: "192.168.1.200"
+ingress_vip: "192.168.1.201"
+load_balancer_pool_cidr: "192.168.1.201-192.168.1.230"
