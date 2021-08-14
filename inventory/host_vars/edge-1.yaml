@@ -10,4 +10,7 @@ control_plane_ips: [
 ]
 control_plane_vip: "10.223.62.230"
 ingress_vip: "10.223.62.227"
-load_balancer_pool_cidr: "10.223.62.227-10.223.62.229"
+load_balancer_pool_cidr: [
+  "10.223.62.227-10.223.62.229",
+  "10.223.62.234-10.223.62.238"
+]
