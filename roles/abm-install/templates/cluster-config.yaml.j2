@@ -51,7 +51,9 @@ spec:
     addressPools:
     - name: load-balance-pool
       addresses:
-      - {{ load_balancer_pool_cidr }}
+      {% for range in load_balancer_pool_cidr %}
+      - {{ range }}
+      {% endfor %}
   # Proxy configuration
   # proxy:
   #   url: http://[username:password@]domain
