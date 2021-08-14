@@ -11,3 +11,6 @@ root_repository_git_auth_type: "token"
 # NOTE: This is a tight coupling with the "Root Repo" that contains "ExternalSecret" instances with the `git-creds` name
 #       IF changed, both the ACM root-repo and this field need to match
 root_repository_git_secret_name: "git-creds"
+
+# This is the production project that contains the CDI containers. Need it to replace with the staging dynamically in file
+cdi_staging_project: "anthos-baremetal-release"
