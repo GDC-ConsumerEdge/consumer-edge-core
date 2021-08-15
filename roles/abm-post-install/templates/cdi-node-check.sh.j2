@@ -1,0 +1,12 @@
+#!/bin/bash
+
+LINES=$(kubectl get vmi -o jsonpath='{range .items[*]}{@..items[0].status.nodeName }{","}{@..items[0].status.phase }{","}{@..items[*].metadata.name}{"\n"}' --all-namespaces)
+
+# VMI_LINES=(${LINES//$'\n'/ })
+
+readarray -t VMI_LINES <<<"$LINES"
+
+for LINE in ${VMI_LINES[@]}; do
+    if [[ "$LINE" != ",,"
+  echo "->>> $LINE"
+done
