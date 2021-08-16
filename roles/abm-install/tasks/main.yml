@@ -235,6 +235,13 @@
 
 ### TODO: Add a "if fails" then remove the cluster `bmctl reset -c {{ cluster_name }}`
 
+  - name: Check membership
+    command:
+      cmd: gcloud container hub memberships describe {{ cluster_name }} --format="value(name)"
+    tags:
+    - abm-install
+    - abm-verify-install
+
 #### Post Install Activities
   - name: Create PVC Folder
     file:

@@ -1,4 +1,4 @@
-cluster_name: "nuc-6"
+cluster_name: "nuc-4"
 cluster_index: 5
 
 control_plane_ip: "192.168.1.16"
