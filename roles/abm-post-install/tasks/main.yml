@@ -23,3 +23,11 @@
   tags:
   - abm-post-install
   - kube-ps1
+
+### Setup CDI cpumanager flag for nodes
+- name: "Add CDI required cpumanager label for nodes"
+  include: create-cdi-node-label.yaml
+  tags:
+  - abm-post-install
+  - cdi-install
+  - cdi-node-hack

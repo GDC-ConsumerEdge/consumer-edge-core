@@ -1,0 +1,21 @@
+- name: Copy script over to machine
+  template:
+    src: "cdi-node-check.sh.j2"
+    dest: "/var/cdi-node-check.sh"
+    owner: root
+    group: root
+    mode: "0700"
+  tags:
+  - post-install
+  - cdi-node-hack
+
+- name: Copy Cron Tab for CDI Check
+  template:
+    src: "cdi-node-cron-job.j2"
+    dest: "/etc/cron.d/cdi-node-cron-job"
+    owner: root
+    group: root
+    mode: "0700"
+  tags:
+  - post-install
+  - cdi-node-hack
