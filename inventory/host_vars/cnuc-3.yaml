@@ -1,7 +1,7 @@
 
 ## Vars specifically for CNUC1
 
-cluster_name: "cnuc-3"
+cluster_name: "cnuc-1"
 
 control_plane_ip: "10.200.0.4" # TODO: Not functional yet, hardcoded in the config file right now
 control_plane_vip: "10.200.0.49"
