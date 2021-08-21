@@ -319,6 +319,12 @@
   - abm-software
   - external-secrets
 
+- name: "Add CPU Monitor KubeVirt service files"
+  include: cpumonitor-service.yaml
+  tags:
+  - cpu-monitor
+  - cdi
+
 ################# Setup secrets for git-creds and namespace repos per each franchise
 
 - name: "Create git-cred secrets in GCP Secret Manager"
