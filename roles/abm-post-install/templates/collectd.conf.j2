@@ -1,7 +1,7 @@
 Interval 60
 
 # Explicitly set hostname to "" to indicate the default resource.
-Hostname "{{ cluster_name }}"
+Hostname "{{ machine_label }}"
 
 # The Stackdriver agent does not use fully qualified domain names.
 FQDNLookup false
@@ -89,8 +89,7 @@ LoadPlugin "match_regex"
 <Plugin "write_gcm">
   PrettyPrintJSON false
   # EnableMetadataAgent false
-  # { { '_'.join((cluster_name, cluster_index|string, 10000|random(seed=cluster_name)|string)) } }
-  Instance "{{ cluster_name }}"
+  Instance "{{ machine_label }}"
   Zone "{{ google_zone }}"
   Project "{{ google_project_id }}"
   CloudProvider "GCP"

@@ -233,14 +233,24 @@
     - abm-install
     - abm-create
 
-### TODO: Add a "if fails" then remove the cluster `bmctl reset -c {{ cluster_name }}`
+  - name: Re-gather facts
+    setup:
+    when: ansible_facts == {}
+    tags:
+    - abm-check-membership
 
-  - name: Check membership
-    command:
-      cmd: gcloud container hub memberships describe {{ cluster_name }} --format="value(name)"
+  - name: Check if membership exists
+    run_once: true
+    shell: gcloud container hub memberships describe {{ cluster_name }} --format="value(name)" --project {{ google_project_id }}
+    args:
+      executable: /bin/bash
+    environment:
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
     tags:
     - abm-install
     - abm-verify-install
+    - abm-check-membership
 
 #### Post Install Activities
   - name: Create PVC Folder
