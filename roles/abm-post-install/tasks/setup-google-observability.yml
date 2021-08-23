@@ -1,10 +1,12 @@
 - name: Get service facts
   service_facts:
+  become: yes
   tags:
   - observability-agent-install
   - observability-setup
 
 - name: Create stackdriver config folder if not exist
+  become: yes
   ansible.builtin.file:
     path: /etc/stackdriver
     state: directory
@@ -12,8 +14,18 @@
     group: root
     mode: '0755'
 
+- name: Create fluentd config folder if not exist
+  become: yes
+  ansible.builtin.file:
+    path: /etc/google-fluentd
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
   ### Configure Monitoring agent
 - name: Copy collectd config
+  become: yes
   template:
     src: collectd.conf.j2
     dest: "/etc/stackdriver/collectd.conf"
@@ -25,6 +37,7 @@
   - observability-setup
 
 - name: Copy stackdriver initd script
+  become: yes
   template:
     src: stackdriver-agent.j2
     dest: "/etc/init.d/stackdriver-agent"
@@ -37,6 +50,7 @@
 
 ### Download install scripts
 - name: Download Agent scripts
+  become: yes
   ansible.builtin.get_url:
     url: "https://dl.google.com/cloudagents/{{ item.script }}"
     dest: "/tmp/{{ item.script }}"
@@ -53,23 +67,41 @@
 
 ### Run scripts
 - name: Run Agent install scripts
+  become: yes
   ignore_errors: yes # (tries to start google-fluentd without configuration, this will be setup later
   command:
     cmd: "bash /tmp/{{ item.script }} --also-install"
+  timeout: 90 # (in seconds) 1.5 minutes to install (and likely fail)
   when: (ansible_facts.services[item.service + '.service'] is undefined) or
         (ansible_facts.services[item.service + '.service'].status != "enabled")
   with_items:
     - { service: 'stackdriver-agent', script: 'add-monitoring-agent-repo.sh' }
     - { service: 'google-fluentd', script: 'add-logging-agent-repo.sh' }
+  register: agent_results
   environment:
     GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
   tags:
   - observability-agent-install
   - observability-setup
 
+- name: Reset dpkg on failure only
+  ignore_errors: yes
+  become: yes
+  command:
+    cmd: dpkg --configure -a
+  environment:
+    - DEBIAN_FRONTEND: "noninteractive"
+    - DEBCONF_NONINTERACTIVE_SEEN: true
+  when: item is failed
+  with_items: "{{ agent_results.results }}"
+  tags:
+  - observability-agent-install
+  - observability-setup
+  - observability-cleanup
 
 ### Configure Logging agent (copies over the top of the "default" installed .deb configuration)
 - name: Copy fluent.d config
+  become: yes
   template:
     src: google-fluentd.conf.j2
     dest: "/etc/google-fluentd/google-fluentd.conf"
@@ -82,6 +114,7 @@
   - observability-setup
 
 - name: Copy fluentd initd script
+  become: yes
   template:
     src: google-fluentd.j2
     dest: "/etc/init.d/google-fluentd"
@@ -94,6 +127,7 @@
   - observability-setup
 
 - name: Enable the syslog plugin
+  become: yes
   ignore_errors: yes
   copy:
     src:  /etc/google-fluentd/config.d/syslog.conf.dpkg-new
@@ -109,6 +143,7 @@
 
 ### Restart both agents after config changes
 - name: Restart observability services
+  become: yes
   ansible.builtin.service:
     name: "{{ item.service }}"
     enabled: yes
@@ -121,6 +156,17 @@
   - observability-service-reset
   - observability-setup
 
+# apt-updates to google-fluentd hang becasue the incoming config
+#    overwrites the /etc/init.d script and therefore removes the google credentials line (roughly line 20)
+#    it is a legacy product anyway, so no real updates
+- name: Mark google-fluentd as not updateable
+  become: yes
+  command:
+    cmd: apt-mark hold google-fluentd
+  tags:
+  - observability-agent-install
+  - observability-service-reset
+  - observability-setup
 
 ##############################
 ##############################
