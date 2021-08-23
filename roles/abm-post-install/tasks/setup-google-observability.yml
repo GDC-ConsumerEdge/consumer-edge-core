@@ -141,6 +141,31 @@
   - logging-agent-config
   - observability-setup
 
+
+- name: Copy auditd config for fluentd plugin
+  become: yes
+  template:
+    src: auditd.conf.j2
+    dest: "/etc/google-fluentd/config.d/auditd.conf"
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+  - fluentd-config
+  - auditd-config
+  - logging-agent-config
+  - observability-setup
+
+- name: Enable the KV plugin for auditd
+  become: yes
+  command:
+    cmd: /opt/google-fluentd/embedded/bin/gem install fluent-plugin-kv-parser
+  tags:
+  - fluentd-config
+  - auditd-config
+  - logging-agent-config
+  - observability-setup
+
 ### Restart both agents after config changes
 - name: Restart observability services
   become: yes
