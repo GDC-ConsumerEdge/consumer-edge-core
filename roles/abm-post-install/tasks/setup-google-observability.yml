@@ -168,6 +168,19 @@
   - observability-service-reset
   - observability-setup
 
+
+# Automatically restarting the agent with cron
+- name: Create cron-job to check if the agent is running and then restart the agent in the event that it crashed.
+  template:
+    src: stackdriver-agent-check-cron-script.j2
+    dest: /etc/cron.d/stackdriver-agent-supervisor-cron-job
+    owner: root
+    group: root
+    mode: '0744'
+  tags:
+  - observability-agent-install
+  - observability-setup
+
 ##############################
 ##############################
 - name: Uninstall packages
