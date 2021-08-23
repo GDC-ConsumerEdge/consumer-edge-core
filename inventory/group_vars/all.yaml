@@ -1,5 +1,18 @@
 ---
 
+#######
+
+# These are the most commonly changed variables for a particular provisioning
+
+####
+#### Anthos Config Management
+####
+acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/root-repo-usa-market.git', True) }}"
+
+
+#######
+
+
 # All ansible interactions are using this user during provisioning
 ansible_user: abm-admin
 
@@ -21,15 +34,9 @@ abm_version: "1.8.2" # verify coupling of ABM to BMCTL versions
 #TODO: set this up to query for the version, then upgrade automatically if updated
 bmctl_version: "1.8.2" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
 
-####
-#### Anthos Config Management
-####
-
 # gsutil ls -al gs://config-management-release/released/
+# Anthos Config Management
 acm_version: "1.8.1"
-# ACM (using 'token' method)
-acm_root_repo: "https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/root-repo-edge-poc.git"
-
 
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
@@ -37,9 +44,6 @@ force_tools_upgrade: false
 # SCM (GitLab, GitHub access token)
 scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') }}"
 scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
-
-gcs_bucket_guest_vm: "anthos-consumer-edge-vm-isos"
-vm_guest_image: "windows-server-2016-eval-en-us.iso"
 
 #Secret name for longhorn to take backups of volumes and send to cloud storage bucket
 volume_backup_secret_name: gcp-cloud-storage-backup-secret
