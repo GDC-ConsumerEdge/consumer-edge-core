@@ -1,0 +1,277 @@
+{
+  "category": "CUSTOM",
+  "displayName": "Edge Anthos Resource Usage",
+  "etag": "9250e3ef90868e8d722927a3ef5593c5",
+  "mosaicLayout": {
+    "columns": 12,
+    "tiles": [
+      {
+        "height": 4,
+        "widget": {
+          "title": "K8s Node - Containers CPU Allocation %",
+          "xyChart": {
+            "chartOptions": {
+              "mode": "COLOR"
+            },
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "timeSeriesQuery": {
+                  "timeSeriesQueryLanguage": "{ t_0:\n    fetch k8s_container\n    | metric\n        'kubernetes.io/anthos/kube_pod_container_resource_requests_cpu_cores'\n    | group_by 1m,\n        [value_kube_pod_container_resource_requests_cpu_cores_mean:\n           mean(value.kube_pod_container_resource_requests_cpu_cores)]\n    | every 1m\n    | group_by [node: metric.node],\n        [value_kube_pod_container_resource_requests_cpu_cores_mean_aggregate:\n           aggregate(value_kube_pod_container_resource_requests_cpu_cores_mean)]\n; t_1:\n    fetch k8s_container\n    | metric 'kubernetes.io/anthos/kube_node_status_allocatable_cpu_cores'\n    | group_by 1m,\n        [value_kube_node_status_allocatable_cpu_cores_mean:\n           mean(value.kube_node_status_allocatable_cpu_cores)]\n    | every 1m\n    | group_by [node: metric.node],\n        [value_kube_node_status_allocatable_cpu_cores_mean_aggregate:\n           aggregate(value_kube_node_status_allocatable_cpu_cores_mean)] }\n| join\n| value\n    [v_0:\n       cast_units(\n         div(\n           t_0.value_kube_pod_container_resource_requests_cpu_cores_mean_aggregate,\n           t_1.value_kube_node_status_allocatable_cpu_cores_mean_aggregate)\n         * 100,\n         '%')]\n| top 10, v_0"
+                }
+              }
+            ],
+            "thresholds": [
+              {
+                "label": "",
+                "targetAxis": "Y1",
+                "value": 90
+              }
+            ],
+            "timeshiftDuration": "0s",
+            "yAxis": {
+              "label": "y1Axis",
+              "scale": "LINEAR"
+            }
+          }
+        },
+        "width": 6,
+        "xPos": 0,
+        "yPos": 0
+      },
+      {
+        "height": 4,
+        "widget": {
+          "title": "Host CPU Usage %",
+          "xyChart": {
+            "chartOptions": {
+              "mode": "COLOR"
+            },
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "timeSeriesQuery": {
+                  "timeSeriesQueryLanguage": "fetch gce_instance\n| metric 'agent.googleapis.com/cpu/utilization'\n| filter (metric.cpu_state == 'idle')\n| align mean_aligner()\n| group_by [name: metadata.system_labels.name],\n    [c'int lit -': cast_units(100, '%') - mean(value.utilization)]\n| every 1m\n| top 10"
+                }
+              }
+            ],
+            "thresholds": [
+              {
+                "label": "",
+                "targetAxis": "Y1",
+                "value": 90
+              }
+            ],
+            "timeshiftDuration": "0s",
+            "yAxis": {
+              "label": "y1Axis",
+              "scale": "LINEAR"
+            }
+          }
+        },
+        "width": 6,
+        "xPos": 6,
+        "yPos": 0
+      },
+      {
+        "height": 4,
+        "widget": {
+          "title": "Host Memory Usage %",
+          "xyChart": {
+            "chartOptions": {
+              "mode": "COLOR"
+            },
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "timeSeriesQuery": {
+                  "timeSeriesQueryLanguage": "fetch gce_instance\n| metric 'agent.googleapis.com/memory/percent_used'\n| filter (metric.state == 'free')\n| align mean_aligner()\n| group_by [name: metadata.system_labels.name],\n    [value_percent_used_mean: cast_units(100, '%') - mean(value.percent_used)]\n| every 1m\n| top 10"
+                }
+              }
+            ],
+            "thresholds": [
+              {
+                "label": "",
+                "targetAxis": "Y1",
+                "value": 90
+              }
+            ],
+            "timeshiftDuration": "0s",
+            "yAxis": {
+              "label": "y1Axis",
+              "scale": "LINEAR"
+            }
+          }
+        },
+        "width": 6,
+        "xPos": 6,
+        "yPos": 4
+      },
+      {
+        "height": 4,
+        "widget": {
+          "title": "K8s Node - Containers Memory Allocation %",
+          "xyChart": {
+            "chartOptions": {
+              "mode": "COLOR"
+            },
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "timeSeriesQuery": {
+                  "timeSeriesQueryLanguage": "{ t_0:\n    fetch k8s_container\n    | metric\n        'kubernetes.io/anthos/kube_pod_container_resource_requests_memory_bytes'\n    | group_by 1m,\n        [value_kube_pod_container_resource_requests_memory_bytes_mean:\n           mean(value.kube_pod_container_resource_requests_memory_bytes)]\n    | every 1m\n    | group_by [node: metric.node],\n        [value_memory_requested_bytes:\n           aggregate(\n             value_kube_pod_container_resource_requests_memory_bytes_mean)]\n; t_1:\n    fetch k8s_container\n    | metric 'kubernetes.io/anthos/kube_node_status_allocatable_memory_bytes'\n    | group_by 1m,\n        [value_kube_node_status_allocatable_memory_bytes_mean:\n           mean(value.kube_node_status_allocatable_memory_bytes)]\n    | every 1m\n    | group_by [node: metric.node],\n        [value_allocatable_memory_bytes:\n           aggregate(value_kube_node_status_allocatable_memory_bytes_mean)] }\n| join\n| value\n    [v_0:\n       cast_units(\n         div(t_0.value_memory_requested_bytes,\n           t_1.value_allocatable_memory_bytes) * 100,\n         '%')]\n| top 10, v_0"
+                }
+              }
+            ],
+            "thresholds": [
+              {
+                "label": "",
+                "targetAxis": "Y1",
+                "value": 80
+              }
+            ],
+            "timeshiftDuration": "0s",
+            "yAxis": {
+              "label": "y1Axis",
+              "scale": "LINEAR"
+            }
+          }
+        },
+        "width": 6,
+        "xPos": 0,
+        "yPos": 4
+      },
+      {
+        "height": 4,
+        "widget": {
+          "title": "K8s Node Disk Usage %",
+          "xyChart": {
+            "chartOptions": {
+              "mode": "COLOR"
+            },
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "timeSeriesQuery": {
+                  "timeSeriesQueryLanguage": "{ t_0:\n    fetch k8s_node\n    | metric 'kubernetes.io/anthos/node_filesystem_avail_bytes'\n    | filter (metric.fstype != 'tmpfs')\n    | group_by 1m,\n        [value_node_filesystem_avail_bytes_mean:\n           mean(value.node_filesystem_avail_bytes)]\n    | every 1m\n    | group_by\n        [device: metric.device, node: resource.node_name],\n        [value_node_filesystem_avail_bytes_mean_aggregate:\n           aggregate(value_node_filesystem_avail_bytes_mean)]\n; t_1:\n    fetch k8s_node\n    | metric 'kubernetes.io/anthos/node_filesystem_size_bytes'\n    | filter (metric.fstype != 'tmpfs')\n    | group_by 1m,\n        [value_node_filesystem_size_bytes_mean:\n           mean(value.node_filesystem_size_bytes)]\n    | every 1m\n    | group_by\n        [device: metric.device, node: resource.node_name],\n        [value_node_filesystem_size_bytes_mean_aggregate:\n           aggregate(value_node_filesystem_size_bytes_mean)] }\n| join\n| value\n    [v_0:\n       cast_units(\n         div(\n           sub(t_1.value_node_filesystem_size_bytes_mean_aggregate,\n             t_0.value_node_filesystem_avail_bytes_mean_aggregate),\n           t_1.value_node_filesystem_size_bytes_mean_aggregate) * 100,\n         '%')]"
+                }
+              }
+            ],
+            "thresholds": [
+              {
+                "label": "",
+                "targetAxis": "Y1",
+                "value": 80
+              }
+            ],
+            "timeshiftDuration": "0s",
+            "yAxis": {
+              "label": "y1Axis",
+              "scale": "LINEAR"
+            }
+          }
+        },
+        "width": 6,
+        "xPos": 6,
+        "yPos": 8
+      },
+      {
+        "height": 4,
+        "widget": {
+          "title": "K8s Node - Containers Storage Allocation %",
+          "xyChart": {
+            "chartOptions": {
+              "mode": "COLOR"
+            },
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "timeSeriesQuery": {
+                  "timeSeriesQueryLanguage": "{ t_0:\n    fetch k8s_container\n    | metric 'kubernetes.io/anthos/kube_pod_container_resource_requests'\n    | filter (metric.resource == 'ephemeral_storage')\n    | group_by 1m,\n        [value_kube_pod_container_resource_requests_mean:\n           mean(value.kube_pod_container_resource_requests)]\n    | every 1m\n    | group_by [node: metric.node],\n        [value_kube_pod_container_resource_requests_mean_aggregate:\n           aggregate(value_kube_pod_container_resource_requests_mean)]\n; t_1:\n    fetch k8s_node\n    | metric 'kubernetes.io/anthos/node_filesystem_avail_bytes'\n    | filter (metric.fstype != 'tmpfs')\n    | group_by 1m,\n        [value_node_filesystem_avail_bytes_mean:\n           mean(value.node_filesystem_avail_bytes)]\n    | every 1m\n    | group_by [node: resource.node_name],\n        [value_node_filesystem_avail_bytes_mean_aggregate:\n           aggregate(value_node_filesystem_avail_bytes_mean)] }\n| join\n| value\n    [v_0:\n       cast_units(\n         div(t_0.value_kube_pod_container_resource_requests_mean_aggregate,\n           t_1.value_node_filesystem_avail_bytes_mean_aggregate) * 100,\n         '%')]\n| top 10, v_0"
+                }
+              }
+            ],
+            "thresholds": [
+              {
+                "label": "",
+                "targetAxis": "Y1",
+                "value": 80
+              }
+            ],
+            "timeshiftDuration": "0s",
+            "yAxis": {
+              "label": "y1Axis",
+              "scale": "LINEAR"
+            }
+          }
+        },
+        "width": 6,
+        "xPos": 0,
+        "yPos": 8
+      },
+      {
+        "height": 4,
+        "widget": {
+          "title": "K8s Node Network Receive Rate",
+          "xyChart": {
+            "chartOptions": {
+              "mode": "COLOR"
+            },
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "timeSeriesQuery": {
+                  "timeSeriesQueryLanguage": "fetch k8s_node\n| metric 'kubernetes.io/anthos/node_network_receive_bytes_total'\n| align rate(1m)\n| every 1m\n| group_by [resource.node_name],\n    [value_node_network_receive_bytes_total_aggregate:\n       aggregate(value.node_network_receive_bytes_total)]"
+                }
+              }
+            ],
+            "timeshiftDuration": "0s",
+            "yAxis": {
+              "label": "y1Axis",
+              "scale": "LINEAR"
+            }
+          }
+        },
+        "width": 6,
+        "xPos": 0,
+        "yPos": 12
+      },
+      {
+        "height": 4,
+        "widget": {
+          "title": "K8s Node Network Transmit Rate",
+          "xyChart": {
+            "chartOptions": {
+              "mode": "COLOR"
+            },
+            "dataSets": [
+              {
+                "plotType": "LINE",
+                "targetAxis": "Y1",
+                "timeSeriesQuery": {
+                  "timeSeriesQueryLanguage": "fetch k8s_node\n| metric 'kubernetes.io/anthos/node_network_transmit_bytes_total'\n| align rate(1m)\n| every 1m\n| group_by [resource.node_name],\n    [value_node_network_transmit_bytes_total_aggregate:\n       aggregate(value.node_network_transmit_bytes_total)]"
+                }
+              }
+            ],
+            "timeshiftDuration": "0s",
+            "yAxis": {
+              "label": "y1Axis",
+              "scale": "LINEAR"
+            }
+          }
+        },
+        "width": 6,
+        "xPos": 6,
+        "yPos": 12
+      }
+    ]
+  },
+  "name": "projects/910037798793/dashboards/2384332c-4207-48fb-820d-b162b2f9c6ff"
+}
