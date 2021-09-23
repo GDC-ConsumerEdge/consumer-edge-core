@@ -42,7 +42,7 @@
  ### Install Obeservability agents
 - name: "Setup Obeservability Agents on Physical"
   include: setup-google-observability.yml
-  when: is_cloud_resource is undefined or is_cloud_resource == False
+  when: install_observability is true and (is_cloud_resource is undefined or is_cloud_resource == False)
   tags:
   - abm-post-install
   - observability-setup
