@@ -52,6 +52,10 @@ volume_backup_secret_name: gcp-cloud-storage-backup-secret
 setup_vlan: false
 vlan_interfaces: []
 
+
+# Observability package
+install_observability: false
+
 # All of the Service Accounts used in this solution
 service_accounts: [
   {

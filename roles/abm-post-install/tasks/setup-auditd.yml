@@ -1,7 +1,10 @@
-- name: Install auditd 
+- name: Install auditd
   become: yes
-  command:
-    cmd: apt-get install -y auditd audispd-plugins
+  apt:
+    pkg:
+    - auditd
+    - audispd-plugins
+    state: present
   tags:
   - observability-audit-install
   - observability-setup
