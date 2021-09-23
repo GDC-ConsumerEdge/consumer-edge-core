@@ -144,6 +144,7 @@
 
 - name: Copy auditd config for fluentd plugin
   become: yes
+  ignore_errors: yes
   template:
     src: auditd.conf.j2
     dest: "/etc/google-fluentd/config.d/auditd.conf"

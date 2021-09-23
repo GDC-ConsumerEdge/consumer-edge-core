@@ -48,6 +48,10 @@ scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
 #Secret name for longhorn to take backups of volumes and send to cloud storage bucket
 volume_backup_secret_name: gcp-cloud-storage-backup-secret
 
+# Setup VLAN on Host # TODO: Add the ability to create multiple VLAN interfaces dynamically
+setup_vlan: false
+vlan_interfaces: []
+
 # All of the Service Accounts used in this solution
 service_accounts: [
   {
