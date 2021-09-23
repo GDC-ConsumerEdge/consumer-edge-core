@@ -200,6 +200,14 @@
   - observability-service-reset
   - observability-setup
 
+- name: Reset daemon status for systemctl
+  become: yes
+  command:
+    cmd: systemctl daemon-reload
+  tags:
+  - observability-agent-install
+  - observability-service-reset
+  - observability-setup
 
 # Automatically restarting the agent with cron
 - name: Create cron-job to check if the agent is running and then restart the agent in the event that it crashed.
