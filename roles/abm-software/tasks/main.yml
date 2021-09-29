@@ -381,7 +381,7 @@
   - primary_cluster_machine == true
   - enable_oidc == true
   tags:
-  - nick
+  - oidc
   - post-acm
 
 - name: "Configure OIDC with Google Cloud Identity"
@@ -394,7 +394,7 @@
   - primary_cluster_machine == true
   - enable_oidc == true
   tags:
-  - nick
+  - oidc
   - post-acm
 
 - name: "Configure role binding for OIDC"
@@ -407,7 +407,7 @@
   - primary_cluster_machine == true
   - enable_oidc == true
   tags:
-  - nick
+  - oidc
   - post-acm
 
 
