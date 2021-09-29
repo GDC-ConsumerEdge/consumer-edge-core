@@ -20,3 +20,9 @@ abm_install_folder: "/var/abm-install"
 
 # CDI add CPU Monitoring flag script run by cron.d
 cdi_cron_script_file: "/var/cdi-check-node.sh"
+
+# OIDC config vars
+enable_oidc: true
+oidc_client_id: "{{ lookup('env', 'OIDC_CLIENT_ID') }}"
+oidc_client_secret: "{{ lookup('env', 'OIDC_CLIENT_SECRET') }}"
+oidc_user: "{{ lookup('env', 'OIDC_USER') }}"
