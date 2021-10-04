@@ -8,7 +8,7 @@ machine_label: "cnuc-1"
 # Indicates that this is the primary machine in the cluster (only important for provisioning)
 primary_cluster_machine: true
 # Name of the "store" per the ACM repo
-acm_cluster_name: "store-chicago"
+acm_cluster_name: "location-1"
 # This machine's IP
 control_plane_ip: "10.200.0.2"
 # The other IPs in the cluster
