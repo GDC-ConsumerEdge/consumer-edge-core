@@ -98,15 +98,6 @@
   - abm-install
   - abm-ssh
 
-## TODO: Take this out after the official fix has been committed
-- name: Setup kernel in response to b/192342102
-  template:
-    src: 24-nf_conntrack_max.conf.j2
-    dest: "/etc/sysctl.d/24-nf_conntrack_max.conf"
-  tags:
-  - temp-fix
-  - ubuntu-setup
-
 # Copy over the vxlan status verify script
 - name: Copy VXLAN status script
   template:

@@ -30,31 +30,6 @@
   tags:
   - abm-software
   - abm-config
-  - onetime
-
-### TODO: This is a fix for a pre-release functionality targeted for 1.8.3
-- name: "Update CDI deployment for future software release"
-  run_once: true
-  shell: |
-    kubectl get deployment -n cdi cdi-operator -o yaml > cdi-operator-change.yaml
-
-    sed -i "s|v1.34.0-gke.1|v1.34.1-gke.5|" cdi-operator-change.yaml
-    sed -i "s|{{ cdi_staging_project }}|{{ google_project_id }}|" cdi-operator-change.yaml
-
-    kubectl apply -f cdi-operator-change.yaml
-    kubectl delete po -n cdi --all
-    touch /var/.has-cdi-update
-    rm -rf cdi-operator-change.yaml
-  args:
-    executable: /bin/bash
-    creates: /var/.has-cdi-update
-  environment:
-    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  tags:
-  - abm-software
-  - future-bug-fix
-  - cdi-install
 
 - name: Folder for ACM configurations
   file:
@@ -373,10 +348,10 @@
   template:
     src: "{{ item.template }}"
     dest: "{{ acm_config_files }}/{{ item.final_name }}"
-  loop: 
+  loop:
   - {"template": "oidc-setup.yaml.j2", "final_name": "oidc-setup.yaml"}
   - {"template": "oidc-rolebindings.yaml.j2", "final_name": "oidc-rolebindings.yaml"}
-  when: 
+  when:
   - primary_cluster_machine is defined
   - primary_cluster_machine == true
   - enable_oidc == true
@@ -389,7 +364,7 @@
     kubectl -n kube-public patch clientconfig default --type merge --patch "$(cat {{ acm_config_files }}/oidc-setup.yaml)"
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  when: 
+  when:
   - primary_cluster_machine is defined
   - primary_cluster_machine == true
   - enable_oidc == true
@@ -402,7 +377,7 @@
     kubectl apply -f {{ acm_config_files }}/oidc-rolebindings.yaml
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  when: 
+  when:
   - primary_cluster_machine is defined
   - primary_cluster_machine == true
   - enable_oidc == true
