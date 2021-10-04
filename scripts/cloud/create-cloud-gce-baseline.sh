@@ -126,7 +126,7 @@ echo "Final Cluster Count = $CLUSTER_COUNT"
 ###############################
 
 # enable any services needed
-gcloud services enable anthos.googleapis.com cloudresourcemanager.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com
+gcloud services enable servicemanagement.googleapis.com anthos.googleapis.com cloudresourcemanager.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com
 
 # Create init script bucket for GCE instances to use
 setup_init_bucket

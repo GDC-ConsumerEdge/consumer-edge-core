@@ -21,6 +21,9 @@ else
     # otherwise, no need to do anything
 fi
 
+# Bootstrap a few API services:
+gcloud services enable servicemanagement.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com
+
 echo "Adding roles/editor"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${GSA_EMAIL}" \
