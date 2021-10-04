@@ -6,3 +6,6 @@ abm_install_user: "el-gato"
 
 # Match with Google-Tools (by convention, not required, but good idea)
 remote_gsa_key: "/var/keys"
+
+# Configuration files for CloudOps Dashboards
+dashboard_config_base: "/var/abm-dashboards"

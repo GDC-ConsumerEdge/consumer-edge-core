@@ -1,6 +1,10 @@
 {
   "category": "CUSTOM",
-  "displayName": "Edge Anthos Memory Usage",
+  "displayName": "Edge - Anthos Memory Usage",
+  "labels": {
+    "retail-edge": "true",
+    "{{ cluster_name }}": "true"
+  },
   "mosaicLayout": {
     "columns": 12,
     "tiles": [
