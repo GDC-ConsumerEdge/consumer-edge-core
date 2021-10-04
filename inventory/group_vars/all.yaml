@@ -27,16 +27,32 @@ tools_base_path: "/var/google-tools-install"
 kubeconfig_shared_root: "/var/kubeconfig"
 kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
 
+gcp_services_required:
+  - anthosaudit.googleapis.com
+  - opsconfigmonitoring.googleapis.com
+  - anthos.googleapis.com
+  - connectgateway.googleapis.com
+  - anthosgke.googleapis.com
+  - cloudresourcemanager.googleapis.com
+  - container.googleapis.com
+  - gkeconnect.googleapis.com
+  - gkehub.googleapis.com
+  - serviceusage.googleapis.com
+  - stackdriver.googleapis.com
+  - monitoring.googleapis.com
+  - logging.googleapis.com
+  - secretmanager.googleapis.com
+
 # Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
 # Version of Anthos Bare Metal to install
-abm_version: "1.8.2" # verify coupling of ABM to BMCTL versions
+abm_version: "1.9.0" # verify coupling of ABM to BMCTL versions
 # bmctl binary version
 #TODO: set this up to query for the version, then upgrade automatically if updated
-bmctl_version: "1.8.2" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
+bmctl_version: "1.9.0" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
 
 # gsutil ls -al gs://config-management-release/released/
 # Anthos Config Management
-acm_version: "1.8.1"
+acm_version: "1.9.0"
 
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
@@ -89,7 +105,8 @@ service_accounts: [
       "roles/logging.logWriter",
       "roles/monitoring.metricWriter",
       "roles/stackdriver.resourceMetadata.writer",
-      "roles/monitoring.dashboardEditor"
+      "roles/monitoring.dashboardEditor",
+      "roles/opsconfigmonitoring.resourceMetadata.writer"
     ]
   },
   {

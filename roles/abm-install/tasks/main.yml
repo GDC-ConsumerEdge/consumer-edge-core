@@ -217,7 +217,7 @@
 
 ### Create cluster configuration
   - name: "Create cluster {{ cluster_name }} -- (be patient, this takes 20-40 minutes)"
-    command: bmctl create cluster --cluster={{ cluster_name }}
+    command: bmctl create cluster --cluster={{ cluster_name }} --quiet --v 0
     when:
       - primary_cluster_machine is defined
       - abm_installed.stat.exists == False
@@ -239,11 +239,10 @@
     tags:
     - abm-check-membership
 
-  - name: Check if membership exists
+  - name: Make sure the GKE Hub membership exists
     run_once: true
-    shell: gcloud container hub memberships describe {{ cluster_name }} --format="value(name)" --project {{ google_project_id }}
-    args:
-      executable: /bin/bash
+    command:
+      cmd: gcloud container hub memberships describe {{ cluster_name }} --format="value(name)" --project {{ google_project_id }}
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
       GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
