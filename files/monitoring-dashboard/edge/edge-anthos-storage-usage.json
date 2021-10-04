@@ -1,7 +1,6 @@
 {
   "category": "CUSTOM",
   "displayName": "Edge Anthos Storage Usage",
-  "etag": "a6d4b0170f043e07e0ec75fe64c52190",
   "mosaicLayout": {
     "columns": 12,
     "tiles": [

@@ -1,7 +1,10 @@
 {
   "category": "CUSTOM",
-  "displayName": "Edge Anthos Resource Usage",
-  "etag": "9250e3ef90868e8d722927a3ef5593c5",
+  "displayName": "Edge - Anthos Resource Usage",
+  "labels": {
+    "retail-edge": "true",
+    "{{ cluster_name }}": "true"
+  },
   "mosaicLayout": {
     "columns": 12,
     "tiles": [
@@ -272,6 +275,5 @@
         "yPos": 12
       }
     ]
-  },
-  "name": "projects/910037798793/dashboards/2384332c-4207-48fb-820d-b162b2f9c6ff"
+  }
 }

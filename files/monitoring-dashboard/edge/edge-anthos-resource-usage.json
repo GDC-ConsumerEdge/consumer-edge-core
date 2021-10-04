@@ -1,7 +1,6 @@
 {
   "category": "CUSTOM",
   "displayName": "Edge Anthos Resource Usage",
-  "etag": "b7716c8fefaac82d19c235ace207aebf",
   "mosaicLayout": {
     "columns": 12,
     "tiles": [

@@ -1,7 +1,6 @@
 {
   "category": "CUSTOM",
   "displayName": "Edge Anthos Memory Usage",
-  "etag": "6a48e59ac7e57f5557ce25ad196c4209",
   "mosaicLayout": {
     "columns": 12,
     "tiles": [

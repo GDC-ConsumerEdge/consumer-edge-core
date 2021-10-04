@@ -1,7 +1,6 @@
 {
   "category": "CUSTOM",
   "displayName": "Edge Anthos Log Errors",
-  "etag": "0ff58ddec8f2dab963a759043bd41d4e",
   "mosaicLayout": {
     "columns": 12,
     "tiles": [
