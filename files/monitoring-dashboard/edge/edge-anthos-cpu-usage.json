@@ -17,7 +17,7 @@
                 "plotType": "LINE",
                 "targetAxis": "Y1",
                 "timeSeriesQuery": {
-                  "timeSeriesQueryLanguage": "fetch gce_instance\n| metric 'agent.googleapis.com/cpu/utilization'\n| filter (metric.cpu_state == 'idle')\n| group_by 1m,\n    [value_utilization_mean: cast_units(100, '%') - mean(value.utilization)]\n| every 1m\n| group_by\n    [metric.cpu_number, resource.instance_id, resource.zone,\n     metadata.user.category: metadata.user_labels.category,\n     metadata.user.location: metadata.user_labels.location,\n     metadata.user.type: metadata.user_labels.type,\n     metadata.user.vxlanid: metadata.user_labels.vxlanid,\n     metadata.system.name: metadata.system_labels.name,\n     metadata.system.region: metadata.system_labels.region,\n     metadata.system.state: metadata.system_labels.state],\n    [value_utilization_mean_aggregate: aggregate(value_utilization_mean)]"
+                  "timeSeriesQueryLanguage": "fetch gce_instance\n| metric 'agent.googleapis.com/cpu/utilization'\n| filter (metric.cpu_state == 'idle')\n| group_by 1m,\n    [value_utilization_mean: cast_units(100, '%') - mean(value.utilization)]\n| every 1m\n| group_by\n    [resource.instance_id, resource.zone],\n    [value_utilization_mean_aggregate: aggregate(value_utilization_mean)]"
                 }
               }
             ],
@@ -113,7 +113,7 @@
               "timeSeriesQueryLanguage": "fetch gce_instance\n| metric 'agent.googleapis.com/cpu/utilization'\n| filter (metric.cpu_state == 'idle')\n| group_by 1m, [value_utilization_max: cast_units(100,\"%\")-max(value.utilization)]\n| every 1m\n| group_by [], [value_utilization_max_max: max(value_utilization_max)]"
             }
           },
-          "title": "Max CPU Utilization %"
+          "title": "Node With Max CPU Utilization %"
         },
         "width": 4,
         "xPos": 0,
@@ -148,5 +148,6 @@
         "yPos": 4
       }
     ]
-  }
+  },
+  "name": "projects/277388456369/dashboards/faf30aba-e972-47c6-985f-3f5644446c7b"
 }
