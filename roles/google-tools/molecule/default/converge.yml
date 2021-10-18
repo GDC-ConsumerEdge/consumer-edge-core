@@ -5,3 +5,9 @@
     - name: "Include google-tools"
       include_role:
         name: "google-tools"
+  vars:
+    # Most of these VARs are pulled from all.yaml and the group/host VARs inside inventory/
+    google_region: "us-central1"
+    google_zone: "{{google_region}}-a"
+    gcp_services_required: []
+    bmctl_version: "1.9.0"

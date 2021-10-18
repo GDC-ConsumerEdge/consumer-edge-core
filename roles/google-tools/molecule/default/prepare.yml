@@ -1,0 +1,16 @@
+
+- name: Prepare
+  hosts: all
+  gather_facts: false
+  vars: []
+
+  tasks:
+  - name: Uninstall packages
+    apt:
+      pkg:
+        - bash-completion
+      state: present
+      force: yes
+      purge: yes
+    tags:
+    - molecule-prepare
