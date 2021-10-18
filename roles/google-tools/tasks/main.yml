@@ -127,6 +127,9 @@
     run_once: true # only one in whole inventory to run this
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    when:
+      - gcp_services_required is defined
+      - (gcp_services_required|length>0)
     tags:
     - initial-install
 

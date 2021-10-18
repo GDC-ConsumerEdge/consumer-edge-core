@@ -8,7 +8,7 @@ platforms:
   #   image: docker.io/ubuntu:20.10
   #   pre_build_image: true
   - name: buster
-    image: docker.io/python:3.9.1-buster
+    image: docker.io/python:3-buster
     pre_build_image: true
 
 provisioner:
