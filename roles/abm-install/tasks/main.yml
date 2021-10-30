@@ -26,6 +26,7 @@
     - abm-install
     - abm-once
 
+
   - name: Add roles to service accounts
     command:
       cmd: gcloud projects add-iam-policy-binding {{ google_project_id }} --member="serviceAccount:{{ item.0.name }}@{{ google_project_id }}.iam.gserviceaccount.com" --role="{{ item.1 }}"

@@ -81,7 +81,7 @@
     lineinfile:
       path: /etc/environment
       regexp: 'PATH="(\/usr\/local\/sbin:\/usr\/local\/bin:\/usr\/sbin:\/usr\/bin:\/sbin:\/bin:\/usr\/games:\/usr\/local\/games:\/snap\/bin)"$' #uugghhly...but works
-      line: 'PATH="\1:/var/google-tools-install/google-cloud-sdk/bin"'
+      line: 'PATH="/var/google-tools-install/google-cloud-sdk/bin:\1"' #prepend gcloud (snap auto installs gcloud on GCE instances)
       backrefs: yes
       state: present
     tags:
