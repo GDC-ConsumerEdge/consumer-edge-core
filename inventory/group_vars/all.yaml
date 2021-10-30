@@ -138,6 +138,14 @@ service_accounts: [
       "roles/gkehub.gatewayAdmin",
       "roles/gkehub.viewer"
     ]
+  },
+  {
+    name: cdi-import-agent,
+    keyfile: cdi-import-agent-creds.json,
+    description: "Agent used for CDI image access",
+    roles: [
+      "roles/storage.objectViewer"
+    ]
   }
 ]
 
