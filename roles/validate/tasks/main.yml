@@ -42,3 +42,16 @@
     fail_msg: "The local environment variable 'LOCAL_GSA_FILE' needs to be set to the local filesystem GSA JSON key"
   tags:
   - verify
+
+- name: Ensure at least 120GB on primary disk
+  shell: |
+    export PRIMARY_DISK=$(df -BG / | awk '{if (NR!=1) print $2}' | tr -d 'G')
+    if [ "$PRIMARY_DISK" -lt 120 ]; then
+      echo "ERROR: $PRIMARY_DISK is less than required 120GB"
+      exit 1
+    fi
+  failed_when: disk_check.rc > 0
+  changed_when: disk_check.rc != 0
+  register: disk_check
+  tags:
+  - verify
