@@ -54,7 +54,6 @@
     msg: "{{ ufw.stdout }}"
   tags:
   - remove
-  - debug
 
 ## Create the user that builds and communicates across cluster machines
 - name: Create a user for ABM Control

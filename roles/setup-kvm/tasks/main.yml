@@ -33,6 +33,7 @@
     - kvm-install
     - kvm-packages
 
+# TODO: Refactor timeout
 - name: Reboot machine so KVM dependencies are active
   reboot:
     reboot_timeout: 300

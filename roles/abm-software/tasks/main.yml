@@ -1,7 +1,13 @@
+- name: Post-Install--Fail if number of available hosts != in-play count
+  fail:
+    msg: "Failure caused by expected {{ ansible_play_hosts_all|length }} hosts but have {{ ansible_play_hosts|length }}. Check failures above to see what issue happened."
+  when: (ansible_play_hosts_all|length) != (ansible_play_hosts|length)
+  tags:
+  - verify
+
 #
 # Install ACM
 #
-
 - name: Fail if local SCM_TOKEN_USER ENV is not defined
   assert:
     that:
@@ -84,35 +90,15 @@
   - external-secrets-operator
   - external-secrets-apply
 
- ###  Longhorn
- #
-- name: Copy Longhorn namespace and configmap
-  template:
-    src: longhorn-default-setting.yml.j2
-    dest: "{{ acm_config_files }}/longhorn-default-setting.yml"
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
+ ###  Setup & install Longhorn if settings
+- name: Setup Longhorn
+  include: csi-longhorn.yaml
+  vars:
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+  when: storage_provider == "longhorn"
   tags:
-  - longhorn-config-management
-
-
-- name: Create Longhorn namespace and configmap
-  shell: |
-    kubectl apply -f {{ acm_config_files }}/longhorn-default-setting.yml
-    exit $?
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  retries: 3
-  register: cmc_result
-  until: cmc_result.rc == 0
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  tags:
-  - longhorn-config-management
-
-
+  - longhorn
+  - storage-setup
 
 ### ACM
 - name: "Enable ACM API in GCP"

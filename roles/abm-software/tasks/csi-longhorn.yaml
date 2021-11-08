@@ -1,0 +1,60 @@
+
+# Get HMAC secret from Secret Manager
+- name: Get the HMAC cloud stroage key from Secret Manager IF it exists
+  run_once: true
+  ignore_errors: true
+  shell: |
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ longhorn_secret_name }}" --format="value(name)" --project="{{ google_project_id }}")
+    if [ -z "$HAS_SECRET" ]; then
+      exit 1
+    else
+      exit 0
+    fi
+  register: hmac_longhorn_secret
+  changed_when: hmac_longhorn_secret.rc != 0
+  tags:
+  - longhorn-hmac-keys
+  - longhorn-install
+
+- name: Create new HMAC key for longhorn backup to cloud stoarge and push to Secret Manager
+  run_once: true
+  shell: |
+    gsutil hmac create longhorn-cloud-storage@{{ google_project_id }}.iam.gserviceaccount.com > /tmp/hmackey.txt
+    access_key=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $1}'`
+    access_secret=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $2}'`
+    echo "{\"access_key\": \"${access_key}\",  \"access_secret\": \"${access_secret}\" , \"endpoint\" : \"https://storage.googleapis.com\" }" > /tmp/hmacsecret.json
+    gcloud secrets create {{ longhorn_secret_name }} --replication-policy="automatic" --project="{{ google_project_id }}"
+    gcloud secrets versions add {{ longhorn_secret_name }} --data-file="/tmp/hmacsecret.json"
+    rm -rf /tmp/hmacsecret.json /tmp/hmackey.txt # delete temp file
+    exit $?
+  args:
+    executable: /bin/bash
+  when: hmac_longhorn_secret.rc > 0
+  tags:
+  - longhorn-hmac-keys
+  - longhorn-install
+
+- name: Copy Longhorn namespace and configmap
+  template:
+    src: longhorn-default-setting.yml.j2
+    dest: "{{ acm_config_files }}/longhorn-default-setting.yml"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  tags:
+  - longhorn-config-management
+  - longhorn-install
+
+- name: Create Longhorn namespace and configmap
+  command:
+    cmd: kubectl apply -f {{ acm_config_files }}/longhorn-default-setting.yml
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  retries: 3
+  register: cmc_result
+  until: cmc_result.rc == 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - longhorn-config-management
