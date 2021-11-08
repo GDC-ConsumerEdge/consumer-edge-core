@@ -10,9 +10,18 @@
 acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/root-repo-usa-market.git', True) }}"
 
 
-#######
+###
+### Storage Provider
+###
+storage_provider: "longhorn" # Options: openebs, robin, none
+# Storage provider roots for disc storage
+storage_provider_roots: [ "/customer" ]
+# GSM Secret name used for Longhorn HMAC
+longhorn_secret_name: "longhorn-cloud-storage-hmac"
 
-
+###
+###
+###
 # All ansible interactions are using this user during provisioning
 ansible_user: abm-admin
 
@@ -76,6 +85,7 @@ vlan_interfaces: []
 install_observability: true
 
 # All of the Service Accounts used in this solution
+## LONGHORN
 service_accounts: [
   {
     name: abm-gcr-agent,

@@ -32,6 +32,3 @@ local_share_pvc_mount: "/opt/localpv-share" # Default value
 
 # Cluster runtime
 container_runtime: "containerd" # docker or containerd
-
-# Secret used for Longhorn
-longhorn_secret_name: "longhorn-cloud-storage-hmac"
