@@ -1,4 +1,11 @@
----
+## Check to make sure all hosts are active
+  - name: Pre ABM Install--Fail if number of available hosts != in-play count
+    fail:
+      msg: "Failure caused by expected {{ ansible_play_hosts_all|length }} hosts but have {{ ansible_play_hosts|length }}. Check failures above to see what issue happened."
+    when: (ansible_play_hosts_all|length) != (ansible_play_hosts|length)
+    tags:
+    - verify
+
 # tasks file for abm-install
 
 ### gcloud auth to target-machine-gsa done in google-tools
@@ -103,34 +110,17 @@
     - abm-gsa-keys
     - abm-install
 
-  - name: Create new HMAC key for longhorn backup to cloud stoarge and push to Secret Manager
-    run_once: true # only one machine to do this
-    shell: |
-      gsutil hmac create longhorn-cloud-storage@{{ google_project_id }}.iam.gserviceaccount.com > /tmp/hmackey.txt
-      access_key=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $1}'`
-      access_secret=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $2}'`
-      echo "{\"access_key\": \"${access_key}\",  \"access_secret\": \"${access_secret}\" , \"endpoint\" : \"https://storage.googleapis.com\" }" > /tmp/hmacsecret.json
-      gcloud secrets create {{ longhorn_secret_name }} --replication-policy="automatic" --project="{{ google_project_id }}"
-      gcloud secrets versions add {{ longhorn_secret_name }} --data-file="/tmp/hmacsecret.json"
-      rm -rf /tmp/hmacsecret.json /tmp/hmackey.txt # delete temp file
-      exit $?
-    args:
-      executable: /bin/bash
-    tags:
-    - abm-once
-    - longhorn-hmac-keys
-    - abm-install
-
-### Create or ensure the /customer folder exists
-###TODO Make this /customer configuration and link to Longhorn config
-  - name: Create the /customer folder if needs
+### Create or ensure root folder exists for storage provider
+  - name: Create the storage provider folder(s)
     ansible.builtin.file:
-      path: /customer
+      path: "{{ item }}"
       state: directory
       mode: '0755'
+    loop: "{{ storage_provider_roots }}"
     tags:
     - abm-install
     - abm-config
+    - storage-setup
 
 ### Create Local PVC folder (future will be mounted or something)
   - name: Create PVC Folder
@@ -141,6 +131,7 @@
     tags:
     - abm-install
     - abm-config
+    - storage-setup
 
 ### Create install folder
   - name: Create isolated install folder

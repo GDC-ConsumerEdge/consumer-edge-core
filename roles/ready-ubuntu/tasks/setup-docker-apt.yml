@@ -69,6 +69,7 @@
     group: "docker"
     append: yes
 
+# TODO: Refactor timeout
 - name: Reboot machine to get new session with updated docker group
   reboot:
     reboot_timeout: 300
