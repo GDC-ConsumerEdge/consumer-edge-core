@@ -1,0 +1,12 @@
+kind: EgressNATPolicy
+apiVersion: networking.gke.io/v1alpha1
+metadata:
+  name: egress
+spec:
+  egress:
+  - namespaceSelector:
+      matchLabels:
+        type: frontend
+  destinationCIDRs:
+  - 8.8.8.0/24
+  egressSourceIP: {{ anthos_network_gateway_ips[0] }}

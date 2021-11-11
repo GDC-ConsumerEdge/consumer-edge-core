@@ -1,0 +1,10 @@
+apiVersion: networking.gke.io/v1alpha1
+kind: AnthosNetworkGateway
+metadata:
+  name: default
+  namespace: kube-system
+spec:
+  floatingIPs:
+  {% for range in anthos_network_gateway_ips %}
+  - {{ range }}
+  {% endfor %}
