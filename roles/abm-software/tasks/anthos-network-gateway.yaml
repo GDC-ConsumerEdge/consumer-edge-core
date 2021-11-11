@@ -1,0 +1,28 @@
+- name: "Hydrate and copy templates Anthos Network Gateway"
+  template:
+    src: "{{ item.template }}"
+    dest: "{{ acm_config_files }}/{{ item.final_name }}"
+  loop:
+  - {"template": "anthos-network-gateway.yaml.j2", "final_name": "anthos-network-gateway.yaml"}
+  - {"template": "egress-nat-config.yaml.j2", "final_name": "egress-nat-config.yaml"}
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - ang-install
+  - post-acm
+
+- name: "Apply ANG Configurations"
+  shell: |
+    kubectl apply -f {{ acm_config_files }}/{{ item.final_name }}
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  loop:
+  - {"template": "anthos-network-gateway.yaml.j2", "final_name": "anthos-network-gateway.yaml"}
+  - {"template": "egress-nat-config.yaml.j2", "final_name": "egress-nat-config.yaml"}
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - ang-install
+  - post-acm

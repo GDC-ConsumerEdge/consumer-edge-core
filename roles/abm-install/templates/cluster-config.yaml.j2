@@ -16,6 +16,8 @@ kind: Cluster
 metadata:
   name: {{ cluster_name }}
   namespace: {{ cluster_name }}
+  annotations:
+    baremetal.cluster.gke.io/enable-anthos-network-gateway: "{{ anthos_network_gateway | lower }}"
 spec:
   type: {{ install_type }}
   profile: edge

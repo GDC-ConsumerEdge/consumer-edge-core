@@ -8,3 +8,9 @@ is_cloud_resource: true
 
 # Use QEMU emulation on devices belonging to the cloud
 kubevirt_use_emulation: true
+
+# Anthos Network Gateway IPs
+anthos_network_gateway_ips: [
+  "10.200.0.12",
+  "10.200.0.13"
+]

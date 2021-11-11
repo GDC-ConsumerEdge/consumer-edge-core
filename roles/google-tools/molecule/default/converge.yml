@@ -10,4 +10,4 @@
     google_region: "us-central1"
     google_zone: "{{google_region}}-a"
     gcp_services_required: []
-    bmctl_version: "1.9.0"
+    bmctl_version: "1.9.1"

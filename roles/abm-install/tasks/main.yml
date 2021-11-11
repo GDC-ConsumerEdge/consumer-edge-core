@@ -144,7 +144,7 @@
     - abm-config
     - build-config
 
-### Create configuration file (TODO: Switch this to a template)
+### Create cluster configuration file
   - name: "Place configuration file into ABM install folder"
     template:
       src: cluster-config.yaml.j2
