@@ -169,13 +169,13 @@ franchises: [
   {
     franchise_number: "123", # DEPRECATED
     git_creds_gcp_secret_name: "global-lab-git-creds", # Secret to access the namespace repo containing the franchise's information
-    franchise_name: "Global McD", # DEPRECATED
+    franchise_name: "Global", # DEPRECATED
     stores: [
       "edge-2" # store-usa-123-1
     ]
   },
   {
-    franchise_name: "Chicago McD",
+    franchise_name: "Chicago",
     franchise_number: "234",
     git_creds_gcp_secret_name: "northam-lab-git-creds",
     stores: [
