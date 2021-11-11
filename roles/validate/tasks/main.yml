@@ -43,6 +43,22 @@
   tags:
   - verify
 
+- name: Fail if local SCM_TOKEN_USER ENV is not defined
+  assert:
+    that:
+      - scm_token_user != ""
+    fail_msg: "The local environment variable 'SCM_TOKEN_USER' needs to be set to the SCM user name"
+  tags:
+  - verify
+
+- name: Fail if local SCM_TOKEN_TOKEN ENV is not defined
+  assert:
+    that:
+      - scm_token_token != ""
+    fail_msg: "The local environment variable 'SCM_TOKEN_TOKEN' needs to be set to the secret value for the SCM PAT"
+  tags:
+  - verify
+
 - name: Ensure at least 120GB on primary disk
   shell: |
     export PRIMARY_DISK=$(df -BG / | awk '{if (NR!=1) print $2}' | tr -d 'G')
@@ -55,3 +71,41 @@
   register: disk_check
   tags:
   - verify
+
+- name: Installed output
+  debug:
+    msg:
+    - "----- IMPORTANT VARIABLES ----"
+    - ""
+    - "Root-Repo: {{ acm_root_repo }}"
+    - "ABM Version: {{ abm_version }}"
+    - "ACM Version: {{ acm_version }}"
+    - ""
+    - "-------------------------"
+    - ""
+    - "Google Project: {{ google_project_id }}"
+    - "Google Region/Zone {{ google_region }}/{{ google_zone }}"
+    - ""
+    - "-------------------------"
+    - ""
+    - "SCM PAT User: {{ scm_token_user }}"
+    - "SCM PAT Token: {{ scm_token_token[:5] }}*******"
+    - ""
+    - "-------------------------"
+    - ""
+    - "Storage provider: {{ storage_provider }}"
+    - "Storage provider root: {{ storage_provider_roots | join(',') }}"
+    - ""
+
+  when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
+  tags:
+  - verify
+  - print-install-variables
+
+- name: Give time to read variables (Hit <ctrl>+c to cancel now if incorrect)
+  run_once: true
+  wait_for:
+    timeout: 3
+  tags:
+  - verify
+  - print-install-variables
