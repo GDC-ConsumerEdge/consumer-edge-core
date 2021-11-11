@@ -2,13 +2,31 @@
 
 #######
 
-# These are the most commonly changed variables for a particular provisioning
+####
+#### Commonly changed variables
+####
+# Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
+# Version of Anthos Bare Metal to install
+abm_version: "1.9.1" # verify coupling of ABM to BMCTL versions
+# bmctl binary version
+#TODO: set this up to query for the version, then upgrade automatically if updated
+#NOTE: A copy of this variable is in Molecule test `for google_tools`
+bmctl_version: "1.9.1" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
 
 ####
 #### Anthos Config Management
 ####
-acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/root-repo-usa-market.git', True) }}"
+acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-ml-edge.git', True) }}"
+# gsutil ls -al gs://config-management-release/released/
+# Anthos Config Management version
+acm_version: "1.9.1"
 
+####
+#### Anthos Network Gateway
+####
+# Floating IP addresses for Anthos Network Gateway
+anthos_network_gateway_ips: []
+anthos_network_gateway_install: true
 
 ###
 ### Storage Provider
@@ -24,9 +42,7 @@ longhorn_secret_name: "longhorn-cloud-storage-hmac"
 ###
 # All ansible interactions are using this user during provisioning
 ansible_user: abm-admin
-
 # Variables assigned to all inventory
-
 google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
 google_region: "{{ lookup('env', 'REGION') | default('us-central1', True) }}"
@@ -55,17 +71,6 @@ gcp_services_required:
   - logging.googleapis.com
   - secretmanager.googleapis.com
 
-# Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
-# Version of Anthos Bare Metal to install
-abm_version: "1.9.0" # verify coupling of ABM to BMCTL versions
-# bmctl binary version
-#TODO: set this up to query for the version, then upgrade automatically if updated
-#NOTE: A copy of this variable is in Molecule test `for google_tools`
-bmctl_version: "1.9.0" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
-
-# gsutil ls -al gs://config-management-release/released/
-# Anthos Config Management
-acm_version: "1.9.0"
 
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false

@@ -1,0 +1,32 @@
+apiVersion: networking.gke.io/v1alpha1
+kind: MultiClusterConnectivityConfig
+metadata:
+  name: default
+  namespace: anet-system
+spec:
+  asns:
+    peer: 10201
+    self: 10202
+  tunnels:
+  - ikeKey:
+      name: ike-key1
+      namespace: anet-system
+    peer:
+      bgpIP: 169.254.0.1
+      privateIP: 35.242.54.192 # GCP VPN IP
+      publicIP: 35.242.54.192 # GCP VPN IP
+    self:
+      bgpIP: 169.254.0.2
+      privateIP: {{ anthos_network_gateway_ips[0] }}  # Floating IP
+      publicIP: 104.134.28.8 # NAT IP
+  - ikeKey:
+      name: ike-key2
+      namespace: anet-system
+    peer:
+      bgpIP: 169.254.0.9
+      privateIP: 35.220.53.24 # GCP VPN IP
+      publicIP: 35.220.53.24 # GCP VPN IP
+    self:
+      bgpIP: 169.254.0.10
+      privateIP: {{ anthos_network_gateway_ips[1] }} # Floating IP
+      publicIP: 104.134.28.9 # NAT IP
