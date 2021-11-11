@@ -5,7 +5,7 @@ machine_label: "nuc-1"
 # Indicates that this is the primary machine in the cluster (only important for provisioning)
 primary_cluster_machine: true
 # Name of the "store" per the ACM repo
-acm_cluster_name: "store-chicago"
+acm_cluster_name: "{{ cluster_name }}"
 # This machine's IP
 control_plane_ip: "192.168.1.11"
 # The other IPs in the cluster
@@ -21,4 +21,10 @@ ingress_vip: "192.168.1.121"
 # Load balancers created in this range
 load_balancer_pool_cidr: [
   "192.168.1.121-192.168.1.129"
+]
+
+# Floating IP addresses for Anthos Network Gateway
+anthos_network_gateway_ips: [
+  "192.168.1.17",
+  "192.168.1.18"
 ]
