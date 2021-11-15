@@ -4,9 +4,6 @@ Each of these segments are required to setup both the **Provisioning machine** a
 
 ---
 
-TOC: [Provision Target Machines](#provision-target-machines) | [ Access Target Machines ](#access-target-machines)
-
----
 
 ## Establishing a Baseline
 
@@ -17,17 +14,20 @@ These steps will need to be followed for the first installation, or any subsquen
 In this "one-time-setup", you will perform four primary goals:
 
 1. Setup a bootable USB stick<sup>†</sup> containing Ubuntu 20.04 LTS
-1. Setup SSH keys to allow passwordless access to the remote machine
+1. Setup SSH keys to allow passwordless access between the **provisioning** machine and each **target** machine(s) 
 1. Setup the **provisioning** machine with Ansible and Ansible dependencies
-1. Setup inventory files
+1. Setup inventory files used by Ansible
 
 <sup>†</sup> PXE is out of scope, but follows similar concept.
 
-## Goal 1 - Provision target machine(s)
+## Goal 1 - Configure target machine(s)
+
+The following are performed from the **provisioning machine**.
 
 ### Step 1 - Create asymetric keys for SSH
 
-1. Create (or use an existing) asymetric key-pair to SSH into all inventory. NOTE: the names of the keys below are defaults, so if you want to use different names, you will need to adjust ENV variables to match (not recommended).
+1. Create (or use an existing) asymetric key-pair to SSH into all inventory. 
+NOTE: the names of the keys below are defaults, so if you want to use different names, you will need to adjust ENV variables to match (not recommended).
 
     > :warning: **DO NOT** use a passphrase, just hit [enter]
 
@@ -102,6 +102,8 @@ The following are performed from the **provisioning machine**.
 
 ## Goal 3 - Setup the Provisioning machine
 
+The following are performed from the provisioning machine.
+
 Setting up the machine has 4 steps, setting up python, instaling dependencies, provisioning a Google Service Account, and establishing some required environment variables.
 
 ### Step 1 - Setup Python 3
@@ -124,8 +126,20 @@ Setting up the machine has 4 steps, setting up python, instaling dependencies, p
     pip install requests
     pip install google-auth
     ```
+### Step 3 - Required environment variables
 
-### Step 3 - Setting up GCP Service Account for provisioning
+> RECOMMENDATION: use [direnv](https://direnv.net/) to manage local environment variables per project. You would then store each of the below variables in a `.envrc` file at the root of the project.
+
+| Environment Variable | Required | Description | Default Value |
+|:---------------------|:--------:|:------------|:-------------:|
+| LOCAL_GSA_FILE       |  Y       |  Google Service Account key to a GSA that is used to provision and activate all Google-based services (all `gcloud` commands) from inside the Target machine(s) | Set in next step |
+| PROJECT_ID           |  Y       |  Google Project ID to put clusters, Service Accounts and API services into | gcloud config |
+| SSH_PUB_KEY_LOCATION |  N       |  SSH public key location for Ansible | `$HOME/.ssh/cnucs-cloud.pub` |
+| ZONE                 |  N       |  Google default zone | gcloud config  |
+| SCM_TOKEN_USER       |  Y       |  Git repo token user/name | none  |
+| SCM_TOKEN_TOKEN      |  Y       |  Git repo token string | none  |
+
+### Step 4 - Setting up GCP Service Account for provisioning
 
 Both `physical` and `cloud` installations use a GSA (`target-machine-gsa@<project-id>.iam.gserviceaccount.com`) to run commands inside the **target machines**. The installation process needs keys to securely pass (via Secrets Manager) the keys to each target machine. Follow the steps below to generate (or update) the GSA and create or re-create a set of keys for use.
 
@@ -142,27 +156,17 @@ Both `physical` and `cloud` installations use a GSA (`target-machine-gsa@<projec
 
     > NOTE: Add the `export LOCAL_GSA_FILE=...` line to `.bashrc` or `.envrc` (if using `direnv`) so new shells can establish this required environment variable
 
-### Step 4 - Required environment variables
-
-> RECOMMENDATION: use [direnv](https://direnv.net/) to manage local environment variables per project. You would then store each of the below variables in a `.envrc` file at the root of the project.
-
-| Environment Variable | Required | Description | Default Value |
-|:---------------------|:--------:|:------------|:-------------:|
-| LOCAL_GSA_FILE       |  Y       |  Google Service Account key to a GSA that is used to provision and activate all Google-based services (all `gcloud` commands) from inside the Target machine(s) | N/A |
-| PROJECT_ID           |  N       |  Google Project ID to put clusters, Service Accounts and API services into | gcloud config |
-| SSH_PUB_KEY_LOCATION |  N       |  SSH public key location for Ansible | `$HOME/.ssh/cnucs-cloud.pub` |
-| ZONE                 |  N       |  Google default zone | gcloud config  |
-| SCM_TOKEN_USER       |  Y       |  Git repo token user/name | none  |
-| SCM_TOKEN_TOKEN      |  Y       |  Git repo token string | none  |
-
 GSA Permissions should include:
 - Editor (roles/editor) or Owner (roles/owner)
 - Storage Object Viewer (roles/storage.objectViewer)
 - Project IAM Admin (roles/resourcemanager.projectIamAdmin)
 - Secret Manager Admin (roles/secretmanager.admin)
 - Secret Manager Secret Accessor (secretmanager.secretAccessor)
+- GKE Hub Gateway Admin (gkehub.gatewayAdmin)
+- GKE Hub Viewer (gkehub.viewer)
 
 > NOTE: This is not necessarily the minimal-roles, further work will refine this). Please use `scripts/create-primary-gsa.sh` to generate the GSA and key.
+
 
 ## Goal 4 - Setting up Inventory files
 
@@ -190,7 +194,16 @@ In order to create an inventory file, use the example file `inventory-physical-e
 envsubst < templates/inventory-physical-example.yaml > inventory/inventory.yaml
 ```
 
-> NOTE: Check the contents and make sure the quantity of hostnames is correct for your situation
+> NOTE: Check the contents and make sure the quantity of hostnames is correct for your situation and that the hostnames used will resolve (e.g. nuc-1 vs nuc-1.lan)
+
+## Verifying Inventory Variables
+
+For each host defined in inventory/inventory.yaml, ensure that ip addresses and ranges are appropriate for your network and that IP addresses match host IP.
+
+```bash
+# Repeat for each node defined in inventory/inventory.yaml
+vim inventory/host_vars/nuc-1.yaml
+```
 
 
 ## Verifying Inventory Status
