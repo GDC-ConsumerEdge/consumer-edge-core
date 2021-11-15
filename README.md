@@ -20,7 +20,7 @@ There are two deployment types: Hardware and Cloud. Both deployment types can co
 
 ## Provisioning
 
-The following steps are broken into **one-time** and **repeatable steps** used to provision the ***target machine(s)***. Most of the steps are common scross both Hardware and Cloud deployment options, but will note when a specific step is needed for either.
+The following steps are broken into **one-time** and **repeatable steps** used to provision both ***provisioning machine*** and ***target machine(s)***. Most of the steps are common across both Hardware and Cloud deployment options, but will note when a specific step is needed for either.
 
 Please proceed through each of the installation stages.
 
