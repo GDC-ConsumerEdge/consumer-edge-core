@@ -337,45 +337,11 @@
   - enable-acm
   - post-acm
 
-- name: "Hydrate and copy templates for OIDC"
-  template:
-    src: "{{ item.template }}"
-    dest: "{{ acm_config_files }}/{{ item.final_name }}"
-  loop:
-  - {"template": "oidc-setup.yaml.j2", "final_name": "oidc-setup.yaml"}
-  - {"template": "oidc-rolebindings.yaml.j2", "final_name": "oidc-rolebindings.yaml"}
+- name: Setup OIDC in cluster
+  include: setup-oidc.yaml
   when:
-  - primary_cluster_machine is defined
-  - primary_cluster_machine == true
   - enable_oidc == true
   tags:
+  - abm-software
   - oidc
   - post-acm
-
-- name: "Configure OIDC with Google Cloud Identity"
-  shell: |
-    kubectl -n kube-public patch clientconfig default --type merge --patch "$(cat {{ acm_config_files }}/oidc-setup.yaml)"
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  when:
-  - primary_cluster_machine is defined
-  - primary_cluster_machine == true
-  - enable_oidc == true
-  tags:
-  - oidc
-  - post-acm
-
-- name: "Configure role binding for OIDC"
-  shell: |
-    kubectl apply -f {{ acm_config_files }}/oidc-rolebindings.yaml
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  when:
-  - primary_cluster_machine is defined
-  - primary_cluster_machine == true
-  - enable_oidc == true
-  tags:
-  - oidc
-  - post-acm
-
-

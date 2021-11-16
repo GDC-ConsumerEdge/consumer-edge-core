@@ -107,6 +107,26 @@
   tags:
   - verify
 
+- name: show oidc status
+  debug:
+    var: enable_oidc
+  tags:
+  - oidc
+
+- name: Validate OIDC varaibles are set if OIDC is enabled
+  run_once: true
+  assert:
+    that:
+    - oidc_client_id != ""
+    - oidc_client_secret != ""
+    - oidc_user != ""
+    fail_msg: "OIDC is enabled, but the local environment variables are not set. Please configure OIDC and ENV vars before provisioning or disable 'enable_oidc' variable in all.yaml settings"
+  when:
+  - enable_oidc == true
+  tags:
+  - verify
+  - oidc
+
 - name: Installed output
   debug:
     msg:
