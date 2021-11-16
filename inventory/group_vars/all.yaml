@@ -38,6 +38,14 @@ storage_provider_roots: [ "/customer" ]
 longhorn_secret_name: "longhorn-cloud-storage-hmac"
 
 ###
+### OIDC in cluster (setup OIDC before provisioning, set environment variables to the values)
+###
+enable_oidc: "{{ lookup('env', 'OIDC_ENABLED')|bool or false }}" # Off by default, change with ENV var, not with default value
+oidc_client_id: "{{ lookup('env', 'OIDC_CLIENT_ID') }}"
+oidc_client_secret: "{{ lookup('env', 'OIDC_CLIENT_SECRET') }}"
+oidc_user: "{{ lookup('env', 'OIDC_USER') }}"
+
+###
 ###
 ###
 # All ansible interactions are using this user during provisioning
