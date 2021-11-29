@@ -78,7 +78,8 @@ gcp_services_required:
   - monitoring.googleapis.com
   - logging.googleapis.com
   - secretmanager.googleapis.com
-
+  - iamcredentials.googleapis.com
+  - iam.googleapis.com
 
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
