@@ -41,6 +41,7 @@ k8s/overlays/**/configuration/secrets/*.json
 ansible.cfg
 
 ### Python
+.python-version
 .pytest_cache
 __pycache__
 *.data
