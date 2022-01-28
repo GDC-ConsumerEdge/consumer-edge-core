@@ -16,8 +16,6 @@ kind: Cluster
 metadata:
   name: {{ cluster_name }}
   namespace: {{ cluster_name }}
-  annotations:
-    baremetal.cluster.gke.io/enable-anthos-network-gateway: "{{ anthos_network_gateway | lower }}"
 spec:
   type: {{ install_type }}
   profile: edge
@@ -36,7 +34,11 @@ spec:
       {% endfor %}
   # Cluster networking configuration
   clusterNetwork:
-    multipleNetworkInterfaces: {{ multi_network_enabled }}
+    multipleNetworkInterfaces: {{ multi_network_enabled | capitalize  }}
+    # eBPF
+    # enableDataplaneV2: True
+    # Network Gateway Groups
+    advancedNetworking: {{ network_gateway_group | capitalize  }}
     pods:
       cidrBlocks:
       - {{ pod_cidr }}

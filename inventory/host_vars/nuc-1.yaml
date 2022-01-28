@@ -23,8 +23,8 @@ load_balancer_pool_cidr: [
   "192.168.1.121-192.168.1.129"
 ]
 
-# Floating IP addresses for Anthos Network Gateway
-anthos_network_gateway_ips: [
+# Floating IP addresses for Network Gateway Group
+network_gateway_group_ips: [
   "192.168.1.17",
   "192.168.1.18"
 ]
