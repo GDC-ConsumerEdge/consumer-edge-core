@@ -7,11 +7,11 @@
 ####
 # Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
 # Version of Anthos Bare Metal to install
-abm_version: "1.9.1" # verify coupling of ABM to BMCTL versions
+abm_version: "1.10.1" # verify coupling of ABM to BMCTL versions
 # bmctl binary version
 #TODO: set this up to query for the version, then upgrade automatically if updated
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
-bmctl_version: "1.9.1" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
+bmctl_version: "1.10.1" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
 
 ####
 #### Anthos Config Management
@@ -19,14 +19,14 @@ bmctl_version: "1.9.1" # If changed, set the `force_tools_upgrade` to true so ne
 acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-ml-edge.git', True) }}"
 # gsutil ls -al gs://config-management-release/released/
 # Anthos Config Management version
-acm_version: "1.9.1"
+acm_version: "1.10.1"
 
 ####
 #### Anthos Network Gateway
 ####
 # Floating IP addresses for Anthos Network Gateway
-anthos_network_gateway_ips: []
-anthos_network_gateway_install: true
+network_gateway_group_ips: []
+network_gateway_group_install: true
 
 ###
 ### Storage Provider
@@ -71,6 +71,7 @@ gcp_services_required:
   - anthosgke.googleapis.com
   - cloudresourcemanager.googleapis.com
   - container.googleapis.com
+  - storage.googleapis.com
   - gkeconnect.googleapis.com
   - gkehub.googleapis.com
   - serviceusage.googleapis.com
@@ -149,7 +150,7 @@ service_accounts: [
   {
     name: longhorn-cloud-storage,
     keyfile: longhorn-cloud-storage-creds.json,
-    description: "Longhorn taking volume backups on cloud stoarge ",
+    description: "Longhorn taking volume backups on cloud storage ",
     roles: [
       "roles/storage.objectAdmin"
     ]
@@ -170,7 +171,16 @@ service_accounts: [
     roles: [
       "roles/storage.objectViewer"
     ]
+  },
+  {
+    name: storage-agent-svc-account,
+    keyfile: storage-agent-svc-account-creds.json,
+    description: "Agent used for Snapshot Cloud Storage",
+    roles: [
+      "roles/storage.admin"
+    ]
   }
+
 ]
 
 # git_creds_gcp_secret_name is the secret created to hold the Git PAT info corresponding to that Namespace Repo

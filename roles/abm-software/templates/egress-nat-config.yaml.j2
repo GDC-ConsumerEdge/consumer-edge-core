@@ -1,12 +1,15 @@
 kind: EgressNATPolicy
-apiVersion: networking.gke.io/v1alpha1
+apiVersion: networking.gke.io/v1
 metadata:
   name: egress
 spec:
-  egress:
+  sources:
   - namespaceSelector:
       matchLabels:
         type: frontend
-  destinationCIDRs:
-  - 8.8.8.0/24
-  egressSourceIP: {{ anthos_network_gateway_ips[0] }}
+  action: SNAT
+  destinations:
+    - cidr: 8.8.8.0/24
+  gatewayRef:
+    name: default
+    namespace: kube-system
