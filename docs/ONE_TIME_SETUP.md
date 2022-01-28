@@ -14,7 +14,7 @@ These steps will need to be followed for the first installation, or any subsquen
 In this "one-time-setup", you will perform four primary goals:
 
 1. Setup a bootable USB stick<sup>†</sup> containing Ubuntu 20.04 LTS
-1. Setup SSH keys to allow passwordless access between the **provisioning** machine and each **target** machine(s) 
+1. Setup SSH keys to allow passwordless access between the **provisioning** machine and each **target** machine(s)
 1. Setup the **provisioning** machine with Ansible and Ansible dependencies
 1. Setup inventory files used by Ansible
 
@@ -26,7 +26,7 @@ The following are performed from the **provisioning machine**.
 
 ### Step 1 - Create asymetric keys for SSH
 
-1. Create (or use an existing) asymetric key-pair to SSH into all inventory. 
+1. Create (or use an existing) asymetric key-pair to SSH into all inventory.
 NOTE: the names of the keys below are defaults, so if you want to use different names, you will need to adjust ENV variables to match (not recommended).
 
     > :warning: **DO NOT** use a passphrase, just hit [enter]
@@ -115,11 +115,16 @@ Setting up the machine has 4 steps, setting up python, instaling dependencies, p
         python --version
         ```
 
-1. Sometimes systems have `python` and `python3`. Reference https://docs.ansible.com/ansible/latest/reference_appendices/python_3_support.html for reference on how to support `python3` (often adding `ansible_python_interpreter=/usr/bin/python3` to the Ansible config is required, along with all depenedencies installed with `pip3`)
+1. Sometimes systems have `python` and `python3`. Reference https://docs.ansible.com/ansible/latest/reference_appendices/python_3_support.html for reference on how to support `python3` (often adding `ansible_python_interpreter=/usr/bin/python3` to the Ansible config is required, along with all dependencies installed with `pip3`)
 
-### Step 2 - Install all python depencencies
-1. Run this if you don't care about precise used/unused libraries
+### Step 2 - Install all python dependencies
+1. Install the dependencies for Ansible and installation via PIP
     ```bash
+    # Option 1 (preferred)
+    pip install --upgrade pip # upgrade pip just-in-case
+    pip install -r requirements.txt
+
+    # Option 2 (install each independently, not recommended, use requirements.txt unless you know why)
     pip install --upgrade pip # upgrade pip just-in-case
     pip install ansible
     pip install dnspython
