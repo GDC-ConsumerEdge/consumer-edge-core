@@ -282,8 +282,8 @@
 
 ### Anthos Network Gateway
 - name: "Install Anthos Network Gateway"
-  include: anthos-network-gateway.yaml
-  when: anthos_network_gateway_install == true
+  include: network-gateway-group.yaml
+  when: network_gateway_group_install == true
   tags:
   - ang-install
 

@@ -61,16 +61,16 @@
 
 - name: Set Anthos Network Gateway to True if IPs have length
   set_fact:
-    "anthos_network_gateway": True
-  when: anthos_network_gateway_ips | length > 0
+    "network_gateway_group": True
+  when: network_gateway_group_ips | length > 0
   tags:
   - verify
   - anthos-network-gateway
 
 - name: Set Anthos Network Gateway False if NO IPs have been defined
   set_fact:
-    "anthos_network_gateway": False
-  when: anthos_network_gateway_ips | length == 0
+    "network_gateway_group": False
+  when: network_gateway_group_ips | length == 0
   tags:
   - verify
   - anthos-network-gateway
@@ -78,8 +78,8 @@
 - name: Anthos Network IS Enabled
   run_once: true
   debug:
-    msg: "Anthos Network Gateway Enabled?  {{ anthos_network_gateway }}"
-  when: anthos_network_gateway == True
+    msg: "Network Gateway Group Enabled?  {{ network_gateway_group }}"
+  when: network_gateway_group == True
   tags:
   - verify
   - anthos-network-gateway
@@ -87,9 +87,9 @@
 - name: List Anthos Gateway Network IPs
   run_once: true
   debug:
-    msg: "IP: {{ item }}, {{ anthos_network_gateway }}"
-  loop: "{{ anthos_network_gateway_ips }}"
-  when: anthos_network_gateway == True
+    msg: "IP: {{ item }}, {{ network_gateway_group }}"
+  loop: "{{ network_gateway_group_ips }}"
+  when: network_gateway_group == True
   tags:
   - verify
   - anthos-network-gateway

@@ -3,7 +3,7 @@
     src: "{{ item.template }}"
     dest: "{{ acm_config_files }}/{{ item.final_name }}"
   loop:
-  - {"template": "anthos-network-gateway.yaml.j2", "final_name": "anthos-network-gateway.yaml"}
+  - {"template": "network-gateway-group.yaml.j2", "final_name": "network-gateway-group.yaml"}
   - {"template": "egress-nat-config.yaml.j2", "final_name": "egress-nat-config.yaml"}
   when:
   - primary_cluster_machine is defined
@@ -18,7 +18,7 @@
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   loop:
-  - {"template": "anthos-network-gateway.yaml.j2", "final_name": "anthos-network-gateway.yaml"}
+  - {"template": "network-gateway-group.yaml.j2", "final_name": "network-gateway-group.yaml"}
   - {"template": "egress-nat-config.yaml.j2", "final_name": "egress-nat-config.yaml"}
   when:
   - primary_cluster_machine is defined
