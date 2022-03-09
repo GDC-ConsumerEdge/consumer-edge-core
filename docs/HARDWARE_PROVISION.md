@@ -2,17 +2,23 @@
 
 This document describes how to provision a hardware based machine such as a NUC or Dell R-series.
 
-There are two options to provision a machine, an automated installation process or a manual installation (both via a USB). PXE installations are out-of-scope for this project, but is competely possible for an advanced user. Additionally, "golden images" would be another recommended approach to reduce provisioning time, but also out of scope.
+There are two options to provision a machine, an automated installation process or a manual installation (both via a USB). PXE installations are out-of-scope for this project, but is completely possible for an advanced user. Additionally, "golden images" would be another recommended approach to reduce provisioning time, but also out of scope.
+
+> This process will eventually be converted into a Golden Image (and if you want to contribute, please be vocal!!)
 
 ## Step 1 (Option 1)- Automated Provisioning (preferred)
 
-1. Clone [https://github.com/mike-ensor/ubuntu-20-04-autoinstall](https://github.com/mike-ensor/ubuntu-20-04-autoinstall)
+1. Clone [https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/edge-ubuntu-20-04-autoinstall](https://gitlab.com/gcp-solutions/app-mod/sm002-consumer-edge/consumer-retail-edge/edge-ubuntu-20-04-autoinstall)
 1. Create a file called `pub_keys` and add the contents of your public key into this file (multiple public keys can be added on each line). This will automatically transfer the public keys into the `abm-admin` user's `authorized_keys` file allowing passwordless SSH.
 
     > NOTE: Never commit this file to a repository. By default, this file is ignored in .gitignore
 
     ```bash
+    # Wherever your SSH key is located
     cat ~/.ssh/nucs.pub > ./pub-keys
+
+    # or if using Docker installation
+    cat <PATH TO Consumer Edge installation>/build-artifacts/consumer-edge-machine.pub > ./pub-keys
     ```
 1. Run the following command from that folder:
     > NOTE: `-H` specifies a hostname and generates configuration specific to that hostname. Each ISO will be unique to the host name chosen.

@@ -2,6 +2,13 @@
 
 # Remove all service account keys for the ABM GSAs from GCP
 
+read -p "This is a destructive operation meant for advanced users only. Proceed? (any character other than 'Y' will exit): " response
+
+if [ "$response" != "Y" ]; then
+    echo 'Canceling...'
+    exit 0
+fi
+
 GSAs=(
     "abm-gke-register-agent@${PROJECT_ID}.iam.gserviceaccount.com"
     "abm-cloud-operations-agent@${PROJECT_ID}.iam.gserviceaccount.com"
@@ -19,5 +26,13 @@ do
     for KEY in "${KEYS[@]}"
     do
         gcloud iam service-accounts keys delete $KEY --iam-account=$GSA --quiet --project="${PROJECT_ID}"
+    done
+    # # Remove the Secret Manager version (disable it)
+    GSA_SECRET_KEY_NAME="${GSA%%@*}"
+
+    SECRET_VERSIONS=( $(gcloud secrets versions list ${GSA_SECRET_KEY_NAME} --format="value(name)" --filter=state=enabled) )
+    for SECRET_VERSION in "${SECRET_VERSIONS[@]}"
+    do
+        gcloud secrets versions disable "${SECRET_VERSION}" --secret="${GSA_SECRET_KEY_NAME}"
     done
 done

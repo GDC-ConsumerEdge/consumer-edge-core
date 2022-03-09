@@ -4,7 +4,7 @@ echo "This will create a Google Service Account and key that is used on each of 
 
 GSA_NAME="target-machine-gsa"
 GSA_EMAIL="${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
-KEY_LOCATION="./remote-gsa-key.json"
+KEY_LOCATION="./consumer-edge-gsa.json"
 
 EXISTS=$(gcloud iam service-accounts list --filter="email=${GSA_EMAIL}" --format="value(name, disabled)" --project="${PROJECT_ID}")
 if [[ -z "${EXISTS}" ]]; then
@@ -22,7 +22,7 @@ else
 fi
 
 # Bootstrap a few API services:
-gcloud services enable servicemanagement.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com
+gcloud services enable servicemanagement.googleapis.com containerregistry.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com
 
 echo "Adding roles/editor"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
@@ -68,6 +68,9 @@ if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     gcloud iam service-accounts keys create ${KEY_LOCATION} \
         --iam-account=${GSA_EMAIL} \
         --project ${PROJECT_ID}
+
+    # reducing OS visibility to read-only for current user
+    chmod 400 ${KEY_LOCATION}
 else
     echo "Skipping making new keys"
 fi
