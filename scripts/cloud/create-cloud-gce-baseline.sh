@@ -4,12 +4,20 @@
 
 #### TODO: gcloud compute config-ssh  (on the host computer after GCEs are setup?)
 
+## Get directory this script was run from. gce-helpers.vars is in the same directory.
+## -- is used in case the directory name starts with a -
+PREFIX_DIR=$(dirname -- "$0")
+WORKDIR=$(pwd)
+source ${PREFIX_DIR}/gce-helper.vars
+
 # Defaults
 GCE_COUNT=1
 CLUSTER_START_INDEX=1
 unset PREEMPTIBLE_OPTION
+SSH_PUB_KEY_LOCATION="${WORKDIR}/build-artifacts/consumer-edge-machine.pub" # default
 
-while getopts 'c:p:s:tz:': option
+
+while getopts 'c:p:k:s:tz:': option
 do
     # #*= allows for c=1 and strips out the c= in addition to -c 1
     case "${option}" in
@@ -22,11 +30,6 @@ do
     esac
 done
 
-## Get directory this script was run from. gce-helpers.vars is in the same directory.
-## -- is used in case the directory name starts with a -
-PREFIX_DIR=$(dirname -- "$0")
-source ${PREFIX_DIR}/gce-helper.vars
-
 usage()
 {
     echo "Usage: $0
@@ -37,12 +40,24 @@ usage()
         [ -t ]
         [ -z ZONE ]"
     echo "-c: Number of instances to create. Defaults to 1. Example: -c 1"
-    echo "-k: SSH public key location. Defaults to '${HOME}/.ssh/cnucs-cloud.pub'. Creates the key if it doesn't exist."
+    echo "-k: SSH public key location. Defaults to './build-artifacts/consumer-edge-machine.pub'. Creates the key if it doesn't exist."
     echo "-p: project ID. Can be set with PROJECT_ID environment variable. Defaults to gcloud config if not set."
     echo "-s: Starting index. Defaults to 1. Example: -s 10."
     echo "-t: Use temporary preemptible instances."
     echo "-z: Zone. Can be set with ZONE environment variable. Defaults to gcloud config zone if not set."
     exit 2
+}
+
+
+###
+###  Create and/or store public key used in ansible provisioning (ie, the "host" box)
+###
+function store_public_key_secret() {
+    SSH_KEY_LOC=$1
+    # Create SSH key if it doesn't exist
+    create_ssh_key "${SSH_KEY_LOC}"
+
+    create_secret "${SSH_KEY_SECRET_KEY}" "${SSH_KEY_LOC}" "true" # create the secret from a file
 }
 
 ERROR=0
@@ -95,8 +110,6 @@ if [[ -z "${CLUSTER_START_INDEX}" || ! "${CLUSTER_START_INDEX}" =~ ^[0-9]+$ || "
     echo "Error: Missing or invalid starting index"
     ERROR=1
 fi
-
-# SSH_PUB_KEY_LOCATION is handled in gce-helper.vars
 
 if [[ "${ERROR}" -eq 1 ]]; then
     usage
