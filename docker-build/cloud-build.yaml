@@ -1,0 +1,20 @@
+
+steps:
+- name: "gcr.io/cloud-builders/gcloud"
+  id: getLatest
+  waitFor: ['-']
+  entrypoint: 'bash'
+  args:
+  - '-eEuo'
+  - 'pipefail'
+  - '-c'
+  - |-
+    ./get-latest-gcloud.sh
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: buildImage
+  waitFor: ['getLatest']
+  args: ['build', '--build-arg', '"GCLOUD_VERSION=$$(cat version.txt | xargs)"', '-t', 'gcr.io/${PROJECT_ID}/consumer-edge-install', '.']
+
+images:
+- gcr.io/${PROJECT_ID}/consumer-edge-install
