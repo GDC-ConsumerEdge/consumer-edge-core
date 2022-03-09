@@ -2,6 +2,14 @@ target/
 pkg/
 tmp/
 
+# test
+
+# Folder to hold build-artifacts needed for Docker install (maybe all)
+# keep the .gitkeep file, but ignore everything else
+build-artifacts/*
+!build-artifacts/README.md
+!build-artifacts/ssh-config
+
 # local Inventory files are not stored
 inventory.yml
 inventory.yaml
@@ -39,6 +47,9 @@ k8s/overlays/**/configuration/secrets/*.json
 
 ### Ansible ###
 ansible.cfg
+
+## test files
+scripts/cloud/test.sh
 
 ### Python
 .python-version

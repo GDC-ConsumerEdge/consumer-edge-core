@@ -1,16 +1,20 @@
 # Overview
 
-This project is an opinionated installation of Anthos bare metal designed specifically for Consumer Edge requirements.
+This project is an opinionated installation of Anthos Bare Metal designed specifically for Consumer Edge requirements.
 
 This project is a group of Ansible playbooks and bash scripts that are used to provision and manage Anthos bare metal instances given a hardware or cloud inventory.
 
 There are two deployment types: Hardware and Cloud. Both deployment types can co-exist. Communication between any of the ABM instances are supported over the LAN supporting the hardware or cloud instances. Networking is not configured to communicate cross network boundaries (nothing prevents this being built, just not in the scope of this project)
 
 > **Hardware** - Scripts and Playbooks designed to deploy onto hardware servers meeting requirements.
-* In this project, all hardware machines will have "nuc" as a prefix for hostname and varaible names.
+* In this project, all hardware machines will have "nuc" as a prefix for hostname and variable names.
 
 > **Cloud** - Scripts and Playbooks designed to be deployed into GCE Virtual Machines.
-* In this project, all cloud machines will have "cnuc" as a prefix for hostname and varaible names.
+* In this project, all cloud machines will have "cnuc" as a prefix for hostname and variable names.
+
+## TL;DR (Quick Star)
+
+If you do not plan on contributing or changing the codebase or you do not have the ability to install the developer dependencies, the recommended approach is to use the [docker installation](docs/DOCKER_INSTALL.md).
 
 ## Terms to know
 

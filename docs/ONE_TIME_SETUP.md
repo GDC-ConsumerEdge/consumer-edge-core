@@ -24,9 +24,9 @@ In this "one-time-setup", you will perform four primary goals:
 
 The following are performed from the **provisioning machine**.
 
-### Step 1 - Create asymetric keys for SSH
+### Step 1 - Create asymmetric keys for SSH
 
-1. Create (or use an existing) asymetric key-pair to SSH into all inventory.
+1. Create (or use an existing) asymmetric key-pair to SSH into all inventory.
 NOTE: the names of the keys below are defaults, so if you want to use different names, you will need to adjust ENV variables to match (not recommended).
 
     > :warning: **DO NOT** use a passphrase, just hit [enter]
@@ -104,7 +104,7 @@ The following are performed from the **provisioning machine**.
 
 The following are performed from the provisioning machine.
 
-Setting up the machine has 4 steps, setting up python, instaling dependencies, provisioning a Google Service Account, and establishing some required environment variables.
+Setting up the machine has 4 steps, setting up python, installing dependencies, provisioning a Google Service Account, and establishing some required environment variables.
 
 ### Step 1 - Setup Python 3
 1. Provisioning machine needs to have Python 3.x (3.7+ is recommended)

@@ -1,0 +1,5 @@
+Host cnuc-* edge-*
+    User abm-admin
+    StrictHostKeyChecking no
+    Compression yes
+    IdentityFile ./build-artifacts/consumer-edge-machine
