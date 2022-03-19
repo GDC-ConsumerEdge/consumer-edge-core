@@ -38,7 +38,7 @@ if [[ "${ERROR}" -eq 1 ]]; then
 fi
 
 # Asymetric key for SSH cloud instances required ahead of time
-if [[ -z "${SSH_PUB_KEY_LOCATION}" ]]; then
+if [[ ! -z "${SSH_PUB_KEY_LOCATION}" ]]; then
     if [[ ! -f "${SSH_PUB_KEY_LOCATION}" ]]; then
         echo "The ENV variable 'SSH_PUB_KEY_LOCATION' does not point to a public key used for SSH access. Please refer to one-time setup (step 2) to generate the key pair."
         exit 1
