@@ -40,7 +40,7 @@ This step is intended to describe how to create a CNUC machine that is a replica
     > NOTE: The initial provisioning of each CNUC may take up to 5 minutes.
 
     ```bash
-    ./scripts/status.sh
+    ./scripts/gce-status.sh
     ```
 1. The above script will output text that can be used to cut-copy-paste and use as `ssh` commands. Additionally, the second section can be placed in the `/etc/hosts` file for hostname lookups on CNUC machines. Keep in mind that the IPs are ephemeral, so the `/etc/hosts` file may need to be updated from time-to-time (along with ssh fingerprints in `known_hosts`)
 

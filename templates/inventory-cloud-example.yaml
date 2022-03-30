@@ -1,7 +1,7 @@
 # NOTE: This is a template YAML file that dynamically creates inventory based on the below parameters
 # To use this, type the following (will create file inventory/02-gcp.yaml). Optionally, just copy the file and manually change environment variables
 
-# envsubt < inventory-cloud-example.yaml > inventory/gcp.yaml
+# envsubst < inventory-cloud-example.yaml > inventory/gcp.yml
 
 plugin: gcp_compute
 projects:

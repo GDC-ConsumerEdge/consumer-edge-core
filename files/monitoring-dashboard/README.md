@@ -6,6 +6,7 @@ There are two subdirectories
 
 To import dashboards:
 
-```
-scripts/dashboard.sh import <your-gcp-project> monitoring-dashboard/anthos-cluster-monitoring.json 
+```bash
+# NOTE: Running from project base directory, fix pathing if running from within the `scripts/` or other folders
+scripts/post-provision/install-custom-dashboards.sh import ${PROJECT_ID} monitoring-dashboard/anthos-cluster-monitoring.json
 ```
