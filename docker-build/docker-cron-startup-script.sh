@@ -5,11 +5,11 @@
 
 if ! grep -q "AUTO-GENERATED-CONSUMER-EDGE" "/etc/hosts"; then
     # Only apply IF the file does not contain AUTO-GENERATED
-    ./scripts/status.sh true >> /etc/hosts
+    /var/consumer-edge-install/scripts/gce-status.sh true >> /etc/hosts
 
     # If the file "add-hosts" exists, add these to the bottom of the /etc/hosts file (usually used for physical machines)
-    if [ -f "./build-artifacts/add-hosts" ]; then
+    if [ -f "/var/consumer-edge-install/build-artifacts/add-hosts" ]; then
         echo "" >> /etc/hosts
-        cat ./build-artifacts/add-hosts >> /etc/hosts
+        cat /var/consumer-edge-install/build-artifacts/add-hosts >> /etc/hosts
     fi
 fi
