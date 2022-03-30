@@ -3,7 +3,7 @@
 # Flag for Is this a local run (non gcloud)
 IS_LOCAL=${1:-false}
 
-echo "${IS_LOCAL} <-- value"
+echo "Run On Local Machine = ${IS_LOCAL} <-- value"
 
 
 # store temp files in temp directory
@@ -15,8 +15,8 @@ fi
 echo "Temp directory: ${TEMP_DIR}"
 
 # URL to the latest
-gsutil ls -l gs://cloud-sdk-release/google-cloud-sdk-*-linux-x86_64.tar.gz | sort -k 2 | tail -n 2 | head -1 | cut -d ' ' -f 7 >> ${TEMP_DIR}/version-with-url.txt
-
+LATEST_SDK_LINE=$(gsutil ls -l gs://cloud-sdk-release/google-cloud-sdk-*-linux-x86_64.tar.gz | sort -k 2 | tail -n 2 | head -1 | awk '{ print $NF }')
+echo $LATEST_SDK_LINE >> ${TEMP_DIR}/version-with-url.txt
 
 ### Match/extract version
 SDK_VERSION_URL=$(cat ${TEMP_DIR}/version-with-url.txt)
@@ -35,7 +35,7 @@ if [[ ! -f "${TEMP_DIR}/version.txt" ]]; then
     exit 1
 elif [[ ${IS_LOCAL} == true ]]; then
     VERSION=$(cat ${TEMP_DIR}/version.txt | xargs)
-    echo "|$VERSION|"
+    echo "Using GCLOUD VERSION: '${VERSION}'"
     set -x
     docker build --build-arg="GCLOUD_VERSION=${VERSION}" -t consumer-edge-install .
 fi

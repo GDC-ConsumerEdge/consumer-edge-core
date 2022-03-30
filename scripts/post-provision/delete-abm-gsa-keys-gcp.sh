@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# Remove all service account keys for the ABM GSAs from GCP
+###
+### GSAs can only have a maximum of 10 GSA keys, and the installation process, with certain parameters, produce new GSA keys, this script removes all GSA keys for the primary agents in the system.
+###
+### This should ONLY be used when you know the explicit reason why you're doing this
+###
 
 read -p "This is a destructive operation meant for advanced users only. Proceed? (any character other than 'Y' will exit): " response
 

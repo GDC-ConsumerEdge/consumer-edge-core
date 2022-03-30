@@ -1,96 +1,179 @@
 # Overview
 
-This project is an opinionated installation of Anthos Bare Metal designed specifically for Consumer Edge requirements.
+This project is an opinionated installation of Anthos Bare Metal and several Google Cloud Platform tools designed specifically for Consumer Edge requirements.
 
 This project is a group of Ansible playbooks and bash scripts that are used to provision and manage Anthos bare metal instances given a hardware or cloud inventory.
 
-There are two deployment types: Hardware and Cloud. Both deployment types can co-exist. Communication between any of the ABM instances are supported over the LAN supporting the hardware or cloud instances. Networking is not configured to communicate cross network boundaries (nothing prevents this being built, just not in the scope of this project)
+There are two deployment target types: **Hardware** and **Cloud**. Both deployment types can co-exist, but are not in the same network space by default.
 
-> **Hardware** - Scripts and Playbooks designed to deploy onto hardware servers meeting requirements.
-* In this project, all hardware machines will have "nuc" as a prefix for hostname and variable names.
+## TL;DR
 
-> **Cloud** - Scripts and Playbooks designed to be deployed into GCE Virtual Machines.
-* In this project, all cloud machines will have "cnuc" as a prefix for hostname and variable names.
+There are three phases to installing Consumer Retail Edge
 
-## TL;DR (Quick Star)
+1. Setup baseline compute machines - Create and setup the underlying machines to be ready for provisioning
+1. Provision inventory - Provision/install Consumer Edge onto the baseline compute maachines
+1. Verify installation - Login to one of the machines and perform `kubectl` and other tool operations
 
-If you do not plan on contributing or changing the codebase or you do not have the ability to install the developer dependencies, the recommended approach is to use the [docker installation](docs/DOCKER_INSTALL.md).
-
-## Terms to know
+### Terms to know
 
 > **Target machine(s)** - The machine that the cluster is being installed into/onto (ie, NUC, GCE, etc). This is often called the "host" in public documentation.
 
 > **Provisioning machine** - The machine that initiates the `ansible` run. This is typically a laptop or the cloud shell within the GCP console
 
-## Provisioning
+---
 
-The following steps are broken into **one-time** and **repeatable steps** used to provision both ***provisioning machine*** and ***target machine(s)***. Most of the steps are common across both Hardware and Cloud deployment options, but will note when a specific step is needed for either.
+## Quick Start - 1. Setup Baseline Compute
 
-Please proceed through each of the installation stages.
+This **Quick Start** will use GCE instances to simulate physical hardware and utilize VXLAN overlays to simulate L2 networking support.
 
-## Installation Stages
+Please perform the following sequence of events:
 
-The installation of the Consumer Edge has a series of stages that need to be completed in sequence. Some are one-time stages, other are idempotent and therefore repeatable, but all have a test to verify the stage has been completed.
-
-The stages are:
-1. [Pre-installation Steps](#pre-installation-steps)
-1. [One-time Setup](docs/ONE_TIME_SETUP.md)
-1. [Install Anthos bare metal](#installing-anthos-bare-metal)
-
-> NOTE: This solution requires `3n` machines to form a High Availability single cluster (ie: 3 instances, 6 instances, 9 instances, ...)
-
-### Pre-Installation Steps
-
-1. **Fork** this repository
-1. This project uses Personal Access Tokens for ACM communication. [Add a token](https://docs.gitlab.com/ee/user/project/deploy_tokens/) to the Git repo with **read_repository** privilege. Remember the token name that will be used for env var **SCM_TOKEN_USER**. Copy the token string that will be uesd for env var **SCM_TOKEN_TOKEN**. Go to user **Preferences** on the top right corner.
-   ![gitlab token](docs/Gitlab_token.png)
-
-### One-Time Setup
-
-1. Review and complete the [one-time setup](docs/ONE_TIME_SETUP.md) steps
-    1. Result should be baseline provisioned inventory resources (ie, GCE instances and/or hardware machines with passwordless SSH access)
+1. Install docker on the **provisioning machine** (your machine, a cloud-top, etc)
 
     ```bash
-    # Test one-time-setup script (should see "success")
-    ./scripts/verify-pre-installation.sh
+    docker --version
     ```
 
-## Installing Anthos Bare Metal
+1. This project uses Personal Access Tokens for the ACM authentication of the `root-repo`. [Create a new PAT token](https://docs.gitlab.com/ee/user/project/deploy_tokens/) and save the credentials for teh steps below. ![gitlab token](docs/Gitlab_token.png)
+    1. Create the PAT with **read_repository** privilege.
+    1. The "Token name" name that will be used as an environment variable **SCM_TOKEN_USER**.
+    1. The produced token value that will be uesd as an environment variable **SCM_TOKEN_TOKEN**. Go to user **Preferences** on the top right corner.
 
-### Install ALL Inventory
+1. Install or verify `gettext` is installed on the **provisioning machine**. Run `which envsubst` and if this fails, follow the below steps to install `gettext` binary
 
-The `site.yml` playbook is used to quickly provision ALL inventory assets (ie, `cloud` and `hardware`)
+    * MacOS with Ports
+        ```bash
+        # MacOS + Ports
+        sudo port install gettext
+        ```
 
-```bash
-ansible-playbook -i inventory site.yml
-```
+    * MacOS with Homebrew
+        ```bash
+        # MacOS + Brew
+        brew install gettext
+        brew link --force gettext
+        ```
 
-## Playbooks
+    * Debian/Ubuntu
+        ```bash
+        sudo apt install gettext
+        ```
 
-Below is a list of playbooks and what they are intended to be used for
+1. Create Google Service Account used for provisioning.  Skip this step if you have a properly authenticated GSA key located at `./build-artifacts/consumer-edge-gsa.json`
+
+    ```bash
+    # Follow prompts, generate a new key when prompted
+    ./scripts/create-primary-gsa.sh
+    ```
+
+    * This will create a JSON key for the new GSA at `./build-artifacts/consumer-edge-gsa.json`
+
+1. Create SSH keypair for communication between **provisioning machine** and **target machines**.
+
+    1. Create new SSH keypair
+        ```bash
+        ssh-keygen -o -a 100 -t ed25519 -f ./build-artifacts/consumer-edge-machine2
+        ```
+        > When prompted, leave `passphrase` empty
+
+1. Create configuration file (`.envrc`)
+
+    ```bash
+    # Create a default .envrc file (dot-file)
+    envsubst < templates/envrc-template.sh > .envrc
+    ```
+
+    1. Edit the created `.envrc` file and substitute values. Replace all of the obvious variables (ie: `### replace me ###`)
+
+    1. Replace the Gitlab Personal Access Token values inside `.envrc`
+
+    1. Instanciate ENV variables inside current shell. Run source on the `.envrc` file to expose variables (advanced users can use `direnv` if installed and configured)
+
+        ```bash
+        source .envrc
+        ```
+
+1. Create GCE baseline instances.
+    The quick start uses GCE intances to emulate Intel 11 NUCs (8CPU/16vCPU, 64GB RAM and 250GB storage).
+
+    ```bash
+    # Create 3 GCE instances w/ embedded init-script
+    ./scripts/cloud/create-cloud-gce-baseline.sh -c 3
+    ```
+
+    > NOTE: Instance type defaults to `n1-standard-16`, stay within the `n1` or `n2` family due to hypervisor access visibility inside the OS.
 
 
-|     Name      |  Description    |  Inventory  | Command/Example |  Notes/Options |
-|:-------------:|:----------------|:-----------:|:----------------|:---------------|
-| Everything Install | Installs and sets up all Host requirements and then installs ABM on ALL inventory | ALL | `ansible-playbook -i inventory site.yml` | Installs and updates everything from a fresh provision. `all-full-install.yml` is called from site.yml, so has the same functionality |
-| Cloud Install | Install ABM from a recently provisioned machine group | CLOUD | `ansible-playbook -i inventory cloud-full-inventory.yml` | Same as "everything", but only targets `cnuc`s |
-| Hardware Install | Install ABM on physical hardware (NUCs) | HARDWARE | `ansible-playbook -i inventory hardware-full-inventory.yml` | Same as "everything", but only targets `nuc`s |
-| Get Remote Login Tokens | Pulls login tokens to be used in the GCP console's `Kubernetes` screen | ALL | `ansible-playbook get-login-tokens.yml -i inventory` | Use `--tags cloud` or `--tags hardware` to limit to one or the other |
-| Update Ubuntu OS | Equivalent of `apt-get update && apt-get upgrade` and `gcloud components update` | ALL | `ansible-playbook -i inventory all-update-servers.yml` | Use `--tags cloud` or `--tags hardware` to limit to one or the other |
-| Reset Logging | Removes all logs and frees up space on the machine | ALL | `ansible-playbook -i inventory all-hard-reset-logging.yml` | This is a lossy process and removes all logs not synced to GCP. This is intended to be used in emergency scenarios only (ie, pods being evicted due to "out of space") |
-| ABM Install Software | Installs only ABM on a ready OS. Does not install tools, OS requirements or anything else | ALL | `ansible-playbook -i inventory all-install-abm-software.yml` | This is idempotent and can be used to install ABM + ACM without touching the OS. OS needs to be previously setup to meet ABM host requirements |
-| ABM Remove Software | Removes only ABM. Does not change underlying OS | ALL | `ansible-playbook -i inventory all-remove-abm-software.yml` | This is idempotent and can be used to remove ABM and deregisteres cluster from GKE Hub. OS needs to be previously setup to meet ABM host requirements |
+## Quick Start - 2. Provision Inventory
+
+In this phase, the compute machines have been created and a baseline has been established (ie: users created, minimal dependencies and public keys have been added to **target machines**). Now it is time to run `ansible`.
+
+This phase involves the creation of a Docker provisioning image, inventory configuration settings and running the provisioning.
+
+1. Creating and instanciating a `docker` provisioning image. A detailed explanation can be found in the [Docker build details](docker-build/README.md) file.
+
+    ```bash
+    cd docker-build
+    gcloud builds submit --config cloud-build.yaml .
+    cd ..
+    ```
+
+1. Create "inventory" file for Ansible provisioning
+
+    ```bash
+    envsubst < templates/inventory-cloud-example.yaml > inventory/gcp.yml
+    ```
+
+1. Upon completion, it's time to provision! Run the following and answer 'y' when propmted. This command will enter into the Docker image shell to run commands, do not `exit` until completed.
+    ```bash
+    ./install.sh
+    ```
+
+    > NOTE: The install script validates variables and dependencies that are used during provisioning.
+
+1. Go get coffee, it can take 20-40 minutes to full provsion
+
+1. If you completed with all 3 machines still in scope and no failures, you now have a fully provisioned Consumer Edge cluster!
 
 
-## Configuration Explanation
+## Quick Start - 3. Verifying
 
-### Environment IPs
+At this point, the cluster should be completed and visible in the `Kubernets Engine` and `Anthos` menus of GCP Console under `cnuc-1`. The quick start **does not** use OIDC (yet), so you will not be able to see the workloads and services of the cluser until you `login`. To do this, a token needs to be generated and cut-copy-pasted into the `Token` prompt of the login screen.
 
-The below are IPs used in the installation process. The configuration for these exists in the `inventory/host_vars/<host>.yaml` files.
+1. From within the Docker shell (if previously exited, run `./install.sh` again)
 
-* control_plane_vip -- IP address that is addressable & available, not overlapping with other clusters, but not pre-allocated. This is created during the process
-* ingress_vip -- Must be in the Load Balancer pool for the cluster, same rules as control_plane_vip for availability
-* load_balancer_pool_cidr -- IP addresses for the LoadBalancers (bundled mode) can attach to, same rules as control_plane_vip
-* control_plane_ip -- different than the `control_plane_vip`, this is the IP of the box you are installing on
+    ```bash
+    ansible-playbook all-get-login-tokens.yaml -i inventory
+    ```
 
-> NOTE: The default inventory file sets up space for 9 LBs allocated per cluster, with 1 taken for Ingress (sufficient for POC and basic work)
+    * Cut-copy-paste the token for `cnuc-1`
+
+1. From the GCP console, click on the three vertical dots (menu) for the `cnuc-1` cluster and select `Login`
+
+1. Select "Token" and paste in the value obtained from the previous command and submit
+
+1. Workloads and services should now show up within the console as though it were a normal GKE cluster
+
+1. Optional, logging in and running `kubectl` and `k9s` commands can be performed using SSH.
+
+    * Run `./scripts/gce-status.sh` to produce the SSH commands for logging into each of the 3 machines
+
+        ```bash
+        ssh -F ./build-artifacts/ssh-config cnuc-1
+        ```
+    * Run commands on machine, the user will be `abm-admin`
+
+        ```bash
+        kubectl get nodes
+        ```
+    * `exit` to return to Docker shell
+
+## Glossary
+
+### Provisioning target types
+
+> **Hardware** - Scripts and Playbooks designed to deploy onto hardware servers meeting requirements.
+* In this project, all hardware machines will have `nuc` or `edge` as a prefixes on their hostname and variable names.
+
+> **Cloud** - Scripts and Playbooks designed to be deployed into GCE Virtual Machines.
+* In this project, all cloud machines will have `cnuc` as a prefix for hostname and variable names.

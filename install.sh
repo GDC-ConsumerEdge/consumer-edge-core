@@ -190,7 +190,8 @@ pretty_print "Thank you for using the quick helper script!"
 pretty_print ""
 
 # TODO: Swap when there is a public image
-docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd):/var/consumer-edge-install:ro" -it mikeensor/consumer-edge-install:latest
+docker pull gcr.io/${PROJECT_ID}/consumer-edge-install:latest
+docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd):/var/consumer-edge-install:ro" -it gcr.io/${PROJECT_ID}/consumer-edge-install:latest
 
 if [[ $? -gt 0 ]]; then
     pretty_print "ERROR: Docker container cannot open."
