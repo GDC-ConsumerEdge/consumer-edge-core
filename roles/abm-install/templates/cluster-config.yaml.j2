@@ -25,6 +25,10 @@ spec:
   # GKE connect configuration
   gkeConnect:
     projectID: {{ google_project_id }}
+  edgeManagement:
+    optIn: true
+    # TODO: Future, this will be configurable as API is rolled out
+    location: us-central1 # same as cloud-ops region {{ google_region }}, but hard-coded as API is only in us-central1
   # Control plane configuration
   controlPlane:
     nodePoolSpec:

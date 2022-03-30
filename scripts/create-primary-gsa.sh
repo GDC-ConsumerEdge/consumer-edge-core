@@ -4,7 +4,7 @@ echo "This will create a Google Service Account and key that is used on each of 
 
 GSA_NAME="target-machine-gsa"
 GSA_EMAIL="${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
-KEY_LOCATION="./consumer-edge-gsa.json"
+KEY_LOCATION="./build-artifacts/consumer-edge-gsa.json"
 
 EXISTS=$(gcloud iam service-accounts list --filter="email=${GSA_EMAIL}" --format="value(name, disabled)" --project="${PROJECT_ID}")
 if [[ -z "${EXISTS}" ]]; then
