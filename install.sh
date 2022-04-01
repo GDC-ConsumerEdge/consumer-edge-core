@@ -163,37 +163,39 @@ if [[ "${ERROR}" -eq 1 ]]; then
 fi
 
 echo ""
-read -p "Check the values above and if correct, do you want to proceed? (any keyboard other than 'y' will cancel): " proceed
+read -p "Check the values above and if correct, do you want to proceed? (y/N): " proceed
 
-if [[ "${proceed}" != 'y' ]]; then
+if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+
+
+    pretty_print "Starting the installation"
+    pretty_print "Pulling docker install image"
+
+    RESULT=$(docker pull mikeensor/consumer-edge-install:latest)
+
+    if [[ $? -gt 0 ]]; then
+        pretty_print "ERROR: Cannot pull Consumer Edge Install image"
+        exit 1
+    fi
+
+    pretty_print "Starting docker container. You need to run the following 2 commands (cut-copy-paste)"
+    pretty_print "=============================="
+    pretty_print "1: \t\t./scripts/health-check.sh"
+    pretty_print "2: \t\tansible-playbook all-full-install.yml -i inventory"
+    pretty_print "3: \t\tType 'exit' to exit the Docker shell after installation"
+    pretty_print "=============================="
+    pretty_print "Thank you for using the quick helper script!"
+    pretty_print ""
+
+    # TODO: Swap when there is a public image
+    docker pull gcr.io/${PROJECT_ID}/consumer-edge-install:latest
+    docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd):/var/consumer-edge-install:ro" -it gcr.io/${PROJECT_ID}/consumer-edge-install:latest
+
+    if [[ $? -gt 0 ]]; then
+        pretty_print "ERROR: Docker container cannot open."
+        exit 1
+    fi
+else
     echo "Canceling"
     exit 0
-fi
-
-pretty_print "Starting the installation"
-pretty_print "Pulling docker install image"
-
-RESULT=$(docker pull mikeensor/consumer-edge-install:latest)
-
-if [[ $? -gt 0 ]]; then
-    pretty_print "ERROR: Cannot pull Consumer Edge Install image"
-    exit 1
-fi
-
-pretty_print "Starting docker container. You need to run the following 2 commands (cut-copy-paste)"
-pretty_print "=============================="
-pretty_print "1: \t\t./scripts/health-check.sh"
-pretty_print "2: \t\tansible-playbook all-full-install.yaml -i inventory"
-pretty_print "3: \t\tType 'exit' to exit the Docker shell after installation"
-pretty_print "=============================="
-pretty_print "Thank you for using the quick helper script!"
-pretty_print ""
-
-# TODO: Swap when there is a public image
-docker pull gcr.io/${PROJECT_ID}/consumer-edge-install:latest
-docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd):/var/consumer-edge-install:ro" -it gcr.io/${PROJECT_ID}/consumer-edge-install:latest
-
-if [[ $? -gt 0 ]]; then
-    pretty_print "ERROR: Docker container cannot open."
-    exit 1
 fi

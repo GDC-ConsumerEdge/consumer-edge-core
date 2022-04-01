@@ -141,20 +141,45 @@ echo "Final Cluster Count = $CLUSTER_COUNT"
 # enable any services needed
 gcloud services enable servicemanagement.googleapis.com anthos.googleapis.com cloudresourcemanager.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com
 
+# Setup firewalls for GCE VXLAN (only needed by cloud-version) #TODO: Modify this to use tags on the GCE instances
+
+# Look for any firewall rules with "vxlan" in them (see below for vxlan fireall entries...this works for both rules)
+FIREWALLS=$(gcloud compute firewall-rules list --filter=name=vxlan --format="value(name)")
+if [[ -z "${FIREWALLS}" ]]; then
+    gcloud compute firewall-rules create vxlan-egress \
+        --allow all \
+        --direction=EGRESS \
+        --network=default \
+        --priority=900
+
+    gcloud compute firewall-rules create vxlan-ingress \
+        --allow all \
+        --direction=INGRESS \
+        --network=default \
+        --priority=900 \
+        --source-ranges="10.0.0.0/8"
+fi
+
+# setup default compute to view secrets and GCS buckets
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+echo "Adding roles/secretmanager.secretAccessor and roles/storage.objectViewer to default compute service account..."
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+    --role="roles/secretmanager.secretAccessor" --no-user-output-enabled
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+    --role="roles/storage.objectViewer" --no-user-output-enabled
+
 # Create init script bucket for GCE instances to use
 setup_init_bucket
 
 # Create backup bucket for volume backups
 setup_init_bucket ${BACKUP_BUCKET_NAME} ${PROJECT_ID}
 
+# Copy the init script to bucket for GCE startup
 copy_init_script
-
-# setup default compute to view secrets
-PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
-echo "Adding roles/secretmanager.secretAccessor to default compute service account..."
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-    --role="roles/secretmanager.secretAccessor" --no-user-output-enabled
 
 # Store the SSH pub key as a secret
 store_public_key_secret ${SSH_PUB_KEY_LOCATION}
