@@ -143,7 +143,7 @@ At this point, the cluster should be completed and visible in the `Kubernets Eng
 1. From within the Docker shell (if previously exited, run `./install.sh` again)
 
     ```bash
-    ansible-playbook all-get-login-tokens.yaml -i inventory
+    ansible-playbook all-get-login-tokens.yml -i inventory
     ```
 
     * Cut-copy-paste the token for `cnuc-1`
