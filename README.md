@@ -72,7 +72,7 @@ Please perform the following sequence of events:
 
     1. Create new SSH keypair
         ```bash
-        ssh-keygen -o -a 100 -t ed25519 -f ./build-artifacts/consumer-edge-machine2
+        ssh-keygen -o -a 100 -t ed25519 -f ./build-artifacts/consumer-edge-machine
         ```
         > When prompted, leave `passphrase` empty
 
