@@ -25,10 +25,10 @@ spec:
   # GKE connect configuration
   gkeConnect:
     projectID: {{ google_project_id }}
-  edgeManagement:
-    optIn: true
-    # TODO: Future, this will be configurable as API is rolled out
-    location: us-central1 # same as cloud-ops region {{ google_region }}, but hard-coded as API is only in us-central1
+  #edgeManagement:
+  #  optIn: {{ edge_api_enabled }}
+  #  # TODO: Future, this will be configurable as API is rolled out
+  #  location: {{ edge_api_location }}
   # Control plane configuration
   controlPlane:
     nodePoolSpec:
@@ -140,6 +140,7 @@ spec:
   nodeAccess:
     loginUser: {{ abm_install_user }}
 ---
+
 # Node pools for worker nodes
 #apiVersion: baremetal.cluster.gke.io/v1
 #kind: NodePool

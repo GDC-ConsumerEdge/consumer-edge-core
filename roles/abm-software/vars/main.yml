@@ -2,6 +2,8 @@
 # Home directory for ACM download and operations
 acm_config_files: "/var/acm-configs"
 
+vmruntime_config_path: "/var/vmruntime"
+
 # Home directory for external secrets download and operations
 external_secrets_files: "/var/external-secrets"
 
