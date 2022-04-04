@@ -37,45 +37,32 @@
   - abm-software
   - abm-config
 
-- name: Folder for ACM configurations
+- name: Folder for VMRUntime configuration
   file:
-    path: '{{ acm_config_files }}'
+    path: '{{ vmruntime_config_path }}'
     state: directory
     mode: '0755'
   when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
   tags:
   - abm-software
-  - abm-config
+  - vmruntime
 
-### Add External Secrets
-
-- name: Create folder for External Secrets files
-  file:
-    path: '{{ external_secrets_files }}'
-    state: directory
-    mode: '0755'
+- name: Copy VMRuntime for install
+  template:
+    src: vmruntime-config.yaml.j2
+    dest: "{{ vmruntime_config_path }}/vmruntime.yaml"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
   tags:
-  - external-secrets-operator
-  - external-secrets-copy
+  - abm-software
+  - vmruntime
 
-# Copy over the external secrets operator and CRD to all inventory
-- name: Copy External Secrets Operator and CRD files
-  copy:
-    src: "{{ item }}"
-    dest: "{{ external_secrets_files }}"
-    mode: '0444' # read/write/execute owner, everyone else read/execute
-  with_fileglob: "external-secrets-c*.yaml"
-  tags:
-  - external-secrets-operator
-  - external-secrets-copy
-
-- name: "Install External Secrets Operator (b/185519826)"
+- name: "Install VMRuntime"
   shell: |
-      kubectl apply -f {{ external_secrets_files }}/external-secrets-crd.yaml
+      kubectl apply -f {{ vmruntime_config_path }}/vmruntime.yaml
       # Allow for the API to register the API
       sleep 5s
-      kubectl wait --for=condition=established --timeout=600s crd externalsecrets.kubernetes-client.io
-      exit $?
   args:
     executable: /bin/bash
   environment:
@@ -87,10 +74,29 @@
   register: result
   until: result.rc == 0
   tags:
-  - external-secrets-operator
-  - external-secrets-apply
+  - abm-software
+  - vmruntime
 
- ###  Setup & install Longhorn if settings
+- name: Folder for ACM configurations
+  file:
+    path: '{{ acm_config_files }}'
+    state: directory
+    mode: '0755'
+  when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
+  tags:
+  - abm-software
+  - abm-config
+
+### Add External Secrets
+- name: Setup External Secrets
+  include: external-secrets.yaml
+  vars:
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+  tags:
+  - external-secrets-install
+  - abm-software
+
+###  Setup & install Longhorn if settings
 - name: Setup Longhorn
   include: csi-longhorn.yaml
   vars:
@@ -266,19 +272,6 @@
     - (has_root_repo_installed == false)
   tags:
   - acm-root-repo
-
-- name: "Create secret for External Secrets"
-  shell: |
-    kubectl create ns external-secrets || true
-    kubectl create secret generic gcp-creds --from-file=/var/keys/external-secrets-k8s-creds.json -n external-secrets || true
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  tags:
-  - abm-software
-  - external-secrets
 
 ### Anthos Network Gateway
 - name: "Install Anthos Network Gateway"
