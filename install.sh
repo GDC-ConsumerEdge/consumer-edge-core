@@ -26,7 +26,7 @@
 
 ERROR="\e[31m"
 INFO="\e[32m"
-WARN="\e[1;${RED}"
+WARN="\e[1;33m"
 DEBUG="\e[1;33m"
 ENDCOLOR="\e[0m"
 
@@ -110,15 +110,15 @@ else
 fi
 
 # Check for GCP Inventory
-if [[ ! -f "./inventory/gcp.yaml" ]]; then
-    pretty_print "WARNING: GCP Inventory file was not found. If you are expecting to provision against GCE instances, this file MUST be setup and working. Possible command might be: envsubst < templates/inventory-cloud-example.yaml > inventory/gcp.yaml" "WARN"
+if [[ ! -f "./inventory/gcp.yml" ]]; then
+    pretty_print "WARNING: GCP Inventory file was not found. IF using GCE instances, this file MUST be setup and working." "WARN"
 else
     pretty_print "PASS: GCP Inventory file found"
 fi
 
 # Check for GCP Inventory
 if [[ ! -f "./inventory/inventory.yaml" ]]; then
-    pretty_print "WARNING: Physical Inventory file was not found. If you are expecting to provision against physical devices, this file MUST be setup and working. Possible command might be: envsubst < templates/inventory-physical-example.yaml > inventory/inventory.yaml" "WARN"
+    pretty_print "WARNING: Physical Inventory file was not found. IF using physical devices, this file MUST be setup and working." "WARN"
 else
     pretty_print "PASS: Physical inventory file found"
 fi
@@ -128,7 +128,7 @@ if [[ ! -f "./.envrc" ]]; then
     pretty_print "ERROR: Environment variables file .envrc was not found or is not accessible." "ERROR"
     exit 1
 else
-    pretty_print "PASS: Environment variables file found"
+    pretty_print "PASS: Environment variables (.envrc) file found"
 fi
 
 # Check for SSH Keys
@@ -146,16 +146,29 @@ elif [[ ! -f $LOCAL_GSA_FILE ]]; then
     pretty_print "ERROR: Local GSA file does not exist or is not placed where the ENV is pointing to." "ERROR"
     ERROR=1
 else
-    pretty_print "PASS: Environment variable LOCAL_GSA_FILE (${LOCAL_GSA_FILE}) variable is set and points to the GSA key."
+    pretty_print "PASS: Local GSA key (${LOCAL_GSA_FILE})"
 fi
 
-if [[ -z "${SCM_TOKEN_USER}" || -z "${SCM_TOKEN_TOKEN}" ]]; then
-    pretty_print "ERROR: Gitlab personal access token variable for USER and/or TOKEN not set. Please refer to 'Pre Installation Steps'" "ERROR"
+if [[ -z "${SCM_TOKEN_USER}" ]]; then
+    pretty_print "ERROR: Gitlab personal access token variable for USER is not set. Please refer to 'Pre Installation Steps'" "ERROR"
+    ERROR=1
+else
+    pretty_print "PASS: SCM_TOKEN_USER (${SCM_TOKEN_USER}) variable is set."
+fi
+
+if [[ -z "${SCM_TOKEN_TOKEN}" ]]; then
+    pretty_print "ERROR: Gitlab personal access token variable for TOKEN is not set. Please refer to 'Pre Installation Steps'" "ERROR"
     ERROR=1
 else
     pretty_print "PASS: SCM_TOKEN_TOKEN (${SCM_TOKEN_TOKEN}) variable is set."
 fi
 
+if [[ -z "${ROOT_REPO_URL}" ]]; then
+    pretty_print "ERROR: Root Repo URL has not been set." "ERROR"
+    ERROR=1
+else
+    pretty_print "PASS: Root Repo is set to: (${ROOT_REPO_URL})"
+fi
 
 if [[ "${ERROR}" -eq 1 ]]; then
     echo "Required configurations are not present in their intended location. Please re-configure and re-try again."
@@ -167,34 +180,36 @@ read -p "Check the values above and if correct, do you want to proceed? (y/N): "
 
 if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
-
     pretty_print "Starting the installation"
-    pretty_print "Pulling docker install image"
+    pretty_print "Pulling docker install image..."
 
-    RESULT=$(docker pull mikeensor/consumer-edge-install:latest)
+    RESULT=$(docker pull gcr.io/${PROJECT_ID}/consumer-edge-install:latest)
 
     if [[ $? -gt 0 ]]; then
         pretty_print "ERROR: Cannot pull Consumer Edge Install image"
         exit 1
     fi
 
-    pretty_print "Starting docker container. You need to run the following 2 commands (cut-copy-paste)"
+    pretty_print " "
     pretty_print "=============================="
-    pretty_print "1: \t\t./scripts/health-check.sh"
-    pretty_print "2: \t\tansible-playbook all-full-install.yml -i inventory"
-    pretty_print "3: \t\tType 'exit' to exit the Docker shell after installation"
+    pretty_print "Starting the docker container. You will need to run the following 2 commands (cut-copy-paste)"
+    pretty_print "=============================="
+    pretty_print "1: ./scripts/health-check.sh"
+    pretty_print "2: ansible-playbook all-full-install.yml -i inventory"
+    pretty_print "3: Type 'exit' to exit the Docker shell after installation"
     pretty_print "=============================="
     pretty_print "Thank you for using the quick helper script!"
-    pretty_print ""
+    pretty_print "(you are now inside the Docker shell)"
+    pretty_print " "
 
-    # TODO: Swap when there is a public image
-    docker pull gcr.io/${PROJECT_ID}/consumer-edge-install:latest
+    # Running docker image
     docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd):/var/consumer-edge-install:ro" -it gcr.io/${PROJECT_ID}/consumer-edge-install:latest
 
     if [[ $? -gt 0 ]]; then
         pretty_print "ERROR: Docker container cannot open."
         exit 1
     fi
+
 else
     echo "Canceling"
     exit 0
