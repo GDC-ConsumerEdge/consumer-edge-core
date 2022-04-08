@@ -139,7 +139,7 @@ echo "Final Cluster Count = $CLUSTER_COUNT"
 ###############################
 
 # enable any services needed
-gcloud services enable servicemanagement.googleapis.com anthos.googleapis.com cloudresourcemanager.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com
+gcloud services enable servicemanagement.googleapis.com anthos.googleapis.com cloudbuild.googleapis.com cloudresourcemanager.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com
 
 # Setup firewalls for GCE VXLAN (only needed by cloud-version) #TODO: Modify this to use tags on the GCE instances
 

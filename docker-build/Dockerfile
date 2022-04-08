@@ -4,7 +4,7 @@ FROM ubuntu:latest
 # - ENV variables
 
 ENV DEBIAN_FRONTEND=noninteractive
-ARG GCLOUD_VERSION="379.0.0"
+ARG GCLOUD_VERSION="380.0.0"
 
 RUN apt-get update && apt-get -y upgrade
 
@@ -55,4 +55,5 @@ CMD direnv allow . \
     && export PATH=/var/gcloud-sdk/google-cloud-sdk/bin:${PATH} \
     && gcloud auth activate-service-account --key-file=./build-artifacts/consumer-edge-gsa.json --project ${PROJECT_ID} \
     && cron \
+    && gcloud auth configure-docker --quiet --verbosity=critical \
     && /bin/bash

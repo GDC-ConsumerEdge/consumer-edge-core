@@ -131,6 +131,14 @@ else
     pretty_print "PASS: Environment variables (.envrc) file found"
 fi
 
+# Check for GCR docker credentials helper
+HAS_GCR=$(cat ${HOME}/.docker/config.json | grep "gcloud")
+
+if [[ -z "${HAS_GCR}" ]]; then
+    pretty_print "Authorizing docker for gcr.io"
+    gcloud auth configure-docker --quiet --verbosity=critical --no-user-output-enabled
+fi
+
 # Check for SSH Keys
 if [[ -z "${PROJECT_ID}" ]]; then
     pretty_print "ERROR: Environment variable 'PROJECT_ID' does not exist, please set and try again." "ERROR"
@@ -181,7 +189,9 @@ read -p "Check the values above and if correct, do you want to proceed? (y/N): "
 if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
     pretty_print "Starting the installation"
+
     pretty_print "Pulling docker install image..."
+
 
     RESULT=$(docker pull gcr.io/${PROJECT_ID}/consumer-edge-install:latest)
 
