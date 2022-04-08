@@ -112,7 +112,7 @@ setup_vlan: false
 vlan_interfaces: []
 
 # Observability package
-install_observability: true
+install_observability: false
 
 # All of the Service Accounts used in this solution
 ## LONGHORN
