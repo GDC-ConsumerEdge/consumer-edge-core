@@ -40,18 +40,18 @@
   - abm-post-install
   - dashboard-install
 
-### Add custom monitoring dashboards to GCP project
-- name: Add custom monitoring dashboards to GCP Project
-  run_once: true
-  shell: |  # TODO: Add a check to see if the dashboard already exists
-    gcloud --project "{{ google_project_id }}" monitoring dashboards create --config-from-file "{{ item.dest }}"
-  loop: "{{ dashboards.results }}"
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  tags:
-  - abm-post-install
-  - dashboard-install
+# ### Add custom monitoring dashboards to GCP project
+# - name: Add custom monitoring dashboards to GCP Project
+#   run_once: true
+#   shell: |  # TODO: Add a check to see if the dashboard already exists
+#     gcloud --project "{{ google_project_id }}" monitoring dashboards create --config-from-file "{{ item.dest }}"
+#   loop: "{{ dashboards.results }}"
+#   when:
+#     - (primary_cluster_machine is defined)
+#     - (primary_cluster_machine == true)
+#   tags:
+#   - abm-post-install
+#   - dashboard-install
 
 ### Setup CDI cpumanager flag for nodes
 - name: "Add CDI required cpumanager label for nodes"

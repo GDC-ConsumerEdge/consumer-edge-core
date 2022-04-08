@@ -16,7 +16,7 @@ control_plane_ips: [
   "192.168.3.12"
 ]
 # KubeAPI IP address
-control_plane_vip: "192.168.3.1"
+control_plane_vip: "192.168.3.100"
 # Ingress (k8s) address, must be in LoadBalancer pool below
 ingress_vip: "192.168.3.20"
 # Load balancers created in this range

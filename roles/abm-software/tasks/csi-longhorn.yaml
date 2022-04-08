@@ -10,6 +10,10 @@
     else
       exit 0
     fi
+  args:
+    executable: /bin/bash
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
   register: hmac_longhorn_secret
   changed_when: hmac_longhorn_secret.rc != 0
   tags:
@@ -29,6 +33,8 @@
     exit $?
   args:
     executable: /bin/bash
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
   when: hmac_longhorn_secret.rc > 0
   tags:
   - longhorn-hmac-keys
