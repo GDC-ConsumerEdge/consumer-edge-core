@@ -9,6 +9,15 @@
   tags:
   - verify-os
 
+- name: Get kernel version
+  command: 'uname -r'
+  register: uname_result
+
+- name: Save kernel verson to a variable
+  set_fact:
+    uname_r: '{{ uname_result.stdout }}'
+
+
 - name: Install dependencies used in provisioning
   apt:
     pkg:
@@ -22,6 +31,8 @@
     - software-properties-common
     - network-manager
     - vlan
+    # This is needed for Robin 
+    - linux-modules-extra-{{ uname_r }}
     state: present
     update_cache: yes
   tags:
@@ -128,3 +139,23 @@
   - (setup_vlan == true) and (is_cloud_resource is undefined or is_cloud_resource == false)
   tags:
   - vlan-setup
+
+
+#### Install kernel module for Robin
+- name: Generate modules.dep 
+  command: depmod -a
+  tags: 
+  - robin
+
+ 
+- name: Load tcm_loop kernel module 
+  modprobe:
+    name: tcm_loop
+    state: present
+  tags:
+  - robin
+
+- name: Check if tcm_loop kernel module is loaded 
+  shell: "lsmod | grep tcm"
+  register: tcm_exists
+  failed_when: tcm_exists.rc != 0  
