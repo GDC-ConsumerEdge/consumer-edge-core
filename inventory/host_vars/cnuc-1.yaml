@@ -8,7 +8,7 @@ machine_label: "cnuc-1"
 # Indicates that this is the primary machine in the cluster (only important for provisioning)
 primary_cluster_machine: true
 # Name of the "store" per the ACM repo
-acm_cluster_name: "location-1"
+acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('cnuc-1', True) }}"
 # This machine's IP
 control_plane_ip: "10.200.0.2"
 # The other IPs in the cluster

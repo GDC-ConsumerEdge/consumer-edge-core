@@ -9,6 +9,9 @@ export REGION="us-west1"
 # GCP Project Zone
 export ZONE="us-west1-b"
 
+# (Optional, typically workshop only) Assigned name/number. This is the ACM Cluster object's name (needs to be unique across fleet)
+export CLUSTER_ACM_NAME="### location-1 ###"
+
 # Gitlab Personal Access Token credentials (generated in Quick Start step 2)
 export SCM_TOKEN_USER="### Repo Login Name ###"
 export SCM_TOKEN_TOKEN="### Repo PAT Token ###"
