@@ -9,7 +9,9 @@ external_secrets_files: "/var/external-secrets"
 
 root_repository_branch: "main"
 root_repository_policy_dir: "/config"
-root_repository_git_auth_type: "token"
+root_repository_git_auth_type: "{{ acm_repo_type }}"
+root_repository_service_account_email: source-repo-agent@{{ google_project_id }}.iam.gserviceaccount.com
+
 # NOTE: This is a tight coupling with the "Root Repo" that contains "ExternalSecret" instances with the `git-creds` name
 #       IF changed, both the ACM root-repo and this field need to match
 root_repository_git_secret_name: "git-creds"
