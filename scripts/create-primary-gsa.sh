@@ -22,7 +22,7 @@ else
 fi
 
 # Bootstrap a few API services:
-gcloud services enable servicemanagement.googleapis.com containerregistry.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com
+gcloud services enable servicemanagement.googleapis.com containerregistry.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com sourcerepo.googleapis.com
 
 echo "Adding roles/editor"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
