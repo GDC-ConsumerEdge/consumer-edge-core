@@ -171,6 +171,15 @@ else
     pretty_print "PASS: SCM_TOKEN_TOKEN (${SCM_TOKEN_TOKEN}) variable is set."
 fi
 
+if [[ -z "${ROOT_REPO_TYPE}" ]]; then
+    pretty_print "PASS: Using token based SCM authention."
+elif [[ "${ROOT_REPO_TYPE}" != "gcpserviceaccount" ]]; then  # TODO: This is quick and dirty, not comprehensive to the other types that *could* be used (token, ssh, etc)
+    pretty_print "ERROR: Repo Type is set to but not to 'gcpserviceaccount'" "ERROR"
+    ERROR=1
+else
+    pretty_print "PASS: Using GCP GSA based SCM authention with GSR"
+fi
+
 if [[ -z "${ROOT_REPO_URL}" ]]; then
     pretty_print "ERROR: Root Repo URL has not been set." "ERROR"
     ERROR=1
