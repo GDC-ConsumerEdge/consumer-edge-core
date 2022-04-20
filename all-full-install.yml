@@ -14,5 +14,6 @@
     - abm-install
     - abm-software
     - abm-post-install
+    - ansible-pull
     - abm-login-token
   vars: []
