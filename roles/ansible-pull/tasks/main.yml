@@ -1,0 +1,28 @@
+---
+# Setup Python on target
+
+- name: "Setup Python"
+  apt:
+    pkg:
+    - python3
+    - python3-pip
+
+- name: "Remove python for python3 if present"
+  apt:
+    name: python-is-python3
+    state: absent
+
+- name: "Reset SSH connection if python changed"
+  meta: reset_connection
+
+- name: "Update pip"
+  ansible.builtin.command:
+    cmd: "pip install --upgrade pip"
+
+- name: "Install Ansible"
+  ansible.builtin.command:
+    cmd: "pip install ansible"
+
+# Make working directory for ansible-pull
+- name: Create local directory to work from
+  file: path={{workdir}} state=directory owner=root group=root mode=0751
