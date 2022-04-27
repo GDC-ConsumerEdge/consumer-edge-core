@@ -2,6 +2,8 @@ target/
 pkg/
 tmp/
 
+.gitcookies
+
 # test
 
 # Folder to hold build-artifacts needed for Docker install (maybe all)
