@@ -7,7 +7,7 @@ is_cloud_resource: true
 kubevirt_use_emulation: true
 
 # Network Gateway Group IPs
-network_gateway_group_ips: [
+ang_floating_ips: [
   "10.200.0.12",
   "10.200.0.13"
 ]
