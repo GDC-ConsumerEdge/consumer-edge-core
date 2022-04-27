@@ -4,7 +4,7 @@ FROM ubuntu:latest
 # - ENV variables
 
 ENV DEBIAN_FRONTEND=noninteractive
-ARG GCLOUD_VERSION="382.0.0"
+ARG GCLOUD_VERSION="383.0.1"
 
 RUN apt-get update && apt-get -y upgrade
 
