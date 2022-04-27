@@ -23,3 +23,26 @@ ingress_vip: "192.168.3.20"
 load_balancer_pool_cidr: [
   "192.168.3.20-192.168.3.30" # 9 IPs for LB + 1 Ingress
 ]
+
+###
+###  ANG & VPN Details
+###
+network_gateway_group_install: true
+# Install MultiClusterConfig (needed for VPN)
+network_gateway_mcc: true
+# Egress IP
+egress_cluster_ip: "172.92.230.159" # `curl ifconfig.me`
+# Floating IP addresses for Network Gateway Group
+ang_floating_ips: [
+  "192.168.3.14",
+  "192.168.3.15"
+]
+# IP addresses of the VPN Gateways
+vpn_gateway_ips: [
+  "35.242.104.21"
+]
+# IKE secret
+ike_key_secret_value: "12345"
+
+# Install observability using Legacy agents (override)
+install_observability: false # skip observability on install

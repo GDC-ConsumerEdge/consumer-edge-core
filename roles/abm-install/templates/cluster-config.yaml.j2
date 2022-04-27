@@ -15,6 +15,8 @@ apiVersion: baremetal.cluster.gke.io/v1
 kind: Cluster
 metadata:
   name: {{ cluster_name }}
+  annotations:
+    baremetal.cluster.gke.io/enable-anthos-multi-cluster-connectivity: "{{ enable_mcc_network | default('false', true) | lower }}"
   namespace: {{ cluster_name }}
 spec:
   type: {{ install_type }}
@@ -40,7 +42,7 @@ spec:
   clusterNetwork:
     multipleNetworkInterfaces: {{ multi_network_enabled | capitalize  }}
     # eBPF
-    # enableDataplaneV2: True
+    # enableDataplaneV2: {{ dataplane_v2 | capitalize }}
     # Network Gateway Groups
     advancedNetworking: {{ network_gateway_group | capitalize  }}
     pods:

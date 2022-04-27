@@ -24,3 +24,9 @@ load_balancer_pool_cidr: [
   "10.120.5.227-10.120.5.229",
   "10.120.5.234-10.120.5.238"
 ]
+
+# Floating IP addresses for Network Gateway Group
+ang_floating_ips: [
+  "10.120.5.234",
+  "10.120.5.235"
+]

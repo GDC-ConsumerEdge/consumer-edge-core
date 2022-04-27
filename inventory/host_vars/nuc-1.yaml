@@ -24,7 +24,7 @@ load_balancer_pool_cidr: [
 ]
 
 # Floating IP addresses for Network Gateway Group
-network_gateway_group_ips: [
+ang_floating_ips: [
   "192.168.1.17",
   "192.168.1.18"
 ]
