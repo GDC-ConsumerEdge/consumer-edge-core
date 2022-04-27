@@ -25,4 +25,8 @@
 
 # Make working directory for ansible-pull
 - name: Create local directory to work from
-  file: path={{workdir}} state=directory owner=root group=root mode=0751
+  file:
+    path: '{{ ansible_pull_workdir }}'
+    state: directory
+    mode: '0755'
+  when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"

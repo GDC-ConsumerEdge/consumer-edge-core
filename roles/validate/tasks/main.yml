@@ -62,7 +62,7 @@
 - name: Set Anthos Network Gateway to True if IPs have length
   set_fact:
     "network_gateway_group": True
-  when: network_gateway_group_ips | length > 0
+  when: ang_floating_ips | length > 0
   tags:
   - verify
   - anthos-network-gateway
@@ -70,7 +70,7 @@
 - name: Set Anthos Network Gateway False if NO IPs have been defined
   set_fact:
     "network_gateway_group": False
-  when: network_gateway_group_ips | length == 0
+  when: ang_floating_ips | length == 0
   tags:
   - verify
   - anthos-network-gateway
@@ -88,7 +88,7 @@
   run_once: true
   debug:
     msg: "IP: {{ item }}, {{ network_gateway_group }}"
-  loop: "{{ network_gateway_group_ips }}"
+  loop: "{{ ang_floating_ips }}"
   when: network_gateway_group == True
   tags:
   - verify

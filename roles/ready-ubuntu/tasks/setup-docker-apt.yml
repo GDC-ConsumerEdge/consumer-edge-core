@@ -62,11 +62,11 @@
     name: docker
     state: present
 
-# sudo usermod -aG docker root
+# sudo usermod -aG docker root    [WARNING]: 'append' is set, but no 'groups' are specified. Use 'groups' for appending new groups.This will change to an error in Ansible 2.14.
 - name: Add ansible_user user to "docker" group
   user:
     name: "{{ ansible_user }}"
-    group: "docker"
+    groups: "docker"
     append: yes
 
 # TODO: Refactor timeout
