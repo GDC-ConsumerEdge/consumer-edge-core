@@ -29,14 +29,16 @@ acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/
 acm_repo_type: "{{ lookup('env', 'ROOT_REPO_TYPE') | default('token', True) }}"
 # gsutil ls -al gs://config-management-release/released/
 # Anthos Config Management version
-acm_version: "1.11.1/fwi-verification-earlier-access"  # HACK:this is a pre-release for 1.11.1
+acm_version: "1.11.1"
 
 ####
 #### Anthos Network Gateway
 ####
 # Floating IP addresses for Anthos Network Gateway
-network_gateway_group_ips: []
-network_gateway_group_install: true
+ang_floating_ips: [] # Floating IP for ANG
+vpn_gateway_ips: [] # Gateway IPs for VPN
+network_gateway_group_install: false
+network_gateway_mcc: false
 
 ###
 ### Storage Provider
