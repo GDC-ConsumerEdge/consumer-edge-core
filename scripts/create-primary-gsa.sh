@@ -8,6 +8,7 @@ KEY_LOCATION="./build-artifacts/consumer-edge-gsa.json"
 
 EXISTS=$(gcloud iam service-accounts list --filter="email=${GSA_EMAIL}" --format="value(name, disabled)" --project="${PROJECT_ID}")
 if [[ -z "${EXISTS}" ]]; then
+    echo "GSA [${GSA_EMAIL}]does not exist, creating it"
     # GSA does NOT exist, create
     gcloud iam service-accounts create ${GSA_NAME} \
         --description="GSA used on each Target machine to make gcloud commands" \
@@ -22,7 +23,7 @@ else
 fi
 
 # Bootstrap a few API services:
-gcloud services enable servicemanagement.googleapis.com containerregistry.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com sourcerepo.googleapis.com
+gcloud services enable servicemanagement.googleapis.com compute.googleapis.com secretmanager.googleapis.com containerregistry.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com sourcerepo.googleapis.com
 
 echo "Adding roles/editor"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
