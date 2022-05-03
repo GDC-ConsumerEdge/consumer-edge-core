@@ -149,13 +149,13 @@ if [[ -z "${FIREWALLS}" ]]; then
     gcloud compute firewall-rules create vxlan-egress \
         --allow all \
         --direction=EGRESS \
-        --network=default \
+        --network=${NETWORK} \
         --priority=900
 
     gcloud compute firewall-rules create vxlan-ingress \
         --allow all \
         --direction=INGRESS \
-        --network=default \
+        --network=${NETWORK} \
         --priority=900 \
         --source-ranges="10.0.0.0/8"
 fi
