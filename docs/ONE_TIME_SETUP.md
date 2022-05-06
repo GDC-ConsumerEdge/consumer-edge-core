@@ -253,3 +253,4 @@ After completing all of these steps, you are ready to proceed with provisioning.
 * Very possible to hit `fingerprint` issues with SSH. Most of the time, you can run the suggested command and then SSH back into the machine and accept the new fingerprint.
 
     * Most of the time, you can run the suggested `ssh-keygen` command (ie: `ssh-keygen -f "/home/<user>/.ssh/known_hosts" -R "nuc-1"`) to remove the old fingerprint
+/// /
