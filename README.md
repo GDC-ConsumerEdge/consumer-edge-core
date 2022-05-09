@@ -114,7 +114,7 @@ This phase involves the creation of a Docker provisioning image, inventory confi
 
     ```bash
     cd docker-build
-    gcloud builds submit --config cloud-build.yaml .
+    gcloud builds submit --config cloudbuild.yaml .
     cd ..
     ```
 
