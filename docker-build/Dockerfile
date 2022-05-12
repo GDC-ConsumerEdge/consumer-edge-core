@@ -19,6 +19,9 @@ RUN mkdir -p /tmp/gcloud-install \
     && tar -xvf /tmp/gcloud-install/gcloud-sdk.tar.gz -C /var/gcloud-sdk \
     && rm -rf /tmp/gcloud-install
 
+# Auto-update upon building
+RUN /var/gcloud-sdk/google-cloud-sdk/bin/gcloud components update --quiet --verbosity=critical --no-user-output-enabled
+
 # Setup CRON for configuration drift script
 COPY docker-config-drift.cron /etc/cron.d/docker-config-drift
 RUN chmod 0744 /etc/cron.d/docker-config-drift
