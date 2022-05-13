@@ -2,9 +2,15 @@
 
 echo "This will create a Google Service Account and key that is used on each of the Target machines to run gcloud commands"
 
+PROJECT_ID=${1:-$PROJECT_ID}
 GSA_NAME="target-machine-gsa"
 GSA_EMAIL="${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 KEY_LOCATION="./build-artifacts/consumer-edge-gsa.json"
+
+if [[ -z "${PROJECT_ID}" ]]; then
+  echo "Project ID required, provide as script argument or 'export PROJECT_ID={}'"
+  exit 1
+fi
 
 EXISTS=$(gcloud iam service-accounts list --filter="email=${GSA_EMAIL}" --format="value(name, disabled)" --project="${PROJECT_ID}")
 if [[ -z "${EXISTS}" ]]; then
@@ -23,7 +29,7 @@ else
 fi
 
 # Bootstrap a few API services:
-gcloud services enable servicemanagement.googleapis.com compute.googleapis.com secretmanager.googleapis.com containerregistry.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com sourcerepo.googleapis.com
+gcloud services enable servicemanagement.googleapis.com compute.googleapis.com secretmanager.googleapis.com containerregistry.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com sourcerepo.googleapis.com --project ${PROJECT_ID}
 
 echo "Adding roles/editor"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
