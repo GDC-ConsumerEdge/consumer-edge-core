@@ -39,7 +39,7 @@ RUN mkdir -p ~/.ssh && touch ~/.ssh/config
 RUN printf 'Host *\n\tStrictHostKeyChecking no\n' >> ~/.ssh/config
 RUN chmod 600 ~/.ssh/config
 
-RUN curl -sfL https://direnv.net/install.sh | bash
+RUN curl -sfL --output /tmp/install.sh https://direnv.net/install.sh && bash /tmp/install.sh
 RUN printf '\n#direnv hook\neval "$(direnv hook bash)"\n' >> ~/.bashrc
 
 # Configure touch points
