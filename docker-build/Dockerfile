@@ -11,7 +11,8 @@ RUN apt-get update && apt-get -y upgrade
 # Setup Date/Time to UTC
 RUN ln -fs /usr/share/zoneinfo/UTC /etc/localtime
 RUN apt-get install -y --no-install-recommends tzdata
-RUN apt-get install -y apt-utils vim nano python3-pip python-is-python3 curl wget openssh-server cron gettext iputils-ping
+#install dependencies...
+RUN apt-get install -y apt-utils vim nano python3-pip python-is-python3 curl wget openssh-server cron gettext iputils-ping direnv
 
 RUN mkdir -p /tmp/gcloud-install \
     && mkdir -p /var/gcloud-sdk \
@@ -39,7 +40,7 @@ RUN mkdir -p ~/.ssh && touch ~/.ssh/config
 RUN printf 'Host *\n\tStrictHostKeyChecking no\n' >> ~/.ssh/config
 RUN chmod 600 ~/.ssh/config
 
-RUN curl -sfL --output /tmp/install.sh https://direnv.net/install.sh && bash /tmp/install.sh
+#direnv installed above via apt
 RUN printf '\n#direnv hook\neval "$(direnv hook bash)"\n' >> ~/.bashrc
 
 # Configure touch points
