@@ -4,6 +4,9 @@ tmp/
 
 .gitcookies
 
+# Newrelic agent log
+newrelic_agent.log
+
 # test
 
 # Folder to hold build-artifacts needed for Docker install (maybe all)

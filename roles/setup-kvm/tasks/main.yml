@@ -34,9 +34,8 @@
     - kvm-packages
 
 # TODO: Refactor timeout
-- name: Reboot machine so KVM dependencies are active
-  reboot:
-    reboot_timeout: 300
+- name: Reset ssh if KVM dependencies are active
+  meta: reset_connection
   when: kvm_check.rc > 0
   tags:
     - kvm-install
