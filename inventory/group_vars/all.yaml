@@ -68,6 +68,15 @@ enable_vmruntime: true
 ###
 # All ansible interactions are using this user during provisioning
 ansible_user: abm-admin
+# Path to the private key file used for SSH
+ansible_ssh_key_file_encrypted: build-artifacts/consumer-edge-machine.encrypted
+ansible_ssh_key_timeout: "4h"
+# Details of Google Cloud KMS key used to decrypt SSH private key
+google_kms: {
+    keyring_name: "gdc-ce-keyring", # Defined in ./scripts/create-primary-gsa.sh -- future will be TF
+    key_name: "gdc-ssh-key",
+    location: "global"
+  }
 # Variables assigned to all inventory
 google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
@@ -92,6 +101,7 @@ gcp_services_required:
   - storage.googleapis.com
   - gkeconnect.googleapis.com
   - gkehub.googleapis.com
+  - cloudkms.googleapis.com
   - serviceusage.googleapis.com
   - stackdriver.googleapis.com
   - monitoring.googleapis.com

@@ -39,6 +39,17 @@ Please perform the following sequence of events:
     1. The "Token name" name that will be used as an environment variable **SCM_TOKEN_USER**.
     1. The produced token value that will be uesd as an environment variable **SCM_TOKEN_TOKEN**. Go to user **Preferences** on the top right corner.
 
+## SSH Key Management
+
+The playbooks in this repo contain a set of pre-tasks that take care of decrypting the SSH private key that is used to access remote machines.
+
+As a prerequisite you are expected to encrypt your private key using Google Cloud KMS. The project, keyring, and key name are indicated in the `google_kms` variable under `inventory/groups_vars/all.yaml`.
+
+Once you have the encrypted key, you will need to set the `ansible_ssh_key_file_encrypted` variable under `inventory/groups_vars/all.yaml` to the path of the encrypted key on the local filesystem.
+
+In order to enable dynamically loading the SSH private key during runtime, you will need to make sure that `ssh-agent` is running prior to running a playbook.
+
+## Installation Stages
 1. Install or verify `gettext` is installed on the **provisioning machine**. Run `which envsubst` and if this fails, follow the below steps to install `gettext` binary
 
     * MacOS with Ports
@@ -67,6 +78,7 @@ Please perform the following sequence of events:
     ```
 
     * This will create a JSON key for the new GSA at `./build-artifacts/consumer-edge-gsa.json`
+    * Also sets up KMS keyring and key for private key encryption
 
 1. Create SSH keypair for communication between **provisioning machine** and **target machines**.
 
@@ -75,6 +87,20 @@ Please perform the following sequence of events:
         ssh-keygen -o -a 100 -t ed25519 -f ./build-artifacts/consumer-edge-machine
         ```
         > When prompted, leave `passphrase` empty
+
+1. Encrypt the private key using CloudKMS
+
+    ```bash
+    gcloud kms encrypt --key gdc-ssh-key --keyring gdc-ce-keyring   --location global \
+        --plaintext-file build-artifacts/consumer-edge-machine \
+        --ciphertext-file build-artifacts/consumer-edge-machine.encrypted
+    ```
+
+    > NOTE: The private key can be removed at this point if you want, but do not lose the `consumer-edge-machine.encrypted` file, this is the encrypted private key. Future functionality will automate and upload the key to GCP Secrets Manager.
+
+<!-- TODO: Add mechanism to upload to GCS SecretsManager -->
+<!-- TODO: Add script to allow for ad-hoc SSH into machines (decrypt on-demand) -->
+<!-- TODO: Add instructions to remove SSH key -->
 
 1. Create configuration file (`.envrc`)
 
