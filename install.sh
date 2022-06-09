@@ -94,8 +94,8 @@ fi
 ERROR=0
 
 # Check for SSH Keys
-if [[ ! -f "./build-artifacts/consumer-edge-machine" || ! -f "./build-artifacts/consumer-edge-machine.pub" ]]; then
-    pretty_print "ERROR: SSH Key-pair './build-artifacts/consumer-edge-machine' and './build-artifacts/consumer-edge-machine.pub' does not exist, did you generate them?" "ERROR"
+if [[ ! -f "./build-artifacts/consumer-edge-machine.encrypted" || ! -f "./build-artifacts/consumer-edge-machine.pub" ]]; then
+    pretty_print "ERROR: Encrypted SSH Key './build-artifacts/consumer-edge-machine.encrypted' and/or './build-artifacts/consumer-edge-machine.pub' were not found, did you generate them or encrypt the private key?" "ERROR"
     exit 1
 else
     pretty_print "PASS: SSH Keys found"

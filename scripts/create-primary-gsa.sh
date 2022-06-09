@@ -7,6 +7,10 @@ GSA_NAME="target-machine-gsa"
 GSA_EMAIL="${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 KEY_LOCATION="./build-artifacts/consumer-edge-gsa.json"
 
+KMS_KEY_NAME="gdc-ssh-key"
+KMS_KEYRING_NAME="gdc-ce-keyring"
+KMS_KEYRING_LOCATION=${2-"global"}
+
 if [[ -z "${PROJECT_ID}" ]]; then
   echo "Project ID required, provide as script argument or 'export PROJECT_ID={}'"
   exit 1
@@ -28,9 +32,22 @@ else
     # otherwise, no need to do anything
 fi
 
-# Bootstrap a few API services:
-gcloud services enable servicemanagement.googleapis.com compute.googleapis.com secretmanager.googleapis.com containerregistry.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com sourcerepo.googleapis.com --project ${PROJECT_ID}
+# FIXME: These are not specific to GSA creation, but necessary for project setup (future, this will all be terraform)
+gcloud services enable servicemanagement.googleapis.com compute.googleapis.com secretmanager.googleapis.com containerregistry.googleapis.com cloudkms.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com sourcerepo.googleapis.com --project ${PROJECT_ID}
 
+### Create Keyring for SSH key encryption (future terraform) -- Keyring and keys are used to encrypt/decrypt SSH keys on the provisioning system during provisioning (target host has the pub-key matching encrypted private key)
+HAS_KEYRING=$(gcloud kms keyrings list --location="${KMS_KEYRING_LOCATION}" --format="value(name)" --filter="name~${KMS_KEYRING_NAME}" --project "${PROJECT_ID}")
+if [[ -z "${HAS_KEYRING}" ]]; then
+    gcloud kms keyrings create "${KMS_KEYRING_NAME}" --location="${KMS_KEYRING_LOCATION}" --project "${PROJECT_ID}"
+fi
+
+### Check to see if key exists, create if not
+HAS_KEY=$(gcloud kms keys list --location="${KMS_KEYRING_LOCATION}" --keyring="${KMS_KEYRING_NAME}" --format="value(name)" --project "${PROJECT_ID}")
+if [[ -z "${HAS_KEY}" ]]; then
+    gcloud kms keys create "${KMS_KEY_NAME}" --keyring "${KMS_KEYRING_NAME}" --location "${KMS_KEYRING_LOCATION}" --purpose "encryption" --project "${PROJECT_ID}"
+fi
+
+### Set roles for GSA
 echo "Adding roles/editor"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${GSA_EMAIL}" \
@@ -65,6 +82,11 @@ echo "Adding roles/gkehub.viewer"
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${GSA_EMAIL}" \
     --role="roles/gkehub.viewer" --no-user-output-enabled
+
+echo "Adding roles/cloudkms.cryptoKeyEncrypterDecrypter"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${GSA_EMAIL}" \
+    --role="roles/cloudkms.cryptoKeyEncrypterDecrypter" --no-user-output-enabled
 
 # We should have a GSA enabled or created or ready-to-go by here
 
