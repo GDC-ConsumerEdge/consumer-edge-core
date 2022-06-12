@@ -91,25 +91,25 @@ kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
 
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
 gcp_services_required:
-  - anthosaudit.googleapis.com
-  - opsconfigmonitoring.googleapis.com
   - anthos.googleapis.com
-  - connectgateway.googleapis.com
+  - anthosaudit.googleapis.com
   - anthosgke.googleapis.com
+  - cloudkms.googleapis.com
   - cloudresourcemanager.googleapis.com
+  - connectgateway.googleapis.com
   - container.googleapis.com
-  - storage.googleapis.com
   - gkeconnect.googleapis.com
   - gkehub.googleapis.com
-  - cloudkms.googleapis.com
-  - serviceusage.googleapis.com
-  - stackdriver.googleapis.com
-  - monitoring.googleapis.com
-  - logging.googleapis.com
-  - sourcerepo.googleapis.com
-  - secretmanager.googleapis.com
-  - iamcredentials.googleapis.com
   - iam.googleapis.com
+  - iamcredentials.googleapis.com
+  - logging.googleapis.com
+  - monitoring.googleapis.com
+  - opsconfigmonitoring.googleapis.com
+  - secretmanager.googleapis.com
+  - serviceusage.googleapis.com
+  - sourcerepo.googleapis.com
+  - stackdriver.googleapis.com
+  - storage.googleapis.com
 
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
