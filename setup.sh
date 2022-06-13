@@ -46,7 +46,6 @@ sed -i "s/PROJECT_ID=.*/PROJECT_ID=\"$QL_PROJECT_ID\"/g" .envrc
 source .envrc
 
 yes Y | ./scripts/create-primary-gsa.sh
-./scripts/cloud/create-cloud-gce-baseline.sh -c 3
 if [[ ! -f "./build-artifacts/consumer-edge-machine.encrypted" ]]; then
  	echo "Creating consumer-edge-machine.encrypted file"
 # 	yes Y | gcloud kms keyrings create gdc-ce-keyring --location=global
@@ -56,6 +55,9 @@ if [[ ! -f "./build-artifacts/consumer-edge-machine.encrypted" ]]; then
 else
  	echo "Found existing ./build-artifacts/consumer-edge-machine.encrypted, skipping creation"
 fi
+# Create the 3 cnuc VMs
+./scripts/cloud/create-cloud-gce-baseline.sh -c 3
+
 export CONTAINER_URL=$(gcloud container images list --repository=gcr.io/$PROJECT_ID --format="value(name)" --filter="name~consumer-edge-install")
 if [[ -z "$CONTAINER_URL" ]]; then
 	cd docker-build
