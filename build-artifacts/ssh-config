@@ -1,4 +1,5 @@
-Host cnuc-* edge-*
+## Only use of this SSH config file is to connect to target hosts
+Host *
     User abm-admin
     StrictHostKeyChecking no
     Compression yes
