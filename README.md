@@ -44,21 +44,22 @@ utilize VXLAN overlays to simulate L2 networking support.
 
 Please perform the following sequence of events:
 
-1. Install docker on the **provisioning machine** (your machine, a cloud-top,
+1. Install docker and other components needed on the **provisioning machine** (your machine, a cloud-top, or a GCE VM
     etc)
 
     ```bash
-    docker --version
+    ./setup.sh
     ```
 
 1. This project uses Personal Access Tokens (PATs) for ACM's authentication of
     the `root-repo`. [Create a new PAT token](https://docs.gitlab.com/ee/user/project/deploy_tokens/)
     and save the credentials for the steps below. ![gitlab token](docs/Gitlab_token.png)
-    1. Create the PAT with **read_repository** privilege.
-    1. The "Token name" name that will be used as an environment variable
+    1. Go to user **Preferences** on the top right corner. On the left menu, select **Access Tokens**
+    2. Choose a "Token name" name that will be used later in this installation as an environment variable
         **SCM_TOKEN_USER**.
-    1. The produced token value that will be uesd as an environment variable
-        **SCM_TOKEN_TOKEN**. Go to user **Preferences** on the top right corner.
+    3. Create the PAT with **read_repository** privilege.
+    4. The produced token value that will be uesd later in this installation as an environment variable
+        **SCM_TOKEN_TOKEN**. 
 
 ## SSH Key Management
 
@@ -73,8 +74,12 @@ Once you have the encrypted key, you will need to set the `ansible_ssh_key_file_
 variable under `inventory/groups_vars/all.yaml` to the path of the encrypted
 key on the local filesystem.
 
+All of this will happen automatically when you launch the `create-primary-gsa.sh` 
+in the next steps. 
+
 In order to enable dynamically loading the SSH private key during runtime, you
 will need to make sure that `ssh-agent` is running prior to running a playbook.
+
 
 ## Installation Stages
 1. Install or verify `gettext` is installed on the **provisioning machine**.
@@ -99,11 +104,19 @@ Run `which envsubst` and if this fails, follow the below steps to install
       sudo apt install gettext
       ```
 
-1. Create Google Cloud Service Account used for provisioning. Skip this step if
+1. Make sure you are authenticated with your Google Cloud account on the provisioning machine
+   and set the default working project
+    ```
+    gcloud auth login
+    gcloud config set project <<your_project_id>>
+    ```
+
+
+2. Create Google Cloud Service Account used for provisioning. Skip this step if
 you have a properly authenticated GSA key located at `./build-artifacts/consumer-edge-gsa.json`
 
     ```bash
-    # Follow prompts, generate a new key when prompted
+    # Follow prompts, answer YES to generate a new key when prompted
     ./scripts/create-primary-gsa.sh
     ```
 
@@ -117,7 +130,7 @@ you have a properly authenticated GSA key located at `./build-artifacts/consumer
       ssh-keygen -N '' -o -a 100 -t ed25519 -f ./build-artifacts/consumer-edge-machine
       ```
 
-1. Encrypt the private key using Cloud KMS
+2. Encrypt the private key using Cloud KMS
 
     ```bash
     gcloud kms encrypt \
@@ -127,7 +140,7 @@ you have a properly authenticated GSA key located at `./build-artifacts/consumer
       --plaintext-file build-artifacts/consumer-edge-machine \
       --ciphertext-file build-artifacts/consumer-edge-machine.encrypted
     ```
-1. Delete the unencrypted private key from the local machine
+3. Delete the unencrypted private key from the local machine
 
     ```bash
     rm build-artifacts/consumer-edge-machine
@@ -207,8 +220,9 @@ commands, do not `exit` until completed.
     ./install.sh
     ```
 
-    > NOTE: The install script validates variables and dependencies that are
-    used during provisioning.
+    > NOTE: Depending on your terminal configuration, it might be hard to see,
+    but there are a few commands that you will need to run once you are inside the
+    container. Keep an eye on the output of the script for instructions.
 
 1. Go get coffee, it can take 20-40 minutes to perform a full provsion
 
