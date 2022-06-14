@@ -1,6 +1,18 @@
 #! /bin/bash
 #Run from inside of either CloudShell or a Bastion VM inside of the same GCP project as the GCP cnuc's
 ###
+
+# Must currently run as an admin user with org permissions in order to make the changes throughout
+# For now this means we will require that the user login via gcloud auth login
+# This check will bail if a gserviceaccount is found in use
+GSERVICEACCOUNT=$(gcloud auth list --format=json | grep gserviceaccount)
+if [[ ! -z "${GSERVICEACCOUNT}" ]]; then
+	echo "Please login as an admin user account using the following command -- 'gcloud auth login --no-browser'"
+	echo "This will require you to have run 'gcloud auth login' on your local machines terminal (CloudShell will not work)"
+	exit 1
+fi
+echo "Beginning Installation!"
+
 sudo apt update
 sudo apt -y install screen
 echo "termcapinfo xterm* ti@:te@" > .screenrc
@@ -15,7 +27,7 @@ echo \
 sudo apt update
 sudo apt -y install docker-ce docker-ce-cli containerd.io
 sudo apt -y install jq -y
-sudo apt -y install unzip
+sudo apt -y install unzip direnv
 sudo usermod -aG docker $(whoami)
 sudo chmod 666 /var/run/docker.sock
 echo "Finished Docker setup..."
@@ -24,6 +36,10 @@ echo "Finished Docker setup..."
 #yes Y | gcloud secrets create gcs-auth-secret
 #gcloud secrets versions add gcs-auth-secret --data-file="creds-gcp.json"
 
+echo "Adding direnv hook to bask & allowing direnv for the current direction"
+echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
+direnv allow
+source ~/.bashrc
 
 ##Begin setting up to run  ./install
 if [[ ! -f "./build-artifacts/consumer-edge-machine" ]]; then
