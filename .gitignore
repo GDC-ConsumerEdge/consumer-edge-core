@@ -4,6 +4,8 @@ tmp/
 
 .gitcookies
 
+.screenrc
+
 # Newrelic agent log
 newrelic_agent.log
 

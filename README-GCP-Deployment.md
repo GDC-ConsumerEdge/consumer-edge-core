@@ -28,9 +28,9 @@ This **Quick Start** will use GCE instances to simulate physical hardware and ut
 
 Please perform the following sequence of events:
 
-1. Create bastion VM for deployment (the below is deployed as a SPOT VM for cost savings). This step CAN be skipped and CloudShell used instead, but this as CloudShell will time out this can make leveraging it to run some of these longer running scripts difficult. Thus, it is highly recommended to create a Debain 11 bastion VM to execute the following commands:
+1. Create bastion VM for deployment (the below is deployed as a SPOT VM for cost savings). This step CAN be skipped and CloudShell used instead, but this as CloudShell will time out this can make leveraging it to run some of these longer running scripts difficult. Thus, it is highly recommended to create a Debain 11 bastion VM to execute the following command (or run your own so long as it's Debian 11):
 
-    ```bash
+    ```shell
     gcloud compute instances create bastion-1 --machine-type=e2-medium --network-interface=network-tier=PREMIUM,subnet=default --metadata=enable-oslogin=true  --provisioning-model=STANDARD --scopes=https://www.googleapis.com/auth/cloud-platform --create-disk=auto-delete=yes,boot=yes,device-name=instance-1,image=projects/debian-cloud/global/images/debian-11-bullseye-v20220519,mode=rw,size=40,type=projects/anthos-consumer-edge/zones/us-west2-a/diskTypes/pd-balanced --no-shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring --reservation-affinity=any --provisioning-model=SPOT
     ```
 
@@ -61,6 +61,7 @@ Please perform the following sequence of events:
     ```
 
     > NOTE 1: The install script validates variables and dependencies that are used during provisioning.
+    
     > NOTE 2: `screen` is recommended due to the length of time the script can take to run. If you are disconnected use `screen -r -D` to reconnect to the running script!
 
 1. Go get coffee, it can take 20-40 minutes to full provsion
