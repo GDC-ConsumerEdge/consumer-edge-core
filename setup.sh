@@ -7,8 +7,8 @@
 # This check will bail if a gserviceaccount is found in use
 GSERVICEACCOUNT=$(gcloud auth list --format=json | grep gserviceaccount)
 if [[ ! -z "${GSERVICEACCOUNT}" ]]; then
-	echo "Please login as an admin user account using the following command -- 'gcloud auth login --no-browser'"
-	echo "This will require you to have run 'gcloud auth login' on your local machines terminal (CloudShell will not work)"
+	echo "Please login as an admin user account using the following command -- 'gcloud auth login --no-launch-browser'"
+	echo "Copy/Paste the link into a browser where you are authenticated with admin level permissions for the project!!"
 	exit 1
 fi
 echo "Beginning Installation!"
