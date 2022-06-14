@@ -4,6 +4,7 @@
 sudo apt update
 sudo apt -y install screen
 echo "termcapinfo xterm* ti@:te@" > .screenrc
+
 sudo apt -y install git
 sudo apt -y remove docker docker-engine docker.io containerd runc
 sudo apt -y install ca-certificates curl gnupg lsb-release
@@ -40,8 +41,54 @@ gcloud config set project $QL_PROJECT_ID
 echo "##Running yes Y | gcloud auth configure-docker"
 yes Y | gcloud auth configure-docker
 
+# make "default" network check to see if it doesnt exist
+# ensure non-conflicting CIDR - ... set to automatic
+
+NETWORK="default"
+HAS_NETWORK=$(gcloud compute networks list --filter="name~${NETWORK}" --format="value(name)")
+
+if [[ -z "${HAS_NETWORK}" ]]; then
+	gcloud compute networks create "${NETWORK}" \
+		--subnet-mode=auto \
+		--bgp-routing-mode=regional
+else
+	echo "Skipping creating network ${NETWORK}, already exists"
+fi
+
+# Create default FW rules - assume 0.0.0.0/0 for all entries below
+declare -a global_firewall_rules=(
+	"gdc-allow-kubectl|tcp:6443"
+	"gdc-allow-iap-traffic|tcp:22,tcp:80,tcp:443,tcp:3389"
+	"gdc-allow-icmp|icmp"
+)
+# Create default FW fules - assume 10.0.0.0/0 for all entries below
+declare -a internal_firewall_rules=(
+	"gdc-allow-internal|tcp:0-65535,udp:0-65535,icmp"
+)
+
+# Loop to implement global FW rules
+for fw_rule in "${global_firewall_rules[@]}"
+do
+	# IFS='|' read -r -a array <<< "name1|name2|name3"; echo ${array[0]} ${array[1]} ${array[2]}
+	# Above outpues "name1 name2 name3"
+	IFS="|" read -r -a array <<< "$fw_rule"
+	echo "gcloud compute firewall-rules create ${array[0]} --allow ${array[1]}"
+	gcloud compute firewall-rules create ${array[0]} --allow ${array[1]}
+done
+
+# Loop to implement 10.0.0.0/8 FW rules for internal access
+for fw_rule in "${internal_firewall_rules[@]}"
+do
+	# IFS='|' read -r -a array <<< "name1|name2|name3"; echo ${array[0]} ${array[1]} ${array[2]}
+	# Above outpues "name1 name2 name3"
+	IFS="|" read -r -a array <<< "$fw_rule"
+	echo "gcloud compute firewall-rules create ${array[0]} --allow ${array[1]} --source-ranges='10.0.0.0/8'"
+	gcloud compute firewall-rules create ${array[0]} --allow ${array[1]} --source-ranges="10.0.0.0/8"
+done
+
+
 envsubst < templates/envrc-template.sh > .envrc
-sed -i "s/PROJECT_ID=.*/PROJECT_ID=\"$QL_PROJECT_ID\"/g" .envrc 
+sed -i "s/PROJECT_ID=.*/PROJECT_ID=\"$QL_PROJECT_ID\"/g" .envrc
 #sed -i "s,ROOT_REPO_URL=.*,ROOT_REPO_URL=\"$QL_ROOT_REPO\",g" .envrc
 source .envrc
 
@@ -56,6 +103,7 @@ else
  	echo "Found existing ./build-artifacts/consumer-edge-machine.encrypted, skipping creation"
 fi
 # Create the 3 cnuc VMs
+source .envrc
 ./scripts/cloud/create-cloud-gce-baseline.sh -c 3
 
 export CONTAINER_URL=$(gcloud container images list --repository=gcr.io/$PROJECT_ID --format="value(name)" --filter="name~consumer-edge-install")
