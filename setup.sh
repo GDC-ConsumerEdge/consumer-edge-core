@@ -2,10 +2,17 @@
 #Run from inside of either CloudShell or a Bastion VM inside of the same GCP project as the GCP cnuc's
 ###
 
+read -p "Did you edit Zone/Region in ./envrc-template.sh? (Y/N) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    exit 1
+fi
+
 # Must currently run as an admin user with org permissions in order to make the changes throughout
 # For now this means we will require that the user login via gcloud auth login
 # This check will bail if a gserviceaccount is found in use
-GSERVICEACCOUNT=$(gcloud auth list --format=json | grep gserviceaccount)
+GSERVICEACCOUNT=$(gcloud auth list --format=json | grep -B 1 ACTIVE | grep gserviceaccount)
 if [[ ! -z "${GSERVICEACCOUNT}" ]]; then
 	echo "Please login as an admin user account using the following command -- 'gcloud auth login --no-launch-browser'"
 	echo "Copy/Paste the link into a browser where you are authenticated with admin level permissions for the project!!"
@@ -57,51 +64,6 @@ gcloud config set project $QL_PROJECT_ID
 echo "##Running yes Y | gcloud auth configure-docker"
 yes Y | gcloud auth configure-docker
 
-# make "default" network check to see if it doesnt exist
-# ensure non-conflicting CIDR - ... set to automatic
-
-NETWORK="default"
-HAS_NETWORK=$(gcloud compute networks list --filter="name~${NETWORK}" --format="value(name)")
-
-if [[ -z "${HAS_NETWORK}" ]]; then
-	gcloud compute networks create "${NETWORK}" \
-		--subnet-mode=auto \
-		--bgp-routing-mode=regional
-else
-	echo "Skipping creating network ${NETWORK}, already exists"
-fi
-
-# Create default FW rules - assume 0.0.0.0/0 for all entries below
-declare -a global_firewall_rules=(
-	"gdc-allow-kubectl|tcp:6443"
-	"gdc-allow-iap-traffic|tcp:22,tcp:80,tcp:443,tcp:3389"
-	"gdc-allow-icmp|icmp"
-)
-# Create default FW fules - assume 10.0.0.0/0 for all entries below
-declare -a internal_firewall_rules=(
-	"gdc-allow-internal|tcp:0-65535,udp:0-65535,icmp"
-)
-
-# Loop to implement global FW rules
-for fw_rule in "${global_firewall_rules[@]}"
-do
-	# IFS='|' read -r -a array <<< "name1|name2|name3"; echo ${array[0]} ${array[1]} ${array[2]}
-	# Above outpues "name1 name2 name3"
-	IFS="|" read -r -a array <<< "$fw_rule"
-	echo "gcloud compute firewall-rules create ${array[0]} --allow ${array[1]}"
-	gcloud compute firewall-rules create ${array[0]} --allow ${array[1]}
-done
-
-# Loop to implement 10.0.0.0/8 FW rules for internal access
-for fw_rule in "${internal_firewall_rules[@]}"
-do
-	# IFS='|' read -r -a array <<< "name1|name2|name3"; echo ${array[0]} ${array[1]} ${array[2]}
-	# Above outpues "name1 name2 name3"
-	IFS="|" read -r -a array <<< "$fw_rule"
-	echo "gcloud compute firewall-rules create ${array[0]} --allow ${array[1]} --source-ranges='10.0.0.0/8'"
-	gcloud compute firewall-rules create ${array[0]} --allow ${array[1]} --source-ranges="10.0.0.0/8"
-done
-
 
 envsubst < templates/envrc-template.sh > .envrc
 sed -i "s/PROJECT_ID=.*/PROJECT_ID=\"$QL_PROJECT_ID\"/g" .envrc
@@ -134,4 +96,5 @@ fi
 source .envrc
 envsubst < templates/inventory-cloud-example.yaml > inventory/gcp.yml
 ##Ready to run ./install.sh
-echo "Ready to run ./install.sh"
+echo "Ready to run !!!"
+echo "Execute 'source .envrc; ./install.sh'"
