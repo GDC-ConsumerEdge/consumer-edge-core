@@ -10,7 +10,7 @@ This README will detail how to leverage the scripts in the repo in order to conf
 
 There are three phases to installing Consumer Retail Edge
 
-1. Configuration of Google Cloud org policies - Ensure that various organization policies are disabled for this project to ensure proper operations (i.e. External IP access, VM IP Forwarding, etc.)
+1. Configuration of Google Cloud org policies - Ensure that various organization policies are disabled for this project to ensure proper operations (i.e. External IP access, VM IP Forwarding, etc.) & deployment of the Bastion Host.
 1. Provision VMs - Configure a bastion VM (Debian 11 VM deployed by the user) and creation of an GDC-V 3-node cluster
 1. Verify installation - Login to one of the machines and perform `kubectl` and other tool operations
 
@@ -28,24 +28,17 @@ This **Quick Start** will use GCE instances to simulate physical hardware and ut
 
 Please perform the following sequence of events:
 
-1. Create bastion VM for deployment (the below is deployed as a SPOT VM for cost savings). This step CAN be skipped and CloudShell used instead, but this as CloudShell will time out this can make leveraging it to run some of these longer running scripts difficult. Thus, it is highly recommended to create a Debain 11 bastion VM to execute the following command (or run your own so long as it's Debian 11):
+1. Edit `./pre-setup-org-network-bastion.sh` to set the proper GCP ZONE for deployment. Ensure that `./templates/envrc-template.sh` matches so that both the bastion host and the VM's are deployed to the same Zone. Tt is highly recommended to use this script to allow Org Policies, set FW rules, and create the Debain 11 bastion VM. This step could be skipped if you have already performed these tasks manually:
 
     ```shell
-    gcloud compute instances create bastion-1 --machine-type=e2-medium --network-interface=network-tier=PREMIUM,subnet=default --metadata=enable-oslogin=true  --provisioning-model=STANDARD --scopes=https://www.googleapis.com/auth/cloud-platform --create-disk=auto-delete=yes,boot=yes,device-name=instance-1,image=projects/debian-cloud/global/images/debian-11-bullseye-v20220519,mode=rw,size=40,type=projects/anthos-consumer-edge/zones/us-west2-a/diskTypes/pd-balanced --no-shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring --reservation-affinity=any --provisioning-model=SPOT
+    ./pre-setup-org-network-bastion.sh
     ```
+1. Pull the Consumer Edge Core repo into the bastion VM. As of the time of this writing - the source is contained @ https://consumer-edge.googlesource.com/core/. Once the code is uploaded to the bastion VM, `cd` into the directory.
 
 1. This project uses Personal Access Tokens for the ACM authentication of the `root-repo`. [Create a new PAT token](https://docs.gitlab.com/ee/user/project/deploy_tokens/) and save the credentials for teh steps below. ![gitlab token](docs/Gitlab_token.png)
     1. Create the PAT with **read_repository** privilege.
     1. The "Token name" name that will be used as an environment variable **SCM_TOKEN_USER**.
     1. The produced token value that will be uesd as an environment variable **SCM_TOKEN_TOKEN**. Go to user **Preferences** on the top right corner.
-
-1. Pull the Consumer Edge Core repo into the bastion VM. As of the time of this writing - the source is contained @ https://consumer-edge.googlesource.com/core/. Once the code is uploaded to the bastion VM, `cd` into the directory.
-
-1. Once inside this directory location the `pre-setup-argolis-only.sh`. While this script is intedend specifically for Google Cloud employees to adjust Organizational constraints that are applied to the internal Cloud projects - this script is safe to run on other GCP instances. However, it will attempt allow a series of policies and constraints that may conflict with your organization security standards. Before running - it is recommended to consult with your security team to ensure that you are permitted to change these policies on your project.
-
-    ```bash
-    ./pre-setup-argolis-only.sh
-    ```
 
 1. Locate `setup.sh`. This script will install all required dependencies (only currently works for a Debian 11 VM). Once dependencies are installed, it will create an SSH key to be shared with the created VMs. The primary GSA will be created and then it will use Google Cloud KMS to encrypt this key (but it will leave the unencrypted version in place for user action to delete/leverage). It will then execute the creation of a 3-node cluster named cnuc-1, cnuc-2, cnuc-3. Next, it will create the Docker container for Ansible installation and store it in GCR. Finally, it will prepare the inventory file for Ansible and state that install.sh is ready to run:
 
