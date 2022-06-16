@@ -10,14 +10,14 @@ export REGION="us-west1"
 export ZONE="us-west1-b"
 
 # (Optional, typically workshop only) Assigned name/number. This is the ACM Cluster object's name (needs to be unique across fleet)
-export CLUSTER_ACM_NAME="### location-1 ###"
+export CLUSTER_ACM_NAME="location-1"
 
 # Gitlab Personal Access Token credentials (generated in Quick Start step 2)
-export SCM_TOKEN_USER="### Repo Login Name ###"
-export SCM_TOKEN_TOKEN="### Repo PAT Token ###"
+#export SCM_TOKEN_USER="### Repo Login Name ###"
+#export SCM_TOKEN_TOKEN="### Repo PAT Token ###"
 
-# Default  Root Repo
-export ROOT_REPO_URL="https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-ml-edge.git"
+# Default Root Repo setup for multiple locations
+export ROOT_REPO_URL="https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-edge-workshop.git"
 
 # OIDC Configuration (off by default)
 export OIDC_CLIENT_ID="" # Optional, requires GCP API setup work
