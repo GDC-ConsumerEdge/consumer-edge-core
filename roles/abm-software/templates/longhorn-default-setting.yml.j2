@@ -13,17 +13,17 @@ metadata:
 data:
   default-setting.yaml: |-
     backup-target: s3://abm-edge-backup-{{ google_project_id }}@us/{{ acm_cluster_name }}
-    backup-target-credential-secret: gcp-cloud-storage-backup-secret
+    backup-target-credential-secret:
     allow-recurring-job-while-volume-detached:
     create-default-disk-labeled-nodes:
     default-data-path: /customer
     replica-soft-anti-affinity:
-    replica-auto-balance:
     storage-over-provisioning-percentage:
     storage-minimal-available-percentage:
-    upgrade-checker:
+    upgrade-checker: false
     default-replica-count:
     default-data-locality: best-effort
+    guaranteed-engine-cpu:
     default-longhorn-static-storage-class:
     backupstore-poll-interval:
     taint-toleration:
@@ -38,14 +38,12 @@ data:
     mkfs-ext4-parameters:
     disable-replica-rebuild:
     replica-replenishment-wait-interval:
-    concurrent-replica-rebuild-per-node-limit:
     disable-revision-counter:
     system-managed-pods-image-pull-policy:
     allow-volume-creation-with-degraded-availability:
     auto-cleanup-system-generated-snapshot:
     concurrent-automatic-engine-upgrade-per-node-limit:
     backing-image-cleanup-wait-interval:
-    backing-image-recovery-wait-interval:
     guaranteed-engine-manager-cpu:
     guaranteed-replica-manager-cpu:
-    #volume-attachment-recovery-policy: immediate
+    orphan-auto-deletion:
