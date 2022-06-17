@@ -8,6 +8,11 @@
     if [ -z "$HAS_SECRET" ]; then
       exit 1
     else
+      VERSION_EXISTS=$(gcloud secrets versions list {{ longhorn_secret_name }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
+      if [ -z "${VERSION_EXISTS}" ]; then
+        # no valid versions found, need to create a new one
+        exit 1
+      fi
       exit 0
     fi
   args:
