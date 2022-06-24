@@ -17,7 +17,7 @@
   set_fact:
     uname_r: '{{ uname_result.stdout }}'
 
-
+# TODO Audit this list of dependencies and split into "development" and "production" (not everything is needed for production)
 - name: Install dependencies used in provisioning
   apt:
     pkg:
@@ -31,7 +31,8 @@
     - software-properties-common
     - network-manager
     - vlan
-    # This is needed for Robin 
+    - logrotate
+    # This is needed for Robin
     - linux-modules-extra-{{ uname_r }}
     state: present
     update_cache: yes
@@ -140,22 +141,56 @@
   tags:
   - vlan-setup
 
+- name: ensure logrotate is in /etc/cron.hourly
+  file:
+    src: /etc/cron.daily/logrotate
+    dest: /etc/cron.hourly/logrotate
+    state: link
+    force: yes
+    mode: 0755 # the file needs to be excutable
+  tags:
+  - logrotate-setup
+  - ubuntu-setup
+
+- name: ensure logrotate is in /etc/cron.hourly
+  file:
+    src: /etc/cron.daily/logrotate
+    dest: /etc/cron.hourly/logrotate
+    state: link
+    force: yes
+    mode: 0755 # the file needs to be excutable
+  tags:
+  - logrotate-setup
+  - ubuntu-setup
+
+- name: check hourly logrotate status
+  shell: |
+    IS_HOURLY=$(run-parts --test /etc/cron.hourly)
+    TEST_FOR="/etc/cron.hourly/logrotate"
+    if [[ "${IS_HOURLY}" != *"${TEST_FOR}"* ]]; then
+      exit 1 # Fail if hourly is not setup
+    fi
+  register: hourly_check
+  failed_when: hourly_check.rc != 0
+  changed_when: False
+  tags:
+  - logrotate-setup
+  - ubuntu-setup
 
 #### Install kernel module for Robin
-- name: Generate modules.dep 
+- name: Generate modules.dep
   command: depmod -a
-  tags: 
+  tags:
   - robin
 
- 
-- name: Load tcm_loop kernel module 
+- name: Load tcm_loop kernel module
   modprobe:
     name: tcm_loop
     state: present
   tags:
   - robin
 
-- name: Check if tcm_loop kernel module is loaded 
+- name: Check if tcm_loop kernel module is loaded
   shell: "lsmod | grep tcm"
   register: tcm_exists
-  failed_when: tcm_exists.rc != 0  
+  failed_when: tcm_exists.rc != 0
