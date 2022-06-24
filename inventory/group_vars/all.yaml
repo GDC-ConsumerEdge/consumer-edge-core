@@ -25,12 +25,23 @@ bmctl_version: "1.11.2" # If changed, set the `force_tools_upgrade` to true so n
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
 
+###
+### Ansible Pull Configurations
+###
+
+# Remote playbook for Ansible Pull to use (if empty, no ansible-pull used for this type of execution)
+ansible_pull_remote_execute_repo: ""
 
 ####
 #### Anthos Config Management
 ####
 acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-ml-edge.git', True) }}"
 acm_repo_type: "{{ lookup('env', 'ROOT_REPO_TYPE') | default('token', True) }}"
+
+# SCM (GitLab or GitHub access token)
+scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') }}"
+scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
+
 # gsutil ls -al gs://config-management-release/released/
 # Anthos Config Management version
 acm_version: "1.11.2"
@@ -114,10 +125,6 @@ gcp_services_required:
   - sourcerepo.googleapis.com
   - stackdriver.googleapis.com
   - storage.googleapis.com
-
-# SCM (GitLab, GitHub access token)
-scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') }}"
-scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
 
 #Secret name for longhorn to take backups of volumes and send to cloud storage bucket
 volume_backup_secret_name: gcp-cloud-storage-backup-secret

@@ -28,3 +28,9 @@ ang_floating_ips: [
   "192.168.2.17",
   "192.168.2.18"
 ]
+
+# Ansible Pull Authenticaiton String
+ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
+
+# Ansible Pull repo for Remote Execution
+ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
