@@ -56,7 +56,13 @@ else
 	echo "Found existing ./build-artifacts/consumer-edge-machine, skipping creation"
 fi
 
-export QL_PROJECT_ID=$(gcloud projects list --format=json | jq -r ".[0] .projectId")
+export QL_PROJECT_ID=$(gcloud config get-value project 2> /dev/null)
+if [[ -z "${QL_PROJECT_ID}" ]]; then
+        echo "Project ID not configured for gcloud. Please set project with 'gcloud config set project <project-id>'"
+        exit 1
+	else
+		echo "QL_PROJECT_ID set to ${QL_PROJECT_ID}"
+fi
 export QL_ROOT_REPO="https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-edge-workshop"
 
 echo "##Running gcloud config set project $QL_PROJECT_ID"
