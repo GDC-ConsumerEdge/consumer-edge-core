@@ -2,7 +2,7 @@
 #Run from inside of either CloudShell or a Bastion VM inside of the same GCP project as the GCP cnuc's
 ###
 
-read -p "Did you edit Zone/Region in ./envrc-template.sh? (Y/N) " -n 1 -r
+read -p "Did you edit Zone/Region in ./templates/envrc-template.sh? (Y/N) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
