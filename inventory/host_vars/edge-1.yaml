@@ -46,3 +46,9 @@ ike_key_secret_value: "12345"
 
 # Install observability using Legacy agents (override)
 install_observability: false # skip observability on install
+
+# Ansible Pull Authenticaiton String
+ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
+
+# Ansible Pull repo for Remote Execution
+ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"

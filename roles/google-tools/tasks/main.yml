@@ -56,6 +56,41 @@
     - initial-install
     - tool-install
 
+  - name: Remove previous links and non-gcloud based binaries
+    ansible.builtin.file:
+      path: '/usr/bin/{{ item.app }}'
+      state: absent
+    loop:
+      - { app: gcloud }
+      - { app: kubectx }
+      - { app: nomos }
+      - { app: kustomize }
+      - { app: anthoscli }
+      - { app: kpt }
+      - { app: kubectl }
+      - { app: kubectl-anthos }
+    tags:
+    - initial-install
+    - tool-install
+
+  - name: Put the primary google sdk tools in /usr/bin
+    ansible.builtin.file:
+      src: '{{ tools_base_path }}/google-cloud-sdk/bin/{{ item.app }}'
+      dest: '/usr/bin/{{ item.app }}'
+      state: link
+    loop:
+      - { app: gcloud }
+      - { app: kubectx }
+      - { app: nomos }
+      - { app: kustomize }
+      - { app: anthoscli }
+      - { app: kpt }
+      - { app: kubectl }
+      - { app: kubectl-anthos }
+    tags:
+    - initial-install
+    - tool-install
+
   - name: Download and unarchive kubens
     unarchive:
       src: 'https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_version }}/kubens_v{{ kubectx_version }}_linux_x86_64.tar.gz'
