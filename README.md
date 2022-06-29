@@ -59,7 +59,7 @@ Please perform the following sequence of events:
         **SCM_TOKEN_USER**.
     3. Create the PAT with **read_repository** privilege.
     4. The produced token value that will be uesd later in this installation as an environment variable
-        **SCM_TOKEN_TOKEN**. 
+        **SCM_TOKEN_TOKEN**.
 
 ## SSH Key Management
 
@@ -74,8 +74,8 @@ Once you have the encrypted key, you will need to set the `ansible_ssh_key_file_
 variable under `inventory/groups_vars/all.yaml` to the path of the encrypted
 key on the local filesystem.
 
-All of this will happen automatically when you launch the `create-primary-gsa.sh` 
-in the next steps. 
+All of this will happen automatically when you launch the `create-primary-gsa.sh`
+in the next steps.
 
 In order to enable dynamically loading the SSH private key during runtime, you
 will need to make sure that `ssh-agent` is running prior to running a playbook.
@@ -107,7 +107,7 @@ Run `which envsubst` and if this fails, follow the below steps to install
 1. Make sure you are authenticated with your Google Cloud account on the provisioning machine
    and set the default working project
     ```
-    gcloud auth login
+    gcloud auth login --no-launch-browser
     gcloud config set project <<your_project_id>>
     ```
 
