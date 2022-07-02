@@ -56,7 +56,18 @@
     - initial-install
     - tool-install
 
-  - name: Remove previous links and non-gcloud based binaries
+### All other tools
+  - name: Install kubectl, nomos, kustomize and gsutil
+    command:
+      cmd: gcloud components install kubectl kustomize anthos-auth kpt nomos gsutil kubectl-oidc alpha beta -q
+      creates: "{{ tools_base_path }}/google-cloud-sdk/bin/kubectl"
+    environment:
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    tags:
+    - initial-install
+    - tool-install
+
+  - name: Remove previous /usr/bin links and non-gcloud based binaries
     ansible.builtin.file:
       path: '/usr/bin/{{ item.app }}'
       state: absent
@@ -64,11 +75,12 @@
       - { app: gcloud }
       - { app: kubectx }
       - { app: nomos }
+      - { app: gsutil }
       - { app: kustomize }
       - { app: anthoscli }
       - { app: kpt }
       - { app: kubectl }
-      - { app: kubectl-anthos }
+      - { app: kubectl-oidc }
     tags:
     - initial-install
     - tool-install
@@ -82,11 +94,12 @@
       - { app: gcloud }
       - { app: kubectx }
       - { app: nomos }
+      - { app: gsutil }
       - { app: kustomize }
       - { app: anthoscli }
       - { app: kpt }
       - { app: kubectl }
-      - { app: kubectl-anthos }
+      - { app: kubectl-oidc }
     tags:
     - initial-install
     - tool-install
@@ -185,17 +198,6 @@
     tags:
     - tool-install
     - initial-install
-
-### All other tools
-  - name: Install kubectl, nomos, kustomize and gsutil
-    command:
-      cmd: gcloud components install kubectl kustomize anthos-auth kpt nomos gsutil alpha beta -q
-      creates: "{{ tools_base_path }}/google-cloud-sdk/bin/kubectl"
-    environment:
-      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-    tags:
-    - initial-install
-    - tool-install
 
 ### IF upgrading BMCTL, remove existing
   - name: Remove bmctl
