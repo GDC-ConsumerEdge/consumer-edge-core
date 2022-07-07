@@ -16,11 +16,17 @@ root_repository_service_account_email: source-repo-agent@{{ google_project_id }}
 #       IF changed, both the ACM root-repo and this field need to match
 root_repository_git_secret_name: "git-creds"
 
-# This is the production project that contains the CDI containers. Need it to replace with the staging dynamically in file
+# This is the production project that contains the CDI containers. Need it to replace with the staging dynamically in file (FIXME: This is deprecated)
 cdi_staging_project: "anthos-baremetal-release"
 
 # Folder to run installation out of
 abm_install_folder: "/var/abm-install"
+
+# Snapshot: Where to place configuration
+snapshot_config_folder: "{{ abm_install_folder }}/snapshots"
+snapshot_config_file: "{{ snapshot_config_folder }}/snapshot-config.yaml"
+# Output of snapshot (if not uploading??? ) # TODO: Revist this, may not need
+snapshot_output_folder: "{{ snapshot_config_folder }}/snapshots/output"
 
 # CDI add CPU Monitoring flag script run by cron.d
 cdi_cron_script_file: "/var/cdi-check-node.sh"

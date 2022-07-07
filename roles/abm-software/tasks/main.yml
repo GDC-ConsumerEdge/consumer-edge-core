@@ -26,6 +26,14 @@
   tags:
   - verify
 
+- name: Create cluster snapshot
+  include: create-snapshot.yaml
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  tags:
+  - cluster-snapshot
+
 - name: Remove taint from master node
   command:
     cmd: kubectl taint nodes {{ cluster_name }} node-role.kubernetes.io/master:NoSchedule-
