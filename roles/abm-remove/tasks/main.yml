@@ -45,6 +45,15 @@
   - kubeconfig-remove
   - never
 
+- name: Archive current cluster snapshots
+  include: remove-snapshot.yaml
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  tags:
+    - snapshot-remove
+    - never # must specify `--tags never` on the CLI to run this
+
 - name: Remove ABM Workspace
   ansible.builtin.file:
     path: "{{ abm_install_folder }}/bmctl-workspace"

@@ -19,6 +19,9 @@ export CLUSTER_ACM_NAME="location-1"
 # Default Root Repo setup for multiple locations
 export ROOT_REPO_URL="https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-edge-workshop.git"
 
+# Bucket to store cluster snapshot information
+export SNAPSHOT_GCS="${PROJECT_ID}-cluster-snapshots"
+
 # OIDC Configuration (off by default)
 export OIDC_CLIENT_ID="" # Optional, requires GCP API setup work
 export OIDC_CLIENT_SECRET="" # Optional

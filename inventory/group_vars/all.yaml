@@ -38,7 +38,16 @@ ansible_pull_remote_execute_repo: ""
 acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-ml-edge.git', True) }}"
 acm_repo_type: "{{ lookup('env', 'ROOT_REPO_TYPE') | default('token', True) }}"
 
-# SCM (GitLab or GitHub access token)
+###
+### Google Core Variables
+###
+google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
+google_region: "{{ lookup('env', 'REGION') | default('us-central1', True) }}" # NOTE: A copy of this variable is in Molecule test `for google_tools`
+google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}" # NOTE: A copy of this variable is in Molecule test `for google_tools`
+
+###
+### SCM (GitLab or GitHub access token)
+###
 scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') }}"
 scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
 
@@ -54,6 +63,12 @@ ang_floating_ips: [] # Floating IP for ANG
 vpn_gateway_ips: [] # Gateway IPs for VPN
 network_gateway_group_install: false
 network_gateway_mcc: false
+
+###
+### Global Snapshot & Update Variables
+###
+snapshot_gcs_bucket_base: "{{ lookup('env', 'SNAPSHOT_GCS') | default( [ google_project_id, '-clusters-snapshots' ] | join, True) }}" # leave empty to generate local-only snapshots
+# snapshot_gcs_bucket_base: ""
 
 ###
 ### Storage Provider
@@ -73,13 +88,13 @@ oidc_client_secret: "{{ lookup('env', 'OIDC_CLIENT_SECRET') }}"
 oidc_user: "{{ lookup('env', 'OIDC_USER') }}"
 
 ###
-###
+### VM Runtime (KubeVirt + A4VM)
 ###
 # VM Runtime
 enable_vmruntime: true
 
 ###
-###
+### Default Ansible configuration variables
 ###
 # All ansible interactions are using this user during provisioning
 ansible_user: abm-admin
@@ -92,12 +107,7 @@ google_kms: {
     key_name: "gdc-ssh-key",
     location: "global"
   }
-# Variables assigned to all inventory
-google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
-#NOTE: A copy of this variable is in Molecule test `for google_tools`
-google_region: "{{ lookup('env', 'REGION') | default('us-central1', True) }}"
-#NOTE: A copy of this variable is in Molecule test `for google_tools`
-google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}"
+
 local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
 tools_base_path: "/var/google-tools-install"
 
