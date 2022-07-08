@@ -32,6 +32,7 @@
     - network-manager
     - vlan
     - logrotate
+    - nfs-common
     # This is needed for Robin
     - linux-modules-extra-{{ uname_r }}
     state: present
