@@ -13,7 +13,7 @@ metadata:
 data:
   default-setting.yaml: |-
     backup-target: s3://abm-edge-backup-{{ google_project_id }}@us/{{ acm_cluster_name }}
-    backup-target-credential-secret:
+    backup-target-credential-secret: gcp-cloud-storage-backup-secret
     allow-recurring-job-while-volume-detached:
     create-default-disk-labeled-nodes:
     default-data-path: /customer
@@ -46,4 +46,4 @@ data:
     backing-image-cleanup-wait-interval:
     guaranteed-engine-manager-cpu:
     guaranteed-replica-manager-cpu:
-    orphan-auto-deletion:
+    # orphan-auto-deletion:
