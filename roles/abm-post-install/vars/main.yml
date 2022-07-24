@@ -9,3 +9,6 @@ remote_gsa_key: "/var/keys"
 
 # Configuration files for CloudOps Dashboards
 dashboard_config_base: "/var/abm-dashboards"
+
+# Home directory for external secrets download and operations (duplidated from abm-software role)
+external_secrets_files: "/var/external-secrets"

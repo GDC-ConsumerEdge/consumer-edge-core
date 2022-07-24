@@ -6,7 +6,7 @@ machine_label: "edge-1"
 # Indicates that this is the primary machine in the cluster (only important for provisioning)
 primary_cluster_machine: true
 # Name of the "store" per the ACM repo
-acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('edge-1', True) }}"
+acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('location-1', True) }}"
 # This machine's IP
 control_plane_ip: "192.168.3.10"
 # The other IPs in the cluster

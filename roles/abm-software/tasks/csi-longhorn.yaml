@@ -25,6 +25,7 @@
   - longhorn-hmac-keys
   - longhorn-install
 
+# TODO: Check for exsiting secret and/or HMAC key on bucket before creating a new one
 - name: Create new HMAC key for longhorn backup to cloud stoarge and push to Secret Manager
   run_once: true
   shell: |
@@ -69,3 +70,30 @@
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   tags:
   - longhorn-config-management
+
+- name: Download Longhorn YAML installation script
+  ansible.builtin.get_url:
+    url: "{{ longhorn_installation_yaml_url }}"
+    dest: "{{ longhorn_installation_dir }}/longhorn.yaml"
+    mode: '0400'
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  tags:
+  - longhorn-config-management
+  - longhorn-install
+
+- name: Create Longhorn namespace and configmap
+  command:
+    cmd: kubectl apply -f {{ longhorn_installation_dir }}/longhorn.yaml
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  retries: 3
+  register: long_result
+  until: long_result.rc == 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - longhorn-config-management
+  - longhorn-install
