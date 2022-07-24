@@ -100,6 +100,9 @@ oidc_user: "{{ lookup('env', 'OIDC_USER') }}"
 # VM Runtime
 enable_vmruntime: true
 
+# Base folder to place configuration and installation items for ABM
+abm_install_folder: "/var/abm-install"
+
 ###
 ### Default Ansible configuration variables
 ###
