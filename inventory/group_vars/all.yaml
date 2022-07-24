@@ -32,6 +32,9 @@ force_tools_upgrade: false
 # Remote playbook for Ansible Pull to use (if empty, no ansible-pull used for this type of execution)
 ansible_pull_remote_execute_repo: ""
 
+# Default for ansible pull drift assistance (defaults to empty or no run)
+ansible_pull_drift_repo: ""
+
 ####
 #### Anthos Config Management
 ####

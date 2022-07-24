@@ -8,7 +8,10 @@ ansible_pull_cmd_flags: "--only-if-changed"
 
 # Every Minute
 ansible_pull_remote_execute_cron: "* * * * *"
-
 ansible_pull_remote_execution_log: "/var/log/ansible-pull-remote-execution.log"
+
+# Ansible Pull Drift
+ansible_pull_drift_cron: "30 23 * * *" # 11:30pm
+ansible_pull_drift_log: "/var/log/ansible-pull-drift-execution.log"
 
 ansible_pull_inventory_folder: "{{ ansible_pull_workdir }}/inventory"
