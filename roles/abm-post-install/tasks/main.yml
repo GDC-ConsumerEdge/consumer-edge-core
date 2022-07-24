@@ -75,3 +75,13 @@
   tags:
   - abm-post-install
   - observability-setup
+
+- name: "Run ExternalSecrets store post ACM install"
+  command:
+    cmd: "kubectl apply -f {{ external_secrets_files }}/external-secrets-store.yaml"
+  ignore_errors: yes
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)

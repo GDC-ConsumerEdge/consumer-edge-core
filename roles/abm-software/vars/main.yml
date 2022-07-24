@@ -4,11 +4,9 @@ acm_config_files: "/var/acm-configs"
 
 vmruntime_config_path: "/var/vmruntime"
 
-# Home directory for external secrets download and operations
+# Home directory for external secrets download and operations (TODO: Duplciated in post-install)
 external_secrets_files: "/var/external-secrets"
 
-root_repository_branch: "main"
-root_repository_policy_dir: "/config"
 root_repository_git_auth_type: "{{ acm_repo_type }}"
 root_repository_service_account_email: source-repo-agent@{{ google_project_id }}.iam.gserviceaccount.com
 
@@ -30,3 +28,7 @@ snapshot_output_folder: "{{ snapshot_config_folder }}/snapshots/output"
 
 # CDI add CPU Monitoring flag script run by cron.d
 cdi_cron_script_file: "/var/cdi-check-node.sh"
+
+# Pull Longhorn's installation from this URL (could be updated to a local site)
+longhorn_installation_yaml_url: "https://raw.githubusercontent.com/longhorn/longhorn/v1.3.0/deploy/longhorn.yaml"
+longhorn_installation_dir: "/tmp"

@@ -16,11 +16,11 @@ ansible_ssh_common_args: "-F build-artifacts/ssh-config -o StrictHostKeyChecking
 ####
 # Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
 # Version of Anthos Bare Metal to install
-abm_version: "1.11.2" # verify coupling of ABM to BMCTL versions
+abm_version: "1.12.0" # verify coupling of ABM to BMCTL versions
 # bmctl binary version
 #TODO: set this up to query for the version, then upgrade automatically if updated
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
-bmctl_version: "1.11.2" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
+bmctl_version: "1.12.0" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
 
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
@@ -38,8 +38,12 @@ ansible_pull_drift_repo: ""
 ####
 #### Anthos Config Management
 ####
-acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-ml-edge.git', True) }}"
+acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-public-template.git', True) }}"
 acm_repo_type: "{{ lookup('env', 'ROOT_REPO_TYPE') | default('token', True) }}"
+# From the above repo, what branch and what directory to use as bases
+root_repository_branch: "{{ lookup('env', 'ROOT_REPO_BRANCH') | default('main', True) }}"
+# Directory to use as base
+root_repository_policy_dir: "{{ lookup('env', 'ROOT_REPO_DIR') | default('/config', True) }}"
 
 ###
 ### Google Core Variables
@@ -56,7 +60,7 @@ scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
 
 # gsutil ls -al gs://config-management-release/released/
 # Anthos Config Management version
-acm_version: "1.11.2"
+acm_version: "1.12.0"
 
 ####
 #### Anthos Network Gateway
