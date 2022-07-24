@@ -32,6 +32,8 @@
     - network-manager
     - vlan
     - logrotate
+    - unattended-upgrades
+    - apt-listchanges
     - nfs-common
     # This is needed for Robin
     - linux-modules-extra-{{ uname_r }}

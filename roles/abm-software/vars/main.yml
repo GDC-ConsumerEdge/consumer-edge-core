@@ -19,9 +19,6 @@ root_repository_git_secret_name: "git-creds"
 # This is the production project that contains the CDI containers. Need it to replace with the staging dynamically in file (FIXME: This is deprecated)
 cdi_staging_project: "anthos-baremetal-release"
 
-# Folder to run installation out of
-abm_install_folder: "/var/abm-install"
-
 # Snapshot: Where to place configuration
 snapshot_config_folder: "{{ abm_install_folder }}/snapshots"
 snapshot_config_file: "{{ snapshot_config_folder }}/snapshot-config.yaml"
