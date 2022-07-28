@@ -162,10 +162,11 @@ you have a properly authenticated GSA key located at `./build-artifacts/consumer
     envsubst < templates/envrc-template.sh > .envrc
     ```
 
-    1. Edit the created `.envrc` file and substitute values. Replace all of the
-    obvious variables (ie: `### replace me ###`)
+    1. Edit the created `.envrc` file and substitute the placeholder for GCP Project ID
+    with your GCP Project ID (ie: `###__GCP_PROJECT_ID__###`) HINT: There are two locations to replace
 
-    1. Replace the Gitlab Personal Access Token values inside `.envrc`
+    1. Replace the Gitlab Personal Access Token values inside `.envrc` (`###_Repo_Login_Name_###`
+    and `###_Repo_PAT_Token_###`)
 
     1. Instantiate `ENV` variables inside current shell. Run `source` on the
     `.envrc` file to expose variables (advanced users can use `direnv` if
