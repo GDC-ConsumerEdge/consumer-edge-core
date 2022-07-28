@@ -63,7 +63,8 @@
   - abm-authorized-keys
 
 - name: Remove the temp file after copying
-  ansible.builtin.file:
+  local_action:
+    module: ansible.builtin.file
     path: "{{ tempfile_1.path }}"
     state: absent
   when: tempfile_1.path is defined
