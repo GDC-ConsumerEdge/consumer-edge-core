@@ -76,10 +76,13 @@
   - abm-post-install
   - observability-setup
 
-- name: "Run ExternalSecrets store post ACM install"
+- name: "Run ClusterSecretStore ExternalSecrets post ACM install (wait on ACM to be consistent)" # By this time, the ACM and RootRepo should be installed and configured...retry and wait just-in-case
   command:
     cmd: "kubectl apply -f {{ external_secrets_files }}/external-secrets-store.yaml"
-  ignore_errors: yes
+  retries: 5
+  delay: 10
+  register: result
+  until: result.rc == 0
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   when:
