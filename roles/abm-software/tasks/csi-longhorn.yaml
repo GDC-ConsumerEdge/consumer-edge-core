@@ -1,6 +1,6 @@
 
 # Get HMAC secret from Secret Manager
-- name: Get the HMAC cloud stroage key from Secret Manager IF it exists
+- name: Get the HMAC cloud storage key from Secret Manager if it exists
   run_once: true
   ignore_errors: true
   shell: |
@@ -26,9 +26,24 @@
   - longhorn-install
 
 # TODO: Check for exsiting secret and/or HMAC key on bucket before creating a new one
-- name: Create new HMAC key for longhorn backup to cloud stoarge and push to Secret Manager
+- name: Create new HMAC key for longhorn backup to cloud storage and push to Secret Manager
   run_once: true
   shell: |
+
+    EXISTING_NUM_OF_HMAC_KEYS=$(gsutil hmac list  -u longhorn-cloud-storage@{{ google_project_id }}.iam.gserviceaccount.com -p {{ google_project_id }} | grep longhorn-cloud-storage@{{ google_project_id }}.iam.gserviceaccount.com | wc | awk '{print $1}')
+    if [ ${EXISTING_NUM_OF_HMAC_KEYS} -gt 4 ]
+    then
+      # Max HMAC keys limit reached
+      VERSION_EXISTS=$(gcloud secrets versions list {{ longhorn_secret_name }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
+      if [ -z "${VERSION_EXISTS}" ]; then
+        # Max HMAC keys limit is reached and existing key in secret manager not found so we must fail here
+        exit 1
+      else
+        # Max HMAC keys limit is reached and existing key in secret manager is found so we can skip
+        exit 0
+      fi
+    fi
+
     gsutil hmac create longhorn-cloud-storage@{{ google_project_id }}.iam.gserviceaccount.com > /tmp/hmackey.txt
     access_key=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $1}'`
     access_secret=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $2}'`
