@@ -76,13 +76,22 @@
   - abm-post-install
   - observability-setup
 
-- name: "Run ClusterSecretStore ExternalSecrets post ACM install (wait on ACM to be consistent)" # By this time, the ACM and RootRepo should be installed and configured...retry and wait just-in-case
+- name: "Wait on ClusterSecretStore to exist applied by RootRepo"
   command:
-    cmd: "kubectl apply -f {{ external_secrets_files }}/external-secrets-store.yaml"
+      cmd: kubectl wait --for=condition=established --timeout=600s crd clustersecretstores.external-secrets.io
   retries: 5
   delay: 10
   register: result
   until: result.rc == 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+
+- name: "Run ClusterSecretStore ExternalSecrets post ACM install (wait on ACM to be consistent)" # By this time, the ACM and RootRepo should be installed and configured...retry and wait just-in-case
+  command:
+    cmd: "kubectl apply -f {{ external_secrets_files }}/external-secrets-store.yaml"
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   when:
