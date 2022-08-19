@@ -56,11 +56,11 @@
   tags:
   - acm-operator
 
-- name: "Install ACM Operator"
+- name: "Install ACM Operator" # Wait for ConfigManagement & RootSync CRDs
   shell: |
       kubectl apply -f {{ acm_config_files }}/config-management-operator.yaml
       sleep 10s
-      kubectl wait --for=condition=established --timeout=600s crd configmanagements.configmanagement.gke.io # Wait for ConfigManagement & RootSync CRDs
+      kubectl wait --for=condition=established --timeout=600s crd configmanagements.configmanagement.gke.io
       exit $?
   args:
     executable: /bin/bash
@@ -70,7 +70,8 @@
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
     - (has_acm_operator == false)
-  retries: 3
+  retries: 5
+  delay: 10
   register: result
   until: result.rc == 0
   tags:
