@@ -145,9 +145,22 @@
     name: auditd
     enabled: yes
     state: restarted
+  when:
+  - enable_auditd|bool == True
   tags:
   - observability-audit-install
   - observability-audit-service-reset
   - observability-setup
 
-
+- name: Stop the auditd service
+  become: yes
+  ansible.builtin.service:
+    name: auditd
+    enabled: yes
+    state: stopped
+  when:
+  - enable_auditd|bool == False
+  tags:
+  - observability-audit-install
+  - observability-audit-service-reset
+  - observability-setup
