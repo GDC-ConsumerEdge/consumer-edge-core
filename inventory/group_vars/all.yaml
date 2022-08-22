@@ -103,6 +103,9 @@ enable_vmruntime: true
 # Base folder to place configuration and installation items for ABM
 abm_install_folder: "/var/abm-install"
 
+# Auditd Control
+enable_auditd: false
+
 ###
 ### Default Ansible configuration variables
 ###
