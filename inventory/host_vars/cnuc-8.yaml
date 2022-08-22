@@ -1,13 +1,13 @@
 
-## Vars specifically for CNUC6
+## Vars specifically for CNUC5
 
 # Name of the cluster
-cluster_name: "cnuc-4"
+cluster_name: "cnuc-7"
 # Used for logging/metrics
-machine_label: "cnuc-6"
+machine_label: "cnuc-8"
 
 # This machine's IP
-control_plane_ip: "10.200.0.4"
+control_plane_ip: "10.200.0.3"
 
 # Ansible Pull Authenticaiton String
 ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"

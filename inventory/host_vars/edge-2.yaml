@@ -4,7 +4,7 @@ cluster_name: "edge-1"
 machine_label: "edge-2"
 
 # This machine's IP address
-control_plane_ip: "192.168.3.11"
+control_plane_ip: "192.168.3.12"
 
 # Ansible Pull Authenticaiton String
 ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"

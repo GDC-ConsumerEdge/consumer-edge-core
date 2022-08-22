@@ -4,6 +4,8 @@
 # This playbook is used to run post-installation of the solution, typically for bug fixes and little changes
 - hosts: all
   gather_facts: false
+  become: true
+  become_user: root
   pre_tasks:
   - name: Decrypt SSH key
     include_role:
@@ -12,5 +14,6 @@
     setup: {}
   roles:
     - abm-post-install
+    - update-automation
   vars:
     kubeconfig_shared_location: "/var/kubeconfig/kubeconfig"
