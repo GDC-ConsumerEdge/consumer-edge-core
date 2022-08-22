@@ -2,9 +2,9 @@
 ## Vars specifically for CNUC6
 
 # Name of the cluster
-cluster_name: "cnuc-4"
+cluster_name: "cnuc-7"
 # Used for logging/metrics
-machine_label: "cnuc-6"
+machine_label: "cnuc-9"
 
 # This machine's IP
 control_plane_ip: "10.200.0.4"

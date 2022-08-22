@@ -57,6 +57,16 @@
     group: root
     mode: '0600'
 
+- name: Restart the service apt-daily.timer
+  ansible.builtin.systemd:
+    name: apt-daily.timer
+    state: restarted
+
+- name: Restart the service apt-daily-upgrade.timer
+  ansible.builtin.systemd:
+    name: apt-daily-upgrade.timer
+    state: restarted
+
 - name: Cron file for OS update
   template:
     src: "system-update-cron.j2"
