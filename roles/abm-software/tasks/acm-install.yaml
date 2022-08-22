@@ -112,7 +112,8 @@
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
     - (has_config_management == false)
-  retries: 3
+  retries: 5
+  delay: 10
   register: cmc_result
   until: cmc_result.rc == 0
   environment:
