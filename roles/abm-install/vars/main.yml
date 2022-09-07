@@ -1,8 +1,7 @@
 ---
 # vars file for abm-install
 
-# Folder to run installation out of
-abm_install_folder: "/var/abm-install"
+# abm workspace folder derived from all.yaml defined install folder
 abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"
 
 # Match with Google-Tools (by convention, not required, but good idea)
@@ -11,9 +10,6 @@ remote_gsa_key: "/var/keys"
 # Edge API
 edge_api_enabled: false
 edge_api_location: us-central1 # same as cloud-ops region {{ google_region }}, but hard-coded as API is only in us-central1
-
-kubeconfig_shared_root: "/var/kubeconfig"
-kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
 
 # User that has sudo, password less SSH access to control_plane_ip
 abm_install_user: "el-gato"

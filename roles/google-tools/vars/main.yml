@@ -8,7 +8,7 @@ google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
 tools_base_path: "/var/google-tools-install"
 
 # gcloud version to download (gcloud version) -- roughly kept up-to-date, the system will update when installed, keeping up-to-date just makes the install a little faster
-gcloud_version: "398.0.0"
+gcloud_version: "400.0.0"
 
 # Local GSA Key (needs to be provided via command line vars)
 local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
