@@ -1,0 +1,45 @@
+# {{local_cache_folder}}/config.csv
+# bmctl,/usr/local/bin
+# virtctl,/usr/bin/kubectl-virt
+# kubens,/usr/local/bin/kubens
+# kubectx,/usr/local/bin/kubectx
+# k9s,/usr/local/bin/k9s
+# config-management-operator.yaml,/var/acm-configs/config-management-operator.yaml
+
+- name: Check if file exists at local folder
+  stat:
+    path: "{{ local_cache_folder }}/{{bundle_file_name}}"
+  register: local_file_exists
+
+- name: Copy local bundle to common location IF exists
+  ansible.builtin.copy:
+    src: "{{ local_cache_folder }}/{{bundle_file_name}}"
+    dest: "{{ tmpfile.path }}/{{bundle_file_name}}"
+    mode: '0644'
+    remote_src: true
+  when: local_file_exists.stat.exists
+
+- name: Check if bucket exists when file does not
+  ignore_errors: true
+  command:
+    cmd: "gsutil ls -al {{bucket_cache_url}}/{{bundle_file_name}}"
+  register: bucket_file_exists
+  when: not local_file_exists.stat.exists
+
+- name: Copy bucket bundle to common location IF exists
+  command:
+    cmd: "gsutil cp {{bucket_cache_url}}/{{bundle_file_name}} {{ tmpfile.path }}/{{bundle_file_name}}"
+  when:
+  - not local_file_exists.stat.exists
+  - bucket_file_exists.rc == 0
+
+- name: Set flag to not-found
+  set_fact:
+    "{{ fact_name }}": False
+  when:
+  - not local_file_exists.stat.exists
+  - bucket_file_exists.rc > 0
+
+- name: Set fact that bundle was found
+  set_fact:
+    "{{ fact_name }}": True

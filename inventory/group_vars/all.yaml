@@ -22,6 +22,9 @@ abm_version: "1.12.1" # verify coupling of ABM to BMCTL versions
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
 bmctl_version: "1.12.1" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
 
+# Base folder to install ABM into
+abm_install_folder: "/var/abm-install"
+
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
 
@@ -40,6 +43,10 @@ ansible_pull_drift_repo: ""
 ####
 acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-public-template.git', True) }}"
 acm_repo_type: "{{ lookup('env', 'ROOT_REPO_TYPE') | default('token', True) }}"
+
+# Where to store ACM files during provisoning
+acm_config_files: "/var/acm-configs"
+
 # From the above repo, what branch and what directory to use as bases
 root_repository_branch: "{{ lookup('env', 'ROOT_REPO_BRANCH') | default('main', True) }}"
 # Directory to use as base
@@ -100,9 +107,6 @@ oidc_user: "{{ lookup('env', 'OIDC_USER') }}"
 # VM Runtime
 enable_vmruntime: true
 
-# Base folder to place configuration and installation items for ABM
-abm_install_folder: "/var/abm-install"
-
 # Auditd Control
 enable_auditd: false
 
@@ -124,6 +128,7 @@ google_kms: {
 local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
 tools_base_path: "/var/google-tools-install"
 
+## kubeconfig file locations
 kubeconfig_shared_root: "/var/kubeconfig"
 kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
 

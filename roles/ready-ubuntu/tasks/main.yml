@@ -26,6 +26,7 @@
     - net-tools
     - nmap
     - curl
+    - zip
     - wget
     - gnupg-agent
     - software-properties-common

@@ -9,7 +9,8 @@ tmp/
 # Newrelic agent log
 newrelic_agent.log
 
-# test
+# pre-cached bundle, do not commit if found
+bundle.zip
 
 # Folder to hold build-artifacts needed for Docker install (maybe all)
 # keep the .gitkeep file, but ignore everything else

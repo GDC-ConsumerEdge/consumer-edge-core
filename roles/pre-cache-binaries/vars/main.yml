@@ -1,0 +1,6 @@
+bundle_file_name: "bundle.zip"
+
+local_cache_folder: /tmp/pre-cache
+bucket_cache_url: gs://a-bucket-that-is-not-found
+
+must_use_precache: true
