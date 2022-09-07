@@ -87,7 +87,6 @@
       state: absent
     loop:
       - { app: gcloud }
-      - { app: kubectx }
       - { app: nomos }
       - { app: gsutil }
       - { app: kustomize }
@@ -106,7 +105,6 @@
       state: link
     loop:
       - { app: gcloud }
-      - { app: kubectx }
       - { app: nomos }
       - { app: gsutil }
       - { app: kustomize }
