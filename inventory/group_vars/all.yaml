@@ -69,6 +69,12 @@ scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
 # Anthos Config Management version
 acm_version: "1.12.2"
 
+###
+### Use the "pre-cache" bundle instead of downloading binaries from outside (does not include containers)
+###     DEFAULT = false
+###
+must_use_precache: false
+
 ####
 #### Anthos Network Gateway
 ####

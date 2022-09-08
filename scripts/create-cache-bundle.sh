@@ -41,6 +41,11 @@ wget https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/virtctl-$
 chmod +x virtctl
 mv virtctl "${tmp_dir}/bin"
 
+export kube_ps1_version="0.7.0"
+wget https://github.com/jonmosco/kube-ps1/archive/refs/tags/v${kube_ps1_version}.tar.gz -O ps1.tar.gz
+tar xvf ps1.tar.gz --strip-components=1
+mv kube-ps1.sh "${tmp_dir}/bin"
+
 # Create "config" file
 
 cat << EOF > ${tmp_dir}/config.csv
@@ -50,6 +55,7 @@ kubens,/usr/local/bin/kubens
 kubectx,/usr/local/bin/kubectx
 k9s,/usr/local/bin/k9s
 config-management-operator.yaml,/var/acm-configs/config-management-operator.yaml
+kube-ps1.sh,/var/kube-ps1/kube-ps1-0.7.0/kube-ps1.sh
 EOF
 
 # List out binaries
