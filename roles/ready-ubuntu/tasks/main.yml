@@ -36,9 +36,9 @@
     - unattended-upgrades
     - apt-listchanges
     - nfs-common
-    # This is needed for Robin
-    - linux-modules-extra-{{ uname_r }}
-    state: present
+    # This is needed for TODO: Move this to Robin install only
+    # - linux-modules-extra-{{ uname_r }}
+    state: latest
     update_cache: yes
   tags:
     - update-dependencies

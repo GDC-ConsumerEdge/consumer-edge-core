@@ -15,30 +15,25 @@
     - runc
     state: absent
 
-- name: Add GPG key to apt for Docker Community
-  shell: |
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    touch /root/has-gpg-key
-  args:
-    creates: /root/has-gpg-key
+- name: Add Docker GPG apt Key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add Docker Repository
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    state: present
 
 - name: Install Docker 19+ packages
   apt:
     pkg:
-    - apt-transport-https
-    - ca-certificates
-    - curl
-    - gnupg-agent
-    - software-properties-common
     # Docker Community edition
     - docker-ce
     - docker-ce-cli
     - containerd.io
-    # Docker standard/20.x+
-    # - docker.io
-    state: present
-    update_cache: yes
+    state: latest
+    update_cache: true
 
 - name: Start docker, if not started
   ansible.builtin.service:
@@ -47,7 +42,7 @@
   register: task_result
   until: task_result is succeeded
   retries: 10
-  delay: 1
+  delay: 5
 
 - name: Get Docker version
   command: docker version
@@ -69,10 +64,8 @@
     groups: "docker"
     append: yes
 
-# TODO: Refactor timeout
-- name: Reboot machine to get new session with updated docker group
-  reboot:
-    reboot_timeout: 300
+- name: Reset connection allowing docker group
+  meta: reset_connection
 
 - name: Verify docker can be run
   command:
