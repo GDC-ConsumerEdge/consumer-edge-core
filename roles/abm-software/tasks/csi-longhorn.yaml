@@ -29,7 +29,6 @@
 - name: Create new HMAC key for longhorn backup to cloud storage and push to Secret Manager
   run_once: true
   shell: |
-
     EXISTING_NUM_OF_HMAC_KEYS=$(gsutil hmac list  -u longhorn-cloud-storage@{{ google_project_id }}.iam.gserviceaccount.com -p {{ google_project_id }} | grep longhorn-cloud-storage@{{ google_project_id }}.iam.gserviceaccount.com | wc | awk '{print $1}')
     if [ ${EXISTING_NUM_OF_HMAC_KEYS} -gt 4 ]
     then
