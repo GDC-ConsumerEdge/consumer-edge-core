@@ -53,9 +53,6 @@ k8s/overlays/**/configuration/secrets/*.json
 ### IntelliJ ###
 .idea/
 
-### Ansible ###
-ansible.cfg
-
 ## test files
 scripts/cloud/test.sh
 
