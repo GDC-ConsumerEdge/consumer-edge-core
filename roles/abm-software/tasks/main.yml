@@ -136,6 +136,7 @@
 
 ################# Setup secrets for git-creds and namespace repos per each franchise
 
+# TODO: DEPRECATED -- this is no longer used, remove this and the "franchises" in all.yaml
 - name: "Create git-cred secrets in GCP Secret Manager"
   run_once: true # only need to run on one machine, create all of the secets
   shell: |

@@ -190,3 +190,35 @@
     - (has_root_repo_installed == false)
   tags:
   - acm-root-repo
+
+- name: "Wait for RootReconciler deployment to be ready"
+  command:
+    cmd: kubectl wait --for=condition=available --timeout=600s deployment.apps/root-reconciler -n config-management-system
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  retries: 5
+  delay: 10
+  register: root_recon_result
+  until: root_recon_result.rc == 0
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+    - (has_root_repo_installed == false)
+  tags:
+  - acm-root-repo
+
+- name: "Wait on ExternalSecrets to be deployed coming from RootRepo"
+  command:
+    cmd: kubectl wait --for=condition=available --timeout=600s deployment.apps/external-secrets -n external-secrets
+  retries: 10
+  delay: 10
+  register: external_secret_deployment
+  until: external_secret_deployment.rc == 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  tags:
+  - acm-root-repo
+  - external-secret-install
