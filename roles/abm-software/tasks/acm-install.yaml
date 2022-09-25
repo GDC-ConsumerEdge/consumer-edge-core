@@ -26,7 +26,7 @@
 
 # Check for ACM Operator
 - name: "Test for config-management operator presence"
-  include: kubectl-presence.yml
+  include_tasks: kubectl-presence.yml
   vars:
     name: "config-management"
     type: "configmanagements.configmanagement.gke.io"
@@ -70,7 +70,7 @@
   - acm-config-management
 
 - name: "Test for config-management"
-  include: kubectl-presence.yml
+  include_tasks: kubectl-presence.yml
   vars:
     name: "config-management"
     type: "configmanagements.configmanagement.gke.io"
@@ -106,7 +106,7 @@
 
 # NOTE: If the git-creds secret already exists, no action is taken. There is NO effort to determine what type of secret so switching between types requires removal of the `git-creds` secret within the cluster
 - name: "Test for existing git-creds secret"
-  include: kubectl-presence.yml
+  include_tasks: kubectl-presence.yml
   vars:
     name: "{{ root_repository_git_secret_name }}"
     type: "secrets"
@@ -162,7 +162,7 @@
   - generate-root-sync
 
 - name: "Test for Root Repo installed"
-  include: kubectl-presence.yml
+  include_tasks: kubectl-presence.yml
   vars:
     name: "root-sync"
     type: "RootSync"

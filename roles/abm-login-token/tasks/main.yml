@@ -1,5 +1,5 @@
 - name: "Test for Root Repo Ready"
-  include: kubectl-presence.yml
+  include_tasks: kubectl-presence.yml
   vars:
     name: "root-reconciler"
     type: "deployment"
@@ -13,7 +13,7 @@
   - login-token
 
 - name: Display login token for server
-  include: get-login-token.yml
+  include_tasks: get-login-token.yml
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
