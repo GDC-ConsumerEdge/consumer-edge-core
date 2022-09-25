@@ -53,6 +53,7 @@ acm_config_files: "/var/acm-configs"
 ###
 acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-public-template.git', True) }}"
 acm_repo_type: "{{ lookup('env', 'ROOT_REPO_TYPE') | default('token', True) }}"
+root_repository_git_auth_type: "{{ acm_repo_type }}"
 
 scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') | default('', True) }}"
 scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') | default('', True) }}"
