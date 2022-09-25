@@ -1,0 +1,7 @@
+
+# Creates new k8s secret ONLY if there is not a secret (is this desired??)
+- name: "Create secret token for Root Repo [Token Method]"
+  command:
+    cmd: "kubectl create secret generic {{ root_repository_git_secret_name }} --namespace='config-management-system' --from-literal='username={{ scm_token_user }}' --from-literal='token={{ scm_token_token }}'"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"

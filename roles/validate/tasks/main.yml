@@ -48,6 +48,10 @@
     that:
       - scm_token_user != ""
     fail_msg: "The local environment variable 'SCM_TOKEN_USER' needs to be set to the SCM user name"
+  when:
+  - "primary_cluster_machine is defined"
+  - "primary_cluster_machine == true"
+  - "root_repository_git_auth_type == 'token'"
   tags:
   - verify
 
@@ -56,6 +60,10 @@
     that:
       - scm_token_token != ""
     fail_msg: "The local environment variable 'SCM_TOKEN_TOKEN' needs to be set to the secret value for the SCM PAT"
+  when:
+  - "primary_cluster_machine is defined"
+  - "primary_cluster_machine == true"
+  - "root_repository_git_auth_type == 'token'"
   tags:
   - verify
 

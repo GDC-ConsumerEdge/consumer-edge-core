@@ -41,16 +41,27 @@ ansible_pull_drift_repo: ""
 ####
 #### Anthos Config Management
 ####
-acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-public-template.git', True) }}"
-acm_repo_type: "{{ lookup('env', 'ROOT_REPO_TYPE') | default('token', True) }}"
+# gsutil ls -al gs://config-management-release/released/
+# Anthos Config Management version
+acm_version: "1.12.2"
 
 # Where to store ACM files during provisoning
 acm_config_files: "/var/acm-configs"
 
+###
+### SCM (Root Repo Configurations)
+###
+acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-public-template.git', True) }}"
+acm_repo_type: "{{ lookup('env', 'ROOT_REPO_TYPE') | default('token', True) }}"
+
+scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') | default('', True) }}"
+scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') | default('', True) }}"
+acm_ssh_private_keyfile: "{{ lookup('env', 'SCM_SSH_PRIVATE_KEYFILE') | default('', True) }}"
 # From the above repo, what branch and what directory to use as bases
 root_repository_branch: "{{ lookup('env', 'ROOT_REPO_BRANCH') | default('main', True) }}"
 # Directory to use as base
 root_repository_policy_dir: "{{ lookup('env', 'ROOT_REPO_DIR') | default('/config', True) }}"
+root_repository_sync_time: "15s" # ACM default is 15s
 
 ###
 ### Google Core Variables
@@ -58,16 +69,6 @@ root_repository_policy_dir: "{{ lookup('env', 'ROOT_REPO_DIR') | default('/confi
 google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
 google_region: "{{ lookup('env', 'REGION') | default('us-central1', True) }}" # NOTE: A copy of this variable is in Molecule test `for google_tools`
 google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}" # NOTE: A copy of this variable is in Molecule test `for google_tools`
-
-###
-### SCM (GitLab or GitHub access token)
-###
-scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') }}"
-scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') }}"
-
-# gsutil ls -al gs://config-management-release/released/
-# Anthos Config Management version
-acm_version: "1.12.2"
 
 ###
 ### Use the "pre-cache" bundle instead of downloading binaries from outside (does not include containers)

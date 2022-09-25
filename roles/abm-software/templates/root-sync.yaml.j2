@@ -11,12 +11,12 @@ spec:
   git:
     repo: "{{ acm_root_repo }}"
     branch: "{{ root_repository_branch }}"
+    period: "{{ root_repository_sync_time }}"
     dir: "{{ root_repository_policy_dir }}"
     auth: "{{ root_repository_git_auth_type }}"
-    {# Authentication of type "gcpserviceaccount" needs to also provide the GSA email address for the GSA setup to communicate to the GSR #}
     {% if root_repository_git_auth_type == "gcpserviceaccount" %}
     gcpServiceAccountEmail: "{{ root_repository_service_account_email }}"
-    {% else %}{# GSR method does not need a secret reference, all others does #}
+    {% elif root_repository_git_auth_type != "none" %}
     # Secret Reference
     secretRef:
       name: "{{ root_repository_git_secret_name }}"
