@@ -11,25 +11,6 @@
   - abm-software
   - enable-acm
 
-#### Setup WorkloadIdentity (supporting GSR)
-
-- name: "Configure WorkloadIdentity for GSR"
-  shell: |
-    gcloud iam service-accounts add-iam-policy-binding \
-        --role roles/iam.workloadIdentityUser \
-        --member "serviceAccount:{{ google_project_id }}.svc.id.goog[config-management-system/root-reconciler]" \
-        source-repo-agent@{{ google_project_id }}.iam.gserviceaccount.com
-  args:
-    executable: /bin/bash
-  environment:
-    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-    - (root_repository_git_auth_type == "gcpserviceaccount")
-  tags:
-  - acm-workload-identity
-
 ### Operator
 
 # Download operator
@@ -123,7 +104,53 @@
 
 #### Root Repo Configuration
 
-- name: Copy config management configuration
+# NOTE: If the git-creds secret already exists, no action is taken. There is NO effort to determine what type of secret so switching between types requires removal of the `git-creds` secret within the cluster
+- name: "Test for existing git-creds secret"
+  include: kubectl-presence.yml
+  vars:
+    name: "{{ root_repository_git_secret_name }}"
+    type: "secrets"
+    namespace: "config-management-system"
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+    fact_name: "has_root_repo_secret"
+  tags:
+  - acm-root-repo
+
+- name: "Create dependencies for RootRepo (if not exists) [Token Method]"
+  include_tasks: "config-root-repo-token.yaml"
+  when:
+  - (root_repository_git_auth_type == "token")
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  - (has_root_repo_secret is defined)
+  - (has_root_repo_secret == false)
+  tags:
+  - acm-root-repo
+  - acm-root-repo-token-method
+
+- name: "Create dependencies for RootRepo (if not exists) [SSH Method]"
+  include_tasks: "config-root-repo-ssh.yaml"
+  when:
+  - (root_repository_git_auth_type == "ssh")
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  - (has_root_repo_secret is defined)
+  - (has_root_repo_secret == false)
+  tags:
+  - acm-root-repo
+  - acm-root-repo-ssh-method
+
+- name: "Create dependencies for RootRepo (if not exists) [GCP GSA Method]"
+  include_tasks: "config-root-repo-gcp-gsa.yaml"
+  when:
+  - (root_repository_git_auth_type == "gcpserviceaccount")
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  tags:
+  - acm-root-repo
+  - acm-root-repo-gcp-gsa-method
+
+- name: Copy RootRepo Sync Config File
   template:
     src: root-sync.yaml.j2
     dest: "{{ acm_config_files }}/root-sync.yaml"
@@ -132,35 +159,7 @@
     - (primary_cluster_machine == true)
   tags:
   - acm-root-repo
-
-- name: "Test for Root Repo secret"
-  include: kubectl-presence.yml
-  vars:
-    name: "{{ root_repository_git_secret_name }}"
-    type: "secrets"
-    namespace: "config-management-system"
-    kubeconfig: "{{ kubeconfig_shared_location }}"
-    fact_name: "has_root_repo_secret"
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-    - (root_repository_git_auth_type != "gcpserviceaccount")
-  tags:
-  - acm-root-repo
-
-- name: "Create secret token for Root Repo"
-  command:
-    cmd: "kubectl create secret generic {{ root_repository_git_secret_name }} --namespace='config-management-system' --from-literal='username={{ scm_token_user }}' --from-literal='token={{ scm_token_token }}'"
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-    - (root_repository_git_auth_type != "gcpserviceaccount")
-    - (has_root_repo_secret is defined)
-    - (has_root_repo_secret == false)
-  tags:
-  - acm-root-repo
+  - generate-root-sync
 
 - name: "Test for Root Repo installed"
   include: kubectl-presence.yml

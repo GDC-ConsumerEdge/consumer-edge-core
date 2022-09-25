@@ -1,0 +1,16 @@
+- name: "Copy SSH file to remote [SSH Method]"
+  copy:
+    src: "{{ acm_ssh_private_keyfile }}"
+    dest: "{{ acm_config_files }}/acm-private-key"
+    mode: "0400"
+
+- name: "Create secret token for Root Repo [SSH Method]"
+  command:
+    cmd: "kubectl create secret generic {{ root_repository_git_secret_name }} --namespace='config-management-system' --from-file='ssh={{ acm_config_files }}/acm-private-key'"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+
+- name: "Remove SSH file from remote [SSH Method]"
+  file:
+    path: "{{ acm_config_files }}/acm-private-key"
+    state: absent

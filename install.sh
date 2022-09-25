@@ -24,32 +24,36 @@
 # Run installation (command could be run manually too or instead)
 # docker run -v "$(pwd):/var/consumer-edge-install:ro" -it gcr.io/${GCP_PROJECT}/consumer-edge-install:latest /bin/bash -c ansible-playbook -i inventory all-full-install.yaml
 
-ERROR="\e[31m"
-INFO="\e[32m"
-WARN="\e[1;33m"
-DEBUG="\e[1;33m"
+ERROR_COLOR="\e[1;31m"
+INFO_COLOR="\e[1;37m"
+WARN_COLOR="\e[1;33m"
+DEBUG_COLOR="\e[1;35m"
+DEFAULT_COLOR="\e[1;32m"
 ENDCOLOR="\e[0m"
 
 function pretty_print() {
     MSG=$1
-    LEVEL=${2:-INFO}
+    LEVEL=${2:-DEFAULT}
 
     if [[ -z "${MSG}" ]]; then
         return
     fi
 
     case "$LEVEL" in
+        "DEFAULT")
+            echo -e $(printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}")
+            ;;
         "ERROR")
-            echo -e $(printf "${ERROR}${MSG}$ENDCOLOR")
+            echo -e $(printf "${ERROR_COLOR}${MSG}${ENDCOLOR}")
             ;;
         "WARN")
-            echo -e $(printf "${WARN}${MSG}$ENDCOLOR")
+            echo -e $(printf "${WARN_COLOR}${MSG}${ENDCOLOR}")
             ;;
         "INFO")
-            echo -e $(printf "${INFO}${MSG}$ENDCOLOR")
+            echo -e $(printf "${INFO_COLOR}${MSG}${ENDCOLOR}")
             ;;
         "DEBUG")
-            echo -e $(printf "${DEBUG}${MSG}$ENDCOLOR")
+            echo -e $(printf "${DEBUG_COLOR}${MSG}${ENDCOLOR}")
             ;;
         *)
             echo "NO MATCH"
@@ -157,38 +161,98 @@ else
     pretty_print "PASS: Local GSA key (${LOCAL_GSA_FILE})"
 fi
 
-if [[ -z "${SCM_TOKEN_USER}" ]]; then
-    pretty_print "ERROR: Gitlab personal access token variable for USER is not set. Please refer to 'Pre Installation Steps'" "ERROR"
-    ERROR=1
-else
-    pretty_print "PASS: SCM_TOKEN_USER (${SCM_TOKEN_USER}) variable is set."
-fi
+### Validate ROOT_REPO_TYPE & ROOT_REPO URL
+# Options are none (default), token, gcpserviceaccount, ssh
+# IF default, only ROOT_REPO_URL needs to be filled (http or https prefix)
+# IF SSH, SCM_SSH_PRIVATE_KEYFILE must point to a file and ROOT_REPO_URL needs to start with "ssh://"
+# IF TOKEN, SCM_TOKEN_USER and SCM_TOKEN_TOKEN must be filled and ROOT_REPO_URL starts with http or https
+# IF gcpserviceaccount, ROOT_REPO_URL must start and contain https://source.developers.google.com
+###
 
-if [[ -z "${SCM_TOKEN_TOKEN}" ]]; then
-    pretty_print "ERROR: Gitlab personal access token variable for TOKEN is not set. Please refer to 'Pre Installation Steps'" "ERROR"
-    ERROR=1
-else
-    pretty_print "PASS: SCM_TOKEN_TOKEN (${SCM_TOKEN_TOKEN}) variable is set."
-fi
+case "${ROOT_REPO_TYPE}" in
 
-if [[ -z "${ROOT_REPO_TYPE}" ]]; then
-    pretty_print "PASS: Using token based SCM authention."
-elif [[ "${ROOT_REPO_TYPE}" != "gcpserviceaccount" ]]; then  # TODO: This is quick and dirty, not comprehensive to the other types that *could* be used (token, ssh, etc)
-    pretty_print "ERROR: Repo Type is set to but not to 'gcpserviceaccount'" "ERROR"
-    ERROR=1
-else
-    pretty_print "PASS: Using GCP GSA based SCM authention with GSR"
-fi
+  "ssh")
+    if [[ -z "${SCM_SSH_PRIVATE_KEYFILE}" ]]; then
+        pretty_print "ERROR: SCM_SSH_PRIVATE_KEYFILE is required for ROOT_REPO_TYPE = 'ssh'" "ERROR"
+        ERROR=1
+    elif [[ ! -f "${SCM_SSH_PRIVATE_KEYFILE}" ]]; then
+        pretty_print "ERROR: SCM_SSH_PRIVATE_KEYFILE must point to the PRIVATE key registered with SCM" "ERROR"
+        ERROR=1
+    fi
+    ;;
 
-if [[ -z "${ROOT_REPO_URL}" ]]; then
-    pretty_print "ERROR: Root Repo URL has not been set." "ERROR"
+  "none")
+    ;;
+
+  "gcpserviceaccount")
+    ;;
+
+  "token")
+    if [[ -z "${SCM_TOKEN_USER}" ]]; then
+        pretty_print "ERROR: SCM_TOKEN_USER is required for ROOT_REPO_TYPE = 'token'" "ERROR"
+        ERROR=1
+    fi
+    if [[ -z "${SCM_TOKEN_TOKEN}" ]]; then
+        pretty_print "ERROR: SCM_TOKEN_TOKEN is required for ROOT_REPO_TYPE = 'token'" "ERROR"
+        ERROR=1
+    fi
+    ;;
+
+  *)
+    pretty_print "ERROR: ROOT_REPO_TYPE environment variable is not set to 'token', 'none', 'gcpserviceaccount' or 'ssh'" "ERROR"
     ERROR=1
-else
+    ;;
+esac
+
+case "${ROOT_REPO_TYPE}" in
+
+  "none" | "token")
+    if [[ ! "${ROOT_REPO_URL}" =~ ^http\:\/\/*|^https\:\/\/* ]]; then
+        pretty_print "ERROR: ROOT_REPO_URL requires http:// or https:// protocol when using ROOT_REPO_TYPE = '${ROOT_REPO_TYPE}'" "ERROR"
+        ERROR=1
+    fi
+    ;;
+
+  "ssh")
+    if [[ ! "${ROOT_REPO_URL}" =~ ^ssh\:\/\/* ]]; then
+        pretty_print "ERROR: ROOT_REPO_URL requires ssh:// protocol when using ROOT_REPO_TYPE = '${ROOT_REPO_TYPE}'" "ERROR"
+        ERROR=1
+    fi
+    ;;
+
+  "gcpserviceaccount")
+    if [[ ! "${ROOT_REPO_URL}" =~ ^https\:\/\/source\.developers\.google\.com* ]]; then
+        pretty_print "ERROR: ROOT_REPO_URL requires https://source.developers.google.com protocol when using ROOT_REPO_TYPE = '${ROOT_REPO_TYPE}" "ERROR"
+        ERROR=1
+    fi
+    ;;
+
+esac
+
+if [[ $ERROR -lt 1 ]]; then
+    pretty_print "INFO: Root Repo Authentication is '${ROOT_REPO_TYPE}'" "INFO"
     pretty_print "PASS: Root Repo is set to: (${ROOT_REPO_URL})"
+    case "${ROOT_REPO_TYPE}" in
+
+    "ssh")
+        pretty_print "PASS: Using '${SCM_SSH_PRIVATE_KEYFILE}' as the SSH private key for SCM"
+        ;;
+    "none")
+        pretty_print "INFO: ROOT_REPO_TYPE is 'none' indicating ROOT_REPO_URL does not require authentication."
+        ;;
+    "token")
+        pretty_print "PASS: Using SCM Token User: ${SCM_TOKEN_USER}"
+        pretty_print "PASS: Using SCM Token Value: ${SCM_TOKEN_TOKEN}"
+        ;;
+    esac
+
 fi
+
 
 if [[ "${ERROR}" -eq 1 ]]; then
-    echo "Required configurations are not present in their intended location. Please re-configure and re-try again."
+    echo ""
+    pretty_print "Required configurations are not present in their intended location. Please re-configure and re-try again." "ERROR"
+    echo ""
     exit 1
 fi
 
@@ -199,13 +263,12 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
     pretty_print "Starting the installation"
 
-    pretty_print "Pulling docker install image..."
-
+    pretty_print "Pulling docker install image...(please be patient, can be 1-2 minutes on first image pull)"
 
     RESULT=$(docker pull gcr.io/${PROJECT_ID}/consumer-edge-install:latest)
 
     if [[ $? -gt 0 ]]; then
-        pretty_print "ERROR: Cannot pull Consumer Edge Install image"
+        pretty_print "ERROR: Cannot pull Consumer Edge Install image" "ERROR"
         exit 1
     fi
 
@@ -225,11 +288,10 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd):/var/consumer-edge-install:ro" -it gcr.io/${PROJECT_ID}/consumer-edge-install:latest
 
     if [[ $? -gt 0 ]]; then
-        pretty_print "ERROR: Docker container cannot open."
+        pretty_print "ERROR: Docker container cannot open." "ERROR"
         exit 1
     fi
 
 else
-    echo "Canceling"
     exit 0
 fi
