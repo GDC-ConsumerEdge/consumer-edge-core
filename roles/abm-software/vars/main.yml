@@ -7,7 +7,6 @@ vmruntime_config_path: "/var/vmruntime"
 # Home directory for external secrets download and operations (TODO: Duplciated in post-install)
 external_secrets_files: "/var/external-secrets"
 
-root_repository_git_auth_type: "{{ acm_repo_type }}"
 # GSA Created and granted permissions in `all.yaml`
 root_repository_service_account_email: source-repo-agent@{{ google_project_id }}.iam.gserviceaccount.com
 
