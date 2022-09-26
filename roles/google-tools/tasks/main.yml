@@ -37,7 +37,7 @@
     - initial-install
 
   - name: Download and unarchive gcloud
-    unarchive:
+    ansible.builtin.unarchive:
       src: 'https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-{{ gcloud_version }}-linux-x86_64.tar.gz'
       dest: '{{ tools_base_path }}'
       creates: '{{ tools_base_path }}/google-cloud-sdk'
@@ -47,7 +47,7 @@
     - tool-install
 
   - name: Download and unarchive kubectx
-    unarchive:
+    ansible.builtin.unarchive:
       src: 'https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_version }}/kubectx_v{{ kubectx_version }}_linux_x86_64.tar.gz'
       dest: '/usr/local/bin'
       include_tasks: 'kubectx'
@@ -59,7 +59,7 @@
     - tool-install
 
   - name: Download and unarchive kubens
-    unarchive:
+    ansible.builtin.unarchive:
       src: 'https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_version }}/kubens_v{{ kubectx_version }}_linux_x86_64.tar.gz'
       dest: '/usr/local/bin'
       include_tasks: 'kubens'
