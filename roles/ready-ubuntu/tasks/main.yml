@@ -40,6 +40,15 @@
     # - linux-modules-extra-{{ uname_r }}
     state: latest
     update_cache: yes
+    autoclean: yes
+  tags:
+    - update-dependencies
+
+- name: Remove un-necessary dependencies
+  apt:
+    pkg:
+    - popularity-contest
+    state: absent
   tags:
     - update-dependencies
 
