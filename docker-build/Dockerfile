@@ -50,7 +50,7 @@ VOLUME [ "/var/consumer-edge-install" ]
 
 # Setup Ansible and other PIP-based dependencies
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt
+RUN pip install --require-hashes -r /tmp/requirements.txt
 
 WORKDIR /var/consumer-edge-install
 
