@@ -33,7 +33,7 @@
   - verify
 
 - name: Create cluster snapshot
-  include: create-snapshot.yaml
+  include_tasks: create-snapshot.yaml
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
@@ -103,7 +103,7 @@
 
 ### Add External Secrets
 - name: Setup External Secrets
-  include: external-secrets.yaml
+  include_tasks: external-secrets.yaml
   vars:
     kubeconfig: "{{ kubeconfig_shared_location }}"
   tags:
@@ -112,7 +112,7 @@
 
 ###  Setup & install Longhorn if settings
 - name: Setup Longhorn
-  include: csi-longhorn.yaml
+  include_tasks: csi-longhorn.yaml
   vars:
     kubeconfig: "{{ kubeconfig_shared_location }}"
   when: storage_provider == "longhorn"
@@ -122,20 +122,20 @@
 
 ### Anthos Network Gateway
 - name: "Install Anthos Config Management (ACM)"
-  include: acm-install.yaml
+  include_tasks: acm-install.yaml
   tags:
   - acm-config-management-install
   - acm-config-management
 
 ### Anthos Network Gateway
 - name: "Install Anthos Network Gateway"
-  include: network-gateway-group.yaml
+  include_tasks: network-gateway-group.yaml
   when: network_gateway_group_install == true
   tags:
   - ang-install
 
 - name: "Add CPU Monitor KubeVirt service files"
-  include: cpumonitor-service.yaml
+  include_tasks: cpumonitor-service.yaml
   tags:
   - cpu-monitor
   - cdi
@@ -186,7 +186,7 @@
   - post-acm
 
 - name: Setup OIDC in cluster
-  include: setup-oidc.yaml
+  include_tasks: setup-oidc.yaml
   when:
   - enable_oidc == true
   tags:
