@@ -46,7 +46,7 @@
   - never
 
 - name: Archive current cluster snapshots
-  include_tasks: remove-snapshot.yaml
+  import_tasks: remove-snapshot.yaml
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)

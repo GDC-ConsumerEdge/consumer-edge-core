@@ -50,7 +50,7 @@
     ansible.builtin.unarchive:
       src: 'https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_version }}/kubectx_v{{ kubectx_version }}_linux_x86_64.tar.gz'
       dest: '/usr/local/bin'
-      include_tasks: 'kubectx'
+      include: 'kubectx'
       mode: "0755"
       creates: '/usr/local/bin/kubectx'
       remote_src: yes
@@ -62,7 +62,7 @@
     ansible.builtin.unarchive:
       src: 'https://github.com/ahmetb/kubectx/releases/download/v{{ kubectx_version }}/kubens_v{{ kubectx_version }}_linux_x86_64.tar.gz'
       dest: '/usr/local/bin'
-      include_tasks: 'kubens'
+      include: 'kubens'
       mode: "0755"
       creates: '/usr/local/bin/kubens'
       remote_src: yes
