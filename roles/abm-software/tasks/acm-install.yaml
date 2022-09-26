@@ -117,7 +117,7 @@
   - acm-root-repo
 
 - name: "Create dependencies for RootRepo (if not exists) [Token Method]"
-  include_tasks: "config-root-repo-token.yaml"
+  import_tasks: "config-root-repo-token.yaml"
   when:
   - (root_repository_git_auth_type == "token")
   - (primary_cluster_machine is defined)
@@ -129,7 +129,7 @@
   - acm-root-repo-token-method
 
 - name: "Create dependencies for RootRepo (if not exists) [SSH Method]"
-  include_tasks: "config-root-repo-ssh.yaml"
+  import_tasks: "config-root-repo-ssh.yaml"
   when:
   - (root_repository_git_auth_type == "ssh")
   - (primary_cluster_machine is defined)
@@ -141,7 +141,7 @@
   - acm-root-repo-ssh-method
 
 - name: "Create dependencies for RootRepo (if not exists) [GCP GSA Method]"
-  include_tasks: "config-root-repo-gcp-gsa.yaml"
+  import_tasks: "config-root-repo-gcp-gsa.yaml"
   when:
   - (root_repository_git_auth_type == "gcpserviceaccount")
   - (primary_cluster_machine is defined)
