@@ -3,7 +3,6 @@
 ### Add Kube PS1
 - name: "Add Kube PS1 to all known users"
   include_tasks: add-kube-ps1.yml
-  become: true
   tags:
   - abm-post-install
   - kube-ps1
