@@ -60,31 +60,6 @@
   - longhorn-hmac-keys
   - longhorn-install
 
-- name: Copy Longhorn namespace and configmap
-  template:
-    src: longhorn-default-setting.yml.j2
-    dest: "{{ acm_config_files }}/longhorn-default-setting.yml"
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  tags:
-  - longhorn-config-management
-  - longhorn-install
-
-- name: Create Longhorn namespace and configmap
-  command:
-    cmd: kubectl apply -f {{ acm_config_files }}/longhorn-default-setting.yml
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  retries: 3
-  register: cmc_result
-  until: cmc_result.rc == 0
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  tags:
-  - longhorn-config-management
-
 - name: Download Longhorn YAML installation script
   ansible.builtin.get_url:
     url: "{{ longhorn_installation_yaml_url }}"
@@ -111,3 +86,29 @@
   tags:
   - longhorn-config-management
   - longhorn-install
+
+- name: Copy Longhorn namespace and configmap
+  template:
+    src: longhorn-default-setting.yml.j2
+    dest: "{{ acm_config_files }}/longhorn-default-setting.yml"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  tags:
+  - longhorn-config-management
+  - longhorn-install
+
+- name: Create Longhorn namespace and configmap
+  command:
+    cmd: kubectl apply -f {{ acm_config_files }}/longhorn-default-setting.yml
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  retries: 3
+  register: cmc_result
+  until: cmc_result.rc == 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - longhorn-config-management
+
