@@ -26,6 +26,14 @@ gcp.yaml
 gcp.yml
 
 inventory/*.yaml
+inventory/host_vars/*.yaml
+# Leave 2 examples of Cloud and Physical configurations
+!inventory/host_vars/edge-1.yaml
+!inventory/host_vars/edge-2.yaml
+!inventory/host_vars/edge-3.yaml
+!inventory/host_vars/cnuc-1.yaml
+!inventory/host_vars/cnuc-2.yaml
+!inventory/host_vars/cnuc-3.yaml
 
 # never check in any public keys
 *.pub

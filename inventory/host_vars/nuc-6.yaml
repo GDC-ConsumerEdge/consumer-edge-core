@@ -1,7 +1,0 @@
-# Cluster Name
-cluster_name: "nuc-4"
-# Used for logging/metrics
-machine_label: "nuc-6"
-
-# This machine's IP
-control_plane_ip: "192.168.1.16"
