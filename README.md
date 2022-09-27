@@ -130,7 +130,7 @@ you have a properly authenticated GSA key located at `./build-artifacts/consumer
       ssh-keygen -N '' -o -a 100 -t ed25519 -f ./build-artifacts/consumer-edge-machine
       ```
 
-2. Encrypt the private key using Cloud KMS
+1. Encrypt the private key using Cloud KMS
 
     ```bash
     gcloud kms encrypt \
@@ -140,7 +140,7 @@ you have a properly authenticated GSA key located at `./build-artifacts/consumer
       --plaintext-file build-artifacts/consumer-edge-machine \
       --ciphertext-file build-artifacts/consumer-edge-machine.encrypted
     ```
-3. Delete the unencrypted private key from the local machine
+1. Delete the unencrypted private key from the local machine
 
     ```bash
     rm build-artifacts/consumer-edge-machine
@@ -151,22 +151,34 @@ you have a properly authenticated GSA key located at `./build-artifacts/consumer
         encrypted private key. Future functionality will automate and upload
         the key to GCP Secrets Manager.
 
-<!-- TODO: Add mechanism to upload to GCS SecretsManager -->
-<!-- TODO: Add script to allow for ad-hoc SSH into machines (decrypt on-demand) -->
-<!-- TODO: Add instructions to remove SSH key -->
+    <!-- TODO: Add mechanism to upload to GCS SecretsManager -->
+    <!-- TODO: Add script to allow for ad-hoc SSH into machines (decrypt on-demand) -->
+    <!-- TODO: Add instructions to remove SSH key -->
 
-1. Create configuration file (`.envrc`)
+1. Export the necessary environment variables
+
+    ```sh
+    export PROJECT_ID=<GCP_PROJECT_TO_USE>
+    export REGION=<GCP_REGION_TO_USE>
+    export ZONE=<GCP_ZONE_TO_USE>
+    ```
+
+    1. (Optional) Set the follwing variables only if the `ROOT_REPO_TYPE` used is `token`
+
+    ```sh
+    export SCM_TOKEN_USER=<GITLAB_USERNAME>
+    export SCM_TOKEN_TOKEN=<GITLAB_PERSONAL_ACCESS_TOKEN>
+    ```
+
+2. Create configuration file (`.envrc`)
 
     ```bash
     # Create a default .envrc file (dot-file)
     envsubst < templates/envrc-template.sh > .envrc
     ```
 
-    1. Edit the created `.envrc` file and substitute the placeholder for GCP Project ID
-    with your GCP Project ID (ie: `###__GCP_PROJECT_ID__###`) HINT: There are two locations to replace
-
-    1. Replace the Gitlab Personal Access Token values inside `.envrc` (`###_Repo_Login_Name_###`
-    and `###_Repo_PAT_Token_###`)
+    1. Validate if the correct values have been replaced for the variables in the
+        generated `.envrc` file
 
     1. Instantiate `ENV` variables inside current shell. Run `source` on the
     `.envrc` file to expose variables (advanced users can use `direnv` if
