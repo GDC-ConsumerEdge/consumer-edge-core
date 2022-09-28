@@ -173,7 +173,6 @@ vlan_interfaces: []
 install_observability: false
 
 # All of the Service Accounts used in this solution
-## LONGHORN
 service_accounts: [
   {
     name: abm-gcr-agent,
@@ -197,6 +196,14 @@ service_accounts: [
     description: "ABM GKE Connect Register Account",
     roles: [
       "roles/gkehub.admin"
+    ]
+  },
+  {
+    name: acm-monitoring-agent,
+    keyfile: acm-monitoring-agent.json,
+    description: "ACM Monitoring Account",
+    roles: [
+      "roles/monitoring.metricWriter"
     ]
   },
   {
