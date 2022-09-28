@@ -115,6 +115,16 @@
   tags:
   - verify
 
+- name: deubg
+  debug:
+    msg: "VM: {{ enable_vmruntime }} and Multus {{ enable_multus_network }}"
+
+- name: VMRuntime vs Multus
+  fail:
+    msg: "VMRuntime and Multus cannot both be true"
+  when:
+    - (enable_vmruntime == true and enable_multus_network == true)
+
 - name: show oidc status
   debug:
     var: enable_oidc
@@ -135,40 +145,9 @@
   - verify
   - oidc
 
-- name: Installed output
-  debug:
-    msg:
-    - "----- IMPORTANT VARIABLES ----"
-    - ""
-    - "Root-Repo: {{ acm_root_repo }}"
-    - "ABM Version: {{ abm_version }}"
-    - "ACM Version: {{ acm_version }}"
-    - ""
-    - "-------------------------"
-    - ""
-    - "Google Project: {{ google_project_id }}"
-    - "Google Region/Zone {{ google_region }}/{{ google_zone }}"
-    - ""
-    - "-------------------------"
-    - ""
-    - "SCM PAT User: {{ scm_token_user }}"
-    - "SCM PAT Token: {{ scm_token_token[:5] }}*******"
-    - ""
-    - "-------------------------"
-    - ""
-    - "Storage provider: {{ storage_provider }}"
-    - "Storage provider root: {{ storage_provider_roots | join(',') }}"
-    - ""
-
-  when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
+- name: Fail playbook if any failures
+  fail:
+    msg: "Failure caused by expected {{ ansible_play_hosts_all|length }} hosts but have {{ ansible_play_hosts|length }}. Check failures above to see what issue happened."
+  when: (ansible_play_hosts_all|length) != (ansible_play_hosts|length)
   tags:
   - verify
-  - print-install-variables
-
-- name: Give time to read variables (Hit <ctrl>+c to cancel now if incorrect)
-  run_once: true
-  wait_for:
-    timeout: 3
-  tags:
-  - verify
-  - print-install-variables

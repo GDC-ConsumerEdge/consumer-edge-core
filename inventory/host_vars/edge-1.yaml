@@ -25,13 +25,10 @@ load_balancer_pool_cidr: [
 ]
 
 ###
-###  ANG & VPN Details
+###  Anthos Network Gateway & VPN Details
 ###
+# Setup the HA VPN for the MultiClusterConnectivityConfig (ANG)
 network_gateway_group_install: true
-# Install MultiClusterConfig (needed for VPN)
-network_gateway_mcc: true
-# Egress IP
-egress_cluster_ip: "172.92.230.159" # `curl ifconfig.me`
 # Floating IP addresses for Network Gateway Group
 ang_floating_ips: [
   "192.168.3.14",
@@ -43,6 +40,15 @@ vpn_gateway_ips: [
 ]
 # IKE secret
 ike_key_secret_value: "12345"
+# Egress IP
+egress_cluster_ip: "172.92.230.159" # `curl ifconfig.me`
+
+
+###
+### Cluster Network (Multus)
+###
+# Install Multus
+enable_multus_network: false
 
 # Install observability using Legacy agents (override)
 install_observability: false # skip observability on install

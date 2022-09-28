@@ -56,7 +56,10 @@
     path: '{{ vmruntime_config_path }}'
     state: directory
     mode: '0755'
-  when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+    - (enable_vmruntime == true)
   tags:
   - abm-software
   - vmruntime
@@ -68,6 +71,7 @@
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
+    - (enable_vmruntime == true)
   tags:
   - abm-software
   - vmruntime
@@ -84,7 +88,9 @@
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
-  retries: 3
+    - (enable_vmruntime == true)
+  retries: 5
+  delay: 10
   register: result
   until: result.rc == 0
   tags:
