@@ -26,6 +26,12 @@ load_balancer_pool_cidr: [
   "10.200.0.50-10.200.0.70"
 ]
 
+###
+### Cluster Network (Multus)
+###
+# Install MultiClusterConfig (needed for VPN)
+enable_multus_network: false
+
 # Ansible Pull Authenticaiton String
 ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
 

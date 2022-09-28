@@ -81,10 +81,18 @@ must_use_precache: false
 #### Anthos Network Gateway
 ####
 # Floating IP addresses for Anthos Network Gateway
+network_gateway_group_install: false # Enable ANG for HA VPN
 ang_floating_ips: [] # Floating IP for ANG
 vpn_gateway_ips: [] # Gateway IPs for VPN
-network_gateway_group_install: false
-network_gateway_mcc: false
+
+# OSS Multus
+enable_multus_network: false # Enable Multus (Cannot be true when enable_vmruntime is true) -- https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/how-to/multi-nic
+
+###
+### VM Runtime (KubeVirt + A4VM)
+###
+# VM Runtime
+enable_vmruntime: true  # Enable VMRuntime & Networking (this cannot be true if multus network is true) -- https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/vm-runtime/create-networks
 
 ###
 ### Global Snapshot & Update Variables
@@ -95,7 +103,7 @@ snapshot_gcs_bucket_base: "{{ lookup('env', 'SNAPSHOT_GCS') | default( [ google_
 ###
 ### Storage Provider
 ###
-storage_provider: "longhorn" # Options: openebs, robin, none
+storage_provider: "longhorn" # Future Options: openebs, robin, none
 # Storage provider roots for disc storage
 storage_provider_roots: [ "/customer" ]
 # GSM Secret name used for Longhorn HMAC
@@ -108,12 +116,6 @@ enable_oidc: "{{ lookup('env', 'OIDC_ENABLED')|bool or false }}" # Off by defaul
 oidc_client_id: "{{ lookup('env', 'OIDC_CLIENT_ID') }}"
 oidc_client_secret: "{{ lookup('env', 'OIDC_CLIENT_SECRET') }}"
 oidc_user: "{{ lookup('env', 'OIDC_USER') }}"
-
-###
-### VM Runtime (KubeVirt + A4VM)
-###
-# VM Runtime
-enable_vmruntime: true
 
 # Auditd Control
 enable_auditd: false
