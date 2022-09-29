@@ -90,6 +90,7 @@ declare -a ROLES=(
   "roles/secretmanager.admin"
   "roles/secretmanager.secretAccessor"
   "roles/storage.objectViewer"
+  "roles/iam.serviceAccountAdmin"
 )
 
 for role in ${ROLES[@]}; do
