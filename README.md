@@ -197,7 +197,8 @@ Intel 11 NUCs (8c/16t, 64GB RAM and 250GB storage).
     ```
 
     > NOTE: Instance type defaults to `n1-standard-16`, stay within the `n1` or
-     `n2` family due to hypervisor access visibility inside the OS.
+     `n2` family due to hypervisor access visibility inside the OS. Restart the 
+     VMs. The vxlan not assigning sometimes to the first run of cnucs.
 
 
 ## Quick Start - 2. Provision Inventory
