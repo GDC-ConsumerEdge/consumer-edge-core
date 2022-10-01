@@ -8,7 +8,7 @@ echo "Using '${tmp_dir}' to put all binaries in"
 mkdir -p "${tmp_dir}/bin"
 
 # ACM Operator
-export acm_version="1.12.2"
+export acm_version="1.13.0"
 gsutil cp gs://config-management-release/released/${acm_version}/config-management-operator.yaml .
 mv config-management-operator.yaml "${tmp_dir}/bin"
 
@@ -30,7 +30,7 @@ tar xvf kubens.tar.gz
 chmod +x kubens
 mv kubens "${tmp_dir}/bin"
 
-export bmctl_version="1.12.1"
+export bmctl_version="1.13.0"
 gsutil cp gs://anthos-baremetal-release/bmctl/${bmctl_version}/linux-amd64/bmctl .
 chmod +x bmctl
 mv bmctl "${tmp_dir}/bin"
