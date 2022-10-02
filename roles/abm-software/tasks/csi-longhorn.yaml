@@ -60,34 +60,35 @@
   - longhorn-hmac-keys
   - longhorn-install
 
-- name: Download Longhorn YAML installation script
-  ansible.builtin.get_url:
-    url: "{{ longhorn_installation_yaml_url }}"
-    dest: "{{ longhorn_installation_dir }}/longhorn.yaml"
-    mode: '0400'
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  tags:
-  - longhorn-config-management
-  - longhorn-install
+# - name: Download Longhorn YAML installation script
+#   ansible.builtin.get_url:
+#     url: "{{ longhorn_installation_yaml_url }}"
+#     dest: "{{ longhorn_installation_dir }}/longhorn.yaml"
+#     mode: '0400'
+#   when:
+#     - (primary_cluster_machine is defined)
+#     - (primary_cluster_machine == true)
+#   tags:
+#   - longhorn-config-management
+#   - longhorn-install
 
-- name: Create Longhorn namespace and configmap
-  command:
-    cmd: kubectl apply -f {{ longhorn_installation_dir }}/longhorn.yaml
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  retries: 3
-  register: long_result
-  until: long_result.rc == 0
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  tags:
-  - longhorn-config-management
-  - longhorn-install
+# - name: Create Longhorn namespace and configmap
+#   command:
+#     cmd: kubectl apply -f {{ longhorn_installation_dir }}/longhorn.yaml
+#   when:
+#     - (primary_cluster_machine is defined)
+#     - (primary_cluster_machine == true)
+#   retries: 3
+#   register: long_result
+#   until: long_result.rc == 0
+#   environment:
+#     KUBECONFIG: "{{ kubeconfig_shared_location }}"
+#   tags:
+#   - longhorn-config-management
+#   - longhorn-install
 
 - name: Copy Longhorn namespace and configmap
+  run_once: true
   template:
     src: longhorn-default-setting.yml.j2
     dest: "{{ acm_config_files }}/longhorn-default-setting.yml"
@@ -99,6 +100,7 @@
   - longhorn-install
 
 - name: Create Longhorn namespace and configmap
+  run_once: true
   command:
     cmd: kubectl apply -f {{ acm_config_files }}/longhorn-default-setting.yml
   when:
