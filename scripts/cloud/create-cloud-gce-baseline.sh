@@ -175,9 +175,6 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 # Create init script bucket for GCE instances to use
 setup_init_bucket
 
-# Create backup bucket for volume backups
-setup_init_bucket ${BACKUP_BUCKET_NAME} ${PROJECT_ID}
-
 # Copy the init script to bucket for GCE startup
 copy_init_script
 

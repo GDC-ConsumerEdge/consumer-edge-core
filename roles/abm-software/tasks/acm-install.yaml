@@ -207,9 +207,9 @@
   - acm-root-repo
 
 - name: "Wait on ExternalSecrets to be deployed coming from RootRepo"
-  command:
-    cmd: kubectl wait --for=condition=available --timeout=600s deployment.apps/external-secrets -n external-secrets
-  retries: 10
+  shell: |
+    kubectl wait --for=condition=available --timeout=600s deployment.apps/external-secrets -n external-secrets
+  retries: 60
   delay: 10
   register: external_secret_deployment
   until: external_secret_deployment.rc == 0
