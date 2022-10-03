@@ -26,6 +26,5 @@ snapshot_output_folder: "{{ snapshot_config_folder }}/snapshots/output"
 # CDI add CPU Monitoring flag script run by cron.d
 cdi_cron_script_file: "/var/cdi-check-node.sh"
 
-# Pull Longhorn's installation from this URL (could be updated to a local site)
-longhorn_installation_yaml_url: "https://raw.githubusercontent.com/longhorn/longhorn/v1.3.0/deploy/longhorn.yaml"
-longhorn_installation_dir: "/tmp"
+# GCS bucket to hold Longhorn backups following this format gs://{{ longhorn_backup_bucket }}@us/{{ acm_cluster_name }}
+longhorn_backup_bucket: "longhorn-backup-{{ google_project_id }}"

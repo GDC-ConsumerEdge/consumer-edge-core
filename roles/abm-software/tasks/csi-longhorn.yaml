@@ -1,3 +1,31 @@
+# Create GCS Bucket for Backups
+- name: Check Longhorn GCS Backup Bucket
+  run_once: true
+  ignore_errors: true
+  shell: |
+    gsutil -q ls gs://{{ longhorn_backup_bucket }}/.dontremove > /dev/null 2>&1
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+  changed_when: longhorn_has_bucket.rc > 0
+  register: longhorn_has_bucket
+  tags:
+  - longhorn-backup
+  - longhorn-install
+
+- name: Create Longhorn Backup Bucket
+  run_once: true
+  shell: |
+    gsutil mb -p "{{ google_project_id }}" gs://{{ longhorn_backup_bucket }}
+    echo "do not remove this file" | gsutil cp - gs://{{ longhorn_backup_bucket }}/.dontremove
+  args:
+    executable: /bin/bash
+  when:
+  - longhorn_has_bucket.rc > 0 # not succeed
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+  tags:
+  - longhorn-backup
+  - longhorn-install
 
 # Get HMAC secret from Secret Manager
 - name: Get the HMAC cloud storage key from Secret Manager if it exists
@@ -59,33 +87,6 @@
   tags:
   - longhorn-hmac-keys
   - longhorn-install
-
-# - name: Download Longhorn YAML installation script
-#   ansible.builtin.get_url:
-#     url: "{{ longhorn_installation_yaml_url }}"
-#     dest: "{{ longhorn_installation_dir }}/longhorn.yaml"
-#     mode: '0400'
-#   when:
-#     - (primary_cluster_machine is defined)
-#     - (primary_cluster_machine == true)
-#   tags:
-#   - longhorn-config-management
-#   - longhorn-install
-
-# - name: Create Longhorn namespace and configmap
-#   command:
-#     cmd: kubectl apply -f {{ longhorn_installation_dir }}/longhorn.yaml
-#   when:
-#     - (primary_cluster_machine is defined)
-#     - (primary_cluster_machine == true)
-#   retries: 3
-#   register: long_result
-#   until: long_result.rc == 0
-#   environment:
-#     KUBECONFIG: "{{ kubeconfig_shared_location }}"
-#   tags:
-#   - longhorn-config-management
-#   - longhorn-install
 
 - name: Copy Longhorn namespace and configmap
   run_once: true

@@ -3,9 +3,7 @@
 - name: "Get login token for console"
   shell: |
     set -o pipefail
-    export SECRET_NAME=$(kubectl get serviceaccount console-cluster-reader -o jsonpath='{$.secrets[0].name}' -n default)
-    export KSA_TOKEN=$(kubectl get secret ${SECRET_NAME} -o jsonpath='{$.data.token}' -n default | base64 --decode)
-    export TOKEN_NAME="{{ cluster_name }}-k8s-token"
+    export KSA_TOKEN=$(kubectl get secret console-cluster-reader-ksa-secret -o jsonpath='{$.data.token}' | base64 --decode)
     echo $KSA_TOKEN
   register: token
   args:
