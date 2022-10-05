@@ -1,0 +1,31 @@
+---
+# Reference: https://ansible-lint.readthedocs.io/configuring/
+warn_list:
+- command-instead-of-module  # Using command rather than module.
+- command-instead-of-shell  # Use shell only when shell functionality is required.
+- deprecated-local-action  # Do not use 'local_action', use 'delegate_to: localhost'.
+- experimental  # all rules tagged as experimental
+- fqcn-builtins  # Use FQCN for builtin actions.
+- ignore-errors  # Use failed_when and specify error conditions instead of using ignore_errors.
+- jinja[spacing]  # Rule that looks inside jinja2 templates.
+- literal-compare  # Don't compare to literal True/False.
+- meta-incorrect  # meta/main.yml default values should be changed.
+- meta-no-info  # meta/main.yml should contain relevant info.
+- name[casing]  # Rule for checking task and play names.
+- no-changed-when  # Commands should not change things if nothing needs doing.
+- package-latest  # Package installs should not use latest.
+- risky-file-permissions  # File permissions unset or incorrect.
+- risky-shell-pipe  # Shells that use pipes should set the pipefail option.
+- role-name  # Role name {0} does not match ``^[a-z][a-z0-9_]*$`` pattern.
+- schema[meta]  # Perform JSON Schema Validation for known lintable kinds.
+- schema[playbook]  # Perform JSON Schema Validation for known lintable kinds.
+- schema[tasks]  # Perform JSON Schema Validation for known lintable kinds.
+- yaml[braces]  # Violations reported by yamllint.
+- yaml[brackets]  # Violations reported by yamllint.
+- yaml[colons]  # Violations reported by yamllint.
+- yaml[comments-indentation]  # Violations reported by yamllint.
+- yaml[comments]  # Violations reported by yamllint.
+- yaml[document-start]  # Violations reported by yamllint.
+- yaml[empty-lines]  # Violations reported by yamllint.
+- yaml[indentation]  # Violations reported by yamllint.
+- yaml[truthy]  # Violations reported by yamllint.
