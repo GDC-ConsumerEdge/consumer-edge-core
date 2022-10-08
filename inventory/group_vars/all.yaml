@@ -88,6 +88,10 @@ vpn_gateway_ips: [] # Gateway IPs for VPN
 # OSS Multus
 enable_multus_network: false # Enable Multus (Cannot be true when enable_vmruntime is true) -- https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/how-to/multi-nic
 
+
+### Multipath Disk Service - Can cause issues with SDS, very uncommon to need multipath unless using iSCSI. Defaults to false
+enable_multipath_service: false
+
 ###
 ### VM Runtime (KubeVirt + A4VM)
 ###
