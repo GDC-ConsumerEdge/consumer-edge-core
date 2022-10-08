@@ -207,3 +207,37 @@
   shell: "lsmod | grep tcm"
   register: tcm_exists
   failed_when: tcm_exists.rc != 0
+
+### Multipath Service (can cause bugs in SDS, very uncommon)\
+- name: Disable Multipath Daemon Service
+  ansible.builtin.service:
+    name: multipathd
+    state: "{{ (enable_multipath_service == true) | ternary('running','stopped')  }}"
+    enabled: "{{ enable_multipath_service }}"
+  when:
+  - (services['multipathd.service'] is defined)
+  - (services['multipathd.service'].status == 'enabled') or (services['multipathd.service'].state == 'running')
+  tags:
+  - multipath-config
+
+- name: Disable Multipath Tools Service
+  ansible.builtin.service:
+    name: multipath-tools
+    state: "{{ (enable_multipath_service == true) | ternary('running','stopped')  }}"
+    enabled: "{{ enable_multipath_service }}"
+  when:
+  - (services['multipath-tools.service'] is defined)
+  - (services['multipath-tools.service'].status == 'enabled') or (services['multipath-tools.service'].state == 'running')
+  tags:
+  - multipath-config
+
+- name: Disable Multipath Tools Boot Service
+  ansible.builtin.service:
+    name: multipath-tools-boot
+    state: "{{ (enable_multipath_service == true) | ternary('running','stopped')  }}"
+    enabled: "{{ enable_multipath_service }}"
+  when:
+  - (services['multipath-tools-boot.service'] is defined)
+  - (services['multipath-tools-boot.service'].status == 'enabled') or (services['multipath-tools-boot.service'].state == 'running')
+  tags:
+  - multipath-config

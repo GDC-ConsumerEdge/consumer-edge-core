@@ -1,7 +1,7 @@
 
 ---
 
-- hosts: workers
+- hosts: all
   become: true
   become_user: root
   gather_facts: false
@@ -11,6 +11,12 @@
       name: decrypt-ssh-key
   - name: Gathering Facts
     setup: {}
+    tags:
+    - always
+  - name: Populate service facts
+    service_facts:
+    tags:
+    - always
   roles:
     - abm-software
     - abm-post-install
@@ -19,21 +25,3 @@
   vars: []
   tags:
     - hardware
-
-- hosts: cloud_type_abm
-  become: true
-  become_user: root
-  pre_tasks:
-  - name: Decrypt SSH key
-    include_role:
-      name: decrypt-ssh-key
-  - name: Gathering Facts
-    setup: {}
-  roles:
-    - abm-software
-    - abm-post-install
-    - ansible-pull
-    - abm-login-token
-  vars: []
-  tags:
-    - cloud
