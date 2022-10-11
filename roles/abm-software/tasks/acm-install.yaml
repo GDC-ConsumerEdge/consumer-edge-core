@@ -223,6 +223,7 @@
   - external-secret-install
 
 - name: Setup Workload Identity for ACM Monitorin
+  run_once: true
   command:
     cmd: gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:{{ google_project_id }}.svc.id.goog[config-management-monitoring/default]" acm-monitoring-agent@{{ google_project_id }}.iam.gserviceaccount.com
   when:
@@ -234,7 +235,7 @@
 
 - name: "Wait on ExternalSecrets to be deployed coming from RootRepo"
   command:
-    cmd: kubectl annotate serviceaccount --namespace config-management-monitoring default iam.gke.io/gcp-service-account=acm-monitoring-agent@{{ google_project_id }}.iam.gserviceaccount.com
+    cmd: kubectl annotate serviceaccount default iam.gke.io/gcp-service-account=acm-monitoring-agent@{{ google_project_id }}.iam.gserviceaccount.com --namespace config-management-monitoring --overwrite=true
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   when:
