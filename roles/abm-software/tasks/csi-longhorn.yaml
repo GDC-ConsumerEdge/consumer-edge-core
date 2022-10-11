@@ -89,7 +89,6 @@
   - longhorn-install
 
 - name: Copy Longhorn namespace and configmap
-  run_once: true
   template:
     src: longhorn-default-setting.yml.j2
     dest: "{{ acm_config_files }}/longhorn-default-setting.yml"
@@ -101,7 +100,6 @@
   - longhorn-install
 
 - name: Create Longhorn namespace and configmap
-  run_once: true
   command:
     cmd: kubectl apply -f {{ acm_config_files }}/longhorn-default-setting.yml
   when:
