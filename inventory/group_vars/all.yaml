@@ -25,6 +25,12 @@ bmctl_version: "1.13.1" # If changed, set the `force_tools_upgrade` to true so n
 # Base folder to install ABM into
 abm_install_folder: "/var/abm-install"
 
+# abm workspace folder derived from all.yaml defined install folder
+abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"
+
+# Location of all GSA keys
+remote_gsa_key: "{{ abm_install_folder }}/keys"
+
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
 
@@ -33,6 +39,9 @@ force_tools_upgrade: false
 ###
 
 # Remote playbook for Ansible Pull to use (if empty, no ansible-pull used for this type of execution)
+#     example:
+#     ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
+#     ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
 ansible_pull_remote_execute_repo: ""
 
 # Default for ansible pull drift assistance (defaults to empty or no run)
@@ -46,7 +55,10 @@ ansible_pull_drift_repo: ""
 acm_version: "1.13.1"
 
 # Where to store ACM files during provisoning
-acm_config_files: "/var/acm-configs"
+acm_config_files: "{{ abm_install_folder }}/acm-configs"
+vmruntime_config_path: "{{ abm_install_folder }}/vmruntime"
+# Home directory for external secrets download and operations (TODO: Duplciated in post-install)
+external_secrets_files: "{{ abm_install_folder }}/external-secrets"
 
 ###
 ### SCM (Root Repo Configurations)
@@ -63,6 +75,9 @@ root_repository_branch: "{{ lookup('env', 'ROOT_REPO_BRANCH') | default('main', 
 # Directory to use as base
 root_repository_policy_dir: "{{ lookup('env', 'ROOT_REPO_DIR') | default('/config', True) }}"
 root_repository_sync_time: "15s" # ACM default is 15s
+
+# name of the first/primary root-sync object
+primary_root_sync_name: "primary-root-sync"
 
 ###
 ### Google Core Variables
@@ -108,6 +123,7 @@ snapshot_gcs_bucket_base: "{{ lookup('env', 'SNAPSHOT_GCS') | default( [ google_
 ### Storage Provider
 ###
 storage_provider: "longhorn" # Future Options: openebs, robin, none
+
 # Storage provider roots for disc storage
 storage_provider_roots: [ "/customer" ]
 # GSM Secret name used for Longhorn HMAC
@@ -142,8 +158,8 @@ google_kms: {
 local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
 tools_base_path: "/var/google-tools-install"
 
-## kubeconfig file locations
-kubeconfig_shared_root: "/var/kubeconfig"
+## kubeconfig link directory and file (so all users can access kubeconfig and env KUBECONFIG set to this location/file)
+kubeconfig_shared_root: "{{ abm_install_folder }}/kubeconfig"
 kubeconfig_shared_location: "{{ kubeconfig_shared_root }}/kubeconfig"
 
 #NOTE: A copy of this variable is in Molecule test `for google_tools`

@@ -159,8 +159,6 @@
     fi
   register: out
   changed_when: '"ADDED" in out.stdout_lines'
-  environment:
-    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
   loop: "{{ franchises }}"
   when:
     - (primary_cluster_machine is defined)
@@ -184,8 +182,6 @@
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
-  environment:
-    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
   tags:
   - abm-software
   - enable-acm

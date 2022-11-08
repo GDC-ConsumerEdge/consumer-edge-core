@@ -1,0 +1,25 @@
+applySpecVersion: 1
+spec:
+  configSync:
+    enabled: true
+    preventDrift: false
+  policyController:
+    # Set to true to install and enable Policy Controller
+    enabled: true
+    # Uncomment to prevent the template library from being installed
+    templateLibraryInstalled: false
+    # Uncomment to enable support for referential constraints
+    referentialRulesEnabled: true
+    # Uncomment to disable audit, adjust value to set audit interval
+    auditIntervalSeconds: 0
+    # Uncomment to log all denies and dryrun failures
+    logDeniesEnabled: true
+    # Uncomment to enable mutation
+    mutationEnabled: true
+    # Uncomment to exempt namespaces
+    exemptableNamespaces: ["default"]
+    # Uncomment to change the monitoring backends
+    # monitoring:
+    #     backends:
+    #     - cloudmonitoring
+    #     - prometheus

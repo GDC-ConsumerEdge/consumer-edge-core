@@ -4,17 +4,14 @@
 # Initial project ID to setup gcloud with
 google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
 
-# Scratch directory for tool installation
-tools_base_path: "/var/google-tools-install"
+# Base to hold tools
+tools_base_path: "{{ abm_install_folder }}/tools"
 
 # gcloud version to download (gcloud version) -- roughly kept up-to-date, the system will update when installed, keeping up-to-date just makes the install a little faster
 gcloud_version: "408.0.0"
 
 # Local GSA Key (needs to be provided via command line vars)
 local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
-
-# location of the GSA credentials file for gcloud initialization
-remote_gsa_key: "/var/keys"
 
 kubectx_version: "0.9.4"
 

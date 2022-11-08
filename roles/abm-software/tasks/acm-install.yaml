@@ -11,18 +11,33 @@
   - abm-software
   - enable-acm
 
-### Operator
+### ACM Setup
 
-# Download operator
-- name: "Download ACM Operator"
-  command:
-    cmd: "gsutil cp gs://config-management-release/released/{{ acm_version }}/config-management-operator.yaml {{ acm_config_files }}/config-management-operator.yaml"
-    creates: "{{ acm_config_files }}/config-management-operator.yaml"
-  environment:
-    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+# Check for ACM Operator
+- name: "Test for config-management-system namespace"
+  include_tasks: kubectl-presence.yml
+  vars:
+    name: "config-management-system"
+    type: "namespaces"
+    namespace: ""
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+    fact_name: "has_acm_ns"
   when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
   tags:
-  - abm-software
+  - acm-operator
+
+# # Download operator
+- name: "Create config-management-system namespace if needed"
+  command:
+    cmd: "kubectl create ns config-management-system"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+    - (has_acm_ns == false)
+  tags:
+  - acm-root-repo
 
 # Check for ACM Operator
 - name: "Test for config-management operator presence"
@@ -37,16 +52,22 @@
   tags:
   - acm-operator
 
-- name: "Install ACM Operator" # Wait for ConfigManagement & RootSync CRDs
+- name: "Copy over apply-spec file"
+  template:
+    src: apply-spec.yaml.j2
+    dest: "{{ acm_config_files }}/apply-spec.yaml"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  tags:
+  - acm-config-management
+  - updated-acm
+
+- name: "Install ACM Operator"
   shell: |
-      kubectl apply -f {{ acm_config_files }}/config-management-operator.yaml
-      sleep 10s
-      kubectl wait --for=condition=established --timeout=600s crd configmanagements.configmanagement.gke.io
-      exit $?
+      gcloud beta container fleet config-management apply --membership={{ cluster_name }} --config={{ acm_config_files }}/apply-spec.yaml --project={{ google_project_id }}
   args:
     executable: /bin/bash
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
@@ -58,54 +79,10 @@
   tags:
   - acm-operator
 
-### Create ConfigSync configuration objects
-- name: Copy config management configuration
-  template:
-    src: config-management.yaml.j2
-    dest: "{{ acm_config_files }}/config-management-configuration.yaml"
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  tags:
-  - acm-config-management
-
-- name: "Test for config-management"
-  include_tasks: kubectl-presence.yml
-  vars:
-    name: "config-management"
-    type: "configmanagements.configmanagement.gke.io"
-    namespace: "config-management-system"
-    kubeconfig: "{{ kubeconfig_shared_location }}"
-    fact_name: "has_config_management"
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  tags:
-  - acm-config-management
-
-- name: "Create Config Management Configuration"
-  shell: |
-    kubectl apply -f {{ acm_config_files }}/config-management-configuration.yaml
-    sleep 10s # just enough for the API to pick up the changes, then wait can take over
-    kubectl wait --for=condition=established --timeout=600s crd rootsyncs.configsync.gke.io
-    exit $?
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-    - (has_config_management == false)
-  retries: 5
-  delay: 10
-  register: cmc_result
-  until: cmc_result.rc == 0
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  tags:
-  - acm-config-management
-
 #### Root Repo Configuration
 
 # NOTE: If the git-creds secret already exists, no action is taken. There is NO effort to determine what type of secret so switching between types requires removal of the `git-creds` secret within the cluster
-- name: "Test for existing git-creds secret"
+- name: "Test for existing RootRepo git-creds secret"
   include_tasks: kubectl-presence.yml
   vars:
     name: "{{ root_repository_git_secret_name }}"
@@ -164,7 +141,7 @@
 - name: "Test for Root Repo installed"
   include_tasks: kubectl-presence.yml
   vars:
-    name: "root-sync"
+    name: "{{ primary_root_sync_name }}"
     type: "RootSync"
     namespace: "config-management-system"
     kubeconfig: "{{ kubeconfig_shared_location }}"
@@ -183,6 +160,10 @@
     exit $?
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  retries: 10
+  delay: 10
+  register: root_apply_result
+  until: root_apply_result.rc == 0
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
@@ -192,7 +173,7 @@
 
 - name: "Wait for RootReconciler deployment to be ready"
   command:
-    cmd: kubectl wait --for=condition=available --timeout=600s deployment.apps/root-reconciler -n config-management-system
+    cmd: kubectl wait --for=condition=available --timeout=600s deployment.apps/root-reconciler-{{ primary_root_sync_name }} -n config-management-system
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   retries: 5

@@ -13,10 +13,9 @@
     - primary_cluster_machine is defined
     - primary_cluster_machine == True
 
-
 - name: split bucket information
   set_fact:
-    buckets: "{{ buckets + [ item | regex_search('^(gs:)\/\/([a-z-]*)\/([a-z0-9-]+)\/([a-z0-9-.TZ]+)', '\\2', '\\3', '\\4') ] }}"
+    buckets: "{{ buckets + [ item | regex_search('^(gs:)\/\/([a-zA-Z0-9.\\-_]{1,255})\/([a-z0-9-]+)\/([a-z0-9-.TZ]+)', '\\2', '\\3', '\\4') ] }}"
   with_items:
   - "{{ snapshot_list.stdout_lines }}"
   when:
@@ -32,3 +31,4 @@
   when:
     - primary_cluster_machine is defined
     - primary_cluster_machine == True
+    - buckets is defined and (buckets | length>0 )

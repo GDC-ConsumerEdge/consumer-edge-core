@@ -27,8 +27,6 @@
     args:
       executable: /bin/bash
       creates: /var/nothing
-    environment:
-      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - abm-install
     - abm-once
@@ -40,8 +38,6 @@
       cmd: gcloud projects add-iam-policy-binding {{ google_project_id }} --member="serviceAccount:{{ item.0.name }}@{{ google_project_id }}.iam.gserviceaccount.com" --role="{{ item.1 }}"
     loop: "{{ service_accounts | subelements('roles') }}"
     run_once: true
-    environment:
-      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - abm-install
     - abm-once
@@ -68,8 +64,6 @@
     changed_when: "'NO SECRET' in secret_exists.stdout"
     ignore_errors: true
     loop: "{{ service_accounts }}"
-    environment:
-      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - abm-once
     - abm-debug
@@ -88,8 +82,6 @@
     loop: "{{ secret_exists.results }}"
     loop_control:
       loop_var: entry
-    environment:
-      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - abm-once
     - abm-debug
@@ -103,8 +95,6 @@
       executable: /bin/bash
       creates: "{{ remote_gsa_key }}/{{ item.keyfile }}"
     loop: "{{ service_accounts }}"
-    environment:
-      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - abm-once
     - abm-debug
@@ -198,7 +188,7 @@
     args:
       chdir: "{{ abm_install_folder }}"
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_gsa_key }}/gsa-key.json"
     when:
       - primary_cluster_machine is defined
       - abm_installed.stat.exists == False
@@ -221,7 +211,7 @@
     async: 7200 # run for up to 60 minutes
     #poll: 30 # poll status every 30 seconds
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_gsa_key }}/gsa-key.json"
     tags:
     - abm-install
     - abm-create
@@ -237,8 +227,7 @@
     command:
       cmd: gcloud container hub memberships describe {{ cluster_name }} --format="value(name)" --project {{ google_project_id }}
     environment:
-      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-      GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_gsa_key }}/gsa-key.json"
     tags:
     - abm-install
     - abm-verify-install

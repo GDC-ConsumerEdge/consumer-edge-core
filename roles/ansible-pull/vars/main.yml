@@ -1,5 +1,5 @@
 # Base folder to install and run playbooks
-ansible_pull_workdir: /var/ansible-pull
+ansible_pull_workdir: "{{ abm_install_folder }}/ansible-pull"
 
 ansible_pull_workdir_permissions: "0700" # lock out all others except root
 

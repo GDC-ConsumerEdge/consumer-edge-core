@@ -1,2 +1,4 @@
 
 abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"
+
+gcs_bucketname_regex: "[a-zA-Z0-9.\\-_]{1,255}"

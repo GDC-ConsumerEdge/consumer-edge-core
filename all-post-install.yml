@@ -22,4 +22,4 @@
     - abm-post-install
     - update-automation
   vars:
-    kubeconfig_shared_location: "/var/kubeconfig/kubeconfig"
+    kubeconfig_shared_location: "{{ abm_install_folder }}/kubeconfig/kubeconfig"
