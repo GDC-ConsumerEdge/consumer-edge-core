@@ -1,0 +1,43 @@
+- name: "Backup install and configuration files before fully removing"
+  community.general.archive:
+    path: "{{ abm_install_folder }}"
+    dest: "/tmp/abm-full-{{ ansible_date_time.iso8601_basic_short }}.tar.gz"
+    format: gz
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
+  tags:
+    - abm-remove
+    - never
+
+- name: "Remove the ABM installation (cluster removal only)"
+  command:
+    cmd: bmctl reset -c {{ cluster_name }}
+  args:
+    chdir: "{{ abm_install_folder }}"
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+    GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_gsa_key }}/gsa-key.json"
+  tags:
+    - abm-remove
+    - never # must specify `--tags never` on the CLI to run this
+
+- name: Remove install folder (bmctl_workspace)
+  ansible.builtin.file:
+    path: "{{ abm_workspace_folder }}"
+    state: absent
+  tags:
+    - abm-remove
+    - never # must specify `--tags never` on the CLI to run this
+
+- name: Remove kubeconfig folder
+  ansible.builtin.file:
+    path: "{{ kubeconfig_shared_root }}"
+    state: absent
+  tags:
+  - abm-remove
+  - kubeconfig-remove
+  - never

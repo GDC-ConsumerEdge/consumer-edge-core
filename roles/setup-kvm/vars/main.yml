@@ -4,5 +4,3 @@ libvirt_home: "/var/lib/libvirt/images"
 
 # Where to place the custom images
 image_base_dir: "{{ libvirt_home }}/base"
-
-root_ssh_key: "/root/.ssh/id_rsa"

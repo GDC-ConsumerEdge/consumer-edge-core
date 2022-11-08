@@ -4,7 +4,7 @@ FROM ubuntu:20.04
 # - ENV variables
 
 ENV DEBIAN_FRONTEND=noninteractive
-ARG GCLOUD_VERSION="384.0.0"
+ARG GCLOUD_VERSION="408.0.0"
 
 RUN apt-get update && apt-get -y upgrade
 
@@ -53,6 +53,8 @@ COPY requirements.txt /tmp/requirements.txt
 RUN pip install --require-hashes -r /tmp/requirements.txt
 
 WORKDIR /var/consumer-edge-install
+
+RUN ansible-galaxy collection install community.general
 
 # Run a startup script on start so-as to auto-populate functionality from dynamically added volume
 CMD direnv allow . \

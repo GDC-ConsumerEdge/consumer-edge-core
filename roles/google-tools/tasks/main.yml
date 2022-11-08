@@ -75,7 +75,7 @@
     command:
       cmd: gcloud components install kubectl kustomize anthos-auth kpt nomos gsutil kubectl-oidc alpha beta -q
       creates: "{{ tools_base_path }}/google-cloud-sdk/bin/kubectl"
-    environment:
+    environment: # NOTE: This environment is needed until the components are all installed and added to /usr/local/bin
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - initial-install
@@ -120,7 +120,7 @@
   - name: Setting up Google App Creds for non-interactive shells
     lineinfile:
       path: /etc/environment
-      line: 'GOOGLE_APPLICATION_CREDENTIALS="/var/keys/gsa-key.json"'
+      line: 'GOOGLE_APPLICATION_CREDENTIALS="{{ remote_gsa_key }}/gsa-key.json"'
     tags:
     - profile
     - initial-install
@@ -131,7 +131,7 @@
     lineinfile:
       path: /etc/environment
       regexp: 'PATH="(\/usr\/local\/sbin:\/usr\/local\/bin:\/usr\/sbin:\/usr\/bin:\/sbin:\/bin:\/usr\/games:\/usr\/local\/games:\/snap\/bin)"$' #uugghhly...but works
-      line: 'PATH="/var/google-tools-install/google-cloud-sdk/bin:\1"' #prepend gcloud (snap auto installs gcloud on GCE instances)
+      line: 'PATH="{{ tools_base_path }}/google-cloud-sdk/bin:\1"' #prepend gcloud (snap auto installs gcloud on GCE instances)
       backrefs: yes
       state: present
     tags:
@@ -143,7 +143,7 @@
   - name: Add gcloud BASH completion
     lineinfile:
       path: /etc/profile.d/bash_completion.sh
-      line: "if [ -f '/var/google-tools-install/google-cloud-sdk/completion.bash.inc' ]; then source '/var/google-tools-install/google-cloud-sdk/completion.bash.inc'; fi"
+      line: "if [ -f '{{ tools_base_path }}/google-cloud-sdk/completion.bash.inc' ]; then source '{{ tools_base_path }}/google-cloud-sdk/completion.bash.inc'; fi"
     tags:
     - profile
     - initial-install
@@ -172,16 +172,14 @@
 
   - name: Enable services
     command:
-      # https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/installing/install-prereq
       cmd: gcloud services enable {{ gcp_services_required | join(' ') }} --project={{ google_project_id }}
     run_once: true # only one in whole inventory to run this
-    environment:
-      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     when:
       - gcp_services_required is defined
       - (gcp_services_required|length>0)
     tags:
     - initial-install
+    - terraform
 
   - name: Set Default Region
     command:
@@ -247,8 +245,6 @@
     args:
       creates: /usr/bin/kubectl-virt
       chdir: "{{ tools_base_path }}"
-    environment:
-      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:
     - optional
     - tool-install

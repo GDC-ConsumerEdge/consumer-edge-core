@@ -1,49 +1,27 @@
 
 - name: Prompt reminding about tags
   debug:
-    msg: "IF you are trying to run this and do not see any progress, perhaps you forgot the '--tags never'"
+    msg: "IF you are trying to run this and do not see any progress, perhaps you forgot the '--tags never'"  # must specify `--tags never` on the CLI to run this
   tags:
     - abm-remove
 
-- name: "Remove the ABM installation (cluster removal only)"
-  command:
-    cmd: bmctl reset -c {{ cluster_name }}
-  args:
-    chdir: "{{ abm_install_folder }}"
-  when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-    GOOGLE_APPLICATION_CREDENTIALS: "/var/keys/gsa-key.json"
-  tags:
-    - abm-remove
-    - never # must specify `--tags never` on the CLI to run this
-
-- name: Remove install folder (bmctl_workspace)
-  ansible.builtin.file:
+- name: Check if abm-installation folder exists
+  stat:
     path: "{{ abm_workspace_folder }}"
-    state: absent
+  register: has_abm_workspace
+  tags:
+    - check-abm-remove
+    - never
+
+- name: Remove the ABM cluster with cloud and local
+  import_tasks: remove-abm.yaml
+  when:
+  - has_abm_workspace is defined
+  - has_abm_workspace.stat.exists
+  - has_abm_workspace.stat.isdir
   tags:
     - abm-remove
-    - never # must specify `--tags never` on the CLI to run this
-
-- name: Remove ACM Config files
-  ansible.builtin.file:
-    path: "{{ acm_config_files }}"
-    state: absent
-  tags:
-    - abm-remove
-    - never # must specify `--tags never` on the CLI to run this
-
-- name: Remove kubeconfig folder
-  ansible.builtin.file:
-    path: "{{ kubeconfig_shared_root }}"
-    state: absent
-  tags:
-  - abm-remove
-  - kubeconfig-remove
-  - never
+    - never
 
 - name: Archive current cluster snapshots
   import_tasks: remove-snapshot.yaml
@@ -52,7 +30,7 @@
     - (primary_cluster_machine == true)
   tags:
     - snapshot-remove
-    - never # must specify `--tags never` on the CLI to run this
+    - never
 
 - name: Remove ABM Workspace
   ansible.builtin.file:
@@ -60,4 +38,4 @@
     state: absent
   tags:
     - abm-remove
-    - never # must specify `--tags never` on the CLI to run this
+    - never

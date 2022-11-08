@@ -1,11 +1,4 @@
 
-# Home directory for ACM download and operations
-acm_config_files: "/var/acm-configs"
-
-vmruntime_config_path: "/var/vmruntime"
-
-# Home directory for external secrets download and operations (TODO: Duplciated in post-install)
-external_secrets_files: "/var/external-secrets"
 
 # GSA Created and granted permissions in `all.yaml`
 root_repository_service_account_email: source-repo-agent@{{ google_project_id }}.iam.gserviceaccount.com
@@ -24,7 +17,7 @@ snapshot_config_file: "{{ snapshot_config_folder }}/snapshot-config.yaml"
 snapshot_output_folder: "{{ snapshot_config_folder }}/snapshots/output"
 
 # CDI add CPU Monitoring flag script run by cron.d
-cdi_cron_script_file: "/var/cdi-check-node.sh"
+cdi_cron_script_file: "{{ abm_install_folder }}/cdi-check-node.sh"
 
 # GCS bucket to hold Longhorn backups following this format gs://{{ longhorn_backup_bucket }}@us/{{ acm_cluster_name }}
 longhorn_backup_bucket: "longhorn-backup-{{ google_project_id }}"

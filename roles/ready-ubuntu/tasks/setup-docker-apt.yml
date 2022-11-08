@@ -80,5 +80,3 @@
 - name: Set GCloud to authenticate docker
   command:
     cmd: gcloud auth configure-docker -q
-  environment:
-    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"

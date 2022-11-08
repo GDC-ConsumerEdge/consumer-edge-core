@@ -33,7 +33,6 @@
     - kvm-install
     - kvm-packages
 
-# TODO: Refactor timeout
 - name: Reset ssh if KVM dependencies are active
   meta: reset_connection
   when: kvm_check.rc > 0

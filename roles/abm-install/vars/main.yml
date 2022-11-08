@@ -1,12 +1,6 @@
 ---
 # vars file for abm-install
 
-# abm workspace folder derived from all.yaml defined install folder
-abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"
-
-# Match with Google-Tools (by convention, not required, but good idea)
-remote_gsa_key: "/var/keys"
-
 # Edge API
 edge_api_enabled: false
 edge_api_location: us-central1 # same as cloud-ops region {{ google_region }}, but hard-coded as API is only in us-central1

@@ -1,10 +1,10 @@
 #jinja2: lstrip_blocks: "True", trim_blocks: "True"
 
 # root-sync.yaml
-apiVersion: configsync.gke.io/v1alpha1
+apiVersion: configsync.gke.io/v1beta1
 kind: RootSync
 metadata:
-  name: root-sync
+  name: "{{ primary_root_sync_name }}"
   namespace: config-management-system
 spec:
   sourceFormat: hierarchy
