@@ -180,6 +180,7 @@
     tags:
     - initial-install
     - terraform
+    - gcloud-mutate
 
   - name: Set Default Region
     command:
@@ -189,6 +190,7 @@
     tags:
     - initial-install
     - tool-install
+    - gcloud-command
 
   - name: Set Default Zone
     command:
@@ -198,6 +200,7 @@
     tags:
     - tool-install
     - initial-install
+    - gcloud-command
 
 ### IF upgrading BMCTL, remove existing
   - name: Remove bmctl

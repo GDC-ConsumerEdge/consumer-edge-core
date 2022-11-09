@@ -167,6 +167,7 @@
   - abm-software
   - enable-acm
   - post-acm
+  - gcloud-mutate
 
 - name: "Add new version to git-cred franchise secret in GCP Secret Manager IF no current or active versions exists"
   run_once: true # only need to run on one machine, create all of the secets
@@ -186,6 +187,7 @@
   - abm-software
   - enable-acm
   - post-acm
+  - gcloud-mutate
 
 - name: Setup OIDC in cluster
   import_tasks: setup-oidc.yaml

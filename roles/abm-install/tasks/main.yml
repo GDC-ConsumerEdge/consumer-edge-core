@@ -31,6 +31,7 @@
     - abm-install
     - abm-once
     - acm-monitoring-config
+    - gcloud-mutate
 
 
   - name: Add roles to service accounts
@@ -41,14 +42,38 @@
     tags:
     - abm-install
     - abm-once
+    - gcloud-mutate
 
-### Check if the GSA keys exists in Secrets Manager
-  - name: "Look to see if GSA keys exists in secrets manager"
+### If Secret in secret manager does not exist, then create one
+  - name: "Create Secret if SA keys does not exists in secrets manager"
     run_once: true # only one machine to do this
     shell: |
       export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.name }}" --format="value(name)" --project="{{ google_project_id }}")
       if [ -z "$HAS_SECRET" ]; then
         gcloud secrets create {{ item.name }} --replication-policy="automatic" --project={{ google_project_id }}
+        echo "NO SECRET {{ item.name }}"
+        exit 1 # exit early, no chance there's a version since there wasn't a secret
+      fi
+    args:
+      executable: /bin/bash
+    register: create_secret
+    changed_when: "'NO SECRET' in create_secret.stdout"
+    ignore_errors: true
+    loop: "{{ service_accounts }}"
+    tags:
+    - abm-once
+    - abm-debug
+    - abm-gsa-keys
+    - abm-install
+    - gcloud-mutate
+
+
+### Check if secret and version exists 
+  - name: "Check if secret and version exists in secrets manager"
+    run_once: true # only one machine to do this
+    shell: |
+      export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.name }}" --format="value(name)" --project="{{ google_project_id }}")
+      if [ -z "$HAS_SECRET" ]; then
         echo "NO SECRET {{ item.name }}"
         exit 1 # exit early, no chance there's a version since there wasn't a secret
       fi
@@ -69,8 +94,10 @@
     - abm-debug
     - abm-gsa-keys
     - abm-install
+    - gcloud-command
 
-  - name: Create new GSA keys for all service accounts in configuration and push to Secret Manager
+
+  - name: Create new keys for all service accounts in configuration and push to Secret Manager
     run_once: true # only one machine to do this
     shell: |
       gcloud iam service-accounts keys create /tmp/{{ entry.item.keyfile }} --iam-account={{ entry.item.name }}@{{ google_project_id }}.iam.gserviceaccount.com --project={{ google_project_id }}
@@ -87,8 +114,9 @@
     - abm-debug
     - abm-gsa-keys
     - abm-install
+    - gcloud-mutate
 
-  - name: Write GSA key files from secret manager
+  - name: Download key files from secret manager locally 
     shell: |
       gcloud secrets versions access latest --secret="{{ item.name }}" >> {{ remote_gsa_key }}/{{ item.keyfile }}
     args:
@@ -100,6 +128,7 @@
     - abm-debug
     - abm-gsa-keys
     - abm-install
+    - gcloud-command
 
 ### Create or ensure root folder exists for storage provider
   - name: Create the storage provider folder(s)
@@ -232,6 +261,7 @@
     - abm-install
     - abm-verify-install
     - abm-check-membership
+    - gcloud-command
 
 #### Post Install Activities
   - name: Create PVC Folder
