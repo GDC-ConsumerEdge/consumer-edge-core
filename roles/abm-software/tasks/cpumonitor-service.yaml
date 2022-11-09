@@ -1,3 +1,30 @@
+# add CPU manager static state
+
+- name: Enable CPU Manager static state
+  ansible.builtin.lineinfile:
+    path: /var/lib/kubelet/config.yaml
+    regexp: '^cpuManagerPolicy:'
+    line: "cpuManagerPolicy: static"
+  tags:
+  - enable-cpu-manager
+
+- name: Remove the existing CPU manager file
+  ansible.builtin.file:
+    path: /var/lib/kubelet/cpu_manager_state
+    state: absent
+  tags:
+  - enable-cpu-manager
+
+- name: Restart Kubelet Service
+  systemd:
+    state: restarted
+    name: kubelet
+  retries: 3
+  delay: 10
+  register: kubelet_service_result
+  until: kubelet_service_result is succeeded
+  tags:
+  - enable-cpu-manager
 
 - name: Copy cdi-check-node script
   template:
