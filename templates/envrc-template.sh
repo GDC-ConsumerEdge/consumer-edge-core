@@ -4,19 +4,19 @@ export LOCAL_GSA_FILE=$(pwd)/build-artifacts/consumer-edge-gsa.json
 ### GCP Project Settings (change if needed per each provisioning run)
 ###
 # GCP Project ID
-export PROJECT_ID="$PROJECT_ID"
+export PROJECT_ID="edge-test-368507"
 # Bucket to store cluster snapshot information
 export SNAPSHOT_GCS="$PROJECT_ID-cluster-snapshots"
 # GCP Project Region (Adjust as desired)
-export REGION="$REGION"
+export REGION="us-central1"
 # GCP Project Zone (Adjust as desired)
-export ZONE="$ZONE"
+export ZONE="us-central1-a"
 ###
 ### ACM Settings.  ACM Repos have several authentication to access the repository.
 ###
 ### Options are: none (default), token, gcpserviceaccount, ssh
 ###
-export ROOT_REPO_TYPE="token"
+export ROOT_REPO_TYPE="none"
 ######  SSH Type #############
 # Path to the SSH private key for the SSH user type (must be in build-artifacts/ folder)
 # export SCM_SSH_PRIVATE_KEYFILE="$(pwd)/build-artifacts/scm-ssh-private-key-example"
