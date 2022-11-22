@@ -14,6 +14,9 @@
     path: "{{ dashboard_config_base }}"
     state: directory
     mode: '0755'
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
   tags:
   - abm-post-install
   - dashboard-install
@@ -35,22 +38,35 @@
     dest: "{{ dashboard_config_base }}"
   with_fileglob:
     - "monitoring-dashboard/{{ monitoring_dashboard_type }}/*.json"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  tags:
+  - abm-post-install
+  - dashboard-install
+
+- name: Check to see if dashboards have already been copied over
+  run_once: true
+  shell: |
+    gcloud monitoring dashboards list --format="value(displayName)" --filter="labels=retail-edge" --verbosity=error --project "{{ google_project_id }}"
+  register: dashboard_contents
   tags:
   - abm-post-install
   - dashboard-install
 
 # ### Add custom monitoring dashboards to GCP project
-# - name: Add custom monitoring dashboards to GCP Project
-#   run_once: true
-#   shell: |  # TODO: Add a check to see if the dashboard already exists
-#     gcloud --project "{{ google_project_id }}" monitoring dashboards create --config-from-file "{{ item.dest }}"
-#   loop: "{{ dashboards.results }}"
-#   when:
-#     - (primary_cluster_machine is defined)
-#     - (primary_cluster_machine == true)
-#   tags:
-#   - abm-post-install
-#   - dashboard-install
+- name: Add custom monitoring dashboards to GCP Project
+  run_once: true
+  shell: |
+    gcloud monitoring dashboards create --config-from-file "{{ item.dest }}" --project "{{ google_project_id }}"
+  loop: "{{ dashboards.results }}"
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+    - dashboard_contents.stdout_lines | length <= 0
+  tags:
+  - abm-post-install
+  - dashboard-install
 
 ### Setup CDI cpumanager flag for nodes
 - name: "Add CDI required cpumanager label for nodes"
