@@ -11,6 +11,7 @@
   tags:
   - longhorn-backup
   - longhorn-install
+  - gcloud-command
 
 - name: Create Longhorn Backup Bucket
   run_once: true
@@ -26,6 +27,7 @@
   tags:
   - longhorn-backup
   - longhorn-install
+  - gcloud-mutate
 
 # Get HMAC secret from Secret Manager
 - name: Get the HMAC cloud storage key from Secret Manager if it exists
@@ -52,6 +54,7 @@
   tags:
   - longhorn-hmac-keys
   - longhorn-install
+  - gcloud-command
 
 # TODO: Check for exsiting secret and/or HMAC key on bucket before creating a new one
 - name: Create new HMAC key for longhorn backup to cloud storage and push to Secret Manager
@@ -87,6 +90,7 @@
   tags:
   - longhorn-hmac-keys
   - longhorn-install
+  - gcloud-mutate
 
 - name: Copy Longhorn namespace and configmap
   template:
