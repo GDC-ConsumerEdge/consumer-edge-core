@@ -197,7 +197,8 @@ install_observability: false
 # All of the Service Accounts used in this solution
 service_accounts: [
   {
-    name: abm-gcr-agent,
+    name: "abm-gcr-agent-{{ cluster_name }}",
+    id: "abm-gcr-agent",
     keyfile: abm-gcr-agent-creds.json,
     description: "ABM GCR Agent Account",
     roles: [
@@ -205,7 +206,8 @@ service_accounts: [
     ]
   },
   {
-    name: abm-gke-connect-agent,
+    name: "abm-gke-connect-agent-{{ cluster_name }}",
+    id: "abm-gke-connect-agent",
     keyfile: abm-gke-connect-agent-creds.json,
     description: "ABM GKE Connect Agent Service Account",
     roles: [
@@ -213,7 +215,8 @@ service_accounts: [
     ]
   },
   {
-    name: abm-gke-register-agent,
+    name: "abm-gke-register-agent-{{ cluster_name }}",
+    id: "abm-gke-register-agent",
     keyfile: abm-gke-register-agent-creds.json,
     description: "ABM GKE Connect Register Account",
     roles: [
@@ -221,7 +224,8 @@ service_accounts: [
     ]
   },
   {
-    name: acm-monitoring-agent,
+    name: "acm-monitoring-agent-{{ cluster_name }}",
+    id: "acm-monitoring-agent",
     keyfile: acm-monitoring-agent.json,
     description: "ACM Monitoring Account",
     roles: [
@@ -229,7 +233,8 @@ service_accounts: [
     ]
   },
   {
-    name: abm-cloud-operations-agent,
+    name: "abm-ops-agent-{{ cluster_name }}",
+    id: "abm-ops-agent",
     keyfile: abm-cloud-operations-agent-creds.json,
     description: "ABM Cloud Operations Service Account",
     roles: [
@@ -241,7 +246,8 @@ service_accounts: [
     ]
   },
   {
-    name: external-secrets-k8s,
+    name: "external-secrets-k8s-{{ cluster_name }}",
+    id: "external-secrets-k8s",
     keyfile: external-secrets-k8s-creds.json,
     description: "External Secrets Service Account",
     roles: [
@@ -250,7 +256,8 @@ service_accounts: [
     ]
   },
   {
-    name: longhorn-cloud-storage,
+    name: "longhorn-cloud-storage-{{ cluster_name }}",
+    id: "onghorn-cloud-storage",
     keyfile: longhorn-cloud-storage-creds.json,
     description: "Longhorn taking volume backups on cloud storage ",
     roles: [
@@ -258,7 +265,8 @@ service_accounts: [
     ]
   },
   {
-    name: gateway-connect-agent,
+    name: "gateway-connect-agent-{{ cluster_name }}",
+    id: "gateway-connect-agent",
     keyfile: gateway-connect-agent-creds.json,
     description: "Agent used for Gateway Connect",
     roles: [
@@ -267,7 +275,8 @@ service_accounts: [
     ]
   },
   {
-    name: source-repo-agent,
+    name: "source-repo-agent-{{ cluster_name }}",
+    id: "source-repo-agent",
     keyfile: google-source-repo-agent.json,
     description: "Agent used for GSR",
     roles: [
@@ -275,7 +284,8 @@ service_accounts: [
     ]
   },
   {
-    name: cdi-import-agent,
+    name: "cdi-import-agent-{{ cluster_name }}",
+    id: "cdi-import-agent",
     keyfile: cdi-import-agent-creds.json,
     description: "Agent used for CDI image access",
     roles: [
@@ -283,7 +293,8 @@ service_accounts: [
     ]
   },
   {
-    name: storage-agent-svc-account,
+    name: "storage-agent-{{ cluster_name }}",
+    id: "storage-agent",
     keyfile: storage-agent-svc-account-creds.json,
     description: "Agent used for Snapshot Cloud Storage",
     roles: [
