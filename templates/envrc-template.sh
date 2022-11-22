@@ -4,9 +4,9 @@ export LOCAL_GSA_FILE=$(pwd)/build-artifacts/consumer-edge-gsa.json
 ### GCP Project Settings (change if needed per each provisioning run)
 ###
 # GCP Project ID
-export PROJECT_ID="edge-test-368507"
+export PROJECT_ID="${PROJECT_ID}"
 # Bucket to store cluster snapshot information
-export SNAPSHOT_GCS="$PROJECT_ID-cluster-snapshots"
+export SNAPSHOT_GCS="${PROJECT_ID}-cluster-snapshots"
 # GCP Project Region (Adjust as desired)
 export REGION="us-central1"
 # GCP Project Zone (Adjust as desired)
@@ -22,8 +22,8 @@ export ROOT_REPO_TYPE="none"
 # export SCM_SSH_PRIVATE_KEYFILE="$(pwd)/build-artifacts/scm-ssh-private-key-example"
 ######  Token Type #############
 # Values for Personal Access Token when REPO_TYPE is "token"
-export SCM_TOKEN_USER="$SCM_TOKEN_USER" # Only used if REPO_TYPE is "token"
-export SCM_TOKEN_TOKEN="$SCM_TOKEN_TOKEN" # Only used if REPO_TYPE is "token"
+export SCM_TOKEN_USER="${SCM_TOKEN_USER}" # Only used if REPO_TYPE is "token"
+export SCM_TOKEN_TOKEN="${SCM_TOKEN_TOKEN}" # Only used if REPO_TYPE is "token"
 ###
 ### Root Repo URL
 ###    NOTE: ROOT_REPO_TYPE of "ssh" MUST start with ssh:// (not git://)
