@@ -10,6 +10,7 @@
   tags:
   - abm-software
   - enable-acm
+  - gcloud-mutate
 
 ### ACM Setup
 
@@ -78,6 +79,7 @@
   until: result.rc == 0
   tags:
   - acm-operator
+  - gcloud-command
 
 #### Root Repo Configuration
 
@@ -203,7 +205,7 @@
   - acm-root-repo
   - external-secret-install
 
-- name: Setup Workload Identity for ACM Monitorin
+- name: Setup Workload Identity for ACM Monitoring
   run_once: true
   command:
     cmd: gcloud iam service-accounts add-iam-policy-binding --role roles/iam.workloadIdentityUser --member "serviceAccount:{{ google_project_id }}.svc.id.goog[config-management-monitoring/default]" acm-monitoring-agent@{{ google_project_id }}.iam.gserviceaccount.com
@@ -213,6 +215,7 @@
   tags:
   - acm-root-repo
   - acm-monitoring-config
+  - gcloud-mutate
 
 - name: "Wait on ExternalSecrets to be deployed coming from RootRepo"
   command:
