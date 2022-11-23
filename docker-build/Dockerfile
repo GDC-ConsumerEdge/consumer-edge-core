@@ -13,6 +13,7 @@ RUN ln -fs /usr/share/zoneinfo/UTC /etc/localtime
 RUN apt-get install -y --no-install-recommends tzdata
 #install dependencies...
 RUN apt-get install -y apt-utils vim nano python3-pip python-is-python3 curl wget openssh-server cron gettext iputils-ping direnv
+RUN pip install --upgrade pip
 
 RUN mkdir -p /tmp/gcloud-install \
     && mkdir -p /var/gcloud-sdk \
@@ -22,6 +23,10 @@ RUN mkdir -p /tmp/gcloud-install \
 
 # Auto-update upon building
 RUN /var/gcloud-sdk/google-cloud-sdk/bin/gcloud components update --quiet --verbosity=critical --no-user-output-enabled
+
+# Setup Ansible and other PIP-based dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --require-hashes -r /tmp/requirements.txt
 
 # Setup CRON for configuration drift script
 COPY docker-config-drift.cron /etc/cron.d/docker-config-drift
@@ -47,10 +52,6 @@ RUN printf '\n#direnv hook\neval "$(direnv hook bash)"\n' >> ~/.bashrc
 RUN mkdir -p /var/consumer-edge-install
 
 VOLUME [ "/var/consumer-edge-install" ]
-
-# Setup Ansible and other PIP-based dependencies
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install --require-hashes -r /tmp/requirements.txt
 
 WORKDIR /var/consumer-edge-install
 
