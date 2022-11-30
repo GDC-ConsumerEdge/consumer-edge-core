@@ -97,12 +97,20 @@ fi
 # reset for configuration errors
 ERROR=0
 
-# Check for SSH Keys
-if [[ ! -f "./build-artifacts/consumer-edge-machine.encrypted" || ! -f "./build-artifacts/consumer-edge-machine.pub" ]]; then
-    pretty_print "ERROR: Encrypted SSH Key './build-artifacts/consumer-edge-machine.encrypted' and/or './build-artifacts/consumer-edge-machine.pub' were not found, did you generate them or encrypt the private key?" "ERROR"
+# Check for Private Encrypted SSH Keys
+if [[ ! -f "./build-artifacts/consumer-edge-machine.encrypted" ]]; then
+    pretty_print "ERROR: Encrypted SSH Key './build-artifacts/consumer-edge-machine.encrypted' was not found, did you generate and encrypt the private key?" "ERROR"
     exit 1
 else
-    pretty_print "PASS: SSH Keys found"
+    pretty_print "PASS: Encrypted SSH Private Key found"
+fi
+
+# Check for Public SSH Key
+if [[ ! -f "./build-artifacts/consumer-edge-machine.pub" ]]; then
+    pretty_print "ERROR: Public SSH Key './build-artifacts/consumer-edge-machine.pub' was not found, did you generate the public key along with the private key?" "ERROR"
+    exit 1
+else
+    pretty_print "PASS: Public SSH Key found"
 fi
 
 # Check for GSA Keys
@@ -121,7 +129,7 @@ else
 fi
 
 # Check for GCP Inventory
-if [[ ! -f "./inventory/inventory.yaml" ]]; then
+if [[ ! -f "./inventory/inventory.yaml" && ! -f "./inventory/inventory.yml" ]]; then
     pretty_print "WARNING: Physical Inventory file was not found. IF using physical devices, this file MUST be setup and working." "WARN"
 else
     pretty_print "PASS: Physical inventory file found"
@@ -230,7 +238,7 @@ case "${ROOT_REPO_TYPE}" in
 esac
 
 if [[ $ERROR -lt 1 ]]; then
-    pretty_print "INFO: Root Repo Authentication is '${ROOT_REPO_TYPE}'" "INFO"
+    pretty_print "INFO: Root Repo Authentication Type is '${ROOT_REPO_TYPE}'" "INFO"
     pretty_print "PASS: Root Repo is set to: (${ROOT_REPO_URL})"
     case "${ROOT_REPO_TYPE}" in
 
@@ -242,7 +250,7 @@ if [[ $ERROR -lt 1 ]]; then
         ;;
     "token")
         pretty_print "PASS: Using SCM Token User: ${SCM_TOKEN_USER}"
-        pretty_print "PASS: Using SCM Token Value: ${SCM_TOKEN_TOKEN}"
+        pretty_print "PASS: Using SCM Token Value: $(echo ${SCM_TOKEN_TOKEN} | sed 's/^....../******/')"
         ;;
     esac
 
