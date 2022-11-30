@@ -101,6 +101,9 @@ chmod 400 /home/${ANSIBLE_USER}/.ssh/config
 # Set ownership and permissions
 chmod 400 ~/.ssh/config
 
+# Explicitly run the VXLAN script
+${SETUP_VXLAN_SCRIPT}
+
 # Verify VXLAN IP works
 ping -c 3 ${VXLANIP}
 if [[ $? -gt 0 ]]; then
