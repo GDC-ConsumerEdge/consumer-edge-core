@@ -8,9 +8,9 @@ primary_cluster_machine: true
 # Name of the "store" per the ACM repo
 acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('location-1', True) }}"
 # This machine's IP
-control_plane_ip: "192.168.3.11"
+node_ip: "192.168.3.11"
 # The other IPs in the cluster
-control_plane_ips: [
+peer_node_ips: [
   "192.168.3.11",
   "192.168.3.12",
   "192.168.3.13"

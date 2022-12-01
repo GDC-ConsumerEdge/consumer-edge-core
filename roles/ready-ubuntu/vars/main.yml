@@ -1,7 +1,7 @@
 ---
 # vars file for ready-ubuntu
 
-# User that has sudo, password less SSH access to control_plane_ip
+# User that has sudo, password less SSH access to node_ip
 abm_install_user: "el-gato"
 
 ssh_key_name: "abm-key"

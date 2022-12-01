@@ -5,7 +5,7 @@
 edge_api_enabled: false
 edge_api_location: us-central1 # same as cloud-ops region {{ google_region }}, but hard-coded as API is only in us-central1
 
-# User that has sudo, password less SSH access to control_plane_ip
+# User that has sudo, password less SSH access to node_ip
 abm_install_user: "el-gato"
 
 # Cluster Configuration

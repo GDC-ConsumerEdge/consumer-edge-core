@@ -7,7 +7,7 @@ cluster_name: "cnuc-1"
 machine_label: "cnuc-3"
 
 # This machine's IP
-control_plane_ip: "10.200.0.4"
+node_ip: "10.200.0.4"
 
 # Ansible Pull Authenticaiton String
 ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
