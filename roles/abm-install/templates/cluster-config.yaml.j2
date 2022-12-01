@@ -33,7 +33,7 @@ spec:
   controlPlane:
     nodePoolSpec:
       nodes:
-      {% for ipaddr in control_plane_ips %}
+      {% for ipaddr in peer_node_ips %}
       - address: {{ ipaddr }}
       {% endfor %}
   # Cluster networking configuration

@@ -1,7 +1,7 @@
 
 - name: Verify IP address resolves
   debug:
-    msg: "{{ cluster_name }} is {{ control_plane_ip }}"
+    msg: "{{ cluster_name }} is {{ node_ip }}"
   tags:
   - verify
 
