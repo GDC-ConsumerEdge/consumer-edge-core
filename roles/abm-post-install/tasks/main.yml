@@ -47,6 +47,7 @@
 
 - name: Check to see if dashboards have already been copied over
   run_once: true
+  ignore_errors: yes
   shell: |
     gcloud monitoring dashboards list --format="value(displayName)" --filter="labels=retail-edge" --verbosity=error --project "{{ google_project_id }}"
   register: dashboard_contents
@@ -57,6 +58,7 @@
 # ### Add custom monitoring dashboards to GCP project
 - name: Add custom monitoring dashboards to GCP Project
   run_once: true
+  ignore_errors: yes
   shell: |
     gcloud monitoring dashboards create --config-from-file "{{ item.dest }}" --project "{{ google_project_id }}"
   loop: "{{ dashboards.results }}"
