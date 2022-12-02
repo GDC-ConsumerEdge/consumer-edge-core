@@ -1,4 +1,3 @@
-
 ---
 
 # This playbook is used to run post-installation of the solution, typically for bug fixes and little changes
@@ -19,7 +18,7 @@
     tags:
     - always
   roles:
-    - abm-post-install
-    - update-automation
+  - abm-post-install
+  - update-automation
   vars:
     kubeconfig_shared_location: "{{ abm_install_folder }}/kubeconfig/kubeconfig"

@@ -1,4 +1,4 @@
-
+---
 - hosts: workers
   gather_facts: false
   pre_tasks:
@@ -14,16 +14,16 @@
     tags:
     - always
   roles:
-    - abm-login-token
+  - abm-login-token
   vars:
     kubeconfig_shared_location: "{{ abm_install_folder }}/kubeconfig/kubeconfig"
   tags:
-    - hardware
+  - hardware
 
 - hosts: cloud_type_abm
   roles:
-    - abm-login-token
+  - abm-login-token
   vars:
     kubeconfig_shared_location: "{{ abm_install_folder }}/kubeconfig/kubeconfig"
   tags:
-    - cloud
+  - cloud
