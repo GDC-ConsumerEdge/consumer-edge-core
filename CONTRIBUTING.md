@@ -15,5 +15,5 @@ Follow either of the two links above to access the appropriate CLA and instructi
 
 1. Submit an issue describing your proposed change to the repo in question.
 1. If you haven't already done so, sign a Contributor License Agreement (see details above).
-1. Fork the desired repo, develop and test your code changes.
+1. Fork the desired repo, develop, and test your code changes.  Ensure all the `make docker_lint` checks pass.
 1. Submit a pull request.

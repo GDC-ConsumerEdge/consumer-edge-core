@@ -1,4 +1,3 @@
-
 ---
 
 # Setup everything and install ABM (but not install software on top)
@@ -6,15 +5,15 @@
   become: true
   become_user: root
   roles:
-    - validate
-    - google-tools
-    - update-automation
-    - ready-ubuntu
-    - setup-kvm
-    - abm-install
-    - abm-software
-    - abm-post-install
-    - abm-login-token
+  - validate
+  - google-tools
+  - update-automation
+  - ready-ubuntu
+  - setup-kvm
+  - abm-install
+  - abm-software
+  - abm-post-install
+  - abm-login-token
   vars: []
   tags:
-    - cloud
+  - cloud

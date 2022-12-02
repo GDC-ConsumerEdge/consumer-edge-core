@@ -197,7 +197,7 @@
   - robin
 
 - name: Load tcm_loop kernel module
-  modprobe:
+  community.general.system.modprobe:
     name: tcm_loop
     state: present
   tags:

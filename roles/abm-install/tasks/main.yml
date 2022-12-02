@@ -68,7 +68,7 @@
     - gcloud-mutate
 
 
-### Check if secret and version exists 
+### Check if secret and version exists
   - name: "Check if secret and version exists in secrets manager"
     run_once: true # only one machine to do this
     shell: |
@@ -116,7 +116,7 @@
     - abm-install
     - gcloud-mutate
 
-  - name: Download key files from secret manager locally 
+  - name: Download key files from secret manager locally
     shell: |
       gcloud secrets versions access latest --secret="{{ item.name }}" >> {{ remote_gsa_key }}/{{ item.keyfile }}
     args:

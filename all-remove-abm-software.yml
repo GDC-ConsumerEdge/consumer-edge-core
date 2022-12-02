@@ -1,4 +1,3 @@
-
 ---
 
 # Removes ABM from targeted machines and unregisters from GKE Hub
@@ -22,7 +21,7 @@
     tags:
     - always
   roles:
-    - abm-remove
+  - abm-remove
   vars: []
   tags:
   - hardware

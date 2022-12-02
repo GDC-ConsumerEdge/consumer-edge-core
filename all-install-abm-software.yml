@@ -1,4 +1,3 @@
-
 ---
 
 - hosts: all
@@ -18,10 +17,10 @@
     tags:
     - always
   roles:
-    - abm-software
-    - abm-post-install
-    - ansible-pull
-    - abm-login-token
+  - abm-software
+  - abm-post-install
+  - ansible-pull
+  - abm-login-token
   vars: []
   tags:
-    - hardware
+  - hardware
