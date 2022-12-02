@@ -22,7 +22,7 @@
   shell: |
     gcloud iam service-accounts add-iam-policy-binding \
         --role roles/iam.workloadIdentityUser \
-        --member "serviceAccount:{{ google_project_id }}.svc.id.goog[config-management-system/root-reconciler]" \
+        --member "serviceAccount:{{ google_project_id }}.svc.id.goog[config-management-system/root-reconciler-{{ primary_root_sync_name }}]" \
         {{ root_repository_service_account_email }}
   when:
   - has_gsr_gsa.rc == 0
