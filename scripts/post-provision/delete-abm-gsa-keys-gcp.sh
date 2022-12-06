@@ -5,6 +5,7 @@
 ###
 ### This should ONLY be used when you know the explicit reason why you're doing this
 ###
+CLUSTER_NAME=$1
 
 read -p "This is a destructive operation meant for advanced users only. Proceed? (any character other than 'Y' will exit): " response
 
@@ -14,11 +15,11 @@ if [ "$response" != "Y" ]; then
 fi
 
 GSAs=(
-    "abm-gke-register-agent@${PROJECT_ID}.iam.gserviceaccount.com"
-    "abm-cloud-operations-agent@${PROJECT_ID}.iam.gserviceaccount.com"
-    "abm-gcr-agent@${PROJECT_ID}.iam.gserviceaccount.com"
-    "abm-gke-connect-agent@${PROJECT_ID}.iam.gserviceaccount.com"
-    "external-secrets-k8s@${PROJECT_ID}.iam.gserviceaccount.com"
+    "abm-gke-register-agent-${CLUSTER_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+    "abm-cloud-operations-agent-${CLUSTER_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+    "abm-gcr-agent-${CLUSTER_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+    "abm-gke-connect-agent-${CLUSTER_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+    "external-secrets-k8s-${CLUSTER_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
      )
 
 # gcloud iam service-accounts keys create /var/keys/abm-gke-register-agent-creds.json --iam-account=abm-gke-register-agent@anthos-bare-metal-lab-1.iam.gserviceaccount.com --project=anthos-bare-metal-lab-1

@@ -257,7 +257,7 @@ service_accounts: [
   },
   {
     name: "longhorn-cloud-storage-{{ cluster_name }}",
-    id: "onghorn-cloud-storage",
+    id: "longhorn-cloud-storage",
     keyfile: longhorn-cloud-storage-creds.json,
     description: "Longhorn taking volume backups on cloud storage ",
     roles: [
