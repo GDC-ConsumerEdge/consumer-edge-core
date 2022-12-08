@@ -16,13 +16,13 @@ Metadata is created during the install/creation of a cluster using `bmctl`. This
     1. Successfully complete `bmctl create`
     1. Run "snapshot" capture the contents of state in `{{ abm_workspace_folder }}`. See [official documentation](https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/troubleshooting/bmctl-snapshot)
 
-<!-- NOTE: /var/keys/gsa-key.json is "magic", variables in `google-tools` are used to set this key. Need to move to global scope varaible if want to use variables -->
+<!-- NOTE: {{ remote_keys_folder }}/gsa-key.json is "magic", variables in `google-tools` are used to set this key. Need to move to global scope varaible if want to use variables -->
         ```
         # Runt he snapshot tool to collect compressed folder of `bmctl-workspace`
         bmctl check cluster --snapshot \
             --snapshot-config {{ snapshot_config_file }} \
             --cluster {{ cluster_name }} \
-            --service-account-key-file /var/keys/gsa-key.json \
+            --service-account-key-file {{ remote_keys_folder }}/gsa-key.json \
             --snapshot-output {{ snapshot_output_file }}  \
             --kubeconfig {{ kubeconfig_shared_location }}
         ```

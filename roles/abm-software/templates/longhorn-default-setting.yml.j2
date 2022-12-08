@@ -5,7 +5,6 @@ metadata:
 
 ---
 
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,7 +12,7 @@ metadata:
   namespace: longhorn-system
 data:
   default-setting.yaml: |-
-    backup-target: s3://{{ longhorn_backup_bucket }}@us/{{ acm_cluster_name }}
+    backup-target: s3://{{ storage_provider_gcs_bucket_name }}@us/{{ acm_cluster_name }}
     backup-target-credential-secret: gcp-cloud-storage-backup-secret
     allow-recurring-job-while-volume-detached:
     create-default-disk-labeled-nodes:

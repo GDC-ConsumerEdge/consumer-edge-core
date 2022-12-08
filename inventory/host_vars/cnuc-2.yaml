@@ -14,3 +14,6 @@ ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string
 
 # Ansible pull repo to manage simplified drift
 ansible_pull_drift_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/drift-repo.git"
+
+google_region: "us-west1"
+google_zone: "us-west1-b"

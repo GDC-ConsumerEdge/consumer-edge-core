@@ -35,6 +35,13 @@
   tags:
   - verify
 
+- name: Print Region and Zone
+  debug:
+    msg: "Region: {{google_region}} Zone: {{google_zone}}"
+  tags:
+  - verify
+  - locality
+
 - name: Fail if local LOCAL_GSA_FILE ENV is not defined
   assert:
     that:

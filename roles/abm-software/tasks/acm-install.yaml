@@ -95,8 +95,8 @@
   tags:
   - acm-root-repo
 
-- name: "Create dependencies for RootRepo (if not exists) [Token Method]"
-  import_tasks: "config-root-repo-token.yaml"
+- name: "Create dependencies for RootRepos (if not exists) [Token Method]"
+  import_tasks: "config-acm-repo-tokens.yaml"
   when:
   - (root_repository_git_auth_type == "token")
   - (primary_cluster_machine is defined)
@@ -107,8 +107,8 @@
   - acm-root-repo
   - acm-root-repo-token-method
 
-- name: "Create dependencies for RootRepo (if not exists) [SSH Method]"
-  import_tasks: "config-root-repo-ssh.yaml"
+- name: "Create dependencies for RootRepos (if not exists) [SSH Method]"
+  import_tasks: "config-repos-ssh.yaml"
   when:
   - (root_repository_git_auth_type == "ssh")
   - (primary_cluster_machine is defined)
@@ -119,8 +119,8 @@
   - acm-root-repo
   - acm-root-repo-ssh-method
 
-- name: "Create dependencies for RootRepo (if not exists) [GCP GSA Method]"
-  import_tasks: "config-root-repo-gcp-gsa.yaml"
+- name: "Create dependencies for RootRepos (if not exists) [GCP GSA Method]"
+  import_tasks: "config-repos-gcp-gsa.yaml"
   when:
   - (root_repository_git_auth_type == "gcpserviceaccount")
   - (primary_cluster_machine is defined)
@@ -129,6 +129,9 @@
   - acm-root-repo
   - acm-root-repo-gcp-gsa-method
 
+###
+### Configure PrimaryRootRepo
+###
 - name: Copy RootRepo Sync Config File
   template:
     src: root-sync.yaml.j2
@@ -178,7 +181,7 @@
     cmd: kubectl wait --for=condition=available --timeout=600s deployment.apps/root-reconciler-{{ primary_root_sync_name }} -n config-management-system
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  retries: 5
+  retries: 30
   delay: 10
   register: root_recon_result
   until: root_recon_result.rc == 0

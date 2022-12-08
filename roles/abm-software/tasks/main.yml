@@ -107,6 +107,13 @@
   - abm-software
   - abm-config
 
+### Anthos Config Management
+- name: "Install Anthos Config Management (ACM)"
+  import_tasks: acm-install.yaml
+  tags:
+  - acm-config-management-install
+  - acm-config-management
+
 ### Add External Secrets
 - name: Setup External Secrets
   import_tasks: external-secrets.yaml
@@ -116,24 +123,44 @@
   - external-secrets-install
   - abm-software
 
-###  Setup & install Longhorn if settings
-- name: Setup Longhorn
+###
+### Setting up SDS common settings (git-creds, GSM Secret), if SDS is not none
+###
+- name: Setup common SDS components
+  import_tasks: csi-common.yaml
+  vars:
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+  when:
+  - storage_provider != "none"
+  tags:
+  - sds-common
+  - storage-setup
+
+#  Setup/Configure SDS: Longhorn
+- name: SDS Setup Longhorn
   import_tasks: csi-longhorn.yaml
   vars:
     kubeconfig: "{{ kubeconfig_shared_location }}"
-  when: storage_provider == "longhorn"
+  when:
+  - storage_provider == "longhorn"
   tags:
   - longhorn
   - storage-setup
 
-### Anthos Network Gateway
-- name: "Install Anthos Config Management (ACM)"
-  import_tasks: acm-install.yaml
+#  Setup/Configure SDS: Robin
+- name: SDS Setup Robin
+  import_tasks: csi-robin.yaml
+  vars:
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+  when:
+  - storage_provider == "robin"
   tags:
-  - acm-config-management-install
-  - acm-config-management
+  - robin
+  - storage-setup
 
+###
 ### Anthos Network Gateway
+###
 - name: "Install Anthos Network Gateway"
   import_tasks: network-gateway-group.yaml
   when: network_gateway_group_install == true

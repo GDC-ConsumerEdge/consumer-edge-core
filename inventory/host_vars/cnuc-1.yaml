@@ -8,7 +8,7 @@ machine_label: "cnuc-1"
 # Indicates that this is the primary machine in the cluster (only important for provisioning)
 primary_cluster_machine: true
 # Name of the "store" per the ACM repo
-acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('location-2', True) }}"
+acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('location-1', True) }}"
 # This machine's IP
 node_ip: "10.200.0.2"
 # The other IPs in the cluster
@@ -29,9 +29,6 @@ load_balancer_pool_cidr: [
 ###
 ### Cluster Network (Multus)
 ###
-# Install MultiClusterConfig (needed for VPN)
-enable_multus_network: false
-
 # Ansible Pull Authenticaiton String
 ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
 
@@ -40,3 +37,6 @@ ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string
 
 # Ansible pull repo to manage simplified drift
 ansible_pull_drift_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/drift-repo.git"
+
+google_region: "us-west1"
+google_zone: "us-west1-b"
