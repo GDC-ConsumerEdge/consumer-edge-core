@@ -22,7 +22,7 @@
   - vlan-setup
 
 - name: Add VLAN interface 410 in linux
-  community.general.net_tools.nmcli:
+  nmcli:
     type: vlan
     conn_name: '{{ prinetint }}.410'
     method4: auto

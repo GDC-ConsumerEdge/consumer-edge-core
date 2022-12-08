@@ -1,0 +1,7 @@
+###
+### Configuration, proceedures and tasks associated with setting up Robin.io storage
+###
+
+- name: "Placeholder For Backup Jobs"
+  debug:
+    msg: "This is a placeholder for future jobs that are specific to Robin"

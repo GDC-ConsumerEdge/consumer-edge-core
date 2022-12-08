@@ -19,5 +19,5 @@ snapshot_output_folder: "{{ snapshot_config_folder }}/snapshots/output"
 # CDI add CPU Monitoring flag script run by cron.d
 cdi_cron_script_file: "{{ abm_install_folder }}/cdi-check-node.sh"
 
-# GCS bucket to hold Longhorn backups following this format gs://{{ longhorn_backup_bucket }}@us/{{ acm_cluster_name }}
-longhorn_backup_bucket: "longhorn-backup-{{ google_project_id }}"
+# Location of SDS configuration files
+sds_config_files: "{{ abm_install_folder }}/sds-configs"

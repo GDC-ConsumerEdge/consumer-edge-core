@@ -29,7 +29,7 @@ abm_install_folder: "/var/abm-install"
 abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"
 
 # Location of all GSA keys
-remote_gsa_key: "{{ abm_install_folder }}/keys"
+remote_keys_folder: "{{ abm_install_folder }}/keys"
 
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
@@ -103,10 +103,6 @@ vpn_gateway_ips: [] # Gateway IPs for VPN
 # OSS Multus
 enable_multus_network: false # Enable Multus (Cannot be true when enable_vmruntime is true) -- https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/how-to/multi-nic
 
-
-### Multipath Disk Service - Can cause issues with SDS, very uncommon to need multipath unless using iSCSI. Defaults to false
-enable_multipath_service: false
-
 ###
 ### VM Runtime (KubeVirt + A4VM)
 ###
@@ -122,12 +118,26 @@ snapshot_gcs_bucket_base: "{{ lookup('env', 'SNAPSHOT_GCS') | default( [ google_
 ###
 ### Storage Provider
 ###
-storage_provider: "longhorn" # Future Options: openebs, robin, none
+### Storage providers are installed via Cluster Trait Repos. Configuration for CTR is done in this automation (where possible)
+###
+storage_provider: "robin" # Current Options: longhorn, none & Future Options: openebs, portworx. NOTE: storage_provider_repo_url must match with storage_provider_repo_url
+### Storage Provider Cluster Trait Repo (ex: https://gitlab.com/gcp-solutions-public/retail-edge/available-cluster-traits)
+storage_provider_repo_url: "{{ lookup('env', 'SDS_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/available-cluster-traits/robin-io-anthos.git', True) }}"
+storage_provider_repo_type: "{{ lookup('env', 'SDS_REPO_STRUCTURE') | default('hierarchy', True) }}"
+storage_provider_auth_type: "{{ lookup('env', 'SDS_REPO_TYPE') | default('token', True) }}" # NOTE: Initial feature functionality can ONLY support token
+storage_provider_user_user: "{{ lookup('env', 'SDS_TOKEN_USER') | default({{ scm_token_user }}, True) }}"
+storage_provider_user_token: "{{ lookup('env', 'SDS_TOKEN_TOKEN') | default({{ scm_token_token }}, True) }}"
+storage_provider_auth_secret: "{{storage_provider}}-git-cred" # GCP Secret Manager secret will be created with this name using the name/token above
+
+# Storage provider backup bucket (where PVs are backed up to)
+storage_provider_gcs_bucket_name: "sds-backups-bucket-{{ google_project_id }}"
+storage_provider_hmac_gcm_secret: "sds-backup-hmac-secret"
 
 # Storage provider roots for disc storage
 storage_provider_roots: [ "/customer" ]
-# GSM Secret name used for Longhorn HMAC
-longhorn_secret_name: "longhorn-cloud-storage-hmac"
+
+### Multipath Disk Service - Can cause issues with SDS, very uncommon to need multipath unless using iSCSI. Defaults to false
+enable_multipath_service: false
 
 ###
 ### OIDC in cluster (setup OIDC before provisioning, set environment variables to the values)
@@ -184,7 +194,7 @@ gcp_services_required:
   - stackdriver.googleapis.com
   - storage.googleapis.com
 
-#Secret name for longhorn to take backups of volumes and send to cloud storage bucket
+# GCP Secret name for backups of volumes and send to cloud storage bucket
 volume_backup_secret_name: gcp-cloud-storage-backup-secret
 
 # Setup VLAN on Host # TODO: Add the ability to create multiple VLAN interfaces dynamically
@@ -255,11 +265,12 @@ service_accounts: [
       "roles/secretmanager.viewer"
     ]
   },
+  #####  SDS agent for backups (storage provider used is identified in the description)
   {
-    name: "longhorn-cloud-storage-{{ cluster_name }}",
-    id: "longhorn-cloud-storage",
-    keyfile: longhorn-cloud-storage-creds.json,
-    description: "Longhorn taking volume backups on cloud storage ",
+    name: "sds-backup-agent-{{ cluster_name }}",
+    id: "sds-backup-agent",
+    keyfile: sds-backup-agent-creds.json,
+    description: "SDS agent taking volume backups on cloud storage ({{ storage_provider }})",
     roles: [
       "roles/storage.objectAdmin"
     ]

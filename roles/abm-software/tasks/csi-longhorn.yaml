@@ -1,44 +1,17 @@
-# Create GCS Bucket for Backups
-- name: Check Longhorn GCS Backup Bucket
-  run_once: true
-  ignore_errors: true
-  shell: |
-    gsutil -q ls gs://{{ longhorn_backup_bucket }}/.dontremove > /dev/null 2>&1
-  environment:
-    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-  changed_when: longhorn_has_bucket.rc > 0
-  register: longhorn_has_bucket
-  tags:
-  - longhorn-backup
-  - longhorn-install
-  - gcloud-command
-
-- name: Create Longhorn Backup Bucket
-  run_once: true
-  shell: |
-    gsutil mb -p "{{ google_project_id }}" gs://{{ longhorn_backup_bucket }}
-    echo "do not remove this file" | gsutil cp - gs://{{ longhorn_backup_bucket }}/.dontremove
-  args:
-    executable: /bin/bash
-  when:
-  - longhorn_has_bucket.rc > 0 # not succeed
-  environment:
-    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-  tags:
-  - longhorn-backup
-  - longhorn-install
-  - gcloud-mutate
+###
+### This sub-role verifies the backup bucket for Longhorn, sets up the HMAC for communication with bucket and creates a ConfigMap with configuration specific to the cluster (not appropriate to put into ACM repos)
+###
 
 # Get HMAC secret from Secret Manager
 - name: Get the HMAC cloud storage key from Secret Manager if it exists
   run_once: true
   ignore_errors: true
   shell: |
-    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ longhorn_secret_name }}" --format="value(name)" --project="{{ google_project_id }}")
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ storage_provider_hmac_gcm_secret }}" --format="value(name)" --project="{{ google_project_id }}")
     if [ -z "$HAS_SECRET" ]; then
       exit 1
     else
-      VERSION_EXISTS=$(gcloud secrets versions list {{ longhorn_secret_name }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
+      VERSION_EXISTS=$(gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
       if [ -z "${VERSION_EXISTS}" ]; then
         # no valid versions found, need to create a new one
         exit 1
@@ -60,11 +33,11 @@
 - name: Create new HMAC key for longhorn backup to cloud storage and push to Secret Manager
   run_once: true
   shell: |
-    EXISTING_NUM_OF_HMAC_KEYS=$(gsutil hmac list  -u longhorn-cloud-storage-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com -p {{ google_project_id }} | grep longhorn-cloud-storage-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com | wc | awk '{print $1}')
+    EXISTING_NUM_OF_HMAC_KEYS=$(gsutil hmac list -u sds-backup-agent-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com -p {{ google_project_id }} | grep sds-backup-agent-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com | wc | awk '{print $1}')
     if [ ${EXISTING_NUM_OF_HMAC_KEYS} -gt 4 ]
     then
       # Max HMAC keys limit reached
-      VERSION_EXISTS=$(gcloud secrets versions list {{ longhorn_secret_name }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
+      VERSION_EXISTS=$(gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
       if [ -z "${VERSION_EXISTS}" ]; then
         # Max HMAC keys limit is reached and existing key in secret manager not found so we must fail here
         exit 1
@@ -74,12 +47,12 @@
       fi
     fi
 
-    gsutil hmac create longhorn-cloud-storage-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com > /tmp/hmackey.txt
+    gsutil hmac create sds-backup-agent-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com > /tmp/hmackey.txt
     access_key=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $1}'`
     access_secret=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $2}'`
     echo "{\"access_key\": \"${access_key}\",  \"access_secret\": \"${access_secret}\" , \"endpoint\" : \"https://storage.googleapis.com\" }" > /tmp/hmacsecret.json
-    gcloud secrets create {{ longhorn_secret_name }} --replication-policy="automatic" --project="{{ google_project_id }}"
-    gcloud secrets versions add {{ longhorn_secret_name }} --data-file="/tmp/hmacsecret.json"
+    gcloud secrets create {{ storage_provider_hmac_gcm_secret }} --replication-policy="automatic" --project="{{ google_project_id }}"
+    gcloud secrets versions add {{ storage_provider_hmac_gcm_secret }} --data-file="/tmp/hmacsecret.json"
     rm -rf /tmp/hmacsecret.json /tmp/hmackey.txt # delete temp file
     exit $?
   args:
@@ -109,7 +82,8 @@
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
-  retries: 3
+  retries: 5
+  delay: 10
   register: cmc_result
   until: cmc_result.rc == 0
   environment:
@@ -117,3 +91,17 @@
   tags:
   - longhorn-config-management
 
+- name: Install Cluster Trait Repo for Longhorn
+  command:
+    cmd: kubectl apply -f {{ FAIL }} // this will need a template
+  when:
+    - (primary_cluster_machine is defined)
+    - (primary_cluster_machine == true)
+  retries: 5
+  delay: 10
+  register: cmc_result
+  until: cmc_result.rc == 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - longhorn-config-management

@@ -85,7 +85,7 @@
     - { service: 'google-fluentd', script: 'add-logging-agent-repo.sh' }
   register: agent_results
   environment:
-    GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_gsa_key }}/gsa-key.json"
+    GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/gsa-key.json"
   tags:
   - observability-agent-install
   - observability-setup

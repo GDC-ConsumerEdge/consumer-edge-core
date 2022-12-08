@@ -20,7 +20,7 @@
   - primary_cluster_machine == True
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
-    GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_gsa_key }}/gsa-key.json"
+    GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/gsa-key.json"
   tags:
     - abm-remove
     - never # must specify `--tags never` on the CLI to run this

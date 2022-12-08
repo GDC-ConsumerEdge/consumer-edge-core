@@ -1,0 +1,39 @@
+apiVersion: configsync.gke.io/v1beta1
+kind: RootSync
+metadata:
+  name: {{storage_provider}}-trait-sync
+  namespace: config-management-system
+spec:
+  sourceFormat: "{{ storage_provider_repo_type }}"
+  git:
+    repo: "{{ storage_provider_repo_url }}"
+    branch: "main"
+    dir: "/config"
+    auth: "{{ storage_provider_auth_type }}"
+    secretRef:
+      name: {{storage_provider}}-git-creds # matches the external seret below
+
+---
+
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: {{storage_provider}}-git-creds-es
+  namespace: config-management-system
+spec:
+  refreshInterval: 24h                          # Default to 24h check for update
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: gcp-secret-store
+  target:                                       # K8s secret definition
+    name: {{storage_provider}}-git-creds        ############# Matches the secretRef above
+    creationPolicy: Owner
+  data:
+  - secretKey: username                         # K8s secret key name inside secret
+    remoteRef:
+      key: {{storage_provider}}-access-token-creds     #  GCP Secret Name
+      property: username                        # field inside GCP Secret
+  - secretKey: token                            # K8s secret key name inside secret
+    remoteRef:
+      key: {{storage_provider}}-access-token-creds     #  GCP Secret Name
+      property: token                           # field inside GCP Secret
