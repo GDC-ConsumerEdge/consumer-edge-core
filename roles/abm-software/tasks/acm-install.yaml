@@ -70,11 +70,11 @@
   args:
     executable: /bin/bash
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-    - (has_acm_operator == false)
-  retries: 5
-  delay: 10
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  - (has_acm_operator == false)
+  retries: "{{ default_retry_count }}"
+  delay: "{{ default_retry_delay }}"
   register: result
   until: result.rc == 0
   tags:
@@ -165,8 +165,8 @@
     exit $?
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  retries: 10
-  delay: 10
+  retries: "{{ default_retry_count }}"
+  delay: "{{ default_retry_delay }}"
   register: root_apply_result
   until: root_apply_result.rc == 0
   when:
@@ -181,8 +181,8 @@
     cmd: kubectl wait --for=condition=available --timeout=600s deployment.apps/root-reconciler-{{ primary_root_sync_name }} -n config-management-system
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  retries: 30
-  delay: 10
+  retries: "{{ default_retry_count }}"
+  delay: "{{ default_retry_delay }}"
   register: root_recon_result
   until: root_recon_result.rc == 0
   when:
@@ -195,8 +195,8 @@
 - name: "Wait on ExternalSecrets to be deployed coming from RootRepo"
   shell: |
     kubectl wait --for=condition=available --timeout=600s deployment.apps/external-secrets -n external-secrets
-  retries: 60
-  delay: 10
+  retries: "{{ default_retry_count }}"
+  delay: "{{ default_retry_delay }}"
   register: external_secret_deployment
   until: external_secret_deployment.rc == 0
   environment:
@@ -220,7 +220,7 @@
   - acm-monitoring-config
   - gcloud-mutate
 
-- name: "Wait on ExternalSecrets to be deployed coming from RootRepo"
+- name: "Annotate KubeCTL ACM Monitoring service account for ACM monitoring"
   command:
     cmd: kubectl annotate serviceaccount default iam.gke.io/gcp-service-account=acm-monitoring-agent-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com --namespace config-management-monitoring --overwrite=true
   environment:

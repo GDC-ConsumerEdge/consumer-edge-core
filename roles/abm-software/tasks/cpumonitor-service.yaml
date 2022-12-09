@@ -19,8 +19,8 @@
   systemd:
     state: restarted
     name: kubelet
-  retries: 3
-  delay: 10
+  retries: "{{ default_retry_count }}"
+  delay: "{{ default_retry_delay }}"
   register: kubelet_service_result
   until: kubelet_service_result is succeeded
   tags:

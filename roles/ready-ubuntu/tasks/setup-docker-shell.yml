@@ -17,8 +17,8 @@
     state: started
   register: task_result
   until: task_result is succeeded
-  retries: 10
-  delay: 1
+  retries: "{{ default_retry_count }}"
+  delay: "{{ default_retry_delay }}"
 
 - name: Get Docker version
   command: docker version
