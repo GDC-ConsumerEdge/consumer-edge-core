@@ -11,7 +11,7 @@
 - name: Fail if local SCM_TOKEN_USER ENV is not defined
   assert:
     that:
-      - scm_token_user != ""
+    - scm_token_user != ""
     fail_msg: "The local environment variable 'SCM_TOKEN_USER' needs to be defined for the target Google Project ID"
   when:
   - "primary_cluster_machine is defined"
@@ -23,7 +23,7 @@
 - name: Fail if local SCM_TOKEN_TOKEN ENV is not defined
   assert:
     that:
-      - scm_token_token != ""
+    - scm_token_token != ""
     fail_msg: "The local environment variable 'SCM_TOKEN_TOKEN' needs to be defined for the target Google Project ID"
   when:
   - "primary_cluster_machine is defined"
@@ -35,8 +35,8 @@
 - name: Create cluster snapshot
   import_tasks: create-snapshot.yaml
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
   tags:
   - cluster-snapshot
 
@@ -57,9 +57,9 @@
     state: directory
     mode: '0755'
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-    - (enable_vmruntime == true)
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  - (enable_vmruntime == true)
   tags:
   - abm-software
   - vmruntime
@@ -69,9 +69,9 @@
     src: vmruntime-config.yaml.j2
     dest: "{{ vmruntime_config_path }}/vmruntime.yaml"
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-    - (enable_vmruntime == true)
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  - (enable_vmruntime == true)
   tags:
   - abm-software
   - vmruntime
@@ -86,11 +86,11 @@
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-    - (enable_vmruntime == true)
-  retries: 5
-  delay: 10
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  - (enable_vmruntime == true)
+  retries: "{{ default_retry_count }}"
+  delay: "{{ default_retry_delay }}"
   register: result
   until: result.rc == 0
   tags:
@@ -114,8 +114,8 @@
   - acm-config-management-install
   - acm-config-management
 
-### Add External Secrets
-- name: Setup External Secrets
+### Configure External Secrets
+- name: Configure External Secrets
   import_tasks: external-secrets.yaml
   vars:
     kubeconfig: "{{ kubeconfig_shared_location }}"
@@ -188,8 +188,8 @@
   changed_when: '"ADDED" in out.stdout_lines'
   loop: "{{ franchises }}"
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
   tags:
   - abm-software
   - enable-acm
@@ -208,8 +208,8 @@
   changed_when: '"ADDED" in out.stdout_lines'
   loop: "{{ franchises }}"
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
   tags:
   - abm-software
   - enable-acm

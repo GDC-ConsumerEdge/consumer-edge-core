@@ -165,6 +165,11 @@ google_kms: {
     location: "global"
   }
 
+# Number of retry attempts on failed tasks using retry (600 seconds = approx 10 minutes max)
+default_retry_count: 60
+# Time to wait (seconds) between retries
+default_retry_delay: 10
+
 local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
 tools_base_path: "/var/google-tools-install"
 

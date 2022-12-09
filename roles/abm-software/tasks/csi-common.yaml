@@ -90,6 +90,8 @@
   args:
     executable: /bin/bash
   when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
   - has_bucket.rc > 0
   tags:
   - sds-common-setup
@@ -102,7 +104,9 @@
     path: '{{ sds_config_files }}'
     state: directory
     mode: '0755'
-  when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
   tags:
   - sds-common-setup
   - sds-cluster-trait-repo

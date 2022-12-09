@@ -70,8 +70,8 @@
     src: longhorn-default-setting.yml.j2
     dest: "{{ acm_config_files }}/longhorn-default-setting.yml"
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
   tags:
   - longhorn-config-management
   - longhorn-install
@@ -80,25 +80,10 @@
   command:
     cmd: kubectl apply -f {{ acm_config_files }}/longhorn-default-setting.yml
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  retries: 5
-  delay: 10
-  register: cmc_result
-  until: cmc_result.rc == 0
-  environment:
-    KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  tags:
-  - longhorn-config-management
-
-- name: Install Cluster Trait Repo for Longhorn
-  command:
-    cmd: kubectl apply -f {{ FAIL }} // this will need a template
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  retries: 5
-  delay: 10
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  retries: "{{ default_retry_count }}"
+  delay: "{{ default_retry_delay }}"
   register: cmc_result
   until: cmc_result.rc == 0
   environment:
