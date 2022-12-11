@@ -2,6 +2,37 @@
 ### Configuration, proceedures and tasks associated with setting up Robin.io storage
 ###
 
-- name: "Placeholder For Backup Jobs"
-  debug:
-    msg: "This is a placeholder for future jobs that are specific to Robin"
+- name: "Copy Robin Client script for this cluster"
+  copy:
+    src: robin-get-client.sh
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    mode: "755"
+  tags:
+  - robin-install
+  - robin-client
+
+- name: "Copy Robin Login Client script for this cluster"
+  copy:
+    src: robin-login-client.sh
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    mode: "0755"
+  tags:
+  - robin-install
+  - robin-client
+
+# Runs the above script on a regular basis to get a fresh robin-cli
+- name: Create cron-job to run Robin Client
+  template:
+    src: robin-get-client-cron.j2
+    dest: /etc/cron.d/robin-get-client-cron
+    owner: root
+    group: root
+    mode: "0744"
+  tags:
+  - robin-install
+  - robin-client
+  - robin-cron
