@@ -50,6 +50,18 @@
   tags:
   - verify
 
+- name: "Verify Build-in GSA and Project concatenation are not over 30 characters (GCP limit)"
+  assert:
+    that:
+    - "{{ google_project_id | length < longest_gca_name }}" # 17 is 30-<longest GCP GSA name prefix>
+    fail_msg: "The GCP Project name length may be too long and could cause built-in GSAs to fail for length"
+  when:
+  - "primary_cluster_machine is defined"
+  - "primary_cluster_machine == true"
+  ignore_errors: True
+  tags:
+  - verify
+
 - name: Fail if local SCM_TOKEN_USER ENV is not defined
   assert:
     that:

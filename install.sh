@@ -31,6 +31,8 @@ DEBUG_COLOR="\e[1;35m"
 DEFAULT_COLOR="\e[1;32m"
 ENDCOLOR="\e[0m"
 
+PROJECT_NAME_MAX_LENGTH=17
+
 function pretty_print() {
     MSG=$1
     LEVEL=${2:-DEFAULT}
@@ -96,6 +98,14 @@ fi
 
 # reset for configuration errors
 ERROR=0
+
+# Check for Private Encrypted SSH Keys
+PROJ_LENGTH=`echo ${PROJECT_ID} | wc -c`
+if [[ ${PROJ_LENGTH} > ${PROJECT_NAME_MAX_LENGTH} ]]; then
+    pretty_print "WARN: GCP Project names might be a concern, it is longer than recommended '${PROJECT_NAME_MAX_LENGTH}' characters" "WARN"
+else
+    pretty_print "PASS: Project name length is ok"
+fi
 
 # Check for Private Encrypted SSH Keys
 if [[ ! -f "./build-artifacts/consumer-edge-machine.encrypted" ]]; then
