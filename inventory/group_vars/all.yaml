@@ -279,7 +279,7 @@ service_accounts: [
     keyfile: sds-backup-agent-creds.json,
     description: "SDS agent taking volume backups on cloud storage ({{ storage_provider }})",
     roles: [
-      "roles/storage.objectAdmin"
+      "roles/storage.admin"
     ]
   },
   {
