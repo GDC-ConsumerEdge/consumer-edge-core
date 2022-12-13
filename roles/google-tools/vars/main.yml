@@ -17,3 +17,6 @@ kubectx_version: "0.9.4"
 
 # K9s binary version (https://github.com/derailed/k9s/releases)
 k9s_version: "v0.26.7"
+
+# Kubestr Version (https://github.com/kastenhq/kubestr/releases/)
+kubestr_version: "0.4.36"
