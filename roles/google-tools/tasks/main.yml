@@ -241,6 +241,20 @@
     - optional
     - tool-install
 
+  - name: Add kubestr storage debugging utility
+    ansible.builtin.unarchive:
+      src: https://github.com/kastenhq/kubestr/releases/download/v{{ kubestr_version }}/kubestr_{{ kubestr_version }}_Linux_amd64.tar.gz
+      dest: /usr/local/bin
+      include: 'kubestr'
+      mode: "0755"
+      creates: "/usr/local/bin/kubestr"
+      remote_src: yes
+    ignore_errors: true
+    tags:
+    - optional
+    - tool-install
+    - kubestr
+
   ### Install virtctl via bmctl (keeps this up-to-date without explicit downloading)
   - name: Install virtctl
     command:
