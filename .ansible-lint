@@ -12,6 +12,7 @@ warn_list:
 - meta-incorrect  # meta/main.yml default values should be changed.
 - meta-no-info  # meta/main.yml should contain relevant info.
 - name[casing]  # Rule for checking task and play names.
+- name[template] # Jinja templates should only be at the end of ‘name’.
 - no-changed-when  # Commands should not change things if nothing needs doing.
 - package-latest  # Package installs should not use latest.
 - risky-file-permissions  # File permissions unset or incorrect.
