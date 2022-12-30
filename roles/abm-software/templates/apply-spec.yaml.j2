@@ -1,13 +1,26 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
 applySpecVersion: 1
 spec:
+### ConfigSync
   configSync:
     enabled: true
     preventDrift: false
+    sourceType: git
+    sourceFormat: "{{ acm_root_repo_structure }}"
+    syncRepo: "{{ acm_root_repo }}"
+    syncBranch: "{{ root_repository_branch }}"
+    syncWait: {{ root_repository_sync_time }}
+    policyDir: "{{ root_repository_policy_dir }}"
+    secretType: "{{ root_repository_git_auth_type }}"
+    {% if root_repository_git_auth_type == "gcpserviceaccount" %}
+    gcpServiceAccountEmail: "{{ root_repository_service_account_email }}"
+    {% endif %}
+### Policy Controller
   policyController:
     # Set to true to install and enable Policy Controller
     enabled: true
     # Uncomment to prevent the template library from being installed
-    templateLibraryInstalled: false
+    templateLibraryInstalled: true
     # Uncomment to enable support for referential constraints
     referentialRulesEnabled: true
     # Uncomment to disable audit, adjust value to set audit interval
