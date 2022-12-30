@@ -1,7 +1,7 @@
 - name: "Test for Root Repo Ready"
   include_tasks: kubectl-presence.yml
   vars:
-    name: "root-reconciler-{{ primary_root_sync_name }}"
+    name: "root-reconciler"
     type: "deployment"
     namespace: "config-management-system"
     kubeconfig: "{{ kubeconfig_shared_location }}"

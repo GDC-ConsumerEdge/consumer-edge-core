@@ -16,11 +16,11 @@ ansible_ssh_common_args: "-F build-artifacts/ssh-config -o StrictHostKeyChecking
 ####
 # Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
 # Version of Anthos Bare Metal to install
-abm_version: "1.13.2" # verify coupling of ABM to BMCTL versions
+abm_version: "1.14.0" # verify coupling of ABM to BMCTL versions
 # bmctl binary version
 #TODO: set this up to query for the version, then upgrade automatically if updated
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
-bmctl_version: "1.13.2" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
+bmctl_version: "1.14.0" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
 
 # Base folder to install ABM into
 abm_install_folder: "/var/abm-install"
@@ -52,7 +52,7 @@ ansible_pull_drift_repo: ""
 ####
 # gsutil ls -al gs://config-management-release/released/
 # Anthos Config Management version
-acm_version: "1.13.1"
+acm_version: "1.14.0"
 
 # Where to store ACM files during provisoning
 acm_config_files: "{{ abm_install_folder }}/acm-configs"
@@ -66,6 +66,7 @@ external_secrets_files: "{{ abm_install_folder }}/external-secrets"
 acm_root_repo: "{{ lookup('env', 'ROOT_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/root-repo-public-template.git', True) }}"
 acm_repo_type: "{{ lookup('env', 'ROOT_REPO_TYPE') | default('token', True) }}"
 root_repository_git_auth_type: "{{ acm_repo_type }}"
+acm_root_repo_structure: "{{ lookup('env', 'ROOT_REPO_STRUCTURE') | default('hierarchy', True) }}"
 
 scm_token_user: "{{ lookup('env', 'SCM_TOKEN_USER') | default('', True) }}"
 scm_token_token: "{{ lookup('env', 'SCM_TOKEN_TOKEN') | default('', True) }}"
@@ -74,9 +75,9 @@ acm_ssh_private_keyfile: "{{ lookup('env', 'SCM_SSH_PRIVATE_KEYFILE') | default(
 root_repository_branch: "{{ lookup('env', 'ROOT_REPO_BRANCH') | default('main', True) }}"
 # Directory to use as base
 root_repository_policy_dir: "{{ lookup('env', 'ROOT_REPO_DIR') | default('/config', True) }}"
-root_repository_sync_time: "15s" # ACM default is 15s
+root_repository_sync_time: 15 # ACM default is 15. NOTE: Do not include a suffix, seconds is assumed and type is INT
 
-# name of the first/primary root-sync object
+# name of the first/primary root-sync object (only used in the root-sync.yaml method of RooSync (DEPRECATED removal ~Q1/2023))
 primary_root_sync_name: "primary-root-sync"
 
 ###
@@ -165,8 +166,8 @@ google_kms: {
     location: "global"
   }
 
-# Number of retry attempts on failed tasks using retry (600 seconds = approx 10 minutes max)
-default_retry_count: 60
+# Number of retry attempts on failed tasks using retry (1800 seconds = approx 30 minutes)
+default_retry_count: 180
 # Time to wait (seconds) between retries
 default_retry_delay: 10
 
