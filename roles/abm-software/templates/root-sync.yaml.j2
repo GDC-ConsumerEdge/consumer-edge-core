@@ -7,11 +7,11 @@ metadata:
   name: "{{ primary_root_sync_name }}"
   namespace: config-management-system
 spec:
-  sourceFormat: hierarchy
+  sourceFormat: "{{ acm_root_repo_structure }}"
   git:
     repo: "{{ acm_root_repo }}"
     branch: "{{ root_repository_branch }}"
-    period: "{{ root_repository_sync_time }}"
+    period: "{{ root_repository_sync_time }}s" # NOTE: "s" suffix. `apply-sync.yaml` expects an integer, RootSync expects string of int + time suffix
     dir: "{{ root_repository_policy_dir }}"
     auth: "{{ root_repository_git_auth_type }}"
     {% if root_repository_git_auth_type == "gcpserviceaccount" %}
