@@ -14,6 +14,11 @@ if [[ -f "/usr/local/bin/robin" ]]; then
     exit 0
 fi
 
+if [[ $EUID != 0 ]]; then
+    echo "This script needs to be run as escalated privledges (root/sudo)"
+    exit 1
+fi
+
 # If kubeconfig is defined, go with that, if not use the path given
 KUBECONFIG=${KUBECONFIG:-/var/abm-install/kubeconfig/kubeconfig}
 
@@ -22,7 +27,7 @@ SERVICE_IP=$(kubectl get svc robin-admin -n robinio -o jsonpath='{.status.loadBa
 
 # Make sure we have the IP
 if [[ ! -n "${SERVICE_IP}" ]] || [[ -z "${SERVICE_IP}" ]]; then
-    echo -e "ERROR: Service password does not exist in K8s Sercret 'login-secret' for 'robinio' namespace. Exiting"
+    echo -e "ERROR: Service password does not exist in K8s Sercret 'login-secret' for 'robinio' namespace. Abnormally exiting."
     exit 1
 fi
 
@@ -32,3 +37,16 @@ curl -s -k "https://${SERVICE_IP}:29442/api/v3/robin_server/download?file=robinc
 chmod +x robin-client
 # Move it to usr-bin so it can be access on the path
 mv robin-client /usr/local/bin/robin
+
+### Add entry to /etc/hosts file so Client can login
+HOST="master.robin-server.service.robin" # determined by Robin (hard-coded)
+TARGET="/etc/hosts"
+COMMENT="# SET BY Ansible"
+
+# determine if hostname has been added
+HAS_LINE=$(grep -i "${HOST}" "${TARGET}")
+if [[ $? -eq 0 ]] ; then
+    sed -i  "/${HOST}/ s/.*/${SERVICE_IP}\t${HOST}\t${COMMENT}\#/g" ${TARGET}
+else
+    echo -e "${SERVICE_IP}\t${HOST}\t${COMMENT}\n" >> ${TARGET}
+fi
