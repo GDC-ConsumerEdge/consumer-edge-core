@@ -13,15 +13,15 @@
 ### Create or enable Google Service Accounts
   - name: Create or Enable Service Accounts
     shell: |
-          SA_NAME="{{ item.name }}"
-          PROJECT="{{ google_project_id }}"
-          DESCRIPTION="{{ item.description }}"
-          CURR_SA_NAME=$(gcloud iam service-accounts describe ${SA_NAME}@${PROJECT}.iam.gserviceaccount.com --format="value(name)" 2> /dev/null)
-          if [ -z "$CURR_SA_NAME" ]; then
-              gcloud iam service-accounts create ${SA_NAME} --display-name "${DESCRIPTION}"
-          else
-              gcloud iam service-accounts enable "${SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
-          fi
+      SA_NAME="{{ item.name }}"
+      PROJECT="{{ google_project_id }}"
+      DESCRIPTION="{{ item.description }}"
+      CURR_SA_NAME=$(gcloud iam service-accounts describe ${SA_NAME}@${PROJECT}.iam.gserviceaccount.com --format="value(name)" 2> /dev/null)
+      if [ -z "$CURR_SA_NAME" ]; then
+          gcloud iam service-accounts create ${SA_NAME} --display-name "${DESCRIPTION}"
+      else
+          gcloud iam service-accounts enable "${SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
+      fi
     loop: "{{ service_accounts }}"
     run_once: true # only one machine to do this
     args:
@@ -32,7 +32,6 @@
     - abm-once
     - acm-monitoring-config
     - gcloud-mutate
-
 
   - name: Add roles to service accounts
     command:
@@ -72,13 +71,13 @@
   - name: "Check if secret and version exists in secrets manager"
     run_once: true # only one machine to do this
     shell: |
-      export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.name }}" --format="value(name)" --project="{{ google_project_id }}")
+      export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.name }}" --format="value(name)" --project="{{ google_secret_project_id }}")
       if [ -z "$HAS_SECRET" ]; then
         echo "NO SECRET {{ item.name }}"
         exit 1 # exit early, no chance there's a version since there wasn't a secret
       fi
 
-      gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_project_id }}" &>/dev/null
+      gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" &>/dev/null
       if [ $? -gt 0 ]; then
         echo "NO SECRET {{ item.name }}"
         exit 1
