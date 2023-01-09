@@ -5,6 +5,11 @@ export LOCAL_GSA_FILE=$(pwd)/build-artifacts/consumer-edge-gsa.json
 ###
 # GCP Project ID
 export PROJECT_ID="${PROJECT_ID}"
+# GCP Secret Manager Project ID
+export SECRET_PROJECT_ID="${SECRET_PROJECT_ID}"
+# GCP Service Acocunt Project ID
+export SA_PROJECT_ID="${SA_PROJECT_ID}"
+
 # Bucket to store cluster snapshot information
 export SNAPSHOT_GCS="${PROJECT_ID}-cluster-snapshots"
 # GCP Project Region (Adjust as desired)

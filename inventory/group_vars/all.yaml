@@ -84,6 +84,8 @@ primary_root_sync_name: "primary-root-sync"
 ### Google Core Variables
 ###
 google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
+google_secret_project_id: "{{ lookup('env', 'SECRET_PROJECT_ID') | default(google_project_id, True) }}"
+google_service_account_project_id: "{{ lookup('env', 'SA_PROJECT_ID') | default(google_project_id, True) }}"
 google_region: "{{ lookup('env', 'REGION') | default('us-central1', True) }}" # NOTE: A copy of this variable is in Molecule test `for google_tools`
 google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}" # NOTE: A copy of this variable is in Molecule test `for google_tools`
 
@@ -113,7 +115,7 @@ enable_vmruntime: true  # Enable VMRuntime & Networking (this cannot be true if 
 ###
 ### Global Snapshot & Update Variables
 ###
-snapshot_gcs_bucket_base: "{{ lookup('env', 'SNAPSHOT_GCS') | default( [ google_project_id, '-clusters-snapshots' ] | join, True) }}" # leave empty to generate local-only snapshots
+snapshot_gcs_bucket_base: "{{ lookup('env', 'SNAPSHOT_GCS') | default( [ google_project_id, '-', cluster_name, '-snapshot' ] | join, True) }}" # leave empty to generate local-only snapshots
 # snapshot_gcs_bucket_base: ""
 
 ###
@@ -131,8 +133,8 @@ storage_provider_user_token: "{{ lookup('env', 'SDS_TOKEN_TOKEN') | default(scm_
 storage_provider_auth_secret: "{{storage_provider}}-git-cred" # GCP Secret Manager secret will be created with this name using the name/token above
 
 # Storage provider backup bucket (where PVs are backed up to)
-storage_provider_gcs_bucket_name: "sds-backups-bucket-{{ google_project_id }}"
-storage_provider_hmac_gcm_secret: "sds-backup-hmac-secret"
+storage_provider_gcs_bucket_name: "{{ google_project_id }}-{{ cluster_name }}-sds-backup"
+storage_provider_hmac_gcm_secret: "{{ google_project_id }}-{{ cluster_name }}-sds-hmac-secret"
 
 # Storage provider roots for disc storage
 storage_provider_roots: [ "/customer" ]

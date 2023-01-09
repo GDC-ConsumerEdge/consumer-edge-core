@@ -12,7 +12,7 @@
   shell:
     cmd: |
       gcloud kms decrypt \
-        --project={{ google_project_id }} \
+        --project={{ google_secret_project_id }} \
         --ciphertext-file={{ ansible_ssh_key_file_encrypted }} \
         --plaintext-file=- \
         --location={{ google_kms.location }} \

@@ -7,11 +7,11 @@
   run_once: true
   ignore_errors: true
   shell: |
-    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ storage_provider_hmac_gcm_secret }}" --format="value(name)" --project="{{ google_project_id }}")
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ storage_provider_hmac_gcm_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
     if [ -z "$HAS_SECRET" ]; then
       exit 1
     else
-      VERSION_EXISTS=$(gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
+      VERSION_EXISTS=$(gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_secret_project_id }}")
       if [ -z "${VERSION_EXISTS}" ]; then
         # no valid versions found, need to create a new one
         exit 1
