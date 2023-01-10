@@ -174,7 +174,7 @@ you have a properly authenticated GSA key located at `./build-artifacts/consumer
 
     ```bash
     # Create a default .envrc file (dot-file)
-    envsubst < templates/envrc-template.sh > .envrc
+    envsubst '$PROJECT_ID'  < templates/envrc-template.sh > .envrc
     ```
 
     1. Validate if the correct values have been replaced for the variables in the
@@ -197,7 +197,7 @@ Intel 11 NUCs (8c/16t, 64GB RAM and 250GB storage).
     ```
 
     > NOTE: Instance type defaults to `n1-standard-16`, stay within the `n1` or
-     `n2` family due to hypervisor access visibility inside the OS. Restart the 
+     `n2` family due to hypervisor access visibility inside the OS. Restart the
      VMs. The vxlan not assigning sometimes to the first run of cnucs.
 
 

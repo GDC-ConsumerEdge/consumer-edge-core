@@ -29,9 +29,9 @@ export ROOT_REPO_TYPE="token"
 # export SCM_SSH_PRIVATE_KEYFILE="$(pwd)/build-artifacts/scm-ssh-private-key-example"
 
 ######  Token Type #############
-# Values for Personal Access Token when REPO_TYPE is "token"
-export SCM_TOKEN_USER="${SCM_TOKEN_USER}" # Only used if REPO_TYPE is "token"
-export SCM_TOKEN_TOKEN="${SCM_TOKEN_TOKEN}" # Only used if REPO_TYPE is "token"
+# Values for Personal Access Token when REPO_TYPE is "token". Either set the varaible before `envsubt` or replace "change-me" with the approprate values
+export SCM_TOKEN_USER="${SCM_TOKEN_USER:-change-me}"    # Only used if REPO_TYPE is "token"
+export SCM_TOKEN_TOKEN="${SCM_TOKEN_TOKEN:-change-me}"  # Only used if REPO_TYPE is "token"
 
 ###
 ### Primary Root Repo URL

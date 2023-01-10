@@ -71,7 +71,7 @@ echo "##Running yes Y | gcloud auth configure-docker"
 yes Y | gcloud auth configure-docker
 
 
-envsubst < templates/envrc-template.sh > .envrc
+envsubst '$PROJECT_ID' < templates/envrc-template.sh > .envrc
 sed -i "s/PROJECT_ID=.*/PROJECT_ID=\"$QL_PROJECT_ID\"/g" .envrc
 #sed -i "s,ROOT_REPO_URL=.*,ROOT_REPO_URL=\"$QL_ROOT_REPO\",g" .envrc
 source .envrc
