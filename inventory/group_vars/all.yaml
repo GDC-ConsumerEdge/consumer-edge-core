@@ -34,6 +34,21 @@ remote_keys_folder: "{{ abm_install_folder }}/keys"
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
 
+# Optional OSS and breakglass tooling to be deployed on each of the nodes. These are considered optional.
+#   These tools are primarily used for debugging and/or ready to be used during breakglass
+#   scnearios. The several of these tools are OSS and not supported by Google support.
+#
+#   List of optional tooling:
+#     k9s
+#     kubestr
+#     kubectx
+#     kubens
+#     kustomize
+#     kpt
+#     nomos
+#     virtctl
+optional_tools: true # defaults to true
+
 ###
 ### Ansible Pull Configurations
 ###
