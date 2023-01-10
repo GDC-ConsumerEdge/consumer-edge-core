@@ -274,6 +274,29 @@ if [[ "${ERROR}" -eq 1 ]]; then
     exit 1
 fi
 
+ACCEPT_OSS_MESSAGE=`cat <<EOF
+This solution uses Open Source tools that are not explicity covered by Google Support.
+
+OSS solutions used but not supported:
+* External Secrets
+* Ansible Community (Ansible Playbook and Ansible Pull)
+
+Optional Tooling (config setting in all.yaml under flag "optional_tools")
+* kubens & kubectx
+* kubestr
+* K9s
+
+Do you accept the responsiblity of supporting these OSS tools as listed do you want to proceed? (y/N):
+EOF`
+
+echo ""
+read -p "$ACCEPT_OSS_MESSAGE" proceed
+
+if [[ -z "${proceed}" || "${proceed}" =~ ^([nN][oO]|[nN])$ ]]; then
+    echo "Aborting."
+    exit 0
+fi
+
 echo ""
 read -p "Check the values above and if correct, do you want to proceed? (y/N): " proceed
 
@@ -311,5 +334,6 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     fi
 
 else
+    echo "Aborting."
     exit 0
 fi
