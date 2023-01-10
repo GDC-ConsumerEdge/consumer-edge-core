@@ -59,6 +59,7 @@ acm_config_files: "{{ abm_install_folder }}/acm-configs"
 vmruntime_config_path: "{{ abm_install_folder }}/vmruntime"
 # Home directory for external secrets download and operations (TODO: Duplciated in post-install)
 external_secrets_files: "{{ abm_install_folder }}/external-secrets"
+use_workload_identity_for_external_secrets: false
 
 ###
 ### SCM (Root Repo Configurations)
