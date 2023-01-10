@@ -54,6 +54,7 @@
       mode: "0755"
       creates: '/usr/local/bin/kubectx'
       remote_src: yes
+    when: optional_tools is true
     tags:
     - initial-install
     - tool-install
@@ -66,6 +67,7 @@
       mode: "0755"
       creates: '/usr/local/bin/kubens'
       remote_src: yes
+    when: optional_tools is true
     tags:
     - initial-install
     - tool-install
@@ -77,6 +79,7 @@
       creates: "{{ tools_base_path }}/google-cloud-sdk/bin/kubectl"
     environment: # NOTE: This environment is needed until the components are all installed and added to /usr/local/bin
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    when: optional_tools is true
     tags:
     - initial-install
     - tool-install
@@ -94,6 +97,7 @@
       - { app: kpt }
       - { app: kubectl }
       - { app: kubectl-oidc }
+    when: optional_tools is true
     tags:
     - initial-install
     - tool-install
@@ -112,6 +116,7 @@
       - { app: kpt }
       - { app: kubectl }
       - { app: kubectl-oidc }
+    when: optional_tools is true
     tags:
     - initial-install
     - tool-install
@@ -237,6 +242,7 @@
       dest: /usr/local/bin
       remote_src: yes
     ignore_errors: true
+    when: optional_tools is true
     tags:
     - optional
     - tool-install
@@ -250,6 +256,7 @@
       creates: "/usr/local/bin/kubestr"
       remote_src: yes
     ignore_errors: true
+    when: optional_tools is true
     tags:
     - optional
     - tool-install
@@ -262,6 +269,7 @@
     args:
       creates: /usr/bin/kubectl-virt
       chdir: "{{ tools_base_path }}"
+    when: optional_tools is true
     tags:
     - optional
     - tool-install
