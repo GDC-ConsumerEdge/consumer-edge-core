@@ -112,7 +112,7 @@ Run `which envsubst` and if this fails, follow the below steps to install
     ```
 
 
-2. Create Google Cloud Service Account used for provisioning. Skip this step if
+1. Create Google Cloud Service Account used for provisioning. Skip this step if
 you have a properly authenticated GSA key located at `./build-artifacts/consumer-edge-gsa.json`
 
     ```bash
@@ -200,6 +200,18 @@ Intel 11 NUCs (8c/16t, 64GB RAM and 250GB storage).
      `n2` family due to hypervisor access visibility inside the OS. Restart the
      VMs. The vxlan not assigning sometimes to the first run of cnucs.
 
+1. Setup RobinIO secret if Robin is chosen as the SDS provider (this is the default)
+
+    1. Go to marketplace, search for "robin", select and enable robin
+    1. Create a Google Secret named "robin-sds-license"
+    1. Contents of that secret is a JSON blob in the following format:
+
+        ```json
+        {
+          "consumer-id": "project:pr-xxxddddd-change-me",
+          "entitlement-id": "xxxxxxxx-2450-4dca-9abe-b8-change-me",
+          "reporting-key": "ewogICJ0eXBlIjogInNl...change-me..."
+        }
 
 ## Quick Start - 2. Provision Inventory
 
