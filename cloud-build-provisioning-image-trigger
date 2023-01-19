@@ -1,0 +1,26 @@
+trigger {
+  cloud_project_number: 791690317220
+  name: "build-consumer-edge-provisioning-image"
+  gerrit_trigger {
+    host: "consumer-edge"
+    project: "core"
+    branch: "pso-gcloud-removal"
+    included_files: [
+      "build-artifacts/*"
+    ]
+  }
+  build_configs {
+    file_source {
+      path: "docker-build/cloudbuild-automation.yaml"
+    }
+  }
+  result_config {
+    code_review_config {
+      notify_condition {
+        condition: ALWAYS
+      }
+      update_status: true
+      status_name: "Verified"
+    }
+  }
+}

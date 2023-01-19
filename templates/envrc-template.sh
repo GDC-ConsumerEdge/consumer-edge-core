@@ -17,6 +17,10 @@ export REGION="us-central1"
 # GCP Project Zone (Adjust as desired)
 export ZONE="us-central1-a"
 
+# Determines which project contains the provisioning image. If PROVISIONING_IMAGE_PROJECT_ID is
+# unset, it will default to the PROJECT_ID.
+export PROVISIONING_IMAGE_PROJECT_ID=${PROVISIONING_IMAGE_PROJECT_ID:-$PROJECT_ID}
+
 ###
 ### ACM Settings.  ACM Repos have several authentication to access the repository.
 ###
