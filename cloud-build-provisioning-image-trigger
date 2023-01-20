@@ -1,13 +1,11 @@
 trigger {
+  state: LIVE
   cloud_project_number: 791690317220
   name: "build-consumer-edge-provisioning-image"
   gerrit_trigger {
     host: "consumer-edge"
     project: "core"
     branch: "pso-gcloud-removal"
-    included_files: [
-      "build-artifacts/*"
-    ]
   }
   build_configs {
     file_source {
