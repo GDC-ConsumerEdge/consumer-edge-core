@@ -75,8 +75,7 @@
 
 ### Setup keyless ssh across cluster
 - name: Setup keyless SSH from primary to all others in group
-  command:
-    cmd: ssh-keyscan {{ machine }} >> {{ ssh_user_home }}/known_hosts
+  shell: ssh-keyscan {{ machine }} >> {{ ssh_user_home }}/known_hosts
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
