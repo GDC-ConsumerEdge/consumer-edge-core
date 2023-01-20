@@ -17,6 +17,22 @@
   set_fact:
     uname_r: '{{ uname_result.stdout }}'
 
+- name: Set HTTP apt proxy (if needed)
+  lineinfile:
+    path: /etc/apt/apt.conf.d/proxy.conf
+    line: 'Acquire::http::Proxy "{{ proxy_http_full_addr }}";'
+    create: true
+  when:
+  - proxy_has_http_proxy is true
+
+- name: Set HTTPS apt proxy (if needed)
+  lineinfile:
+    path: /etc/apt/apt.conf.d/proxy.conf
+    line: 'Acquire::https::Proxy "{{ proxy_https_full_addr }}";'
+    create: true
+  when:
+  - proxy_has_https_proxy is true
+
 # TODO Audit this list of dependencies and split into "development" and "production" (not everything is needed for production)
 - name: Install dependencies used in provisioning
   apt:

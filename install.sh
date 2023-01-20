@@ -169,6 +169,13 @@ else
     pretty_print "PASS: PROJECT_ID (${PROJECT_ID}) variable is set."
 fi
 
+# Check for SSH Keys
+if [[ ! -z "${HTTP_PROXY_ADDR}" ]]; then
+    pretty_print "INFO: HTTP Proxy (${HTTP_PROXY_ADDR}) is being installed" "INFO"
+else
+    pretty_print "INFO: No HTTP proxy indicated" "INFO"
+fi
+
 if [[ -z "${LOCAL_GSA_FILE}" ]]; then
     pretty_print "ERROR: An environment variable pointing to the local GSA key file does not exist. Please run ./scripts/create-primary-gsa.sh and place the key as ./build-artifacts/consumer-edge-gsa.json" "ERROR"
     ERROR=1

@@ -207,6 +207,46 @@
     - initial-install
     - gcloud-command
 
+  - name: Set HTTP Proxy for gcloud
+    shell: |
+      gcloud config set proxy/type http
+      gcloud config set proxy/address {{ proxy_http_addr }}
+      gcloud config set proxy/port {{ proxy_http_port }}
+    args:
+      executable: /bin/bash
+    environment:
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    when:
+    - proxy_has_http_proxy is true
+    tags:
+    - tool-install
+    - initial-install
+    - gcloud-command
+    - http-proxy
+    - gcloud-proxy
+
+  - name: Set CLOUDSDK user in global vars
+    lineinfile:
+      path: /etc/environment
+      line: 'CLOUDSDK_PROXY_USERNAME="{{ proxy_http_user }}"'
+    when:
+    - proxy_has_http_proxy is true
+    - proxy_http_user is defined and proxy_http_user | length > 0
+    tags:
+    - http-proxy
+    - gcloud-proxy
+
+  - name: Set CLOUDSDK pass in global vars
+    lineinfile:
+      path: /etc/environment
+      line: 'CLOUDSDK_PROXY_PASSWORD="{{ proxy_http_pass }}"'
+    when:
+    - proxy_has_http_proxy is true
+    - proxy_http_pass is defined and proxy_http_pass | length > 0
+    tags:
+    - http-proxy
+    - gcloud-proxy
+
 ### IF upgrading BMCTL, remove existing
   - name: Remove bmctl
     ansible.builtin.file:

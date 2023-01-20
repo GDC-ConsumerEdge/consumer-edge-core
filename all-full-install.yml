@@ -19,6 +19,7 @@
     - always
   roles:
   - validate
+  - set-proxy
   - google-tools
   - update-automation
   - ready-ubuntu
