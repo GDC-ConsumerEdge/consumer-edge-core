@@ -1,0 +1,62 @@
+### Set up CURL_HOME
+- name: Create curl_home directory
+  ansible.builtin.file:
+    path: "{{ curl_home }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0744'
+  when:
+  - proxy_has_http_proxy is true or proxy_has_https_proxy is true
+  tags:
+  - http-proxy
+  - curl-proxy
+
+- name: Set CURL_HOME for proxy config
+  lineinfile:
+    path: /etc/environment
+    line: 'CURL_HOME="{{ curl_home }}"'
+  when:
+  - proxy_has_http_proxy is true
+  tags:
+  - http-proxy
+  - curl-proxy
+
+- name: Add proxy config to .curlrc
+  lineinfile:
+    path: "{{ curl_home }}/.curlrc"
+    line: "proxy={{ proxy_http_full_addr }}"
+    create: true
+  when:
+  - proxy_has_http_proxy is true
+  tags:
+  - http-proxy
+  - curl-proxy
+
+### Setup HTTP and HTTPS proxies for OS
+- name: Set HTTP Proxy for environment
+  lineinfile:
+    path: /etc/environment
+    line: 'HTTP_PROXY="{{ proxy_http_full_addr }}"'
+  when:
+  - proxy_has_http_proxy is true
+  tags:
+  - http-proxy
+
+- name: Set HTTPS Proxy for environment
+  lineinfile:
+    path: /etc/environment
+    line: 'HTTPS_PROXY="{{ proxy_https_full_addr }}"'
+  when:
+  - proxy_has_https_proxy is true
+  tags:
+  - http-proxy
+
+- name: Set NO_PROXY for environment
+  lineinfile:
+    path: /etc/environment
+    line: "NO_PROXY=\"{{ node_ip.split('.')[0] }}.{{ node_ip.split('.')[1] }}.{{ node_ip.split('.')[2] }}.0/24\""
+  when:
+  - proxy_has_http_proxy is true
+  tags:
+  - http-proxy

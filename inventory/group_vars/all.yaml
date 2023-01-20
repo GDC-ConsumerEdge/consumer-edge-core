@@ -34,6 +34,31 @@ remote_keys_folder: "{{ abm_install_folder }}/keys"
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
 
+### Proxy
+###
+###  Define the HTTP and HTTPS proxies for the systems. Leave values empty if they are not to be set with the exception of port. IF there is a proxy, you must define the port and address
+###
+proxy_http_user: "{{ lookup('env', 'HTTP_PROXY_USER') | default('', True) }}"
+proxy_http_pass: "{{ lookup('env', 'HTTP_PROXY_PASS') | default('', True) }}"
+proxy_http_addr: "{{ lookup('env', 'HTTP_PROXY_ADDR') | default('', True) }}"
+proxy_http_port: "{{ lookup('env', 'HTTP_PROXY_PORT') | default('', True) }}" # Required IF address is defined
+proxy_http_proto: "{{ lookup('env', 'HTTP_PROXY_PROTOCOL') | default('', True) }}"
+
+proxy_https_user: "{{ lookup('env', 'HTTPS_PROXY_USER') | default('', True) }}"
+proxy_https_pass: "{{ lookup('env', 'HTTPS_PROXY_PASS') | default('', True) }}"
+proxy_https_addr: "{{ lookup('env', 'HTTPS_PROXY_ADDR') | default('', True) }}"
+proxy_https_port: "{{ lookup('env', 'HTTPS_PROXY_PORT') | default('', True) }}" # Required IF address is defined
+proxy_https_proto: "{{ lookup('env', 'HTTPS_PROXY_PROTOCOL') | default('', True) }}"
+
+# CALCULATED VARIABLE: Do not manually change -- Build the full http proxy address. This variable should be used for full URL where http proxy is needed
+proxy_http_full_addr: "{{ proxy_http_proto }}://{{ (proxy_http_user is defined and proxy_http_user | length > 0) | ternary( proxy_http_user + ':' + proxy_http_pass + '@', '' ) }}{{ proxy_http_addr }}:{{ proxy_http_port }}"
+# CALCULATED VARIABLE: Do not manually change -- Build the full https proxy address. This variable should be used for full URL where http proxy is needed
+proxy_https_full_addr: "{{ proxy_https_proto }}://{{ (proxy_https_user is defined and proxy_https_user | length > 0) | ternary( proxy_https_user + ':' + proxy_https_pass + '@', '' ) }}{{ proxy_https_addr }}:{{ proxy_https_port }}"
+
+# Calculated value if the http proxy has been set. This is used in "when" conditionals. The value is only true if there is the 'addr' filled out regardless of other varaiables
+proxy_has_http_proxy: "{{ proxy_http_addr | length > 0 }}"
+proxy_has_https_proxy: "{{ proxy_https_addr | length > 0 }}"
+
 # Optional OSS and breakglass tooling to be deployed on each of the nodes. These are considered optional.
 #   These tools are primarily used for debugging and/or ready to be used during breakglass
 #   scnearios. The several of these tools are OSS and not supported by Google support.

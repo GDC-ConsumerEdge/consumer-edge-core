@@ -50,3 +50,17 @@ export OIDC_CLIENT_ID="" # Optional, requires GCP API setup work
 export OIDC_CLIENT_SECRET="" # Optional
 export OIDC_USER="" # Optional
 export OIDC_ENABLED="false" # Flip to true IF implementing OIDC on cluster
+
+###### HTTP / HTTPS Proxy #########
+# Variables for HTTP proxy (leave empty or remove if not used)
+export HTTP_PROXY_USER=""
+export HTTP_PROXY_PASS=""
+export HTTP_PROXY_ADDR=""
+export HTTP_PROXY_PORT=""
+export HTTP_PROXY_PROTOCOL="" # http or https
+# Variables for HTTPS proxy (leave empty or remove if not used)
+export HTTPS_PROXY_USER=""
+export HTTPS_PROXY_PASS=""
+export HTTPS_PROXY_ADDR=""
+export HTTPS_PROXY_PORT=""
+export HTTPS_PROXY_PROTOCOL="" # http or https

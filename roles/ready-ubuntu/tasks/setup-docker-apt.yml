@@ -4,6 +4,7 @@
     state: stopped
   ignore_errors: yes
 
+# TODO: Also remove snap docker
 #### Setup Docker
 - name: Remove all docker-based existing packages
   apt:
@@ -35,10 +36,34 @@
     state: latest
     update_cache: true
 
+- name: Setup proxy for docker (if needed)
+  ansible.builtin.file:
+    path: "{{ docker_service_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when:
+  - proxy_has_http_proxy is true or proxy_has_https_proxy is true
+  tags:
+  - http-proxy
+  - docker-proxy
+
+- name: "Place http-proxy conf in docker system service directory"
+  template:
+    src: docker-http-proxy.conf.j2
+    dest: "{{ docker_service_path }}/http-proxy.conf"
+  when:
+  - proxy_has_http_proxy is true or proxy_has_https_proxy is true
+  tags:
+  - http-proxy
+  - docker-proxy
+
 - name: Start docker, if not started
   ansible.builtin.service:
     name: docker
     state: started
+    daemon_reload: true
   register: task_result
   until: task_result is succeeded
   retries: "{{ default_retry_count }}"
