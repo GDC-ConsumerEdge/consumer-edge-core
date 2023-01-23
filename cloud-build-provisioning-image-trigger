@@ -4,7 +4,10 @@ trigger {
   name: "build-consumer-edge-provisioning-image"
   git_trigger {
     url: "https://consumer-edge.googlesource.com/core"
-    branch_name: "pso-cloud-removal"
+    branch_name: "pso-gcloud-removal"
+    included_files: [
+      "docker-build/**"
+    ]
   }
   build_configs {
     file_source {
