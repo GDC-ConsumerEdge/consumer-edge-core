@@ -5,12 +5,19 @@ export LOCAL_GSA_FILE=$(pwd)/build-artifacts/consumer-edge-gsa.json
 ###
 # GCP Project ID
 export PROJECT_ID="${PROJECT_ID}"
-# Bucket to store cluster snapshot information
-export SNAPSHOT_GCS="${PROJECT_ID}-cluster-snapshots"
+# GCP Secret Manager Project ID
+export SECRET_PROJECT_ID="${SECRET_PROJECT_ID}"
+# GCP Service Acocunt Project ID
+export SA_PROJECT_ID="${SA_PROJECT_ID}"
+
 # GCP Project Region (Adjust as desired)
 export REGION="us-central1"
 # GCP Project Zone (Adjust as desired)
 export ZONE="us-central1-a"
+
+# Determines which project contains the provisioning image. If PROVISIONING_IMAGE_PROJECT_ID is
+# unset, it will default to the PROJECT_ID.
+export PROVISIONING_IMAGE_PROJECT_ID=${PROVISIONING_IMAGE_PROJECT_ID:-$PROJECT_ID}
 
 ###
 ### ACM Settings.  ACM Repos have several authentication to access the repository.
@@ -18,6 +25,9 @@ export ZONE="us-central1-a"
 ######  Cluster Name for ACM #############
 # Set the name of the cluster for ACM to use (NOTE: If provisioning multiple clusters, this is not an effective naming method)
 export CLUSTER_ACM_NAME="con-edge-cluster"    # con-edge-cluster is the default for demos, for POC and other builds, set name in primary_machine of each cluster
+
+# Bucket to store cluster snapshot information
+export SNAPSHOT_GCS="${PROJECT_ID}-${CLUSTER_ACM_NAME}-snapshot"
 
 ### ACM Root Repo structure type. Default is hierarchy, but primary-root-repo-template is unstructured
 export ROOT_REPO_STRUCTURE="unstructured"

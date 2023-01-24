@@ -313,7 +313,8 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
     pretty_print "Pulling docker install image...(please be patient, can be 1-2 minutes on first image pull)"
 
-    RESULT=$(docker pull gcr.io/${PROJECT_ID}/consumer-edge-install:latest)
+    IMAGE_PATH="gcr.io/${PROVISIONING_IMAGE_PROJECT_ID}/consumer-edge-install:latest"
+    RESULT=$(docker pull ${IMAGE_PATH})
 
     if [[ $? -gt 0 ]]; then
         pretty_print "ERROR: Cannot pull Consumer Edge Install image" "ERROR"
@@ -333,7 +334,7 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     pretty_print " "
 
     # Running docker image
-    docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd):/var/consumer-edge-install:ro" -it gcr.io/${PROJECT_ID}/consumer-edge-install:latest
+    docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd):/var/consumer-edge-install:ro" -it ${IMAGE_PATH}
 
     if [[ $? -gt 0 ]]; then
         pretty_print "ERROR: Docker container cannot open." "ERROR"
