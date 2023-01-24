@@ -1,0 +1,10 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: Build Provisioning Image
+    args: ['build', '-t', 'gcr.io/${PROJECT_ID}/consumer-edge-install', 'docker-build/.']
+
+images:
+  - gcr.io/${PROJECT_ID}/consumer-edge-install
+
+options:
+  machineType: 'E2_HIGHCPU_8'

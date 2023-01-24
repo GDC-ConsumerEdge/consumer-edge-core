@@ -7,7 +7,7 @@
 - name: Get a list of current snapshots
   ignore_errors: true
   command:
-    cmd: "gsutil ls -p {{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}/{{ cluster_name }}/*.tar.gz"
+    cmd: "gsutil ls -p {{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}/*.tar.gz"
   register: snapshot_list
   when:
     - primary_cluster_machine is defined

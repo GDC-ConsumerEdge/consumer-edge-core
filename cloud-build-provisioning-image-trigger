@@ -1,0 +1,26 @@
+trigger {
+  state: LIVE
+  cloud_project_number: 791690317220
+  name: "build-consumer-edge-provisioning-image"
+  git_trigger {
+    url: "https://consumer-edge.googlesource.com/core"
+    branch_name: "main"
+    included_files: [
+      "docker-build/**"
+    ]
+  }
+  build_configs {
+    file_source {
+      path: "docker-build/cloudbuild-automation.yaml"
+    }
+  }
+  result_config {
+    code_review_config {
+      notify_condition {
+        condition: ALWAYS
+      }
+      update_status: true
+      status_name: "Verified"
+    }
+  }
+}

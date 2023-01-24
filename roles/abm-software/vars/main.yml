@@ -1,7 +1,7 @@
 
 
 # GSA Created and granted permissions in `all.yaml`
-root_repository_service_account_email: source-repo-agent-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com
+root_repository_service_account_email: source-repo-agent-{{ cluster_name }}@{{ google_service_account_project_id }}.iam.gserviceaccount.com
 
 # NOTE: This is a tight coupling with the "Root Repo" that contains "ExternalSecret" instances with the `git-creds` name
 #       IF changed, both the ACM root-repo and this field need to match
