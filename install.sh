@@ -2,7 +2,7 @@
 
 # Requirements
 # - Need to have gcloud setup and configured to target $PROJECT_ID
-# - Need to have run ./scripts/create-primary-gsa.sh and have the JSON key placed in ./build-artifacts
+# - Need to have run ./scripts/create-gsa.sh and have the JSON key placed in ./build-artifacts
 
 # Need to generate or validate
 # - Create GCE instances (or verify communication with them)
@@ -124,8 +124,8 @@ else
 fi
 
 # Check for GSA Keys
-if [[ ! -f "./build-artifacts/consumer-edge-gsa.json" ]]; then
-    pretty_print "ERROR: GSA JSON key './build-artifacts/consumer-edge-gsa.json' does not exist, please generate a key using ./script/create-primary-gsa.sh and try again." "ERROR"
+if [[ ! -f "./build-artifacts/provisioning-gsa.json" ]]; then
+    pretty_print "ERROR: GSA JSON key './build-artifacts/provisioning-gsa.json' does not exist, please generate a key using ./script/create-gsa.sh and try again." "ERROR"
     exit 1
 else
     pretty_print "PASS: GSA Key found"
@@ -176,14 +176,24 @@ else
     pretty_print "INFO: No HTTP proxy indicated" "INFO"
 fi
 
-if [[ -z "${LOCAL_GSA_FILE}" ]]; then
-    pretty_print "ERROR: An environment variable pointing to the local GSA key file does not exist. Please run ./scripts/create-primary-gsa.sh and place the key as ./build-artifacts/consumer-edge-gsa.json" "ERROR"
+if [[ -z "${PROVISIONING_GSA_FILE}" ]]; then
+    pretty_print "ERROR: An environment variable pointing to the provisioning GSA key file does not exist. Please run ./scripts/create-gsa.sh and place the key as ./build-artifacts/provisioning-gsa.json" "ERROR"
     ERROR=1
-elif [[ ! -f $LOCAL_GSA_FILE ]]; then
-    pretty_print "ERROR: Local GSA file does not exist or is not placed where the ENV is pointing to." "ERROR"
+elif [[ ! -f $PROVISIONING_GSA_FILE ]]; then
+    pretty_print "ERROR: Provisioning GSA file does not exist or is not placed where the ENV is pointing to." "ERROR"
     ERROR=1
 else
-    pretty_print "PASS: Local GSA key (${LOCAL_GSA_FILE})"
+    pretty_print "PASS: Provisioning GSA key (${PROVISIONING_GSA_FILE})"
+fi
+
+if [[ -z "${NODE_GSA_FILE}" ]]; then
+    pretty_print "ERROR: An environment variable pointing to the node GSA key file does not exist. Please run ./scripts/create-gsa.sh and place the key as ./build-artifacts/node-gsa.json" "ERROR"
+    ERROR=1
+elif [[ ! -f $NODE_GSA_FILE ]]; then
+    pretty_print "ERROR: Node GSA file does not exist or is not placed where the ENV is pointing to." "ERROR"
+    ERROR=1
+else
+    pretty_print "PASS: Node GSA key (${NODE_GSA_FILE})"
 fi
 
 ### Validate ROOT_REPO_TYPE & ROOT_REPO URL

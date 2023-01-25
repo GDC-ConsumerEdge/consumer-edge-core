@@ -135,31 +135,31 @@ Setting up the machine has 4 steps, setting up python, installing dependencies, 
 
 > RECOMMENDATION: use [direnv](https://direnv.net/) to manage local environment variables per project. You would then store each of the below variables in a `.envrc` file at the root of the project.
 
-| Environment Variable | Required | Description | Default Value |
-|:---------------------|:--------:|:------------|:-------------:|
-| LOCAL_GSA_FILE       |  Y       |  Google Service Account key to a GSA that is used to provision and activate all Google-based services (all `gcloud` commands) from inside the Target machine(s) | Set in next step |
-| PROJECT_ID           |  Y       |  Google Project ID to put clusters, Service Accounts and API services into | gcloud config |
-| SSH_PUB_KEY_LOCATION |  N       |  SSH public key location for Ansible | `$HOME/.ssh/cnucs-cloud.pub` |
-| ZONE                 |  N       |  Google default zone | gcloud config  |
-| SCM_TOKEN_USER       |  Y       |  Git repo token user/name | none  |
-| SCM_TOKEN_TOKEN      |  Y       |  Git repo token string | none  |
+| Environment Variable  | Required | Description | Default Value |
+|:----------------------|:--------:|:------------|:-------------:|
+| PROVISIONING_GSA_FILE |  Y       |  Google Service Account key to a GSA that is used to provision and activate all Google-based services (all `gcloud` commands) from inside the Target machine(s) | Set in next step |
+| PROJECT_ID            |  Y       |  Google Project ID to put clusters, Service Accounts and API services into | gcloud config |
+| SSH_PUB_KEY_LOCATION  |  N       |  SSH public key location for Ansible | `$HOME/.ssh/cnucs-cloud.pub` |
+| ZONE                  |  N       |  Google default zone | gcloud config  |
+| SCM_TOKEN_USER        |  Y       |  Git repo token user/name | none  |
+| SCM_TOKEN_TOKEN       |  Y       |  Git repo token string | none  |
 
 ### Step 4 - Setting up GCP Service Account for provisioning
 
 Both `physical` and `cloud` installations use a GSA (`target-machine-gsa@<project-id>.iam.gserviceaccount.com`) to run commands inside the **target machines**. The installation process needs keys to securely pass (via Secrets Manager) the keys to each target machine. Follow the steps below to generate (or update) the GSA and create or re-create a set of keys for use.
 
-1. Create a service account key and set an environment varaible (`LOCAL_GSA_FILE`) to that location
+1. Create a service account key and set an environment varaible (`PROVISIONING_GSA_FILE`) to that location
 
     1. A helper script is provided to generate, provision with IAM roles and download the key
 
         ```bash
         # Follow prompts
-        ./scripts/create-primary-gsa.sh
+        ./scripts/create-gsa.sh
 
-        export LOCAL_GSA_FILE="./remote-gsa-key.json"
+        export PROVISIONING_GSA_FILE="./provisioning-gsa.json"
         ```
 
-    > NOTE: Add the `export LOCAL_GSA_FILE=...` line to `.bashrc` or `.envrc` (if using `direnv`) so new shells can establish this required environment variable
+    > NOTE: Add the `export PROVISIONING_GSA_FILE=...` line to `.bashrc` or `.envrc` (if using `direnv`) so new shells can establish this required environment variable
 
 GSA Permissions should include:
 - Editor (roles/editor) or Owner (roles/owner)
@@ -170,7 +170,7 @@ GSA Permissions should include:
 - GKE Hub Gateway Admin (gkehub.gatewayAdmin)
 - GKE Hub Viewer (gkehub.viewer)
 
-> NOTE: This is not necessarily the minimal-roles, further work will refine this). Please use `scripts/create-primary-gsa.sh` to generate the GSA and key.
+> NOTE: This is not necessarily the minimal-roles, further work will refine this). Please use `scripts/create-gsa.sh` to generate the GSA and key.
 
 
 ## Goal 4 - Setting up Inventory files

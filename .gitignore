@@ -98,8 +98,7 @@ test-report.xml
 coverage-report.xml
 
 # Ignore key files
-gsa-key.json
-remote-gsa-key.json
+provisioning-gsa.json
 
 # ansible temp files
 ansible*temp

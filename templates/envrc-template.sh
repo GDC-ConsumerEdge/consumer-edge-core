@@ -1,5 +1,6 @@
 # GSA Key used for provisioning (result of running ./scripts/create-primary-gsa.sh)
-export LOCAL_GSA_FILE=$(pwd)/build-artifacts/consumer-edge-gsa.json
+export PROVISIONING_GSA_FILE=$(pwd)/build-artifacts/provisioning-gsa.json
+export NODE_GSA_FILE=$(pwd)/build-artifacts/node-gsa.json
 ###
 ### GCP Project Settings (change if needed per each provisioning run)
 ###
