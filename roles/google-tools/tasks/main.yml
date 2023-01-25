@@ -2,7 +2,7 @@
 
   # Credentials
 
-### The /etc/profile.d/gcloud_auth.sh requires it readable for all users
+### The remote keys folder must be readable for all users
   - name: Create the temp keys directory
     file:
       path: '{{ remote_keys_folder }}'
@@ -14,11 +14,21 @@
     - initial-install
     - tool-authentication
 
-### The /etc/profile.d/gcloud_auth.sh requires it readable for all users
-  - name: Get the SA key to initialize gcloud with
+  - name: Get the provisiong GSA key to initialize gcloud with
     copy:
-      src: '{{ local_gsa_key }}'
-      dest: '{{ remote_keys_folder }}/gsa-key.json'
+      src: '{{ provisioning_gsa_key }}'
+      dest: '{{ remote_keys_folder }}/provisioning-gsa.json'
+      mode: '0444' # read only
+      group: 'root'
+      owner: 'root'
+    tags:
+    - initial-install
+    - tool-authentication
+
+  - name: Copy node GSA
+    copy:
+      src: '{{ node_gsa_key }}'
+      dest: '{{ remote_keys_folder }}/node-gsa.json'
       mode: '0444' # read only
       group: 'root'
       owner: 'root'
@@ -125,7 +135,7 @@
   - name: Setting up Google App Creds for non-interactive shells
     lineinfile:
       path: /etc/environment
-      line: 'GOOGLE_APPLICATION_CREDENTIALS="{{ remote_keys_folder }}/gsa-key.json"'
+      line: 'GOOGLE_APPLICATION_CREDENTIALS="{{ remote_keys_folder }}/node-gsa.json"'
     tags:
     - profile
     - initial-install
@@ -154,10 +164,10 @@
     - initial-install
     - non-interactive-shell
 
-  - name: Add gcloud BASH completion
+  - name: Add node GSA activation script to /etc/profile.d
     lineinfile:
       path: /etc/profile.d/gcloud_auth.sh
-      line: "gcloud auth activate-service-account --key-file={{ remote_keys_folder }}/gsa-key.json --project {{ google_project_id }}"
+      line: "gcloud auth activate-service-account --key-file={{ remote_keys_folder }}/node-gsa.json --project {{ google_project_id }}"
       state: present
       create: yes
     tags:
@@ -167,9 +177,9 @@
     - gcloud-setup
 
 ### Switch current session to target-machine-gsa
-  - name: Switch to target-machine-gsa
+  - name: Switch to provisioning GSA
     command:
-      cmd: bash /etc/profile.d/gcloud_auth.sh
+      cmd: "gcloud auth activate-service-account --key-file={{ remote_keys_folder }}/provisioning-gsa.json --project {{ google_project_id }}"
     environment:
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
     tags:

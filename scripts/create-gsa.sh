@@ -5,9 +5,12 @@ set -e
 echo "This will create a Google Service Account and key that is used on each of the target machines to run gcloud commands"
 
 PROJECT_ID=${1:-${PROJECT_ID}}
-GSA_NAME="target-machine-gsa"
-GSA_EMAIL="${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
-KEY_LOCATION="./build-artifacts/consumer-edge-gsa.json"
+PROVISIONING_GSA_NAME="provision-gsa"
+PROVISIONING_GSA="${PROVISIONING_GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+NODE_GSA_NAME="node-gsa"
+NODE_GSA="${NODE_GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+PROVISIONING_KEY_LOCATION="./build-artifacts/provisioning-gsa.json"
+NODE_KEY_LOCATION="./build-artifacts/node-gsa.json"
 
 KMS_KEY_NAME="gdc-ssh-key"
 KMS_KEYRING_NAME="gdc-ce-keyring"
@@ -18,23 +21,46 @@ if [[ -z "${PROJECT_ID}" ]]; then
   exit 1
 fi
 
-EXISTS=$(gcloud iam service-accounts list \
-  --filter="email=${GSA_EMAIL}" \
+# Provisioning GSA
+PROV_EXISTS=$(gcloud iam service-accounts list \
+  --filter="email=${PROVISIONING_GSA}" \
   --format="value(name, disabled)" \
   --project="${PROJECT_ID}")
 
-if [[ -z "${EXISTS}" ]]; then
-  echo "GSA [${GSA_EMAIL}]does not exist, creating it"
+if [[ -z "${PROV_EXISTS}" ]]; then
+  echo "GSA [${PROVISIONING_GSA}]does not exist, creating it"
 
   # GSA does NOT exist, create
-  gcloud iam service-accounts create ${GSA_NAME} \
-    --description="GSA used on each Target machine to make gcloud commands" \
-    --display-name="target-machine-gsa" \
+  gcloud iam service-accounts create ${PROVISIONING_GSA_NAME} \
+    --description="GSA used during provisioning with gcloud commands" \
+    --display-name="${PROVISIOING_GSA_NAME}" \
     --project ${PROJECT_ID}
 else
-  if [[ "${EXISTS}" =~ .*"disabled".* ]]; then
+  if [[ "${PROV_EXISTS}" =~ .*"disabled".* ]]; then
     # Found GSA is disabled, enable
-    gcloud iam service-accounts enable ${GSA_EMAIL} --project ${PROJECT_ID}
+    gcloud iam service-accounts enable ${PROVISIONING_GSA} --project ${PROJECT_ID}
+  fi
+  # otherwise, no need to do anything
+fi
+
+# Node GSA
+NODE_EXISTS=$(gcloud iam service-accounts list \
+  --filter="email=${NODE_GSA}" \
+  --format="value(name, disabled)" \
+  --project="${PROJECT_ID}")
+
+if [[ -z "${NODE_EXISTS}" ]]; then
+  echo "GSA [${NODE_GSA}]does not exist, creating it"
+
+  # GSA does NOT exist, create
+  gcloud iam service-accounts create ${NODE_GSA_NAME} \
+    --description="GSA which persists on each node" \
+    --display-name="${NODE_GSA_NAME}" \
+    --project ${PROJECT_ID}
+else
+  if [[ "${NODE_EXISTS}" =~ .*"disabled".* ]]; then
+    # Found GSA is disabled, enable
+    gcloud iam service-accounts enable ${NODE_GSA} --project ${PROJECT_ID}
   fi
   # otherwise, no need to do anything
 fi
@@ -96,7 +122,7 @@ declare -a ROLES=(
 for role in ${ROLES[@]}; do
   echo "Adding ${role}"
   gcloud projects add-iam-policy-binding ${PROJECT_ID} \
-    --member="serviceAccount:${GSA_EMAIL}" \
+    --member="serviceAccount:${PROVISIONING_GSA}" \
     --role="${role}" \
     --no-user-output-enabled
 done
@@ -107,12 +133,19 @@ echo -e "\n====================\n"
 
 read -r -p "Create a new key for GSA? [y/N] " response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-  gcloud iam service-accounts keys create ${KEY_LOCATION} \
-    --iam-account=${GSA_EMAIL} \
+  gcloud iam service-accounts keys create ${PROVISIONING_KEY_LOCATION} \
+    --iam-account=${PROVISIONING_GSA} \
     --project ${PROJECT_ID}
 
   # reducing OS visibility to read-only for current user
-  chmod 400 ${KEY_LOCATION}
+  chmod 400 ${PROVISIONING_KEY_LOCATION}
+
+  gcloud iam service-accounts keys create ${NODE_KEY_LOCATION} \
+    --iam-account=${NODE_GSA} \
+    --project ${PROJECT_ID}
+
+  # reducing OS visibility to read-only for current user
+  chmod 400 ${NODE_KEY_LOCATION}
 else
   echo "Skipping making new keys"
 fi

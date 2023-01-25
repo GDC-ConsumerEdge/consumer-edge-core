@@ -11,7 +11,8 @@ tools_base_path: "{{ abm_install_folder }}/tools"
 gcloud_version: "408.0.0"
 
 # Local GSA Key (needs to be provided via command line vars)
-local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
+provisioning_gsa_key: "{{ lookup('env', 'PROVISIONING_GSA_FILE') }}"
+node_gsa_key: "{{ lookup('env', 'NODE_GSA_FILE') }}"
 
 kubectx_version: "0.9.4"
 

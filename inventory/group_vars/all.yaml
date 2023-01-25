@@ -204,7 +204,7 @@ ansible_ssh_key_file_encrypted: build-artifacts/consumer-edge-machine.encrypted
 ansible_ssh_key_timeout: "4h"
 # Details of Google Cloud KMS key used to decrypt SSH private key
 google_kms: {
-    keyring_name: "gdc-ce-keyring", # Defined in ./scripts/create-primary-gsa.sh -- future will be TF
+    keyring_name: "gdc-ce-keyring", # Defined in ./scripts/create-gsa.sh -- future will be TF
     key_name: "gdc-ssh-key",
     location: "global"
   }
@@ -214,7 +214,8 @@ default_retry_count: 180
 # Time to wait (seconds) between retries
 default_retry_delay: 10
 
-local_gsa_key: "{{ lookup('env', 'LOCAL_GSA_FILE') }}"
+provisioning_gsa_key: "{{ lookup('env', 'PROVISIONING_GSA_FILE') }}"
+node_gsa_key: "{{ lookup('env', 'NODE_GSA_FILE') }}"
 tools_base_path: "/var/google-tools-install"
 
 ## kubeconfig link directory and file (so all users can access kubeconfig and env KUBECONFIG set to this location/file)

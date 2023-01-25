@@ -148,13 +148,13 @@ flowchart TB
         gcloud version
         ```
 
-    1. Create a Google Service Account (GSA) and place the JSON key at `build-artifacts/consumer-edge-gsa.json`. Use the helper script located at `scripts/create-primary-gsa.sh`. Follow the prompts to create a new GSA Key **if** you don't have one defined, or if you want to use a new one.
+    1. Create a Google Service Account (GSA) and place the JSON key at `build-artifacts/provisioning-gsa.json`. Use the helper script located at `scripts/create-gsa.sh`. Follow the prompts to create a new GSA Key **if** you don't have one defined, or if you want to use a new one.
 
         ```bash
-        ./scripts/create-primary-gsa.sh
+        ./scripts/create-gsa.sh
         ```
 
-        Move the newly created `consumer-edge-gsa.json` file into the `build-artifacts/` folder.
+        Move the newly created `provisioning-gsa.json` file into the `build-artifacts/` folder.
 
         > :exclamation: - Anything stored in the `build-artifacts/` folder are **NOT** able to be stored in the Git repo and are therefore not backed up. Many of the files in the folder are sensitive, so please practice caution. File should be `chmod 400` (read-only) for the current user.
 
@@ -164,7 +164,7 @@ flowchart TB
 
         ```bash
         # Local Environment Variables
-        export LOCAL_GSA_FILE=$(pwd)/build-artifacts/consumer-edge-gsa.json
+        export PROVISIONING_GSA_FILE=$(pwd)/build-artifacts/provisioning-gsa.json
         export PROJECT_ID="< ## YOUR GOOGLE CLOUD PROJECT ID ##>" #CHANGEME
         export REGION="us-west1" # CHANGEME
         export ZONE="${REGION}-b" # CHANGEME
@@ -199,7 +199,7 @@ flowchart TB
 
             ```bash
             direnv: loading ~/abm-consumer-edge-ansible/.envrc
-            direnv: export +LOCAL_GSA_FILE +OIDC_CLIENT_ID +OIDC_CLIENT_SECRET +OIDC_ENABLED +OIDC_USER +PROJECT_ID +REGION +ROOT_REPO_URL +SCM_TOKEN_TOKEN +SCM_TOKEN_USER +ZONE
+            direnv: export +PROVISIONING_GSA_FILE +OIDC_CLIENT_ID +OIDC_CLIENT_SECRET +OIDC_ENABLED +OIDC_USER +PROJECT_ID +REGION +ROOT_REPO_URL +SCM_TOKEN_TOKEN +SCM_TOKEN_USER +ZONE
             ```
 
     1. You can verify the ENVs by typing the following and seeing your GCP Project ID printed back to you. NOTE: The below code is for `bash` shell, if using another shell, please convert to your shell. `bash` is the most common shell, you will know if you're using a different shell.
@@ -213,7 +213,7 @@ flowchart TB
         To verify the file is correct, run the following. Both should print their values and no errors.
         ```bash
         echo $PROJECT_ID
-        echo $LOCAL_GSA_FILE
+        echo $PROVISIONING_GSA_FILE
         ```
 
 ## 3. Establish Inventory
@@ -324,7 +324,7 @@ In the true term "bare metal", Consumer Edge can be installed onto a Host machin
 
     > NOTE: If existing GCE instances are present, previous installations can be removed using `./scripts/cloud/delete-cloud-gce-baseline.sh`. ALL instances will be removed, script is not a scalpel, it's a saw.
 
-    > Common failures at this stage are related to not having the GSA key reference to by `$LOCAL_GSA_FILE`, not in the `./build-artifacts` folder or the file name not matching the convention (`consumer-edge-gsa.json`)
+    > Common failures at this stage are related to not having the GSA key reference to by `$PROVISIONING_GSA_FILE`, not in the `./build-artifacts` folder or the file name not matching the convention (`provisioning-gsa.json`)
 
 1. Verify password-less access to the machines and accept the SSH fingerprints.
 

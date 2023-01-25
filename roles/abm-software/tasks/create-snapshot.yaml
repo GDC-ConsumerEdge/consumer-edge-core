@@ -77,7 +77,7 @@
 # Perform Snapshot collection & push to bucket
 - name: Create snapshot
   command:
-    cmd: bmctl check cluster --snapshot --snapshot-config {{ snapshot_config_file }} --cluster {{ cluster_name }} --service-account-key-file {{ remote_keys_folder }}/gsa-key.json --snapshot-output {{ snapshot_output_file }} --kubeconfig {{ kubeconfig_shared_location }}
+    cmd: bmctl check cluster --snapshot --snapshot-config {{ snapshot_config_file }} --cluster {{ cluster_name }} --service-account-key-file {{ remote_keys_folder }}/provisioning-gsa.json --snapshot-output {{ snapshot_output_file }} --kubeconfig {{ kubeconfig_shared_location }}
   args:
     chdir: "{{ abm_install_folder }}"
 
