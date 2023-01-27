@@ -42,11 +42,19 @@
   - verify
   - locality
 
-- name: Fail if local LOCAL_GSA_FILE ENV is not defined
+- name: Fail if local PROVISIONING_GSA_FILE ENV is not defined
   assert:
     that:
-      - local_gsa_key != ""
-    fail_msg: "The local environment variable 'LOCAL_GSA_FILE' needs to be set to the local filesystem GSA JSON key"
+      - provisioning_gsa_key != ""
+    fail_msg: "The local environment variable 'PROVISIONING_GSA_FILE' needs to be set to the local filesystem GSA JSON key"
+  tags:
+  - verify
+
+- name: Fail if local NODE_GSA_FILE ENV is not defined
+  assert:
+    that:
+      - node_gsa_key != ""
+    fail_msg: "The local environment variable 'NODE_GSA_FILE' needs to be set to the node GSA JSON key"
   tags:
   - verify
 

@@ -234,7 +234,7 @@
     args:
       chdir: "{{ abm_install_folder }}"
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/gsa-key.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/provisioning-gsa.json"
     when:
       - primary_cluster_machine is defined
       - abm_installed.stat.exists == False
@@ -257,7 +257,7 @@
     async: 7200 # run for up to 60 minutes
     #poll: 30 # poll status every 30 seconds
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/gsa-key.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/provisioning-gsa.json"
     tags:
     - abm-install
     - abm-create
@@ -273,7 +273,7 @@
     command:
       cmd: gcloud container hub memberships describe {{ cluster_name }} --format="value(name)" --project {{ google_project_id }}
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/gsa-key.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/provisioning-gsa.json"
     tags:
     - abm-install
     - abm-verify-install
