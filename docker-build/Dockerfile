@@ -38,7 +38,7 @@ RUN touch /var/log/cron.log
 RUN printf '\n#gcloud binaries\nexport PATH=/var/gcloud-sdk/google-cloud-sdk/bin:${PATH}\n' >> ~/.bashrc
 
 # add authentication for gcloud when bash starts up
-RUN printf '\n#gcloud authentication\n[ ! -z "${PROJECT_ID}" ] && gcloud auth activate-service-account --key-file=./build-artifacts/consumer-edge-gsa.json --project ${PROJECT_ID}' >> ~/.bashrc
+RUN printf '\n#gcloud authentication\n[ ! -z "${PROJECT_ID}" ] && gcloud auth activate-service-account --key-file=./build-artifacts/provisioning-gsa.json --project ${PROJECT_ID}' >> ~/.bashrc
 
 # Add SSH Config to avoid fingerprint checking
 RUN mkdir -p ~/.ssh && touch ~/.ssh/config
@@ -60,7 +60,7 @@ RUN ansible-galaxy collection install community.general
 # Run a startup script on start so-as to auto-populate functionality from dynamically added volume
 CMD direnv allow . \
     && export PATH=/var/gcloud-sdk/google-cloud-sdk/bin:${PATH} \
-    && gcloud auth activate-service-account --key-file=./build-artifacts/consumer-edge-gsa.json --project ${PROJECT_ID} \
+    && gcloud auth activate-service-account --key-file=./build-artifacts/provisioning-gsa.json --project ${PROJECT_ID} \
     && cron \
     && gcloud auth configure-docker --quiet --verbosity=critical \
     && /bin/bash

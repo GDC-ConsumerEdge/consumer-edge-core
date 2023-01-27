@@ -15,7 +15,7 @@ keyed_groups:
   - key: labels
     prefix: cloud
 auth_kind: serviceaccount
-service_account_file: ./build-artifacts/consumer-edge-gsa.json
+service_account_file: ./build-artifacts/provisioning-gsa.json
 hostnames:
   # Hostname so host_vars can be used
   - name

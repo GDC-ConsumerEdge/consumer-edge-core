@@ -74,7 +74,7 @@ Once you have the encrypted key, you will need to set the `ansible_ssh_key_file_
 variable under `inventory/groups_vars/all.yaml` to the path of the encrypted
 key on the local filesystem.
 
-All of this will happen automatically when you launch the `create-primary-gsa.sh`
+All of this will happen automatically when you launch the `create-gsa.sh`
 in the next steps.
 
 In order to enable dynamically loading the SSH private key during runtime, you
@@ -113,14 +113,14 @@ Run `which envsubst` and if this fails, follow the below steps to install
 
 
 1. Create Google Cloud Service Account used for provisioning. Skip this step if
-you have a properly authenticated GSA key located at `./build-artifacts/consumer-edge-gsa.json`
+you have a properly authenticated GSA key located at `./build-artifacts/provisioning-gsa.json`
 
     ```bash
     # Follow prompts, answer YES to generate a new key when prompted
-    ./scripts/create-primary-gsa.sh
+    ./scripts/create-gsa.sh
     ```
 
-    * This will create a JSON key for the new GSA at `./build-artifacts/consumer-edge-gsa.json`
+    * This will create a JSON key for the new GSA at `./build-artifacts/provisioning-gsa.json`
     * Also sets up KMS keyring and key for SSH private key encryption
 
 1. Create SSH keypair for communication between **provisioning machine** and **target machines**.

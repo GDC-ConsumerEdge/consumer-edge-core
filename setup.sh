@@ -76,7 +76,7 @@ sed -i "s/PROJECT_ID=.*/PROJECT_ID=\"$QL_PROJECT_ID\"/g" .envrc
 #sed -i "s,ROOT_REPO_URL=.*,ROOT_REPO_URL=\"$QL_ROOT_REPO\",g" .envrc
 source .envrc
 
-yes Y | ./scripts/create-primary-gsa.sh
+yes Y | ./scripts/create-gsa.sh
 if [[ ! -f "./build-artifacts/consumer-edge-machine.encrypted" ]]; then
  	echo "Creating consumer-edge-machine.encrypted file"
 # 	yes Y | gcloud kms keyrings create gdc-ce-keyring --location=global
