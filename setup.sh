@@ -94,7 +94,7 @@ export CONTAINER_URL=$(gcloud container images list --repository=gcr.io/$PROJECT
 if [[ -z "$CONTAINER_URL" ]]; then
 	cd docker-build
 	echo "Starting Cloud Build Install Container!"
-	gcloud builds submit --config cloudbuild.yaml .
+	gcloud builds submit --config cloudbuild.yaml ../.
 	cd ..
 else
 	echo "Found exsiting container: $CONTAINER_URL"

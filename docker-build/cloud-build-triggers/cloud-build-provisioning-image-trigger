@@ -11,7 +11,7 @@ trigger {
   }
   build_configs {
     file_source {
-      path: "docker-build/cloudbuild-automation.yaml"
+      path: "docker-build/cloudbuild.yaml"
     }
   }
   result_config {

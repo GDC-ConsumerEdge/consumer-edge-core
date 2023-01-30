@@ -27,7 +27,7 @@ There are two methods to build this docker image, please choose one:
     Cloud Build allows you to build the docker image without needing to build docker images on the provisioning machine.
 
     ```bash
-    gcloud builds submit --config cloudbuild.yaml .
+    gcloud builds submit --config cloudbuild.yaml ../.
     ```
 
 1. Manual docker commands (optional)
