@@ -10,6 +10,17 @@
     - abm-remove
     - never
 
+- name: Copy provisiong GSA to nodes for ABM reset
+  copy:
+    src: '{{ provisioning_gsa_key }}'
+    dest: '{{ remote_keys_folder }}/provisioning-gsa.json'
+    mode: '0444' # read only
+    group: 'root'
+    owner: 'root'
+  tags:
+    - abm-remove
+    - never
+
 - name: "Remove the ABM installation (cluster removal only)"
   command:
     cmd: bmctl reset -c {{ cluster_name }}
