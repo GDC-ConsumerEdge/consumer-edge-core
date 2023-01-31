@@ -14,9 +14,7 @@ spec:
     period: "{{ root_repository_sync_time }}s" # NOTE: "s" suffix. `apply-sync.yaml` expects an integer, RootSync expects string of int + time suffix
     dir: "{{ root_repository_policy_dir }}"
     auth: "{{ root_repository_git_auth_type }}"
-    {% if root_repository_git_auth_type == "gcpserviceaccount" %}
-    gcpServiceAccountEmail: "{{ root_repository_service_account_email }}"
-    {% elif root_repository_git_auth_type != "none" %}
+    {% if root_repository_git_auth_type != "none" %}
     # Secret Reference
     secretRef:
       name: "{{ root_repository_git_secret_name }}"

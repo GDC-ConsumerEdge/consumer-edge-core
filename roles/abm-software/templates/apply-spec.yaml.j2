@@ -12,9 +12,6 @@ spec:
     syncWait: {{ root_repository_sync_time }}
     policyDir: "{{ root_repository_policy_dir }}"
     secretType: "{{ root_repository_git_auth_type }}"
-    {% if root_repository_git_auth_type == "gcpserviceaccount" %}
-    gcpServiceAccountEmail: "{{ root_repository_service_account_email }}"
-    {% endif %}
 ### Policy Controller
   policyController:
     # Set to true to install and enable Policy Controller

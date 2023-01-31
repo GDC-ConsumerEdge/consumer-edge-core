@@ -13,20 +13,20 @@
 ### Create or enable Google Service Accounts
   - name: Create or Enable Service Accounts
     shell: |
-      ENABLED="{{ item.enabled }}"
-      if [[ ${ENABLED} == "True" || ${ENABLED} == "true" ]] ; then    
-        SA_NAME="{{ item.name }}"
-        PROJECT="{{ google_project_id }}"
-        DESCRIPTION="{{ item.description }}"
-        CURR_SA_NAME=$(gcloud iam service-accounts describe ${SA_NAME}@${PROJECT}.iam.gserviceaccount.com --format="value(name)" 2> /dev/null)
-        if [ -z "$CURR_SA_NAME" ]; then
-            gcloud iam service-accounts create ${SA_NAME} --display-name "${DESCRIPTION:0:98}"
-        else
-            gcloud iam service-accounts enable "${SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
-        fi
+      SA_NAME="{{ item.name }}"
+      PROJECT="{{ google_project_id }}"
+      DESCRIPTION="{{ item.description }}"
+      CURR_SA_NAME=$(gcloud iam service-accounts describe ${SA_NAME}@${PROJECT}.iam.gserviceaccount.com --format="value(name)" 2> /dev/null)
+      if [ -z "$CURR_SA_NAME" ]; then
+          gcloud iam service-accounts create ${SA_NAME} --display-name "${DESCRIPTION:0:98}"
+      else
+          gcloud iam service-accounts enable "${SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
       fi
+
     loop: "{{ service_accounts }}"
     run_once: true # only one machine to do this
+    when:
+    - item.enabled | bool == true 
     args:
       executable: /bin/bash
       creates: /var/nothing
@@ -38,11 +38,9 @@
 
   - name: Add roles to service accounts
     shell: |
-      ENABLED="{{ item.0.enabled }}"
-      if [[ ${ENABLED} == "True" || ${ENABLED} == "true" ]] ; then    
-        gcloud projects add-iam-policy-binding {{ google_project_id }} --member="serviceAccount:{{ item.0.name }}@{{ google_project_id }}.iam.gserviceaccount.com" --role="{{ item.1 }}"
-      fi
+      gcloud projects add-iam-policy-binding {{ google_project_id }} --member="serviceAccount:{{ item.0.name }}@{{ google_project_id }}.iam.gserviceaccount.com" --role="{{ item.1 }}"
     loop: "{{ service_accounts | subelements('roles') }}"
+    when: "{{ item.0.enabled | bool == true }}"
     run_once: true
     tags:
     - abm-install
@@ -53,14 +51,11 @@
   - name: "Create Secret if SA keys does not exists in secrets manager"
     run_once: true # only one machine to do this
     shell: |
-      ENABLED="{{ item.enabled }}"
-      if [[ ${ENABLED} == "True" || ${ENABLED} == "true" ]] ; then
-        export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.name }}" --format="value(name)" --project="{{ google_project_id }}")
-        if [ -z "$HAS_SECRET" ]; then
-          gcloud secrets create {{ item.name }} --replication-policy="automatic" --project={{ google_project_id }}
-          echo "NO SECRET {{ item.name }}"
-          exit 1 # exit early, no chance there's a version since there wasn't a secret
-        fi
+      export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.name }}" --format="value(name)" --project="{{ google_project_id }}")
+      if [ -z "$HAS_SECRET" ]; then
+        gcloud secrets create {{ item.name }} --replication-policy="automatic" --project={{ google_project_id }}
+        echo "NO SECRET {{ item.name }}"
+        exit 1 # exit early, no chance there's a version since there wasn't a secret
       fi
     args:
       executable: /bin/bash
@@ -68,6 +63,8 @@
     changed_when: "'NO SECRET' in create_secret.stdout"
     ignore_errors: true
     loop: "{{ service_accounts }}"
+    when:
+    - item.enabled | bool == true     
     tags:
     - abm-once
     - abm-debug
@@ -80,19 +77,16 @@
   - name: "Check if secret and version exists in secrets manager"
     run_once: true # only one machine to do this
     shell: |
-      ENABLED="{{ item.enabled }}"
-      if [[ ${ENABLED} == "True" || ${ENABLED} == "true" ]] ; then    
-        export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.name }}" --format="value(name)" --project="{{ google_secret_project_id }}")
-        if [ -z "$HAS_SECRET" ]; then
-          echo "NO SECRET {{ item.name }}"
-          exit 1 # exit early, no chance there's a version since there wasn't a secret
-        fi
+      export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.name }}" --format="value(name)" --project="{{ google_secret_project_id }}")
+      if [ -z "$HAS_SECRET" ]; then
+        echo "NO SECRET {{ item.name }}"
+        exit 1 # exit early, no chance there's a version since there wasn't a secret
+      fi
 
-        gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" &>/dev/null
-        if [ $? -gt 0 ]; then
-          echo "NO SECRET {{ item.name }}"
-          exit 1
-        fi
+      gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" &>/dev/null
+      if [ $? -gt 0 ]; then
+        echo "NO SECRET {{ item.name }}"
+        exit 1
       fi
     args:
       executable: /bin/bash
@@ -100,6 +94,8 @@
     changed_when: "'NO SECRET' in secret_exists.stdout"
     ignore_errors: true
     loop: "{{ service_accounts }}"
+    when:
+    - item.enabled | bool == true 
     tags:
     - abm-once
     - abm-debug
@@ -111,15 +107,14 @@
   - name: Create new keys for all service accounts in configuration and push to Secret Manager
     run_once: true # only one machine to do this
     shell: |
-      ENABLED="{{ entry.item.enabled }}"
-      if [[ ${ENABLED} == "True" || ${ENABLED} == "true" ]] ; then
-        gcloud iam service-accounts keys create /tmp/{{ entry.item.keyfile }} --iam-account={{ entry.item.name }}@{{ google_project_id }}.iam.gserviceaccount.com --project={{ google_project_id }}
-        gcloud secrets versions add {{ entry.item.name }} --data-file="/tmp/{{ entry.item.keyfile }}"
-        rm -rf /tmp/{{ entry.item.keyfile }} # delete temp file
-      fi
+      gcloud iam service-accounts keys create /tmp/{{ entry.item.keyfile }} --iam-account={{ entry.item.name }}@{{ google_project_id }}.iam.gserviceaccount.com --project={{ google_project_id }}
+      gcloud secrets versions add {{ entry.item.name }} --data-file="/tmp/{{ entry.item.keyfile }}"
+      rm -rf /tmp/{{ entry.item.keyfile }} # delete temp file
     args:
       executable: /bin/bash
-    when: entry.rc != 0
+    when: 
+    - "{{ entry.item.enabled | bool == true }}"
+    - entry.rc != 0
     loop: "{{ secret_exists.results }}"
     loop_control:
       loop_var: entry
@@ -132,14 +127,13 @@
 
   - name: Download key files from secret manager locally
     shell: |
-      ENABLED="{{ item.enabled }}"
-      if [[ ${ENABLED} == "True" || ${ENABLED} == "true" ]] ; then
-        gcloud secrets versions access latest --secret="{{ item.name }}" >> {{ remote_keys_folder }}/{{ item.keyfile }} --project="{{ google_secret_project_id }}"
-      fi
+      gcloud secrets versions access latest --secret="{{ item.name }}" >> {{ remote_keys_folder }}/{{ item.keyfile }} --project="{{ google_secret_project_id }}"
     args:
       executable: /bin/bash
       creates: "{{ remote_keys_folder }}/{{ item.keyfile }}"
     loop: "{{ service_accounts }}"
+    when:
+    - item.enabled | bool == true     
     tags:
     - abm-once
     - abm-debug
