@@ -33,7 +33,7 @@ export SNAPSHOT_GCS="${PROJECT_ID}-${CLUSTER_ACM_NAME}-snapshot"
 ### ACM Root Repo structure type. Default is hierarchy, but primary-root-repo-template is unstructured
 export ROOT_REPO_STRUCTURE="unstructured"
 
-### Authentication type of Root Repo (options are "none", "token", "gcpserviceaccount" and "ssh")
+### Authentication type of Root Repo (options are "none", "token", and "ssh")
 export ROOT_REPO_TYPE="token"
 ######  SSH Type #############
 # Path to the SSH private key for the SSH user type (must be in build-artifacts/ folder)
@@ -47,7 +47,6 @@ export SCM_TOKEN_TOKEN="${SCM_TOKEN_TOKEN:-change-me}"  # Only used if REPO_TYPE
 ###
 ### Primary Root Repo URL
 ###    NOTE: ROOT_REPO_TYPE of "ssh" MUST start with ssh:// (not git://)
-###    NOTE: ROOT_REPO_TYPE of "gcpserviceaccount" needs to start with "https://source.developers.google.com"
 ###
 export ROOT_REPO_URL="https://gitlab.com/gcp-solutions-public/retail-edge/primary-root-repo-template.git"
 export ROOT_REPO_BRANCH="main"

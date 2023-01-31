@@ -78,16 +78,6 @@
   - acm-root-repo
   - acm-root-repo-ssh-method
 
-- name: "Create dependencies for RootRepos (if not exists) [GCP GSA Method]"
-  import_tasks: "config-repos-gcp-gsa.yaml"
-  when:
-  - (root_repository_git_auth_type == "gcpserviceaccount")
-  - (primary_cluster_machine is defined)
-  - (primary_cluster_machine == true)
-  tags:
-  - acm-root-repo
-  - acm-root-repo-gcp-gsa-method
-
 # Check for ACM Operator
 - name: "Test for config-management operator presence"
   include_tasks: kubectl-presence.yml
