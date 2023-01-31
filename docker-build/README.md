@@ -2,7 +2,7 @@
 
 This is a utility docker image that is intended to minimize the installation effort for practitioners to build Anthos Edge. The provided Docker image contains all of the dependencies for buildling the Consumer Edge so a developer does not need to modify their development machine (except have `gcloud` installed and configured)
 
-To use this utiltity, follow the steps outlined below.
+To use this utility, follow the steps outlined below.
 
 1. Satisfy local machine (provisioning machine) requirements
 1. Build the image and optionally push to GCP Project Google Cloud Repository (gcr.io)
@@ -75,3 +75,18 @@ There are two methods to build this docker image, please choose one:
     ```bash
     docker run -e PROJECT_ID=${PROJECT_ID} -v "$(pwd):/var/consumer-edge-install:ro" -it gcr.io/${PROJECT_ID}/consumer-edge-install:latest
     ```
+
+## Troubleshooting
+
+### `(gcloud.auth.activate-service-account) Unable to read file`
+
+
+This presents when starting the container with the following message:
+
+```
+ERROR: (gcloud.auth.activate-service-account) Unable to read file [./build-artifacts consumer-edge-gsa.json]: [Errno 2] No such file or directory: './build-artifacts/consumer-edge-gsa.json'
+```
+
+This is the result of now using two Google Service Accounts (GSAs) in this solution: *provisioning*, which is used by this Docker container for the purposes of provisioning ABM onto the cluster nodes; and *node*, which persists on the cluster nodes and is *not* used by Docker container.  This resulted in a rename of the GSA which was activated when the container starts.
+
+To fix this, rebuild your Docker container after updating your branch with the latest changes in the `main` branch.

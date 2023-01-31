@@ -148,13 +148,13 @@ flowchart TB
         gcloud version
         ```
 
-    1. Create a Google Service Account (GSA) and place the JSON key at `build-artifacts/provisioning-gsa.json`. Use the helper script located at `scripts/create-gsa.sh`. Follow the prompts to create a new GSA Key **if** you don't have one defined, or if you want to use a new one.
+    1. Create Google Service Account (GSA) and place the JSON keys at `build-artifacts/provisioning-gsa.json` and `build-artifacts/node-gsa.json`. Use the helper script located at `scripts/create-gsa.sh`. Follow the prompts to create new GSA Keys **if** you don't have tehm defined, or if you want to use a new ones.
 
         ```bash
         ./scripts/create-gsa.sh
         ```
 
-        Move the newly created `provisioning-gsa.json` file into the `build-artifacts/` folder.
+        Move the newly created `provisioning-gsa.json` and `node-gsa.json` files into the `build-artifacts/` folder.
 
         > :exclamation: - Anything stored in the `build-artifacts/` folder are **NOT** able to be stored in the Git repo and are therefore not backed up. Many of the files in the folder are sensitive, so please practice caution. File should be `chmod 400` (read-only) for the current user.
 
@@ -165,6 +165,7 @@ flowchart TB
         ```bash
         # Local Environment Variables
         export PROVISIONING_GSA_FILE=$(pwd)/build-artifacts/provisioning-gsa.json
+        export NODE_GSA_FILE=$(pwd)/build-artifacts/node-gsa.json
         export PROJECT_ID="< ## YOUR GOOGLE CLOUD PROJECT ID ##>" #CHANGEME
         export REGION="us-west1" # CHANGEME
         export ZONE="${REGION}-b" # CHANGEME
@@ -324,7 +325,7 @@ In the true term "bare metal", Consumer Edge can be installed onto a Host machin
 
     > NOTE: If existing GCE instances are present, previous installations can be removed using `./scripts/cloud/delete-cloud-gce-baseline.sh`. ALL instances will be removed, script is not a scalpel, it's a saw.
 
-    > Common failures at this stage are related to not having the GSA key reference to by `$PROVISIONING_GSA_FILE`, not in the `./build-artifacts` folder or the file name not matching the convention (`provisioning-gsa.json`)
+    > Common failures at this stage are related to not having the GSA key references to by `$PROVISIONING_GSA_FILE` and `NODE_GSA_FILE` not in the `./build-artifacts` folder or the file name not matching the convention (`provisioning-gsa.json`, `node-gsa.json`)
 
 1. Verify password-less access to the machines and accept the SSH fingerprints.
 
