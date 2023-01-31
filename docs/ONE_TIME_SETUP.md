@@ -138,6 +138,7 @@ Setting up the machine has 4 steps, setting up python, installing dependencies, 
 | Environment Variable  | Required | Description | Default Value |
 |:----------------------|:--------:|:------------|:-------------:|
 | PROVISIONING_GSA_FILE |  Y       |  Google Service Account key to a GSA that is used to provision and activate all Google-based services (all `gcloud` commands) from inside the Target machine(s) | Set in next step |
+| NODE_GSA_FILE |  Y       |  GSA which persists on the nodes and is activated automatically at login for all users | Set in next step |
 | PROJECT_ID            |  Y       |  Google Project ID to put clusters, Service Accounts and API services into | gcloud config |
 | SSH_PUB_KEY_LOCATION  |  N       |  SSH public key location for Ansible | `$HOME/.ssh/cnucs-cloud.pub` |
 | ZONE                  |  N       |  Google default zone | gcloud config  |
@@ -157,6 +158,7 @@ Both `physical` and `cloud` installations use a GSA (`target-machine-gsa@<projec
         ./scripts/create-gsa.sh
 
         export PROVISIONING_GSA_FILE="./provisioning-gsa.json"
+        export NODE_GSA_FILE="./node-gsa.json"
         ```
 
     > NOTE: Add the `export PROVISIONING_GSA_FILE=...` line to `.bashrc` or `.envrc` (if using `direnv`) so new shells can establish this required environment variable

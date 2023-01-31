@@ -112,15 +112,19 @@ Run `which envsubst` and if this fails, follow the below steps to install
     ```
 
 
-1. Create Google Cloud Service Account used for provisioning. Skip this step if
-you have a properly authenticated GSA key located at `./build-artifacts/provisioning-gsa.json`
+1. Create Google Cloud Service Accounts used for provisioning and for the nodes. Skip this step if
+you have a properly authenticated GSA keys:
+   * Provisioning GSA located at `./build-artifacts/provisioning-gsa.json`
+   * Node GSA located at `./build-artifacts/node-gsa.json`
 
+    **Note:** The following helper script will create both GSA, but it will only create one provisioning and node keypair per project as it does not generate unique names per cluster.
     ```bash
     # Follow prompts, answer YES to generate a new key when prompted
     ./scripts/create-gsa.sh
     ```
-
-    * This will create a JSON key for the new GSA at `./build-artifacts/provisioning-gsa.json`
+    What this does:
+    * Creates provisioning GSA and key at `./build-artifacts/provisioning-gsa.json`
+    * Creates node GSA and key at `./build-artifacts/node-gsa.json`
     * Also sets up KMS keyring and key for SSH private key encryption
 
 1. Create SSH keypair for communication between **provisioning machine** and **target machines**.
