@@ -20,7 +20,7 @@
         DESCRIPTION="{{ item.description }}"
         CURR_SA_NAME=$(gcloud iam service-accounts describe ${SA_NAME}@${PROJECT}.iam.gserviceaccount.com --format="value(name)" 2> /dev/null)
         if [ -z "$CURR_SA_NAME" ]; then
-            gcloud iam service-accounts create ${SA_NAME} --display-name "${DESCRIPTION}"
+            gcloud iam service-accounts create ${SA_NAME} --display-name "${DESCRIPTION:0:98}"
         else
             gcloud iam service-accounts enable "${SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
         fi
