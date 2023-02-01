@@ -197,11 +197,10 @@ else
 fi
 
 ### Validate ROOT_REPO_TYPE & ROOT_REPO URL
-# Options are none (default), token, gcpserviceaccount, ssh
+# Options are none (default), token, ssh
 # IF default, only ROOT_REPO_URL needs to be filled (http or https prefix)
 # IF SSH, SCM_SSH_PRIVATE_KEYFILE must point to a file and ROOT_REPO_URL needs to start with "ssh://"
 # IF TOKEN, SCM_TOKEN_USER and SCM_TOKEN_TOKEN must be filled and ROOT_REPO_URL starts with http or https
-# IF gcpserviceaccount, ROOT_REPO_URL must start and contain https://source.developers.google.com
 ###
 
 case "${ROOT_REPO_TYPE}" in
@@ -219,9 +218,6 @@ case "${ROOT_REPO_TYPE}" in
   "none")
     ;;
 
-  "gcpserviceaccount")
-    ;;
-
   "token")
     if [[ -z "${SCM_TOKEN_USER}" ]]; then
         pretty_print "ERROR: SCM_TOKEN_USER is required for ROOT_REPO_TYPE = 'token'" "ERROR"
@@ -234,7 +230,7 @@ case "${ROOT_REPO_TYPE}" in
     ;;
 
   *)
-    pretty_print "ERROR: ROOT_REPO_TYPE environment variable is not set to 'token', 'none', 'gcpserviceaccount' or 'ssh'" "ERROR"
+    pretty_print "ERROR: ROOT_REPO_TYPE environment variable is not set to 'token', 'none', or 'ssh'" "ERROR"
     ERROR=1
     ;;
 esac
@@ -251,13 +247,6 @@ case "${ROOT_REPO_TYPE}" in
   "ssh")
     if [[ ! "${ROOT_REPO_URL}" =~ ^ssh\:\/\/* ]]; then
         pretty_print "ERROR: ROOT_REPO_URL requires ssh:// protocol when using ROOT_REPO_TYPE = '${ROOT_REPO_TYPE}'" "ERROR"
-        ERROR=1
-    fi
-    ;;
-
-  "gcpserviceaccount")
-    if [[ ! "${ROOT_REPO_URL}" =~ ^https\:\/\/source\.developers\.google\.com* ]]; then
-        pretty_print "ERROR: ROOT_REPO_URL requires https://source.developers.google.com protocol when using ROOT_REPO_TYPE = '${ROOT_REPO_TYPE}" "ERROR"
         ERROR=1
     fi
     ;;

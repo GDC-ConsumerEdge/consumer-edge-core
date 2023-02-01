@@ -240,7 +240,6 @@ gcp_services_required:
   - opsconfigmonitoring.googleapis.com
   - secretmanager.googleapis.com
   - serviceusage.googleapis.com
-  - sourcerepo.googleapis.com
   - stackdriver.googleapis.com
   - storage.googleapis.com
 
@@ -343,16 +342,6 @@ service_accounts: [
     roles: [
       "roles/gkehub.gatewayAdmin",
       "roles/gkehub.viewer"
-    ]
-  },
-  {
-    name: "src-repo-{{ cluster_name }}",
-    id: "source-repo-agent",
-    keyfile: google-source-repo-agent.json,
-    enabled: "{{ 'gcpserviceaccount' == lookup('env', 'ROOT_REPO_TYPE')| default('token', True)| string }}",
-    description: "Agent used for GSR (Google Source Repository). When we use ROOT_REPO_TYPE with gcpserviceaccount, only then this service account is used. When we use ROOT_REPO_TYPE with none, ssh or token then this service account is not used",
-    roles: [
-      "roles/source.reader"
     ]
   },
   {
