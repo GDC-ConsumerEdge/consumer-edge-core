@@ -138,9 +138,6 @@ echo "Final Cluster Count = $CLUSTER_COUNT"
 #####   MAIN   ################
 ###############################
 
-# enable any services needed
-gcloud services enable servicemanagement.googleapis.com anthos.googleapis.com cloudbuild.googleapis.com cloudresourcemanager.googleapis.com serviceusage.googleapis.com compute.googleapis.com secretmanager.googleapis.com
-
 # Setup firewalls for GCE VXLAN (only needed by cloud-version) #TODO: Modify this to use tags on the GCE instances
 
 # Look for any firewall rules with "vxlan" in them (see below for vxlan fireall entries...this works for both rules)
@@ -159,18 +156,6 @@ if [[ -z "${FIREWALLS}" ]]; then
         --priority=900 \
         --source-ranges="10.0.0.0/8"
 fi
-
-# setup default compute to view secrets and GCS buckets
-PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
-echo "Adding roles/secretmanager.secretAccessor and roles/storage.objectViewer to default compute service account..."
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-    --role="roles/secretmanager.secretAccessor" --no-user-output-enabled
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-    --role="roles/storage.objectViewer" --no-user-output-enabled
 
 # Create init script bucket for GCE instances to use
 setup_init_bucket
