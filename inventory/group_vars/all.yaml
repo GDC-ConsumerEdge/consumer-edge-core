@@ -8,7 +8,6 @@
 # Ansible will use the key below
 ansible_ssh_private_key_file: "build-artifacts/consumer-edge-machine"
 ansible_ssh_common_args: "-F build-artifacts/ssh-config -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-
 #######
 
 ####
@@ -286,7 +285,7 @@ service_accounts: [
     roles: [
       "roles/gkehub.admin"
     ]
-  }, 
+  },
   {
     name: "abm-ops-{{ cluster_name }}",
     id: "abm-ops-agent",
