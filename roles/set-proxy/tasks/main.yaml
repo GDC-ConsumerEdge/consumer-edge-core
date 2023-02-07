@@ -60,3 +60,22 @@
   - proxy_has_http_proxy is true
   tags:
   - http-proxy
+
+### Setup HTTP & HTTPS proxy for SNAP
+- name: Set HTTP Proxy for environment
+  command:
+    cmd: "snap set system proxy.http='{{ proxy_http_full_addr }}'"
+  when:
+  - proxy_has_http_proxy is true
+  tags:
+  - http-proxy
+  - snap-proxy
+
+- name: Set HTTPS Proxy for environment
+  command:
+    cmd: "snap set system proxy.https='{{ proxy_https_full_addr }}'"
+  when:
+  - proxy_has_https_proxy is true
+  tags:
+  - http-proxy
+  - snap-proxy
