@@ -26,7 +26,7 @@
     loop: "{{ service_accounts }}"
     run_once: true # only one machine to do this
     when:
-    - item.enabled | bool == true 
+    - item.enabled | bool == true
     args:
       executable: /bin/bash
       creates: /var/nothing
@@ -64,7 +64,7 @@
     ignore_errors: true
     loop: "{{ service_accounts }}"
     when:
-    - item.enabled | bool == true     
+    - item.enabled | bool == true
     tags:
     - abm-once
     - abm-debug
@@ -95,7 +95,7 @@
     ignore_errors: true
     loop: "{{ service_accounts }}"
     when:
-    - item.enabled | bool == true 
+    - item.enabled | bool == true
     tags:
     - abm-once
     - abm-debug
@@ -112,7 +112,7 @@
       rm -rf /tmp/{{ entry.item.keyfile }} # delete temp file
     args:
       executable: /bin/bash
-    when: 
+    when:
     - "{{ entry.item.enabled | bool == true }}"
     - entry.rc != 0
     loop: "{{ secret_exists.results }}"
@@ -133,7 +133,7 @@
       creates: "{{ remote_keys_folder }}/{{ item.keyfile }}"
     loop: "{{ service_accounts }}"
     when:
-    - item.enabled | bool == true     
+    - item.enabled | bool == true
     tags:
     - abm-once
     - abm-debug
@@ -248,8 +248,8 @@
     args:
       chdir: "{{ abm_install_folder }}"
       creates: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
-    async: 7200 # run for up to 60 minutes
-    #poll: 30 # poll status every 30 seconds
+    async: "{{ abm_install_sync_timeout_seconds }}"
+    poll: "{{ abm_install_sync_poll_seconds }}"
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/provisioning-gsa.json"
     tags:
