@@ -1,0 +1,118 @@
+
+#TODO Note that this will only run once we also fix the docker conatiner to have mutiple mounted directories and the one which has the keys make it read/write accessable
+
+- name: Prompt reminding about tags
+  debug:
+    msg: "If you are trying to run this and do not see any progress, perhaps you forgot the '--tags never'"  # must specify `--tags never` on the CLI to run this
+  tags:
+    - keys-cleanup
+
+- name: Check if {{ ansible_ssh_private_key_file }} is in Secret Manager with secret {{ ansible_ssh_priv_key_secret }}
+  become: false
+  delegate_to: localhost
+  shell: |
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ ansible_ssh_priv_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
+    if [ -z "$HAS_SECRET" ]; then
+      exit 1 
+    fi
+  when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+  tags:
+  - gcloud-command
+  - keys-cleanup
+  - ssh-keys-cleanup
+  - never
+
+
+- name: Check if {{ provisioning_gsa_key }} is in Secret Manager with secret {{ provisioning_gsa_key_secret }}
+  delegate_to: localhost
+  shell: |
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ provisioning_gsa_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
+    if [ -z "$HAS_SECRET" ]; then
+      exit 1 
+    fi
+  when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+  tags:
+  - gcloud-command
+  - keys-cleanup
+  - gsa-keys-cleanup
+  - provisioning-gsa-keys-cleanup
+  - never
+
+- name: Check if {{ node_gsa_key }} is in Secret Manager with secret {{ node_gsa_key_secret }}
+  delegate_to: localhost
+  shell: |
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ node_gsa_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
+    if [ -z "$HAS_SECRET" ]; then
+      exit 1 
+    fi
+  when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+  tags:
+  - gcloud-command
+  - keys-cleanup
+  - gsa-keys-cleanup
+  - node-gsa-keys-cleanup
+  - never
+
+- name: Remove local {{ ansible_ssh_private_key_file }}
+  become: false
+  delegate_to: localhost
+  file:
+    path: "{{ ansible_ssh_private_key_file }}"
+    state: "absent"
+  when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+  tags:
+    - keys-cleanup
+    - ssh-keys-cleanup
+    - never
+
+- name: Remove local {{ ansible_ssh_key_file_encrypted }}
+  become: false
+  delegate_to: localhost
+  file:
+    path: "{{ ansible_ssh_key_file_encrypted }}"
+    state: "absent"
+  when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+  tags:
+    - keys-cleanup
+    - ssh-keys-cleanup
+    - never
+
+- name: Remove local {{ provisioning_gsa_key }}
+  become: false
+  delegate_to: localhost
+  file:
+    path: "{{ provisioning_gsa_key }}"
+    state: "absent"
+  when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+  tags:
+    - keys-cleanup
+    - gsa-keys-cleanup
+    - provisioning-gsa-keys-cleanup
+    - never
+
+- name: Remove local {{ node_gsa_key }}
+  become: false
+  delegate_to: localhost
+  file:
+    path: "{{ node_gsa_key }}.test"
+    state: "absent"
+  when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+  tags:
+    - keys-cleanup
+    - gsa-keys-cleanup
+    - node-gsa-keys-cleanup
+    - never

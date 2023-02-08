@@ -1,0 +1,18 @@
+---
+# Cleanup the ssh and service acocunt keys from workstation
+- hosts: all
+  become: true
+  become_user: root
+  gather_facts: false
+  pre_tasks:
+  - name: Gathering Facts
+    setup: {}
+    tags:
+    - always
+  - name: Populate service facts
+    service_facts:
+    tags:
+    - always
+  roles:
+  - cleanup
+  vars: []
