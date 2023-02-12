@@ -42,7 +42,7 @@ Please perform the following sequence of events:
    1. The "Token name" name that will be used as an environment variable **SCM_TOKEN_USER**.
    1. The produced token value that will be used as an environment variable **SCM_TOKEN_TOKEN**. Go to user **Preferences** on the top right corner.
 
-1. Locate `setup.sh`. This script will install all required dependencies (only currently works for a Debian 11 VM). Once dependencies are installed, it will create an SSH key to be shared with the created VMs. The primary GSA will be created and then it will use Google Cloud KMS to encrypt this key (but it will leave the unencrypted version in place for user action to delete/leverage). It will then execute the creation of a 3-node cluster named cnuc-1, cnuc-2, cnuc-3. Next, it will create the Docker container for Ansible installation and store it in GCR. Finally, it will prepare the inventory file for Ansible and state that install.sh is ready to run:
+1. Locate `setup.sh`. This script will install all required dependencies (only currently works for a Debian 11 VM). Once dependencies are installed, it will create an SSH key to be shared with the created VMs. The primary GSA will be created. It will then execute the creation of a 3-node cluster named cnuc-1, cnuc-2, cnuc-3. Next, it will create the Docker container for Ansible installation and store it in GCR. Finally, it will prepare the inventory file for Ansible and state that install.sh is ready to run:
 
    ```bash
    ./setup-sh

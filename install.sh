@@ -128,7 +128,6 @@ else
     pretty_print "PASS: Environment variables (.envrc) file found"
 fi
 
-# Check for Private Encrypted SSH Keys
 PROJ_LENGTH=`echo ${PROJECT_ID} | wc -c`
 if [[ ${PROJ_LENGTH} > ${PROJECT_NAME_MAX_LENGTH} ]]; then
     pretty_print "WARN: GCP Project names might be a concern, it is longer than recommended '${PROJECT_NAME_MAX_LENGTH}' characters" "WARN"
@@ -136,6 +135,17 @@ else
     pretty_print "PASS: Project name length is ok"
 fi
 
+<<<<<<< PATCH SET (7ddfc0 Removing KMS and encrypted key altogther)
+# Check for Private SSH Keys
+if [[ ! -f "./build-artifacts/consumer-edge-machine" ]]; then
+    pretty_print "ERROR: SSH Key './build-artifacts/consumer-edge-machine' was not found, did you generate the private key?" "ERROR"
+else
+    pretty_print "PASS: SSH Private Unencrypted Key found"
+fi     
+# Check for SSH Keys
+if [[ -z "${PROJECT_ID}" ]]; then
+    pretty_print "ERROR: Environment variable 'PROJECT_ID' does not exist, please set and try again." "ERROR"
+=======
 # Check for SSH Keys
 if [[ -z "${PROJECT_ID}" ]]; then
     pretty_print "ERROR: Environment variable 'PROJECT_ID' does not exist, please set and try again." "ERROR"
@@ -155,9 +165,18 @@ fi
 # Check for Private Encrypted SSH Keys
 if [[ ! -f "./build-artifacts/consumer-edge-machine.encrypted" ]]; then
     pretty_print "ERROR: Encrypted SSH Key './build-artifacts/consumer-edge-machine.encrypted' was not found, did you generate and encrypt the private key?" "ERROR"
+>>>>>>> BASE      (378937 adding proxy to cluster.yaml)
     exit 1
 else
-    pretty_print "PASS: Encrypted SSH Private Key found"
+    pretty_print "PASS: PROJECT_ID (${PROJECT_ID}) variable is set."
+fi
+
+VISIBLE_ACTIVE_GCP_PROJECT=$(gcloud projects describe ${PROJECT_ID} --format="value(lifecycleState)" --no-user-output-enabled --quiet 2> /dev/null)
+if [[ $? -gt 0 ]]; then
+    pretty_print "ERROR: '${PROJECT_ID}' is not active or accessible by this user. Please ensure \$PROJECT_ID is correct in .envrc" "ERROR"
+    ERROR=1
+else
+    pretty_print "PASS: GCP Project active"
 fi
 
 # Check for Public SSH Key

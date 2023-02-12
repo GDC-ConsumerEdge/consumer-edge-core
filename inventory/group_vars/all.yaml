@@ -202,14 +202,7 @@ enable_auditd: false
 # All ansible interactions are using this user during provisioning
 ansible_user: abm-admin
 # Path to the private key file used for SSH
-ansible_ssh_key_file_encrypted: build-artifacts/consumer-edge-machine.encrypted
 ansible_ssh_key_timeout: "4h"
-# Details of Google Cloud KMS key used to decrypt SSH private key
-google_kms: {
-    keyring_name: "gdc-ce-keyring", # Defined in ./scripts/create-gsa.sh -- future will be TF
-    key_name: "gdc-ssh-key",
-    location: "global"
-  }
 
 # Number of retry attempts on failed tasks using retry (1800 seconds = approx 30 minutes)
 default_retry_count: 180
@@ -231,7 +224,6 @@ gcp_services_required:
   - anthos.googleapis.com
   - anthosaudit.googleapis.com
   - anthosgke.googleapis.com
-  - cloudkms.googleapis.com
   - cloudresourcemanager.googleapis.com
   - connectgateway.googleapis.com
   - container.googleapis.com

@@ -73,19 +73,6 @@
     - ssh-keys-cleanup
     - never
 
-- name: Remove local {{ ansible_ssh_key_file_encrypted }}
-  become: false
-  delegate_to: localhost
-  file:
-    path: "{{ ansible_ssh_key_file_encrypted }}"
-    state: "absent"
-  when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
-  tags:
-    - keys-cleanup
-    - ssh-keys-cleanup
-    - never
 
 - name: Remove local {{ provisioning_gsa_key }}
   become: false

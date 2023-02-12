@@ -64,15 +64,7 @@ Please perform the following sequence of events:
 ## SSH Key Management
 
 The playbooks in this repo contain a set of pre-tasks that take care of
-decrypting the SSH private key that is used to access remote machines.
-
-As a prerequisite you are expected to encrypt your private key using Google
-Cloud KMS. The project, keyring, and key name are indicated in the `google_kms`
-variable under `inventory/groups_vars/all.yaml`.
-
-Once you have the encrypted key, you will need to set the `ansible_ssh_key_file_encrypted`
-variable under `inventory/groups_vars/all.yaml` to the path of the encrypted
-key on the local filesystem.
+downloading the SSH private key form secret manager that is used to access remote machines.
 
 All of this will happen automatically when you launch the `create-gsa.sh`
 in the next steps.
@@ -125,40 +117,25 @@ you have a properly authenticated GSA keys:
     What this does:
     * Creates provisioning GSA and key at `./build-artifacts/provisioning-gsa.json`
     * Creates node GSA and key at `./build-artifacts/node-gsa.json`
-    * Also sets up KMS keyring and key for SSH private key encryption
 
 1. Create SSH keypair for communication between **provisioning machine** and **target machines**.
 
-  1. Create new SSH keypair
+1. If ssh key was already created and is not present locally then download the private key from secret manager. Substitute cluster_name with name of your custer like cnuc-1
+
+    ```bash
+    gcloud secrets versions \
+    access latest --secret="ssh-priv-key-cluster_name" >> build-artifacts/consumer-edge-machine 
+    ```
+
+1. Otherwise create new SSH keypair from scratch
       ```bash
       ssh-keygen -N '' -o -a 100 -t ed25519 -f ./build-artifacts/consumer-edge-machine
       ```
-
-1. Encrypt the private key using Cloud KMS
-
-    ```bash
-    gcloud kms encrypt \
-      --key gdc-ssh-key \
-      --keyring gdc-ce-keyring \
-      --location global \
-      --plaintext-file build-artifacts/consumer-edge-machine \
-      --ciphertext-file build-artifacts/consumer-edge-machine.encrypted
-    ```
-1. Delete the unencrypted private key from the local machine
-
-    ```bash
-    rm build-artifacts/consumer-edge-machine
-    ```
-
-    > NOTE: The unencrypted private key will be removed at this point, but do
-        not lose the `consumer-edge-machine.encrypted` file, this is the
-        encrypted private key. Future functionality will automate and upload
-        the key to GCP Secrets Manager.
-
-    <!-- TODO: Add mechanism to upload to GCS SecretsManager -->
-    <!-- TODO: Add script to allow for ad-hoc SSH into machines (decrypt on-demand) -->
-    <!-- TODO: Add instructions to remove SSH key -->
-
+1. Upload the ssh private key into secret manager. Substitute cluster_name with name of your custer like cnuc-1
+      ```bash
+      gcloud secrets create ssh-priv-key-cluster_name --replication-policy="automatic"
+      gcloud secrets versions add ssh-priv-key-cluster_name --data-file="build-artifacts/consumer-edge-machine"
+      ```
 1. Export the necessary environment variables
 
     ```sh
