@@ -1,0 +1,44 @@
+- name: Check if {{ ansible_ssh_private_key_file }} is in Secret Manager with secret {{ ansible_ssh_priv_key_secret }}
+  become: false
+  delegate_to: localhost
+  shell: |
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ ansible_ssh_priv_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
+    if [ -z "$HAS_SECRET" ]; then
+      exit 1 
+    fi
+  when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+  tags:
+  - gcloud-command
+  - keys-initialization
+
+
+- name: Download SSH private key files from secret manager locally
+  become: false
+  delegate_to: localhost
+  shell: |
+    gcloud secrets versions access latest --secret="{{ ansible_ssh_priv_key_secret }}" >> {{ ansible_ssh_private_key_file }} --project="{{ google_secret_project_id }}"
+  args:
+    executable: /bin/bash
+    creates: "{{ ansible_ssh_private_key_file }}"
+  when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+  tags:
+  - gcloud-command
+  - keys-initialization
+
+
+- name: Add downloaded ssh key to ssh-agent
+  become: false
+  delegate_to: localhost
+  shell: |
+    eval `ssh-agent`
+    cat {{ ansible_ssh_private_key_file }} | ssh-add -t {{ ansible_ssh_key_timeout }} -
+  register: tmp_output
+  when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+  tags:
+  - keys-initialization

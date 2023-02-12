@@ -240,23 +240,6 @@ else
 	pretty_print "PASS: GSA Keys have been created for the provisioning GSA"
 fi
 
-KEYRING_NAME="gdc-ce-keyring"
-HAS_KEYRING=$(gcloud kms keyrings list --location global --format="value(name)" --filter=name~${KEYRING_NAME})
-if [[ -z "${HAS_KEYRING}" ]]; then
-	pretty_print "INFO: Keyring '${KEYRING_NAME} has not been created, creating now." "INFO"
-	yes Y | gcloud kms keyrings create ${KEYRING_NAME} --location=global
-fi
-
-if [[ ! -f "./build-artifacts/consumer-edge-machine.encrypted" ]]; then
- 	gcloud kms encrypt --key gdc-ssh-key --keyring ${KEYRING_NAME} --location global \
- 		--plaintext-file build-artifacts/consumer-edge-machine \
- 		--ciphertext-file build-artifacts/consumer-edge-machine.encrypted --quiet --verbosity=critical --no-user-output-enabled
-
-	pretty_print "INFO: Encrypting private key-pair with KMS key." "INFO"
-else
- 	pretty_print "INFO: Found existing ./build-artifacts/consumer-edge-machine.encrypted, skipping creation" "INFO"
-fi
-
 # Create docker container for buildling
 CONTAINER_URL=$(gcloud container images list --repository=gcr.io/${PROJECT_ID} --format="value(name)" --filter="name~consumer-edge-install")
 if [[ -z "$CONTAINER_URL" ]]; then
