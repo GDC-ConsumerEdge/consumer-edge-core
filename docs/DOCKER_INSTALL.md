@@ -388,7 +388,7 @@ flowchart TB
 
     ```bash
     # NOTE: $PROJECT_ID is a required ENV variable and points to a GCP project-id
-    gcloud builds submit --tag gcr.io/${PROJECT_ID}/consumer-edge-install
+    gcloud builds submit --config ./docker-build/cloudbuild.yaml . --tag gcr.io/${PROJECT_ID}/consumer-edge-install
     ```
 ### 4b. Build & push locally (Currently only option)
 1. Use Docker to build the Dockerfile inside of `docker-build/`

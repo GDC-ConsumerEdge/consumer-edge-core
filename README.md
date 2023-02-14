@@ -231,9 +231,7 @@ explanation can be found in the [Docker build details](docker-build/README.md)
 file.
 
     ```bash
-    cd docker-build
-    gcloud builds submit --config cloudbuild.yaml ../.
-    cd ..
+    gcloud builds submit --config ./docker-build/cloudbuild.yaml .
     ```
 
 1. Create "inventory" file for Ansible provisioning
