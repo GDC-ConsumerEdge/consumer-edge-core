@@ -39,10 +39,21 @@
   - abm-post-install
   - observability-setup
 
+- name: Remove provisioning GSA profile
+  file:
+    path: /etc/profile.d/99-gcloud-auth-provisioning-gsa.sh
+    state: absent
+  tags:
+  - profile
+  - initial-install
+  - non-interactive-shell
+  - gcloud-setup
+  - gsa-removal
+
 # Remove the provisioning GSA after installation is complete
 - name: Remove the provisioning GSA
   ansible.builtin.file:
     path: '{{ remote_keys_folder }}/provisioning-gsa.json'
     state: absent
   tags:
-    - gsa-removal
+  - gsa-removal
