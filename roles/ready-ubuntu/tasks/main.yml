@@ -257,3 +257,15 @@
   - (services['multipath-tools-boot.service'].status == 'enabled') or (services['multipath-tools-boot.service'].state == 'running')
   tags:
   - multipath-config
+
+- name: "Enable recover lost locks for NFS"
+  lineinfile:
+    path: "/etc/modprobe.d/nfs4-locks.conf"
+    line: "options nfs recover_lost_locks=1"
+    create: true
+  when:
+  - storage_provider == "robin"
+  tags:
+  - nfs-storage-robin
+  - robin-setup
+  - modprobe
