@@ -1,0 +1,22 @@
+spec:
+  resourceAttrOverride:
+    gke-metrics-agent/gke-metrics-agent:
+      limits:
+        cpu: 200m
+        memory: 4608Mi
+    stackdriver-metadata-agent-cluster-level/metadata-agent:
+      limits:
+        cpu: 200m
+        memory: 3584Mi
+    node-exporter/node-exporter:
+      limits:
+        cpu: 200m
+        memory: 500Mi
+    kube-state-metrics/kube-state-metrics:
+      limits:
+        cpu: 200m
+        memory: 1228Mi
+    stackdriver-log-forwarder/stackdriver-log-forwarder:
+      limits:
+        cpu: 600m
+        memory: 600Mi

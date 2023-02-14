@@ -1,0 +1,17 @@
+- name: "Copy patch over"
+  ansible.builtin.copy:
+    src: "metric-server-patch.yaml"
+    dest: "{{ acm_config_files }}/metric-server-patch.yaml"
+    mode: '0444'
+  when:
+  - "primary_cluster_machine is defined"
+  - "primary_cluster_machine == true"
+
+- name: "Apply patch to metrics server"
+  command:
+    cmd: "kubectl -n kube-system patch stackdriver stackdriver --type merge --patch-file {{ acm_config_files }}/metric-server-patch.yaml"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  when:
+  - "primary_cluster_machine is defined"
+  - "primary_cluster_machine == true"

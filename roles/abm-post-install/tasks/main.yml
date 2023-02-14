@@ -1,5 +1,14 @@
 # These are post-installation steps that address defects/bugs or are needed after the system has been fully setup
 
+- name: "Update metrics-server resources (b/267792905)"
+  import_tasks: update-resoruces-metrics-server.yaml
+  when:
+  - abm_version is version('1.14.2', '<')
+  tags:
+  - abm-post-install
+  - bugfix-267792905
+  - metrics-server-resources
+
 ### Add Kube PS1
 - name: "Add Kube PS1 to all known users"
   import_tasks: add-kube-ps1.yml
