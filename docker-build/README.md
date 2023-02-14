@@ -20,14 +20,13 @@ To use this utility, follow the steps outlined below.
 There are two methods to build this docker image, please choose one:
 
 > NOTE: In some future state, there will be a public docker image, but until that time, a GCP project will need to host the Docker image.
-> NOTE: All commands in both options should be run from inside the `docker-build/` folder, not from the project root.
 
 1. Cloud Build (preferred)
 
     Cloud Build allows you to build the docker image without needing to build docker images on the provisioning machine.
 
     ```bash
-    gcloud builds submit --config cloudbuild.yaml ../.
+    gcloud builds submit --config ./docker-build/cloudbuild.yaml ./
     ```
 
 1. Manual docker commands (optional)
@@ -36,7 +35,9 @@ There are two methods to build this docker image, please choose one:
 
     ```bash
     # Build for local only
+    pushd docker-build/  # go into docker-build, push current directory on stack
     docker build . -t consumer-edge-install:latest
+    popd  # pop back to previoud directory
     ```
 
     ### Optionally push to GCR manually
