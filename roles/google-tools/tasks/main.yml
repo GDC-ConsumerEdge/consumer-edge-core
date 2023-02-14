@@ -159,6 +159,7 @@
     lineinfile:
       path: /etc/profile.d/bash_completion.sh
       line: "if [ -f '{{ tools_base_path }}/google-cloud-sdk/completion.bash.inc' ]; then source '{{ tools_base_path }}/google-cloud-sdk/completion.bash.inc'; fi"
+      mode: '0755'
     tags:
     - profile
     - initial-install
@@ -166,8 +167,22 @@
 
   - name: Add node GSA activation script to /etc/profile.d
     lineinfile:
-      path: /etc/profile.d/gcloud_auth.sh
+      path: /etc/profile.d/01-gcloud-auth-node-gsa.sh
       line: "gcloud auth activate-service-account --key-file={{ remote_keys_folder }}/node-gsa.json --project {{ google_project_id }}"
+      mode: '0755'
+      state: present
+      create: yes
+    tags:
+    - profile
+    - initial-install
+    - non-interactive-shell
+    - gcloud-setup
+
+  - name: Add node GSA activation script to /etc/profile.d
+    lineinfile:
+      path: /etc/profile.d/99-gcloud-auth-provisioning-gsa.sh
+      line: "gcloud auth activate-service-account --key-file={{ remote_keys_folder }}/provisioning-gsa.json --project {{ google_project_id }}"
+      mode: '0755'
       state: present
       create: yes
     tags:
