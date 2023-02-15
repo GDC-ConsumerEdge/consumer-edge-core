@@ -108,14 +108,15 @@ fi
 
 ### Set roles for GSA
 declare -a ROLES=(
-  "roles/editor"
+   "roles/viewer"
+  "roles/monitoring.editor"
   "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   "roles/gkehub.gatewayAdmin"
   "roles/gkehub.viewer"
   "roles/resourcemanager.projectIamAdmin"
   "roles/secretmanager.admin"
   "roles/secretmanager.secretAccessor"
-  "roles/storage.objectViewer"
+  "roles/storage.admin"
   "roles/iam.serviceAccountAdmin"
 )
 
