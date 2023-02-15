@@ -108,7 +108,7 @@ fi
 
 ### Set roles for GSA
 declare -a ROLES=(
-   "roles/viewer"
+  "roles/viewer"
   "roles/monitoring.editor"
   "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   "roles/gkehub.gatewayAdmin"
@@ -118,6 +118,7 @@ declare -a ROLES=(
   "roles/secretmanager.secretAccessor"
   "roles/storage.admin"
   "roles/iam.serviceAccountAdmin"
+  "roles/iam.serviceAccountKeyAdmin"
 )
 
 for role in ${ROLES[@]}; do
