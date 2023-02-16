@@ -112,7 +112,7 @@ declare -a ROLES=(
   "roles/monitoring.editor"
   "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   "roles/gkehub.gatewayAdmin"
-  "roles/gkehub.viewer"
+  "roles/gkehub.editor"
   "roles/resourcemanager.projectIamAdmin"
   "roles/secretmanager.admin"
   "roles/secretmanager.secretAccessor"
