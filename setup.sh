@@ -261,9 +261,7 @@ fi
 CONTAINER_URL=$(gcloud container images list --repository=gcr.io/${PROJECT_ID} --format="value(name)" --filter="name~consumer-edge-install")
 if [[ -z "$CONTAINER_URL" ]]; then
 	pretty_print "INFO: This project uses a Docker image to provision host machines from. The image has not been detected and will be built (takes about 10 minutes)" "INFO"
-	pushd docker-build
 	gcloud builds submit --config ./docker-build/cloudbuild.yaml ./ --quiet --verbosity=critical --no-user-output-enabled
-	popd
 else
 	pretty_print "INFO: Docker build image was found, will not re-build automatically." INFO
 fi
