@@ -54,6 +54,8 @@ proxy_https_proto: "{{ lookup('env', 'HTTPS_PROXY_PROTOCOL') | default('', True)
 proxy_http_full_addr: "{{ proxy_http_proto }}://{{ (proxy_http_user is defined and proxy_http_user | length > 0) | ternary( proxy_http_user + ':' + proxy_http_pass + '@', '' ) }}{{ proxy_http_addr }}:{{ proxy_http_port }}"
 # CALCULATED VARIABLE: Do not manually change -- Build the full https proxy address. This variable should be used for full URL where http proxy is needed
 proxy_https_full_addr: "{{ proxy_https_proto }}://{{ (proxy_https_user is defined and proxy_https_user | length > 0) | ternary( proxy_https_user + ':' + proxy_https_pass + '@', '' ) }}{{ proxy_https_addr }}:{{ proxy_https_port }}"
+# NO_PROXY list of IPs, CIDR, FQDN, wildcard TLD
+proxy_no_proxy_list: [] # Empty list by default (override in host_vars)
 
 # Calculated value if the http proxy has been set. This is used in "when" conditionals. The value is only true if there is the 'addr' filled out regardless of other varaiables
 proxy_has_http_proxy: "{{ proxy_http_addr | length > 0 }}"

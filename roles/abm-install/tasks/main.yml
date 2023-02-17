@@ -51,9 +51,9 @@
   - name: "Create Secret if SA keys does not exists in secrets manager"
     run_once: true # only one machine to do this
     shell: |
-      export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.name }}" --format="value(name)" --project="{{ google_project_id }}")
+      export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.name }}" --format="value(name)" --project="{{ google_secret_project_id }}")
       if [ -z "$HAS_SECRET" ]; then
-        gcloud secrets create {{ item.name }} --replication-policy="automatic" --project={{ google_project_id }}
+        gcloud secrets create {{ item.name }} --replication-policy="automatic" --project={{ google_secret_project_id }}
         echo "NO SECRET {{ item.name }}"
         exit 1 # exit early, no chance there's a version since there wasn't a secret
       fi

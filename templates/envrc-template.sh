@@ -53,7 +53,7 @@ export ROOT_REPO_BRANCH="main"
 export ROOT_REPO_DIR="/config/clusters/${CLUSTER_ACM_NAME}/meta"
 
 export CONNECT_GATEWAY_ENABLED="false" # This only creates a service acocunt that can be used for kubectl commands
-export SDS_BACKUP_ENABLED="true" # This crates the service acocunt used by SDS to take backups on to GCS bucket 
+export SDS_BACKUP_ENABLED="true" # This crates the service acocunt used by SDS to take backups on to GCS bucket
 
 ###
 ### OIDC Settings
