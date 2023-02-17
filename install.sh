@@ -63,7 +63,21 @@ function pretty_print() {
     esac
 }
 
-
+function setupgcpfirewall() {
+    if [[ -z "${MANAGE_FIREWALL_RULES}" ]]; then
+        pretty_print "INFO: Skipping modification of local-to-cloud firewall rules. Set ENV MANAGE_FIREWALL_RULES=1 to change this." "INFO"
+        return
+    fi
+    gotFWrule=$(gcloud compute firewall-rules list --format="value(name)" | grep -c conedge-access )
+        if [[ "$gotFWrule" -eq 0 ]];
+        then
+            pretty_print "INFO: Creating firewall rule for access from this machine" "INFO"
+            export myip=$(curl -s ifconfig.co) && gcloud --no-user-output-enabled compute --project=$PROJECT_ID firewall-rules create "conedge-access" --direction=INGRESS --description="This rule was created by the Consumer Edge deployment" --priority=1000 --network=default --action=ALLOW --rules=tcp:22 --source-ranges=$myip/32 && unset myip
+          else
+            pretty_print "INFO: Updating firewall rule for access from this machine" "INFO"
+            export myip=$(curl -s ifconfig.co) && gcloud --no-user-output-enabled compute --project=$PROJECT_ID firewall-rules update "conedge-access" --rules=tcp:22 --source-ranges=$myip/32 && unset myip
+        fi
+}
 
 echo -e "===============================================\nThis is a script to manage the installation of the Consumer Edge for Cloud (GCE) demo instances.\n==============================================="
 
@@ -136,6 +150,8 @@ if [[ ! -f "./inventory/gcp.yml" ]]; then
     pretty_print "WARNING: GCP Inventory file was not found. IF using GCE instances, this file MUST be setup and working." "WARN"
 else
     pretty_print "PASS: GCP Inventory file found"
+    pretty_print "INFO: Looks like some targets are GCE instances, let's look at GCP firewall access" "INFO"
+    setupgcpfirewall
 fi
 
 # Check for GCP Inventory
@@ -296,7 +312,7 @@ Do you accept the responsiblity of supporting these OSS tools as listed do you w
 EOF`
 
 echo ""
-read -p "$ACCEPT_OSS_MESSAGE" proceed
+read -p "$ACCEPT_OSS_MESSAGE " proceed
 
 if [[ -z "${proceed}" || "${proceed}" =~ ^([nN][oO]|[nN])$ ]]; then
     echo "Aborting."
