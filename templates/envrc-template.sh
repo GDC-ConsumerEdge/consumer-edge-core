@@ -7,9 +7,12 @@ export NODE_GSA_FILE=$(pwd)/build-artifacts/node-gsa.json
 # GCP Project ID
 export PROJECT_ID="${PROJECT_ID}"
 # GCP Secret Manager Project ID
-export SECRET_PROJECT_ID="${SECRET_PROJECT_ID}"
+export SECRET_PROJECT_ID="${SECRET_PROJECT_ID:-$PROJECT_ID}"
 # GCP Service Acocunt Project ID
-export SA_PROJECT_ID="${SA_PROJECT_ID}"
+export SA_PROJECT_ID="${SA_PROJECT_ID:-$PROJECT_ID}"
+
+# GCP SSH firewall management for GCP CNUC access. Set to true to have gcloud set current public IP to SSH firewall access
+export MANAGE_FIREWALL_RULES=false
 
 # GCP Project Region (Adjust as desired)
 export REGION="us-central1"
@@ -41,8 +44,8 @@ export ROOT_REPO_TYPE="token"
 
 ######  Token Type #############
 # Values for Personal Access Token when REPO_TYPE is "token". Either set the varaible before `envsubt` or replace "change-me" with the approprate values
-export SCM_TOKEN_USER="${SCM_TOKEN_USER:-change-me}"    # Only used if REPO_TYPE is "token"
-export SCM_TOKEN_TOKEN="${SCM_TOKEN_TOKEN:-change-me}"  # Only used if REPO_TYPE is "token"
+export SCM_TOKEN_USER="${SCM_TOKEN_USER:-CHANGE_ME}"    # Only used if REPO_TYPE is "token"
+export SCM_TOKEN_TOKEN="${SCM_TOKEN_TOKEN:-CHANGE_ME}"  # Only used if REPO_TYPE is "token"
 
 ###
 ### Primary Root Repo URL
@@ -53,7 +56,7 @@ export ROOT_REPO_BRANCH="main"
 export ROOT_REPO_DIR="/config/clusters/${CLUSTER_ACM_NAME}/meta"
 
 export CONNECT_GATEWAY_ENABLED="false" # This only creates a service acocunt that can be used for kubectl commands
-export SDS_BACKUP_ENABLED="true" # This crates the service acocunt used by SDS to take backups on to GCS bucket 
+export SDS_BACKUP_ENABLED="true" # This crates the service acocunt used by SDS to take backups on to GCS bucket
 
 ###
 ### OIDC Settings

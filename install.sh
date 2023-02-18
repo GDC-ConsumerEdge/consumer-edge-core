@@ -64,18 +64,26 @@ function pretty_print() {
 }
 
 function setupgcpfirewall() {
-    if [[ -z "${MANAGE_FIREWALL_RULES}" ]]; then
-        pretty_print "INFO: Skipping modification of local-to-cloud firewall rules. Set ENV MANAGE_FIREWALL_RULES=1 to change this." "INFO"
+    if [[ -z "${MANAGE_FIREWALL_RULES}" && "${MANAGE_FIREWALL_RULES}" != true ]]; then
+        pretty_print "INFO: Skipping modification of local-to-cloud ssh firewall rules. Set MANAGE_FIREWALL_RULES=true in your .envrc files to mangae firewall access" "INFO"
         return
     fi
-    gotFWrule=$(gcloud compute firewall-rules list --format="value(name)" | grep -c conedge-access )
+    gotFWrule=$(gcloud compute firewall-rules list --format="value(name)" 2> /dev/null | grep -c conedge-access )
         if [[ "$gotFWrule" -eq 0 ]];
         then
             pretty_print "INFO: Creating firewall rule for access from this machine" "INFO"
-            export myip=$(curl -s ifconfig.co) && gcloud --no-user-output-enabled compute --project=$PROJECT_ID firewall-rules create "conedge-access" --direction=INGRESS --description="This rule was created by the Consumer Edge deployment" --priority=1000 --network=default --action=ALLOW --rules=tcp:22 --source-ranges=$myip/32 && unset myip
-          else
+            myip=$(curl -s ifconfig.co)
+            SUCCESS=$(gcloud --no-user-output-enabled compute --project=$PROJECT_ID firewall-rules create "conedge-access" --direction=INGRESS --description="This rule was created by the Consumer Edge deployment" --priority=1000 --network=default --action=ALLOW --rules=tcp:22 --source-ranges=$myip/32 2> /dev/null)
+            if [[ $? -gt 0 ]]; then
+                pretty_print "ERROR: Cannot firewall rule for access from this machine" "ERROR"
+            fi
+        else
             pretty_print "INFO: Updating firewall rule for access from this machine" "INFO"
-            export myip=$(curl -s ifconfig.co) && gcloud --no-user-output-enabled compute --project=$PROJECT_ID firewall-rules update "conedge-access" --rules=tcp:22 --source-ranges=$myip/32 && unset myip
+            myip=$(curl -s ifconfig.co)
+            SUCCESS=$(gcloud --no-user-output-enabled compute --project=$PROJECT_ID firewall-rules update "conedge-access" --rules=tcp:22 --source-ranges=$myip/32 2> /dev/null)
+            if [[ $? -gt 0 ]]; then
+                pretty_print "ERROR: Cannot firewall rule for access from this machine" "ERROR"
+            fi
         fi
 }
 
@@ -85,7 +93,7 @@ echo -e "===============================================\nThis is a script to ma
 
 ERROR=0
 if [[ ! -x $(command -v gcloud) ]]; then
-    prett_print "ERROR: gcloud (Google Cloud SDK) command is required, but not installed." "ERROR"
+    pretty_print "ERROR: gcloud (Google Cloud SDK) command is required, but not installed." "ERROR"
     ERROR=1
 else
     pretty_print "PASS: gcloud command found"
@@ -112,6 +120,13 @@ fi
 
 # reset for configuration errors
 ERROR=0
+# Check for GSA Keys
+if [[ ! -f "./.envrc" ]]; then
+    pretty_print "ERROR: Environment variables file .envrc was not found or is not accessible." "ERROR"
+    exit 1
+else
+    pretty_print "PASS: Environment variables (.envrc) file found"
+fi
 
 # Check for Private Encrypted SSH Keys
 PROJ_LENGTH=`echo ${PROJECT_ID} | wc -c`
@@ -119,6 +134,22 @@ if [[ ${PROJ_LENGTH} > ${PROJECT_NAME_MAX_LENGTH} ]]; then
     pretty_print "WARN: GCP Project names might be a concern, it is longer than recommended '${PROJECT_NAME_MAX_LENGTH}' characters" "WARN"
 else
     pretty_print "PASS: Project name length is ok"
+fi
+
+# Check for SSH Keys
+if [[ -z "${PROJECT_ID}" ]]; then
+    pretty_print "ERROR: Environment variable 'PROJECT_ID' does not exist, please set and try again." "ERROR"
+    exit 1
+else
+    pretty_print "PASS: PROJECT_ID (${PROJECT_ID}) variable is set."
+fi
+
+VISIBLE_ACTIVE_GCP_PROJECT=$(gcloud projects describe ${PROJECT_ID} --format="value(lifecycleState)" --no-user-output-enabled --quiet 2> /dev/null)
+if [[ $? -gt 0 ]]; then
+    pretty_print "ERROR: '${PROJECT_ID}' is not active or accessible by this user. Please ensure \$PROJECT_ID is correct in .envrc" "ERROR"
+    ERROR=1
+else
+    pretty_print "PASS: GCP Project active"
 fi
 
 # Check for Private Encrypted SSH Keys
@@ -161,28 +192,12 @@ else
     pretty_print "PASS: Physical inventory file found"
 fi
 
-# Check for GSA Keys
-if [[ ! -f "./.envrc" ]]; then
-    pretty_print "ERROR: Environment variables file .envrc was not found or is not accessible." "ERROR"
-    exit 1
-else
-    pretty_print "PASS: Environment variables (.envrc) file found"
-fi
-
 # Check for GCR docker credentials helper
 HAS_GCR=$(cat ${HOME}/.docker/config.json | grep "gcloud")
 
 if [[ -z "${HAS_GCR}" ]]; then
     pretty_print "Authorizing docker for gcr.io"
     gcloud auth configure-docker --quiet --verbosity=critical --no-user-output-enabled
-fi
-
-# Check for SSH Keys
-if [[ -z "${PROJECT_ID}" ]]; then
-    pretty_print "ERROR: Environment variable 'PROJECT_ID' does not exist, please set and try again." "ERROR"
-    exit 1
-else
-    pretty_print "PASS: PROJECT_ID (${PROJECT_ID}) variable is set."
 fi
 
 # Check for SSH Keys
@@ -238,9 +253,15 @@ case "${ROOT_REPO_TYPE}" in
     if [[ -z "${SCM_TOKEN_USER}" ]]; then
         pretty_print "ERROR: SCM_TOKEN_USER is required for ROOT_REPO_TYPE = 'token'" "ERROR"
         ERROR=1
+    elif [[ "${SCM_TOKEN_USER}" == "CHANGE_ME" ]]; then
+        pretty_print "ERROR: You have not set your SCM_TOKEN_USER variable in .envrc, please set this before proceeding." "ERROR"
+        ERROR=1
     fi
     if [[ -z "${SCM_TOKEN_TOKEN}" ]]; then
         pretty_print "ERROR: SCM_TOKEN_TOKEN is required for ROOT_REPO_TYPE = 'token'" "ERROR"
+        ERROR=1
+    elif [[ "${SCM_TOKEN_TOKEN}" == "CHANGE_ME" ]]; then
+        pretty_print "ERROR: You have not set your SCM_TOKEN_TOKEN variable in .envrc, please set this before proceeding." "ERROR"
         ERROR=1
     fi
     ;;
