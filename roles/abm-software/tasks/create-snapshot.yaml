@@ -64,7 +64,7 @@
   ignore_errors: true
   register: bucket_exists
   tags:
-  - gcloud-mutate
+  - gcloud-command
 
 - name: Create if missing
   command:
