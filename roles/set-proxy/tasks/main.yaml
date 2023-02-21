@@ -52,14 +52,24 @@
   tags:
   - http-proxy
 
-- name: Set NO_PROXY for environment
-  lineinfile:
-    path: /etc/environment
-    line: "NO_PROXY=\"{{ node_ip.split('.')[0] }}.{{ node_ip.split('.')[1] }}.{{ node_ip.split('.')[2] }}.0/24\""
+- name: Set NO_PROXY list
+  set_fact:
+    proxy_no_proxy_full_list: "{{ proxy_no_proxy_list | union ( proxy_no_proxy_default_ips ) | join(',') }}"
   when:
   - proxy_has_http_proxy is true
   tags:
   - http-proxy
+  - no-proxy
+
+- name: Set NO_PROXY for environment
+  lineinfile:
+    path: /etc/environment
+    line: "NO_PROXY=\"{{ proxy_no_proxy_full_list }}\""
+  when:
+  - proxy_has_http_proxy is true
+  tags:
+  - http-proxy
+  - no-proxy
 
 ### Setup HTTP & HTTPS proxy for SNAP
 - name: Set HTTP Proxy for environment

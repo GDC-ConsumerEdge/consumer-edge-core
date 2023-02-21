@@ -1,1 +1,4 @@
 curl_home: "/var/curl_config"
+
+# Default list of IPs added to NO_PROXY
+proxy_no_proxy_default_ips: "[ '127.0.0.1', 'localhost', '{{ node_ip.split('.')[0] }}.{{ node_ip.split('.')[1] }}.{{ node_ip.split('.')[2] }}.0/24' ]"
