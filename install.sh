@@ -72,14 +72,14 @@ function setupgcpfirewall() {
         if [[ "$gotFWrule" -eq 0 ]];
         then
             pretty_print "INFO: Creating firewall rule for access from this machine" "INFO"
-            myip=$(curl -s ifconfig.co)
+            myip=$(curl -s -4 ifconfig.co)
             SUCCESS=$(gcloud --no-user-output-enabled compute --project=$PROJECT_ID firewall-rules create "conedge-access" --direction=INGRESS --description="This rule was created by the Consumer Edge deployment" --priority=1000 --network=default --action=ALLOW --rules=tcp:22 --source-ranges=$myip/32 2> /dev/null)
             if [[ $? -gt 0 ]]; then
                 pretty_print "ERROR: Cannot firewall rule for access from this machine" "ERROR"
             fi
         else
             pretty_print "INFO: Updating firewall rule for access from this machine" "INFO"
-            myip=$(curl -s ifconfig.co)
+            myip=$(curl -s -4 ifconfig.co)
             SUCCESS=$(gcloud --no-user-output-enabled compute --project=$PROJECT_ID firewall-rules update "conedge-access" --rules=tcp:22 --source-ranges=$myip/32 2> /dev/null)
             if [[ $? -gt 0 ]]; then
                 pretty_print "ERROR: Cannot firewall rule for access from this machine" "ERROR"
