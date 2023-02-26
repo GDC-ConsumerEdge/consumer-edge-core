@@ -11,3 +11,5 @@ machine_ip: "{{ node_ip }}"
 scm_token_user: "{{ scm_token_user }}"
 # GitHub or GitLab Read-only Token Value (authentication to private repos)
 scm_token_token: "{{ scm_token_token }}"
+
+google_secret_project_id: "{{ lookup('env', 'SECRET_PROJECT_ID') | default(google_project_id, True) }}"
