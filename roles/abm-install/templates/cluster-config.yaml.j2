@@ -63,12 +63,21 @@ spec:
       - {{ range }}
       {% endfor %}
   # Proxy configuration
+  {% if proxy_has_https_proxy is defined and proxy_has_https_proxy | bool %}
+  proxy:
+    url: "{{ proxy_https_full_addr }}"
+    # A list of IPs, hostnames or domains that should not be proxied.
+    noProxy:
+    {% for no_proxy_ip in (proxy_no_proxy_list | union ( proxy_no_proxy_default_ips ) ) %}
+    - {{ no_proxy_ip }}
+    {% endfor %}
+  {% else %}
   # proxy:
-  #   url: http://[username:password@]domain
-  #   # A list of IPs, hostnames or domains that should not be proxied.
+  #   url: <place proxy url here>
   #   noProxy:
   #   - 127.0.0.1
-  #   - localhost
+  #   - other.domains.here
+  {% endif %}
   # Logging and Monitoring
   clusterOperations:
     # Cloud project for logs and metrics.
