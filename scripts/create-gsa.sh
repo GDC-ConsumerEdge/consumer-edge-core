@@ -77,10 +77,6 @@ gcloud services enable --project ${PROJECT_ID} \
 declare -a ROLES=(
   "roles/viewer"
   "roles/monitoring.editor"
-<<<<<<< PATCH SET (7ddfc0 Removing KMS and encrypted key altogther)
-=======
-  "roles/cloudkms.cryptoKeyEncrypterDecrypter"
->>>>>>> BASE      (378937 adding proxy to cluster.yaml)
   "roles/gkehub.gatewayAdmin"
   "roles/gkehub.editor"
   "roles/resourcemanager.projectIamAdmin"
