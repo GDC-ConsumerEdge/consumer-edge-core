@@ -14,6 +14,9 @@ metadata:
 apiVersion: baremetal.cluster.gke.io/v1
 kind: Cluster
 metadata:
+  annotations:
+    # Used to enable Network Connectivity Gateway for cluster VPN
+    baremetal.cluster.gke.io/enable-gng: "{{ network_connectivity_gateway_install }}"
   name: {{ cluster_name }}
   namespace: {{ cluster_name }}
 spec:
@@ -41,8 +44,6 @@ spec:
     multipleNetworkInterfaces: {{ multi_network_enabled | capitalize  }}
     # eBPF
     # enableDataplaneV2: {{ dataplane_v2 | capitalize }}
-    # Network Gateway Groups (Used for HA VPN)
-    advancedNetworking: {{ network_gateway_group | capitalize  }}
     pods:
       cidrBlocks:
       - {{ pod_cidr }}
