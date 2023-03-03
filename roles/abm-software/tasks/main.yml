@@ -159,13 +159,13 @@
   - storage-setup
 
 ###
-### Anthos Network Gateway
+### Anthos Network Connectivity Gateway
 ###
-- name: "Install Anthos Network Gateway"
-  import_tasks: network-gateway-group.yaml
-  when: network_gateway_group_install == true
+- name: "Install Anthos Network Connectivity Gateway"
+  import_tasks: network-connectivity-gateway.yaml
+  when: network_connectivity_gateway_install == true
   tags:
-  - ang-install
+  - ncg-install
 
 - name: "Add CPU Monitor KubeVirt service files"
   import_tasks: cpumonitor-service.yaml

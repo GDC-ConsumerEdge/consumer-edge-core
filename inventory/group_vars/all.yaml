@@ -22,6 +22,10 @@ abm_version: "1.14.1" # verify coupling of ABM to BMCTL versions
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
 bmctl_version: "1.14.1" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
 
+# Latest version can be found:  gsutil ls -al gs://ncg-release/anthos-baremetal
+# Version of the ncgctl command line tool for installing the Network Connectivity Gateway
+ncgctl_version: "v1.12.0"
+
 # Base folder to install ABM into
 abm_install_folder: "/var/abm-install"
 
@@ -138,13 +142,32 @@ google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}" # NO
 ###
 must_use_precache: false
 
-####
-#### Anthos Network Gateway
-####
-# Floating IP addresses for Anthos Network Gateway
-network_gateway_group_install: false # Enable ANG for HA VPN
-ang_floating_ips: [] # Floating IP for ANG
-vpn_gateway_ips: [] # Gateway IPs for VPN
+###
+###  Anthos Network Connectivity Gateway & VPN Details
+###
+# Setup the HA VPN for the Network Connectivity Gateway (NCG)
+network_connectivity_gateway_install: false
+
+# Egress IP
+overlay_vpn_tunnel_self_public_ip: "" # `curl ifconfig.me`
+overlay_bgp_peer_asn: "" # e.g. 4200000000
+overlay_bgp_self_asn: "" # e.g. 4200000001
+
+overlay_vpn_tunnel_1_peer_local_tunnel_ip: "" # e.g. 169.254.156.45
+overlay_vpn_tunnel_1_self_local_tunnel_ip: "" # e.g. 169.254.156.46
+overlay_vpn_tunnel_1_peer_public_ip: ""
+
+# Network connectivity gateway does not support active/active tunnels on the
+# Anthos cluster side as of 2/12/2023. Leaving default as non-HA until
+# supported.
+#
+# overlay_vpn_tunnel_2_peer_local_tunnel_ip: ""
+# overlay_vpn_tunnel_2_self_local_tunnel_ip: ""
+# overlay_vpn_tunnel_2_peer_public_ip: ""
+
+network_connectivity_gateway_ha: false
+
+
 
 # OSS Multus
 enable_multus_network: false # Enable Multus (Cannot be true when enable_vmruntime is true) -- https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/how-to/multi-nic

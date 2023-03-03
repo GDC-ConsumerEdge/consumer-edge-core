@@ -1,0 +1,48 @@
+
+- name: "Install Network Connectivity CRDs"
+  shell: |
+      cd {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}
+      {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl --enable-ncg-on-existing-cluster
+      {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl --verify
+      {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl --install --kubeconfig /var/abm-install/kubeconfig/kubeconfig
+  args:
+    executable: /bin/bash
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  retries: "{{ default_retry_count }}"
+  delay: "{{ default_retry_delay }}"
+  tags:
+  - ncg-install
+  - post-acm
+
+- name: "Hydrate and copy Network Connectivity Gateway templates"
+  template:
+    src: "{{ item.template }}"
+    dest: "{{ acm_config_files }}/{{ item.final_name }}"
+  loop:
+  - {"template": "overlay-vpn-tunnel.yaml.j2", "final_name": "overlay-vpn-tunnel.yaml"}
+  - {"template": "overlay-vpn-bgp-peer.yaml.j2", "final_name": "overlay-vpn-bgp-peer.yaml"}
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - ncg-install
+  - post-acm
+
+- name: "Apply Network Connectivity Gateway Configurations"
+  shell: |
+    kubectl apply -f {{ acm_config_files }}/{{ item.final_name }}
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  loop:
+  - {"final_name": "overlay-vpn-tunnel.yaml"}
+  - {"final_name": "overlay-vpn-bgp-peer.yaml"}
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - ncg-install
+  - post-acm

@@ -301,6 +301,20 @@
     - initial-install
     - tool-install
 
+### Find versions with:  gsutil ls -al gs://ncg-release/anthos-baremetal
+  - name: Install Network Connectivity Gateway CLI
+    shell: |
+      gsutil cp gs://ncg-release/anthos-baremetal/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz {{ tools_base_path }}
+      tar -xvzf {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz -C {{ tools_base_path }}
+      chmod a+x {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl
+      rm -f {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz
+      exit $?
+    args:
+      executable: /bin/bash
+    tags:
+    - initial-install
+    - tool-install
+
   - name: Adding k9s utility to machine (optional, but recommended)
     ansible.builtin.unarchive:
       src: https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_x86_64.tar.gz

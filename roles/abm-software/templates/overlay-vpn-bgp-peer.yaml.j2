@@ -1,0 +1,25 @@
+apiVersion: networking.gke.io/v1alpha1
+kind: OverlayBGPPeer
+metadata:
+  namespace: "kube-system"
+  name: overlay-vpn-bgp-peer-1
+spec:
+  localASN: {{ overlay_bgp_self_asn }}
+  localIP: {{ overlay_vpn_tunnel_1_self_local_tunnel_ip }}
+  peerIP: {{ overlay_vpn_tunnel_1_peer_local_tunnel_ip }}
+  peerASN: {{ overlay_bgp_peer_asn }}
+  vpnTunnel: overlay-vpn-tunnel-1
+{% if network_connectivity_gateway_ha %}
+---
+apiVersion: networking.gke.io/v1alpha1
+kind: OverlayBGPPeer
+metadata:
+  namespace: "kube-system"
+  name: overlay-vpn-bgp-peer-2
+spec:
+  localASN: {{ overlay_bgp_self_asn }}
+  localIP: {{ overlay_vpn_tunnel_2_self_local_tunnel_ip }}
+  peerIP: {{ overlay_vpn_tunnel_2_peer_local_tunnel_ip }}
+  peerASN: {{ overlay_bgp_peer_asn }}
+  vpnTunnel: overlay-vpn-tunnel-2
+{% endif %}

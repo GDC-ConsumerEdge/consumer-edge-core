@@ -1,0 +1,50 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: overlay-vpn-tunnel-1-ike-es
+  namespace: kube-system
+spec:
+  refreshInterval: 24h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: gcp-secret-store
+  target:
+    name: overlay-vpn-tunnel-ike
+    creationPolicy: Owner
+  data:
+  - secretKey: psk
+    remoteRef:
+      key: {{ cluster_name }}-vpn-psk
+---
+apiVersion: networking.gke.io/v1alpha1
+kind: OverlayVPNTunnel
+metadata:
+  namespace: "kube-system"
+  name: overlay-vpn-tunnel-1
+spec:
+  ikeKey:
+    name: "overlay-vpn-tunnel-ike"
+    namespace: "kube-system"
+  peer:
+    publicIP: {{ overlay_vpn_tunnel_1_peer_public_ip }}
+  self:
+    publicIP: {{ overlay_vpn_tunnel_self_public_ip }}
+  localTunnelIP: {{ overlay_vpn_tunnel_1_self_local_tunnel_ip }}
+{% if network_connectivity_gateway_ha %}
+---
+# Optional second tunnel
+apiVersion: networking.gke.io/v1alpha1
+kind: OverlayVPNTunnel
+metadata:
+  namespace: "kube-system"
+  name: overlay-vpn-tunnel-2
+spec:
+  ikeKey:
+    name: "overlay-vpn-tunnel-ike"
+    namespace: "kube-system"
+  peer:
+    publicIP: {{ overlay_vpn_tunnel_2_peer_public_ip }}
+  self:
+    publicIP: {{ overlay_vpn_tunnel_self_public_ip }}
+  localTunnelIP: {{ overlay_vpn_tunnel_2_self_local_tunnel_ip }}
+{% endif %}
