@@ -135,17 +135,6 @@ else
     pretty_print "PASS: Project name length is ok"
 fi
 
-<<<<<<< PATCH SET (7ddfc0 Removing KMS and encrypted key altogther)
-# Check for Private SSH Keys
-if [[ ! -f "./build-artifacts/consumer-edge-machine" ]]; then
-    pretty_print "ERROR: SSH Key './build-artifacts/consumer-edge-machine' was not found, did you generate the private key?" "ERROR"
-else
-    pretty_print "PASS: SSH Private Unencrypted Key found"
-fi     
-# Check for SSH Keys
-if [[ -z "${PROJECT_ID}" ]]; then
-    pretty_print "ERROR: Environment variable 'PROJECT_ID' does not exist, please set and try again." "ERROR"
-=======
 # Check for SSH Keys
 if [[ -z "${PROJECT_ID}" ]]; then
     pretty_print "ERROR: Environment variable 'PROJECT_ID' does not exist, please set and try again." "ERROR"
@@ -165,7 +154,6 @@ fi
 # Check for Private Encrypted SSH Keys
 if [[ ! -f "./build-artifacts/consumer-edge-machine.encrypted" ]]; then
     pretty_print "ERROR: Encrypted SSH Key './build-artifacts/consumer-edge-machine.encrypted' was not found, did you generate and encrypt the private key?" "ERROR"
->>>>>>> BASE      (378937 adding proxy to cluster.yaml)
     exit 1
 else
     pretty_print "PASS: PROJECT_ID (${PROJECT_ID}) variable is set."

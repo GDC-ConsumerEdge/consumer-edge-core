@@ -16,11 +16,11 @@ ansible_ssh_priv_key_secret: "ssh-priv-key-{{ cluster_name }}"
 ####
 # Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
 # Version of Anthos Bare Metal to install
-abm_version: "1.14.1" # verify coupling of ABM to BMCTL versions
+abm_version: "1.14.2" # verify coupling of ABM to BMCTL versions
 # bmctl binary version
 #TODO: set this up to query for the version, then upgrade automatically if updated
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
-bmctl_version: "1.14.1" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
+bmctl_version: "{{ abm_version }}" # If changed, set the `force_tools_upgrade` to true so new version of BMCTL is downloaded
 
 # Latest version can be found:  gsutil ls -al gs://ncg-release/anthos-baremetal
 # Version of the ncgctl command line tool for installing the Network Connectivity Gateway
@@ -98,7 +98,7 @@ ansible_pull_drift_repo: ""
 ####
 # gsutil ls -al gs://config-management-release/released/
 # Anthos Config Management version
-acm_version: "1.14.1"
+acm_version: "1.14.2"
 
 # Where to store ACM files during provisoning
 acm_config_files: "{{ abm_install_folder }}/acm-configs"
