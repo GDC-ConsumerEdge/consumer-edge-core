@@ -30,6 +30,18 @@
   - keys-initialization
 
 
+- name: Change permission on downloaded key
+  become: false
+  delegate_to: localhost
+  file: 
+    path: "{{ ansible_ssh_private_key_file }}"
+    mode: 0600
+  when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+  tags:
+  - keys-initialization
+
 - name: Add downloaded ssh key to ssh-agent
   become: false
   delegate_to: localhost

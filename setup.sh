@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 #Run from inside of either CloudShell or a Bastion VM inside of the same GCP project as the GCP cnuc's
 ###
 
@@ -11,8 +11,6 @@ ENDCOLOR="\e[0m"
 
 PREFIX_DIR=$(dirname -- "$0")
 source ${PREFIX_DIR}/scripts/cloud/gce-helper.vars
-#We ned custer name to find out what would be the secret name in secret manager 
-CLUSTER_NAME=${1-cnuc-1}
 
 function pretty_print() {
     MSG=$1
@@ -43,6 +41,66 @@ function pretty_print() {
             ;;
     esac
 }
+
+### Results in none or one key for the current Instance Run to download. If emtpy, no key to down
+function get_downloadable_key_name {
+	# NOTE: This matches ansible's setting for ssh key download
+	local SSH_SECRET_NAME_PREFIX="ssh-priv-key-"
+
+	# First check if there is a key in the GCP Secret Manager
+	SECRET_LIST=$(gcloud secrets list --filter="name~${SSH_SECRET_NAME_PREFIX}" --format="value(name)" --project="${PROJECT_ID}"  2> /dev/null)
+
+	echo ""
+	pretty_print "NOTE: There are existing keys in Google Secrets for this project (${PROJECT_ID})" "DEBUG"
+    echo ""
+    SECRET_COUNT=${#SECRET_LIST[@]}
+	for index in ${!SECRET_LIST[@]}; do
+        cluster_name=${SECRET_LIST[$index]#"$SSH_SECRET_NAME_PREFIX"}
+        num=$(( index + 1 ))
+		pretty_print "  $num) ${cluster_name}" "DEBUG"
+	done
+    # Add option for "create a new key"
+	pretty_print "  $((num+1))) Create a new key-pair" "DEBUG"
+	echo ""
+	pretty_print "  Ctl+C to cancel" "DEBUG"
+    # Start capture of decision
+    echo ""
+	read -p "Which of these do you want to use: " sel_key_num
+
+	if [[ "${sel_key_num}" =~ ^([1-9][0-9]*)$ ]] && [[ "${sel_key_num}" -le $((SECRET_COUNT+1)) ]] ; then
+        if [[ "${sel_key_num}" -le SECRET_COUNT ]]; then
+            echo ""
+    		pretty_print "INFO: Downloading key for ${SECRET_LIST[$index]#}" "INFO"
+            gcloud secrets versions access latest --secret="${SECRET_LIST[$index]}" >> ./build-artifacts/consumer-edge-machine --project="${PROJECT_ID}"
+			chmod 600 ./build-artifacts/consumer-edge-machine
+            pretty_print "INFO: Generate the public key locally ./build-artifacts/consumer-edge-machine.pub" "INFO"
+
+            ssh-keygen -f ./build-artifacts/consumer-edge-machine -y >> ./build-artifacts/consumer-edge-machine.pub
+        else
+            echo ""
+            echo "INFO: Creating a new SSH key-pair and pushing to Google Secret Manager for Cluster '${DEFAULT_CLUSTER_NAME}'"
+            echo "INFO: The new primary key stored at ./build-artifacts/consumer-edge-machine.pub"
+
+            ssh-keygen -o -a 100 -t ed25519 -f ./build-artifacts/consumer-edge-machine -N ''
+            gcloud secrets create ssh-priv-key-${DEFAULT_CLUSTER_NAME} --replication-policy="automatic" > /dev/null 2>&1 # Ignore all issues with this
+            gcloud secrets versions add ssh-priv-key-${DEFAULT_CLUSTER_NAME} --data-file="build-artifacts/consumer-edge-machine" > /dev/null 2>&1
+        fi
+    else
+        echo ""
+        pretty_print "ERROR: The answer [${sel_key_num}] was not recognized, please re-run." "ERROR"
+        echo ""
+        exit 1
+	fi
+}
+
+# Option to add the cluster name to the script
+DEFAULT_CLUSTER_NAME=${1:-cnuc-1}
+if [[ "${DEFAULT_CLUSTER_NAME}" =~ ^([a-z]+[0-9a-z-]*)$ ]]; then
+	pretty_print "INFO: Evaluating setup using cluster name [${DEFAULT_CLUSTER_NAME}]" "INFO"
+else
+	pretty_print "ERROR: Cluster name [$DEFAULT_CLUSTER_NAME] contains characters that cannot be used. Only lowercase alpha-numeric and dashes can be used" "ERROR"
+	exit 1
+fi
 
 # Must currently run as an admin user with org permissions in order to make the changes throughout
 # For now this means we will require that the user login via gcloud auth login
@@ -193,22 +251,10 @@ fi
 # Start screen configuration & session
 echo "termcapinfo xterm* ti@:te@" > .screenrc
 
-#TODO: This is an opportunity to pull down an existing SSH key (or generate a new one and pull it down)
-#mv algsa-key.json creds-gcp.json
-##Instal GS
-#yes Y | gcloud secrets create gcs-auth-secret
-#gcloud secrets versions add gcs-auth-secret --data-file="creds-gcp.json"
-
 SSH_KEY_LOC="./build-artifacts/consumer-edge-machine"
-
-if [[ ! -f "${SSH_KEY_LOC}" ]]; then
-	pretty_print "DEBUG: CLUSTER_NAME is $CLUSTER_NAME" "DEBUG"
-	pretty_print "INFO: SSH key-pair does not exist for machines. Creating a new key-pair" "INFO"
-	create_ssh_key "${SSH_KEY_LOC}" "-o" "${USER}@${HOSTNAME}"
-	pretty_print "INFO: The new primary key stored at ${SSH_KEY_LOC}.pub" "INFO"
-	#TODO It would be great if we can get the names of the secret from all.yml file 
-	create_secret "ssh-priv-key-${CLUSTER_NAME}" "${SSH_KEY_LOC}" "true"
-	create_secret "ssh-pub-key-${CLUSTER_NAME}" "${SSH_KEY_LOC}.pub" "true"
+### Setup SSH Keys on local box (create new or download from GCP Secret Manager)
+if [[ ! -f "./build-artifacts/consumer-edge-machine" ]]; then
+	get_downloadable_key_name
 fi
 
 # Print the public key (not sensitive)
@@ -272,9 +318,9 @@ echo ""
 pretty_print "Your project is set up and ready for use. You will need to do a combination of the following options next:"
 echo ""
 pretty_print "Cloud-based host machines (default)" "DEBUG"
-pretty_print "1. Create GCE instances to represent physical hardware (called cnucs):  ./scripts/cloud/create-cloud-gce-baseline.sh -c 3"
-pretty_print "2. Check .envrc file to make sure you defined the SCM and PROJECT variables correctly. Where possible, make them static text unless you know why they shouldn't be." "INFO"
-pretty_print "3. If you made any changes, 'direnv allow .'"
+pretty_print "1. Create GCE instances: run './scripts/cloud/create-cloud-gce-baseline.sh -c 3'" "INFO"
+pretty_print "2. Use your editor of choice and check the generated '.envrc' file to ensure correct Environment Variables were set."
+pretty_print "3. If you made any changes, save file and run either: 'direnv allow .' or 'source .envrc'"
 pretty_print "4. Run: ./install.sh "
 echo ""
 pretty_print "Physical Machine based host machines" "DEBUG"

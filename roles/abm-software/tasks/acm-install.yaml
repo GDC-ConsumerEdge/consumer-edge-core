@@ -169,8 +169,8 @@
 ## TODO: If the above fails, stop all
 - name: Primary Root Repo has not deployed correctly
   fail:
-    msg: "Primary Root Repo failed. Failure caused by expected {{ ansible_play_hosts_all|length }} hosts but have {{ ansible_play_hosts|length }}"
-  when: (ansible_play_hosts_all|length) != (ansible_play_hosts|length)
+    msg: "Primary Root Repo failed. Failure caused by expected {{ ansible_play_hosts_all | length }} hosts but have {{ ansible_play_hosts | length }}"
+  when: (ansible_play_hosts_all | length) != (ansible_play_hosts | length)
   tags:
   - acm-root-repo
 
