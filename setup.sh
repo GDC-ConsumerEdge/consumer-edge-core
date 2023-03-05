@@ -9,6 +9,11 @@ DEBUG_COLOR="\e[1;35m"
 DEFAULT_COLOR="\e[1;32m"
 ENDCOLOR="\e[0m"
 
+PREFIX_DIR=$(dirname -- "$0")
+source ${PREFIX_DIR}/scripts/cloud/gce-helper.vars
+#We ned custer name to find out what would be the secret name in secret manager 
+CLUSTER_NAME=${1-cnuc-1}
+
 function pretty_print() {
     MSG=$1
     LEVEL=${2:-DEFAULT}
@@ -194,14 +199,20 @@ echo "termcapinfo xterm* ti@:te@" > .screenrc
 #yes Y | gcloud secrets create gcs-auth-secret
 #gcloud secrets versions add gcs-auth-secret --data-file="creds-gcp.json"
 
-if [[ ! -f "./build-artifacts/consumer-edge-machine" ]]; then
-    pretty_print "INFO: SSH key-pair does not exist for machines. Creating a new key-pair" "INFO"
-    ssh-keygen -o -a 100 -t ed25519 -f ./build-artifacts/consumer-edge-machine -N ''
-	pretty_print "INFO: The new primary key stored at ./build-artifacts/consumer-edge-machine.pub" "INFO"
+SSH_KEY_LOC="./build-artifacts/consumer-edge-machine"
+
+if [[ ! -f "${SSH_KEY_LOC}" ]]; then
+	pretty_print "DEBUG: CLUSTER_NAME is $CLUSTER_NAME" "DEBUG"
+	pretty_print "INFO: SSH key-pair does not exist for machines. Creating a new key-pair" "INFO"
+	create_ssh_key "${SSH_KEY_LOC}" "-o" "${USER}@${HOSTNAME}"
+	pretty_print "INFO: The new primary key stored at ${SSH_KEY_LOC}.pub" "INFO"
+	#TODO It would be great if we can get the names of the secret from all.yml file 
+	create_secret "ssh-priv-key-${CLUSTER_NAME}" "${SSH_KEY_LOC}" "true"
+	create_secret "ssh-pub-key-${CLUSTER_NAME}" "${SSH_KEY_LOC}.pub" "true"
 fi
 
 # Print the public key (not sensitive)
-PUB_KEY=$(cat ./build-artifacts/consumer-edge-machine.pub)
+PUB_KEY=$(cat ${SSH_KEY_LOC}.pub)
 pretty_print "INFO: Public key-pair used: ${PUB_KEY}" "INFO"
 
 export QL_PROJECT_ID=$(gcloud config get-value project 2> /dev/null)
