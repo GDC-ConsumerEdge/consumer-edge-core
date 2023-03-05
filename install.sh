@@ -152,35 +152,19 @@ else
 fi
 
 # Check for Private Encrypted SSH Keys
-if [[ ! -f "./build-artifacts/consumer-edge-machine.encrypted" ]]; then
-    pretty_print "ERROR: Encrypted SSH Key './build-artifacts/consumer-edge-machine.encrypted' was not found, did you generate and encrypt the private key?" "ERROR"
+if [[ ! -f "./build-artifacts/consumer-edge-machine" ]]; then
+    pretty_print "ERROR: Private SSH Key './build-artifacts/consumer-edge-machine' was not found. Please run ./setup.sh to generate and push to Google Secrets" "ERROR"
     exit 1
 else
-    pretty_print "PASS: PROJECT_ID (${PROJECT_ID}) variable is set."
-fi
-
-VISIBLE_ACTIVE_GCP_PROJECT=$(gcloud projects describe ${PROJECT_ID} --format="value(lifecycleState)" --no-user-output-enabled --quiet 2> /dev/null)
-if [[ $? -gt 0 ]]; then
-    pretty_print "ERROR: '${PROJECT_ID}' is not active or accessible by this user. Please ensure \$PROJECT_ID is correct in .envrc" "ERROR"
-    ERROR=1
-else
-    pretty_print "PASS: GCP Project active"
+    pretty_print "PASS: SSH Private key is found"
 fi
 
 # Check for Public SSH Key
 if [[ ! -f "./build-artifacts/consumer-edge-machine.pub" ]]; then
-    pretty_print "ERROR: Public SSH Key './build-artifacts/consumer-edge-machine.pub' was not found, did you generate the public key along with the private key?" "ERROR"
+    pretty_print "ERROR: Public SSH Key './build-artifacts/consumer-edge-machine.pub' was not found. Please run ./setup.sh to generate and push to Google Secrets" "ERROR"
     exit 1
 else
     pretty_print "PASS: Public SSH Key found"
-fi
-
-# Check for GSA Keys
-if [[ ! -f "./build-artifacts/provisioning-gsa.json" ]]; then
-    pretty_print "ERROR: GSA JSON key './build-artifacts/provisioning-gsa.json' does not exist, please generate a key using ./script/create-gsa.sh and try again." "ERROR"
-    exit 1
-else
-    pretty_print "PASS: GSA Key found"
 fi
 
 # Check for GCP Inventory
@@ -207,13 +191,14 @@ if [[ -z "${HAS_GCR}" ]]; then
     gcloud auth configure-docker --quiet --verbosity=critical --no-user-output-enabled
 fi
 
-# Check for SSH Keys
+# Check HTTP Proxy Output
 if [[ ! -z "${HTTP_PROXY_ADDR}" ]]; then
     pretty_print "INFO: HTTP Proxy (${HTTP_PROXY_ADDR}) is being installed" "INFO"
 else
     pretty_print "INFO: No HTTP proxy indicated" "INFO"
 fi
 
+# Check Node and Provisoning GSA keys
 if [[ -z "${PROVISIONING_GSA_FILE}" ]]; then
     pretty_print "ERROR: An environment variable pointing to the provisioning GSA key file does not exist. Please run ./scripts/create-gsa.sh and place the key as ./build-artifacts/provisioning-gsa.json" "ERROR"
     ERROR=1
@@ -377,7 +362,7 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     pretty_print " "
 
     # Running docker image
-    docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd):/var/consumer-edge-install:ro" -it ${IMAGE_PATH}
+    docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd)/build-artifacts:/var/consumer-edge-install/build-artifacts:rw" -v "$(pwd):/var/consumer-edge-install:ro" -it ${IMAGE_PATH}
 
     if [[ $? -gt 0 ]]; then
         pretty_print "ERROR: Docker container cannot open." "ERROR"

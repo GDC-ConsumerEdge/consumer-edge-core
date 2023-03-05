@@ -1,7 +1,7 @@
 - name: Post-Install--Fail if number of available hosts != in-play count
   fail:
-    msg: "Failure caused by expected {{ ansible_play_hosts_all|length }} hosts but have {{ ansible_play_hosts|length }}. Check failures above to see what issue happened."
-  when: (ansible_play_hosts_all|length) != (ansible_play_hosts|length)
+    msg: "Failure caused by expected {{ ansible_play_hosts_all | length }} hosts but have {{ ansible_play_hosts | length }}. Check failures above to see what issue happened."
+  when: (ansible_play_hosts_all | length) != (ansible_play_hosts | length)
   tags:
   - verify
 
