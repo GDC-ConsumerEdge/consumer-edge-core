@@ -91,3 +91,12 @@ ERROR: (gcloud.auth.activate-service-account) Unable to read file [./build-artif
 This is the result of now using two Google Service Accounts (GSAs) in this solution: *provisioning*, which is used by this Docker container for the purposes of provisioning ABM onto the cluster nodes; and *node*, which persists on the cluster nodes and is *not* used by Docker container.  This resulted in a rename of the GSA which was activated when the container starts.
 
 To fix this, rebuild your Docker container after updating your branch with the latest changes in the `main` branch.
+
+## Update requirements.txt
+
+1. Change all `==` to `>=`
+1. Add any new dependencies (optional) using the same `>=` known version
+1. Set the Ansible version of choice (ie: 6.7.0)
+1. Run the compiler `pip-compile --allow-unsafe --generate-hashes requirements.txt --resolver=backtracking`
+1. Review and save file
+
