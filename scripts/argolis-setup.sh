@@ -37,6 +37,10 @@ EOF
     rm -rf $tmpfile
 done
 
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+DEFAULT_COMPUTE_GSA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+gcloud projects add-iam-policy-binding ${PROJECT_ID} --member=serviceAccount:${DEFAULT_COMPUTE_GSA} --role=roles/viewer
+
 NETWORK_EXISTS="$(gcloud compute networks list --filter='name~default' --format='value(name)')"
 
 if [[ -z "${NETWORK_EXISTS}" ]]; then
