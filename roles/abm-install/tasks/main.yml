@@ -263,11 +263,13 @@
     - abm-check-membership
 
   - name: Make sure the GKE Hub membership exists
-    run_once: true
     command:
       cmd: gcloud container hub memberships describe {{ cluster_name }} --format="value(name)" --project {{ google_project_id }}
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/provisioning-gsa.json"
+    when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
     tags:
     - abm-install
     - abm-verify-install
