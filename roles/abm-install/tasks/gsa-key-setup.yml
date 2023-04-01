@@ -1,0 +1,118 @@
+### gcloud auth to target-machine-gsa done in google-tools
+###
+### 1. Check to see if the GSA exists or is enabled already
+###   a. Create if not
+###   b. Set permissions/bindings
+### 2. Check the GSA Key in Secret Manager
+###   a. If not, create the KEY and push it to Secret Manager (prefer to not even stay on disk)
+### 3. Download the key
+###   a. Download the key from GSM ONLY
+###
+
+### Create or enable Google Service Accounts
+- name: Create or Enable Service Accounts
+  shell: |
+    GSA_ENABLED=$(gcloud iam service-accounts list --filter={{ item.name }}@{{ google_project_id }}.iam.gserviceaccount.com --format="value(disabled)")
+    if [ -z "$GSA_ENABLED" ]; then
+        gcloud iam service-accounts create "{{ item.name }}" --display-name "{{ item.description | truncate(10, True, '') }}" > /dev/null
+        echo "Modified"
+    elif [ "${GSA_ENABLED}" == "True" ]; then
+        gcloud iam service-accounts enable "{{ item.name }}@{{ google_project_id }}.iam.gserviceaccount.com" > /dev/null
+        echo "Modified"
+    fi
+  loop: "{{ service_accounts }}"
+  register: create_modify_gsa
+  changed_when: "'Modified' in create_modify_gsa.stdout"
+  when:
+  - item.enabled | bool == true
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - gsa-enable
+  - gsa-create
+  - gsa-keys
+  - gcloud-mutate
+
+### All requried GSAs should be created and/or enabled
+### NOTE: Always run just in case additional policies are added. Does NOT remove existing roles, only adds
+- name: Add role bindings to service accounts
+  command:
+    cmd: gcloud projects add-iam-policy-binding {{ google_project_id }} --member="serviceAccount:{{ item.0.name }}@{{ google_project_id }}.iam.gserviceaccount.com" --role="{{ item.1 }}"
+  loop: "{{ service_accounts | subelements('roles') }}"
+  when:
+  - item.0.enabled | bool == true
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - gsa-enable
+  - gsa-create
+  - gsa-keys
+  - gcloud-mutate
+
+###
+### All required GSAs created/enabled with proper permission/roles added
+###
+### Check to see if Secret exists and ONLY create a new key IF the Secret does not exist or does not have an enabled version
+###
+
+### If Secret in secret manager does not exist, then create one
+- name: Check if GSA key has active Google Secret Manager version
+  command:
+    cmd: gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" --no-user-output-enabled
+  register: has_valid_secret
+  changed_when: has_valid_secret is not succeeded
+  ignore_errors: true
+  loop: "{{ service_accounts }}"
+  when:
+  - item.enabled | bool == true
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - gsa-keys-check
+  - gsa-keys
+  - gcloud-command
+
+#TODO: Instead of writing to /tmp, redirect file output to stdout and into key version --data-file
+- name: |
+    Create GSM Secret and GSA Keys]
+    DESC [Create GSA keys and add to secret as latest version
+  shell: |
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.item.name }}" --format="value(name)" --project="{{ google_secret_project_id }}")
+    if [ -z "$HAS_SECRET" ]; then
+      gcloud secrets create {{ item.item.name }} --replication-policy="automatic" --project={{ google_secret_project_id }} --no-user-output-enabled
+    fi
+    # In all cases, a key will need to be generated
+    gcloud iam service-accounts keys create /tmp/{{ item.item.keyfile }} --iam-account={{ item.item.name }}@{{ google_project_id }}.iam.gserviceaccount.com --project={{ google_project_id }}
+    # create a secret version
+    gcloud secrets versions add {{ item.item.name }} --data-file="/tmp/{{ item.item.keyfile }}"
+    # Remove temp file
+    rm -rf /tmp/{{ item.item.keyfile }}
+  loop: "{{ has_valid_secret.results }}"
+  when:
+  - item is not succeeded
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - gsa-keys-create
+  - gsa-keys
+  - gcloud-mutate
+
+###
+### Download the keys to the local machine
+###
+- name: Download key files from secret manager locally
+  shell: |
+    gcloud secrets versions access latest --secret="{{ item.name }}" >> {{ remote_keys_folder }}/{{ item.keyfile }} --project="{{ google_secret_project_id }}"
+    chmod 444 {{ remote_keys_folder }}/{{ item.keyfile }} # read-only
+  args:
+    executable: /bin/bash
+    creates: "{{ remote_keys_folder }}/{{ item.keyfile }}"
+  loop: "{{ service_accounts }}"
+  when:
+  - item.enabled | bool == true
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - gsa-keys-download
+  - gsa-keys
+  - gcloud-command
