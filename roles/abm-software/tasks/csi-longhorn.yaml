@@ -4,7 +4,7 @@
 
 # Get HMAC secret from Secret Manager
 - name: Get the HMAC cloud storage key from Secret Manager if it exists
-  run_once: true
+  run_once: true  # fleet-wide (not cluster-level) so run_once is valid
   ignore_errors: true
   shell: |
     export HAS_SECRET=$(gcloud secrets list --filter="name~{{ storage_provider_hmac_gcm_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
@@ -31,7 +31,6 @@
 
 # TODO: Check for exsiting secret and/or HMAC key on bucket before creating a new one
 - name: Create new HMAC key for longhorn backup to cloud storage and push to Secret Manager
-  run_once: true
   shell: |
     EXISTING_NUM_OF_HMAC_KEYS=$(gsutil hmac list -u sds-backup-agent-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com -p {{ google_project_id }} | grep sds-backup-agent-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com | wc | awk '{print $1}')
     if [ ${EXISTING_NUM_OF_HMAC_KEYS} -gt 4 ]
@@ -59,7 +58,10 @@
     executable: /bin/bash
   environment:
     PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-  when: hmac_longhorn_secret.rc > 0
+  when:
+  - hmac_longhorn_secret.rc > 0
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
   tags:
   - longhorn-hmac-keys
   - longhorn-install

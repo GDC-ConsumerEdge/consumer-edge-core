@@ -17,7 +17,7 @@
 
 - name: Create temporary file
   become: no
-  run_once: true
+  run_once: true # run-once becasue it is local-action
   local_action:
     module: ansible.builtin.tempfile
     state: file
