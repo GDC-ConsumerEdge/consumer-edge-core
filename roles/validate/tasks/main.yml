@@ -124,7 +124,6 @@
   - oidc
 
 - name: Validate OIDC varaibles are set if OIDC is enabled
-  run_once: true
   assert:
     that:
     - oidc_client_id != ""
@@ -133,6 +132,8 @@
     fail_msg: "OIDC is enabled, but the local environment variables are not set. Please configure OIDC and ENV vars before provisioning or disable 'enable_oidc' variable in all.yaml settings"
   when:
   - enable_oidc == true
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
   tags:
   - verify
   - oidc
