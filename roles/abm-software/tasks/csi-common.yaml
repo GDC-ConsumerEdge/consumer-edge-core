@@ -27,7 +27,7 @@
 
 # Create GCP Secret if not exist
 - name: "Add SDS git-creds Google Secrets if not exist"
-  run_once: true
+  run_once: true # confirmed, this is fleet-level so run-once is OK
   shell: |
     EXISTS=$(gcloud secrets list --filter="{{ storage_provider_auth_secret }}" --format="value(name)" --project="{{ google_project_id }}")
     if [ -z "${EXISTS}" ]]; then
@@ -47,7 +47,7 @@
 
 # Create a new secret version if none are active or exist
 - name: "Add new version to SDS git-creds to Google Secrets Manager if none exist or none active"
-  run_once: true
+  run_once: true # confirmed, this is fleet-level so run-once is OK
   shell: |
     EXISTS=$(gcloud secrets versions list {{ storage_provider_auth_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
     if [ -z "${EXISTS}" ]; then
@@ -68,7 +68,7 @@
 
 # Check on GCS Bucket status
 - name: Check SDS GCS Backup Bucket
-  run_once: true
+  run_once: true  # confirmed, this is fleet-level so run-once is OK
   ignore_errors: true
   command:
     cmd: gsutil -q ls gs://{{ storage_provider_gcs_bucket_name }}/.dontremove > /dev/null 2>&1
@@ -83,7 +83,7 @@
   - gcloud-command
 
 - name: Create SDS Backup Bucket
-  run_once: true
+  run_once: true # confirmed, this is fleet-level so run-once is OK
   shell: |
     gsutil mb -p "{{ google_project_id }}" gs://{{ storage_provider_gcs_bucket_name }}
     echo "do not remove this file" | gsutil cp - gs://{{ storage_provider_gcs_bucket_name }}/.dontremove
