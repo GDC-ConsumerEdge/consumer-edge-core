@@ -231,9 +231,26 @@
     state: absent
     force: yes
     purge: yes
-  when: (full_reset is defined) and (full_reset == "True")
+  when: 
+  - (full_reset is defined) and (full_reset == "True")
+  - target_os == "ubuntu"
   tags:
   - observability-removal
+
+- name: Uninstall packages
+  dnf:
+    pkg:
+      - google-fluentd
+      - google-fluentd-catch-all-config
+    state: absent
+    force: yes
+    purge: yes
+  when: 
+  - (full_reset is defined) and (full_reset == "True")
+  - target_os == "redhat"
+  tags:
+  - observability-removal
+
 
 - name: Remove agents
   command:

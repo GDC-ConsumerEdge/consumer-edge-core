@@ -8,6 +8,21 @@
   tags:
   - observability-audit-install
   - observability-setup
+  when:
+  - target_os == "ubuntu"
+
+- name: Install auditd
+  become: yes
+  yum:
+    pkg:
+    - audit
+    - audispd-plugins
+    state: present
+  tags:
+  - observability-audit-install
+  - observability-setup
+  when:
+  - target_os == "redhat"
 
 - name: Copy base auditd rules
   become: yes
@@ -21,6 +36,15 @@
   - observability-audit-install
   - observability-setup
   - auditd-config
+  when:
+  - target_os == "ubuntu"
+
+- name: Reload Auditd
+  command: /usr/sbin/service auditd reload
+  args:
+    warn: false
+  when:
+  - target_os == "redhat"
 
 - name: Copy times auditd rules
   become: yes
@@ -147,6 +171,20 @@
     state: restarted
   when:
   - enable_auditd|bool == True
+  - target_os == "ubuntu"
+  tags:
+  - observability-audit-install
+  - observability-audit-service-reset
+  - observability-setup
+
+- name: Restart auditd service
+  become: yes
+  command: /usr/sbin/service auditd restart
+  args:
+    warn: false
+  when:
+  - enable_auditd|bool == True
+  - target_os == "redhat"
   tags:
   - observability-audit-install
   - observability-audit-service-reset
@@ -159,7 +197,21 @@
     enabled: yes
     state: stopped
   when:
+  - enable_auditd|bool == True
+  - target_os == "ubuntu"
+  tags:
+  - observability-audit-install
+  - observability-audit-service-reset
+  - observability-setup
+
+- name: Stop the auditd service
+  become: yes
+  command: /usr/sbin/service auditd stop
+  args:
+    warn: false
+  when:
   - enable_auditd|bool == False
+  - target_os == "redhat"
   tags:
   - observability-audit-install
   - observability-audit-service-reset

@@ -5,8 +5,8 @@ echo "Looking for instances..."
 INSTANCES=()
 # By default, remove all GCE instances
 if [[ ! -z "$1" ]]; then
-    instance_name="cnuc-$1"
-    INSTANCE=$(gcloud compute instances list --filter="name="$instance_name"" --format="value(name, zone)" 2>/dev/null ) # error goes to /dev/null
+    instance_name="$1"
+    INSTANCE=$(gcloud compute instances list --filter="name~"$instance_name"" --format="value(name, zone)" 2>/dev/null ) # error goes to /dev/null
     if [[ -z "${INSTANCE}" ]]; then
         echo "${instance_name} does not exist in this project. Skipping..."
         exit 1

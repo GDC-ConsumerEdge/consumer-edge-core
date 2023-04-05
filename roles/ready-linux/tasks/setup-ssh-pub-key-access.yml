@@ -1,21 +1,24 @@
+##################
+###### Passwordless SSH (el-gato) to all other peers
+##################
 
-### Add pub-key to facts by name
+### Add pub-key to facts by name (el-gato's public key for the abm-key)
 - name: Get Public Key
   shell: "cat {{ ssh_user_home }}/{{ ssh_key_name }}.pub"
-  register: key_value
+  register: abm_key_pub_value
   tags:
   - abm-authorized-keys
   - abm-ssh
 
-- name: Add key to dictionary
+- name: Add ABM Pub Key to dictionary
   set_fact:
-    keys: "{{ keys | default({}) | combine( { cluster_name: key_value.stdout } ) }}"
+    keys: "{{ keys | default({}) | combine( { cluster_name: abm_key_pub_value.stdout } ) }}"
     cacheable: true
   tags:
   - abm-authorized-keys
   - abm-ssh
 
-- name: Create temporary file
+- name: Create localhost temporary file
   become: no
   run_once: true # run-once becasue it is local-action
   local_action:
@@ -29,15 +32,7 @@
   - abm-authorized-keys
   - create-local-temp
 
-- name: Display path to to Temp file
-  debug:
-    msg: "{{ tempfile_1.path }}"
-  tags:
-  - abm-ssh
-  - abm-authorized-keys
-  - create-local-temp
-
-- name: Create tmp authorized_keys file contain all pub keys
+- name: Create authorized_keys into temp file with Public keys
   become: no
   local_action:
     module: lineinfile
@@ -73,34 +68,44 @@
   - abm-authorized-keys
   - delete-local-temp
 
+##################
+######
+##################
+
 ### Setup keyless ssh across cluster
 - name: Setup keyless SSH from primary to all others in group
-  shell: ssh-keyscan {{ machine }} >> {{ ssh_user_home }}/known_hosts
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-    - (node_ip != machine)
+  shell: |
+    ssh-keyscan -v {{ machine }} >> {{ ssh_user_home }}/known_hosts
+  register: keyscan_out
+  until: "keyscan_out is not failed"
+  retries: 10
+  delay: 5
   loop: "{{ peer_node_ips }}"
   loop_control:
     loop_var: machine
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  - (node_ip != machine)
   tags:
   - abm-ssh
   - debug-ssh
   - abm-authorized-keys
 
-### Test by ssh 10.200.0.x 'echo hi'
+### Test by ssh 10.200.0.0/24 (Peer Nodes with node-to-node user)
 - name: verify SSH access to other machines
   command:
-    cmd: ssh {{abm_install_user}}@{{ machine }} -i {{ ssh_user_home }}/{{ ssh_key_name }} 'echo this-works'
+    cmd: ssh {{abm_install_user}}@{{ machine }} -i {{ ssh_user_home }}/{{ ssh_key_name }} -o 'BatchMode=yes' -o 'ConnectionAttempts=1' -o 'ConnectTimeout=5' -o StrictHostKeyChecking=no true
+  loop: "{{ peer_node_ips }}"
+  loop_control:
+    loop_var: machine
   when:
     - (primary_cluster_machine is defined)
     - (primary_cluster_machine == true)
     - (node_ip != machine)
     - (is_cloud_resource is defined)
     - (is_cloud_resource == True)
-  loop: "{{ peer_node_ips }}"
-  loop_control:
-    loop_var: machine
   tags:
   - abm-ssh
   - debug-ssh
+  - verify-ssh

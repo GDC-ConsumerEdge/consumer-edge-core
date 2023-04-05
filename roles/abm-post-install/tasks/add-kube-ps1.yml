@@ -1,6 +1,6 @@
 ## Create download directory for KubePS1
 
-  - name: Create directory for kube-ps1
+  - name: Create directory for kube-ps1 - Ubuntu
     file:
       path: '{{ tools_base_path}}/kube-ps1'
       state: directory
@@ -10,6 +10,21 @@
     tags:
     - optional
     - kube-ps1
+    when:
+    - target_os == "ubuntu"
+
+  - name: Create directory for kube-ps1 - Redhat
+    file:
+      path: '{{ tools_base_path}}/kube-ps1'
+      state: directory
+      mode: '0755'
+      group: 'users'
+      owner: 'root'
+    tags:
+    - optional
+    - kube-ps1
+    when:
+    - target_os == "redhat"
 
 ## Download kube_ps1
   - name: Download kube-kube_ps1
@@ -32,6 +47,8 @@
     tags:
     - optional
     - kube-ps1
+    when:
+    - target_os == "ubuntu"
 
   - name: Add kube_ps1 to PS1 line
     lineinfile:
@@ -43,3 +60,5 @@
     tags:
     - optional
     - kube-ps1
+    when:
+    - target_os == "redhat"

@@ -80,3 +80,7 @@ export HTTPS_PROXY_PASS=""
 export HTTPS_PROXY_ADDR=""
 export HTTPS_PROXY_PORT=""
 export HTTPS_PROXY_PROTOCOL="" # http or https
+
+# Uncomment to use RHEL8 or fill in with supported OS/family/project as needed (advanced)
+# export MACHINE_OS_FAMILY="rhel-8"
+# export MACHINE_OS_PROJECT="rhel-cloud"

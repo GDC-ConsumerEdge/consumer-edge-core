@@ -28,7 +28,29 @@
     - libvirt-daemon-system
     - libvirt-clients
     update_cache: yes
-  when: kvm_check.rc > 0
+  when: 
+  - kvm_check.rc > 0
+  - target_os == "ubuntu"
+  tags:
+    - kvm-install
+    - kvm-packages
+
+- name: Install kvm dependencies
+  dnf:
+    pkg:
+    - jq
+    #- uml-utilities
+    - qemu-kvm
+    - libvirt
+    #- bridge-utils
+    #- virtinst
+    #- libvirt-daemon
+    #- libvirt-daemon-system
+    #- libvirt-clients
+    update_cache: yes
+  when: 
+  - kvm_check.rc > 0
+  - target_os == "redhat"
   tags:
     - kvm-install
     - kvm-packages
