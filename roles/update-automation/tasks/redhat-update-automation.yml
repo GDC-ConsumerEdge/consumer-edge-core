@@ -1,0 +1,82 @@
+# Set the upgrades to all happen daily (conditional to timer) and enable auto removal
+
+---
+- name: Install dnf-automatic
+  dnf:
+    name: dnf-automatic
+    state: installed
+
+- name: Set dnf-automatic to notify on ssh for updates
+  lineinfile:
+    path: /etc/dnf/automatic.conf
+    regexp: '^emit_via ='
+    line: 'emit_via = motd'
+
+- name: Set dnf-automatic to completely install packages
+  lineinfile:
+    path: /etc/dnf/automatic.conf
+    regexp: '^apply_updates ='
+    line: 'apply_updates = yes'
+
+- name: Set dnf-automatic to install updates
+  systemd:
+    name: dnf-automatic.timer
+    enabled: yes
+    state: started
+
+
+### below is just ubuntu stuf for reference
+
+# - name: Replace unattended upgrades configuration 
+#   template:
+#     src: "20auto-upgrades.j2.conf"
+#     dest: "/etc/apt/apt.conf.d/20auto-upgrades"
+#     owner: root
+#     group: root
+#     mode: '0600'
+
+# - name: Create folder for update timer config
+#   file:
+#     path: "/etc/systemd/system/apt-daily.timer.d"
+#     state: directory
+#     mode: '0700'
+
+# - name: Create folder for upgrade timer config
+#   file:
+#     path: "/etc/systemd/system/apt-daily-upgrade.timer.d/"
+#     state: directory
+#     mode: '0700'
+
+# - name: Set timer for apt UPDATE via unattended upgrades
+#   template:
+#     src: "apt-timer-update-override.j2.conf"
+#     dest: "/etc/systemd/system/apt-daily.timer.d/override.conf"
+#     owner: root
+#     group: root
+#     mode: '0600'
+
+# - name: Set timer for apt UPGRADE via unattended upgrades
+#   template:
+#     src: "apt-timer-upgrade-override.j2.conf"
+#     dest: "/etc/systemd/system/apt-daily-upgrade.timer.d/override.conf"
+#     owner: root
+#     group: root
+#     mode: '0600'
+
+# - name: Restart the service apt-daily.timer
+#   ansible.builtin.systemd:
+#     name: apt-daily.timer
+#     state: restarted
+
+# - name: Restart the service apt-daily-upgrade.timer
+#   ansible.builtin.systemd:
+#     name: apt-daily-upgrade.timer
+#     state: restarted
+
+# - name: Cron file for OS update
+#   template:
+#     src: "system-update-cron.j2"
+#     dest: "/etc/cron.d/system-update-cron"
+#     owner: root
+#     group: root
+#     mode: '0700'

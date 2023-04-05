@@ -1,0 +1,7 @@
+---
+# vars file for ready-linux
+
+# let's get the primary network interface
+prinetint: "{{ ansible_default_ipv4.interface }}"
+
+docker_service_path: "/etc/systemd/system/docker.service.d"

@@ -51,6 +51,17 @@
   - abm-software
   - abm-config
 
+- name: Remove taint from master node
+  command:
+    cmd: kubectl taint nodes {{ cluster_name }} node-role.kubernetes.io/master:PreferNoSchedule-
+  when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  ignore_errors: yes
+  tags:
+  - abm-software
+  - abm-config
+
 - name: Folder for VMRUntime configuration
   file:
     path: '{{ vmruntime_config_path }}'

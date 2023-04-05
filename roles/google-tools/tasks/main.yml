@@ -1,8 +1,18 @@
 ---
-
-  # Credentials
+# Credentials
 
 ### The remote keys folder must be readable for all users
+  - name: Add /usr/local/bin to path for RHEL
+    lineinfile:
+      path: /etc/environment
+      line: 'PATH=$PATH:/bin:/usr/sbin:/usr/local/bin'
+    when:
+    - target_os == "redhat"
+    tags:
+    - abm-install
+    - abm-config
+    - build-config
+
   - name: Create the temp keys directory
     file:
       path: '{{ remote_keys_folder }}'
@@ -155,6 +165,17 @@
     - non-interactive-shell
 
 ## Set up auto-complete
+  - name: Check for '/etc/profile.d/bash_completion.sh'
+    stat:
+      path: "/etc/profile.d/bash_completion.sh"
+    register: has_bash_completion
+
+  - name: Missing '/etc/profile.d/bash_completion.sh', touching to create
+    ansible.builtin.file:
+      path: /etc/profile.d/bash_completion.sh
+      state: touch
+    when: has_bash_completion.stat.exists ==  false
+
   - name: Add gcloud BASH completion
     lineinfile:
       path: /etc/profile.d/bash_completion.sh
@@ -178,7 +199,11 @@
     - non-interactive-shell
     - gcloud-setup
 
-  - name: Add node GSA activation script to /etc/profile.d
+# TODO: Setup a check to see if gcloud is authenticated: gcloud auth list --format="value(account)" --filter="status=ACTIVE" and skip re-authenticating if authd
+# TODO: Make this a script rather than an in-line
+# TODO: This needs to be comprehensive with the next stanza, only one should exist and it should be a script only
+# TODO: Couple this with the "post-install" removal of the profile.d, instead, the default user's session completion should end the logged in state, no need to remove the 99-* profile.d script
+  - name: Add node GSA activation script to /etc/profile.d # NOTE: This will be removed in
     lineinfile:
       path: /etc/profile.d/99-gcloud-auth-provisioning-gsa.sh
       line: "gcloud auth activate-service-account --key-file={{ remote_keys_folder }}/provisioning-gsa.json --project {{ google_project_id }}"
@@ -192,7 +217,7 @@
     - gcloud-setup
 
 ### Switch current session to target-machine-gsa
-  - name: Switch to provisioning GSA
+  - name: Switch to provisioning GSA for the provisioning session only
     command:
       cmd: "gcloud auth activate-service-account --key-file={{ remote_keys_folder }}/provisioning-gsa.json --project {{ google_project_id }}"
     environment:
@@ -292,8 +317,6 @@
       gsutil cp gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl {{ tools_base_path }}
       chmod a+x {{ tools_base_path }}/bmctl
       mv {{ tools_base_path }}/bmctl /usr/local/bin/bmctl
-      bmctl version
-      exit $?
     args:
       creates: /usr/local/bin/bmctl
       executable: /bin/bash
@@ -343,6 +366,13 @@
     - tool-install
     - kubestr
 
+### adding to allow RHEL to see bmctl in proper location as root
+  - name: reset ssh connection
+    meta: reset_connection
+    tags:
+      - optional
+      - tool-install
+
   ### Install virtctl via bmctl (keeps this up-to-date without explicit downloading)
   - name: Install virtctl
     command:
@@ -350,6 +380,8 @@
     args:
       creates: /usr/bin/kubectl-virt
       chdir: "{{ tools_base_path }}"
+    environment:
+      PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
     when: optional_tools is true
     tags:
     - optional

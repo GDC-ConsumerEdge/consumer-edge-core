@@ -7,8 +7,11 @@
 
 # Ansible will use the key below
 ansible_ssh_private_key_file: "build-artifacts/consumer-edge-machine"
-ansible_ssh_common_args: "-F build-artifacts/ssh-config -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_ssh_common_args: "-F build-artifacts/ssh-config -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=1200s -o BatchMode=yes"
+ansible_control_path_dir: "/tmp/ansible-cp"
 ansible_ssh_priv_key_secret: "ssh-priv-key-{{ cluster_name }}"
+ansible_async_dir: "/tmp/.ansible_async"
+ansible_ssh_transfer_method: scp # smart|sftp|scp|piped
 #######
 
 ####
@@ -37,6 +40,16 @@ remote_keys_folder: "{{ abm_install_folder }}/keys"
 
 # Force Upgrade of tools (typically used when updating the ABM version above)
 force_tools_upgrade: false
+
+###
+###
+### Node-to-node ABM user information
+###
+abm_install_user: "el-gato"
+ssh_key_name: "abm-key"
+ssh_user_home: "/home/{{ abm_install_user }}/.ssh"
+ssh_key_path: "{{ ssh_user_home }}/{{ ssh_key_name }}"
+ssh_key_path_pub: "{{ ssh_user_home }}/{{ ssh_key_name }}.pub"
 
 ### Proxy
 ###
@@ -236,7 +249,7 @@ provisioning_gsa_key: "{{ lookup('env', 'PROVISIONING_GSA_FILE') }}"
 provisioning_gsa_key_secret: "provisioning-gsa-{{ cluster_name }}"
 node_gsa_key: "{{ lookup('env', 'NODE_GSA_FILE') }}"
 node_gsa_key_secret: "node-gsa-{{ cluster_name }}"
-tools_base_path: "/var/google-tools-install"
+tools_base_path: "{{ abm_install_folder }}/google-tools-install"
 
 ## kubeconfig link directory and file (so all users can access kubeconfig and env KUBECONFIG set to this location/file)
 kubeconfig_shared_root: "{{ abm_install_folder }}/kubeconfig"
@@ -413,3 +426,10 @@ franchises: [
     ]
   }
 ]
+
+
+
+## Setting up Redhat or Ubuntu #NOTE: This is not a comprehesive solution that can/may provide other OSes in the future (ternary is not the right choice when 3 options)
+is_redhat: "{{ (ansible_distribution == 'RedHat') and (ansible_distribution_major_version == '8' or ansible_distribution_major_version == '9') }}"
+is_ubuntu: "{{ (ansible_distribution == 'Ubuntu') and (ansible_distribution_version == '18.04' or ansible_distribution_version == '20.04') }}"
+target_os: "{{ (is_ubuntu == true) | ternary('ubuntu', 'redhat') }}"
