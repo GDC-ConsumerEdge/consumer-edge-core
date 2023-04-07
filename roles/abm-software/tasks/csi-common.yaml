@@ -118,6 +118,7 @@
   when:
   - (primary_cluster_machine is defined)
   - (primary_cluster_machine == true)
+  - storage_provider_install == true
   tags:
   - sds-common-setup
   - sds-cluster-trait-repo
@@ -130,6 +131,7 @@
   when:
   - (primary_cluster_machine is defined)
   - (primary_cluster_machine == true)
+  - storage_provider_install == true
   tags:
   - sds-common-setup
   - sds-cluster-trait-repo
