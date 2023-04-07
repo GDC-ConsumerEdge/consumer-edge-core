@@ -189,7 +189,13 @@ snapshot_gcs_bucket_base: "{{ lookup('env', 'SNAPSHOT_GCS') | default( [ google_
 ###
 ### Storage providers are installed via Cluster Trait Repos. Configuration for CTR is done in this automation (where possible)
 ###
-storage_provider: "longhorn" # Current Options: longhorn, none & Future Options: openebs, portworx. NOTE: storage_provider_repo_url must match with storage_provider_repo_url
+### NOTE: Storage providers can be installed during provsioning, but will not be done by default. Adding a trait to the Primary Root Repo is the preferred new method unless variables are required
+###
+# Set to "true" if the SDS should be applied during provisioning, otherwise only the supporting functionality (ie: lvm groups or cluster-specific default settings will be added)
+storage_provider_install: false
+# SDS Operator to setup and optionally install. Each SDS may have setup that is requried on the physical host(s), selecting one from the list will install the host-config and/or specific configuration
+# but will not install the SDS unless the `storage_provider_install` is set to true.
+storage_provider: "none" # Current Options: robin, longhorn, none & Future Options: openebs, portworx. NOTE: storage_provider_repo_url must match with storage_provider_repo_url
 ### Storage Provider Cluster Trait Repo (ex: https://gitlab.com/gcp-solutions-public/retail-edge/available-cluster-traits)
 storage_provider_repo_url: "{{ lookup('env', 'SDS_REPO_URL') | default('https://gitlab.com/gcp-solutions-public/retail-edge/available-cluster-traits/robin-io-anthos.git', True) }}"
 storage_provider_repo_type: "{{ lookup('env', 'SDS_REPO_STRUCTURE') | default('hierarchy', True) }}"
