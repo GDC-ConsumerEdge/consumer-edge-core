@@ -16,8 +16,7 @@ CLUSTER_START_INDEX=1
 unset PREEMPTIBLE_OPTION
 SSH_PUB_KEY_LOCATION="${WORKDIR}/build-artifacts/consumer-edge-machine.pub" # default
 
-
-while getopts 'c:p:k:s:tz:': option
+while getopts 'c:p:k:v:s:tz:': option
 do
     # #*= allows for c=1 and strips out the c= in addition to -c 1
     case "${option}" in
@@ -26,6 +25,7 @@ do
         p) PROJECT_ID="${OPTARG#*=}";;
         s) CLUSTER_START_INDEX="${OPTARG#*=}";;
         t) PREEMPTIBLE_OPTION="--preemptible";;
+        v) VXLAN_ID="${OPTARG#*=}";;
         z) ZONE="${OPTARG#*=}";;
     esac
 done
@@ -37,12 +37,14 @@ usage()
         [ -k SSH_PUB_KEY_LOCATION ]
         [ -p PROJECT_ID]
         [ -s STARTING_INDEX ]
+        [ -v VXLAN ID ]
         [ -t ]
         [ -z ZONE ]"
     echo "-c: Number of instances to create. Defaults to 1. Example: -c 1"
     echo "-k: SSH public key location. Defaults to './build-artifacts/consumer-edge-machine.pub'. Creates the key if it doesn't exist."
     echo "-p: project ID. Can be set with PROJECT_ID environment variable. Defaults to gcloud config if not set."
     echo "-s: Starting index. Defaults to 1. Example: -s 10."
+    echo "-v: VXLAN ID (default 40)"
     echo "-t: Use temporary preemptible instances."
     echo "-z: Zone. Can be set with ZONE environment variable. Defaults to gcloud config zone if not set."
     exit 2
@@ -120,6 +122,9 @@ echo "GCE_COUNT: ${GCE_COUNT}"
 echo "PROJECT_ID: ${PROJECT_ID}"
 echo "START_INDEX: ${CLUSTER_START_INDEX}"
 echo "ZONE: ${ZONE}"
+echo "GCE Prefix: ${GCE_NAME_PREFIX}"
+echo "==========================================="
+echo ""
 
 if [[ ! -z "$PREEMPTIBLE_OPTION" ]]; then
     echo "NOTE: USING PREEMPTIBLE MACHINE. The GCE will be up at most 24h and will need to be re-created and re-provisioned. This option keeps the costs of testing/trying ABM Retail Edge to a minimum"
@@ -170,3 +175,7 @@ store_public_key_secret ${SSH_PUB_KEY_LOCATION}
 create_gce_vms $GCE_COUNT
 
 display_gce_vms_ips
+
+echo ""
+echo "Check the Cloud Init scripts: sudo journalctl -u google-startup-scripts.service"
+echo ""

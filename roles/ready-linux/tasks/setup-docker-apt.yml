@@ -35,6 +35,8 @@
     - containerd.io
     state: latest
     update_cache: true
+  when:
+  - target_os == "ubuntu"
 
 - name: Setup proxy for docker (if needed)
   ansible.builtin.file:

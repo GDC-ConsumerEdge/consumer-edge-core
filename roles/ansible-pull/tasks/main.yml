@@ -10,6 +10,8 @@
   - ansible-pull
   - ansible-pull-install
   - ansible-pull-common
+  when:
+  - target_os == "ubuntu"
 
 - name: "Remove python for python3 if present"
   apt:
@@ -19,6 +21,42 @@
   - ansible-pull
   - ansible-pull-install
   - ansible-pull-common
+  when:
+  - target_os == "ubuntu"
+
+- name: "Setup Python"
+  dnf:
+    pkg:
+    - python3
+    - python3-pip
+  tags:
+  - ansible-pull
+  - ansible-pull-install
+  - ansible-pull-common
+  when:
+  - target_os == "redhat"
+
+- name: "Remove python for python3 if present"
+  dnf:
+    name: python-is-python3
+    state: absent
+  tags:
+  - ansible-pull
+  - ansible-pull-install
+  - ansible-pull-common
+  when:
+  - target_os == "redhat"
+
+- name: Symbolic link for pip for RHEL
+  ansible.builtin.file:
+    src: "/usr/bin/pip3"
+    dest: "/usr/bin/pip"
+    state: link
+    mode: '0777'
+  when:
+  - target_os == "redhat"
+  tags:
+  - make-pip-links
 
 - name: "Reset SSH connection if python changed"
   meta: reset_connection

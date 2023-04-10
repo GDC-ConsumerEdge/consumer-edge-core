@@ -18,6 +18,7 @@
     tags:
     - always
   roles:
+  - validate
   - abm-post-install
   - update-automation
   vars:

@@ -29,5 +29,5 @@ local_share_pvc_mount: "/opt/localpv-share" # Default value
 container_runtime: "containerd" # docker or containerd
 
 # How long to let the ABM installation (via bmctl) take before an Ansible timeout occurs. Default 120 min
-abm_install_sync_timeout_seconds: 7200
+abm_install_sync_timeout_seconds: 18000
 abm_install_sync_poll_seconds: 60

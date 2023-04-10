@@ -13,15 +13,19 @@ if [[ -f /etc/startup_was_launched ]]; then exit 0; fi
 # touch a file to indicate init script has been launched
 touch /etc/startup_was_launched
 
-# Disable warning about dpkg not being available for interaction
-export DEBIAN_FRONTEND=noninteractive
-
 # 0. Very baseline libraries/apps used for this portion only (please use the Ansible roles to baseline the full image)
-apt-get -qq update > /dev/null
-apt-get -qq install -y jq > /dev/null
+if [[ "${OS_BUILD}" == "debian" ]]; then
+    # Disable warning about dpkg not being available for interaction
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get -qq update > /dev/null
+    apt-get -qq install -y jq > /dev/null
+elif [[ "${OS_BUILD}" == "rhel" ]]; then
+    yum clean metadata > /dev/null
+    yum install jq -y > /dev/null
+fi
 
 # 1. Establish a user (same user for all GCEs)
-useradd -m -s /bin/bash -g users ${ANSIBLE_USER}
+useradd -m -c "ABM Admin user" -s /bin/bash -g users ${ANSIBLE_USER}
 echo "${ANSIBLE_USER}  ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/${ANSIBLE_USER}
 
 # 2. Copy/place/setup a authorized_keys from a GCP Secret under that user and under root
@@ -66,10 +70,12 @@ cat > ${SYSTEM_SERVICE_VXLAN} <<EOF
 [Unit]
 
 After=network.service
+Description="Sets up the VXLAN for GCE instances using Consumer Edge"
 
 [Service]
 
 ExecStart=${SETUP_VXLAN_SCRIPT}
+ExecReload=${SETUP_VXLAN_SCRIPT}
 
 [Install]
 
@@ -79,27 +85,25 @@ EOF
 chmod 644 ${SYSTEM_SERVICE_VXLAN}
 chmod 744 ${SETUP_VXLAN_SCRIPT}
 
+# Reload the daemon set
+systemctl daemon-reload
 # Setup vxlan service
 systemctl enable ${SYSTEM_SERVICE_NAME}
 # Start the vxlan service
 systemctl start ${SYSTEM_SERVICE_NAME}
 
-# setup SSH config to skip key checking
-cat >> ~/.ssh/config <<EOF
-
+# setup SSH folder (if not exist)
+mkdir -p /home/${ANSIBLE_USER}/.ssh
+chmod 700 /home/${ANSIBLE_USER}/.ssh
+# Setup SSH config to skip key checking
+cat >> /home/${ANSIBLE_USER}/.ssh/config <<EOF
 # allow SSH without checking fingerprint for the 10.200.0.0/24 addresses
 Host 10.200.0.*
     StrictHostKeyChecking no
-
 EOF
 
-# re-use the same SSH config for the ansible user
-cp ~/.ssh/config /home/${ANSIBLE_USER}/.ssh/config
-chown ${ANSIBLE_USER} /home/${ANSIBLE_USER}/.ssh/config # note, just assigning owner since group is 0 anyway
-chmod 400 /home/${ANSIBLE_USER}/.ssh/config
-
 # Set ownership and permissions
-chmod 400 ~/.ssh/config
+chmod 400 /home/${ANSIBLE_USER}/.ssh/config
 
 # Explicitly run the VXLAN script
 ${SETUP_VXLAN_SCRIPT}
