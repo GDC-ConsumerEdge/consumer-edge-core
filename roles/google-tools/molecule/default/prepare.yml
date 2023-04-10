@@ -14,3 +14,17 @@
       purge: yes
     tags:
     - molecule-prepare
+    when:
+    - target_os == "ubuntu"
+
+  - name: Uninstall packages
+    dnf:
+      pkg:
+        - bash-completion
+      state: present
+      force: yes
+      purge: yes
+    tags:
+    - molecule-prepare
+    when:
+    - target_os == "redhat"

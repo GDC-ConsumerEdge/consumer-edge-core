@@ -8,7 +8,7 @@
   - validate
   - google-tools
   - update-automation
-  - ready-ubuntu
+  - ready-linux
   - setup-kvm
   - abm-install
   - abm-software

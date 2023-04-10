@@ -59,16 +59,25 @@
     - abm-config
     - build-config
 
-### Check if cluster is installed already (kubeconfig file would exist)
+### Check if cluster is installed already (found in gke hub registration)
   - name: Check to see if ABM has been installed already
-    stat:
-      path: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
-    register: abm_installed
-    when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
+    command:
+      cmd: gcloud container hub memberships list --filter="name~{{ cluster_name }}" --format="value(name)"
+    register: gke_registered
+    when:
+      - primary_cluster_machine is defined
+      - primary_cluster_machine == True
     tags:
     - abm-install
     - abm-create
     - build-config
+
+  - name: Set fact if the cluster should be installed or not
+    set_fact:
+      install_cluster: "{{ cluster_name not in gke_registered.stdout }}"
+    when:
+      - primary_cluster_machine is defined
+      - primary_cluster_machine == True
 
 ### For caution, re-run setup of VXLAN
   - name: Run startup for vxlan
@@ -102,10 +111,11 @@
       chdir: "{{ abm_install_folder }}"
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/provisioning-gsa.json"
+      PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
     when:
-      - primary_cluster_machine is defined
-      - abm_installed.stat.exists == False
-      - primary_cluster_machine == True
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+    - install_cluster == True
     tags:
     - abm-install
     - abm-config
@@ -115,9 +125,9 @@
   - name: "Create cluster {{ cluster_name }} -- (be patient, this takes 20-40 minutes)"
     command: bmctl create cluster --cluster={{ cluster_name }} --quiet --v 0
     when:
-      - primary_cluster_machine is defined
-      - abm_installed.stat.exists == False
-      - primary_cluster_machine == True
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == True
+    - install_cluster == True
     args:
       chdir: "{{ abm_install_folder }}"
       creates: "{{ abm_install_folder }}/bmctl-workspace/{{ cluster_name }}/{{ cluster_name }}-kubeconfig"
@@ -125,6 +135,7 @@
     poll: "{{ abm_install_sync_poll_seconds }}"
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/provisioning-gsa.json"
+      PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
     tags:
     - abm-install
     - abm-create

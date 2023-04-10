@@ -1,14 +1,7 @@
 ---
-# tasks file for ready-ubuntu
+# tasks file for ready-linux
 
 ### Verify OS is approved (Ubuntu only at this point). Saves the pre-checks later
-- name: Fail if not running on Ubuntu 18.04 or 20.04
-  fail:
-    msg: "This playbook can only run on Ubuntu 18.04 or 20.04. Using {{ ansible_distribution }}:{{ ansible_distribution_version }}"
-  when: (ansible_distribution != "Ubuntu") or (ansible_distribution_version != '18.04' and ansible_distribution_version != '20.04')
-  tags:
-  - verify-os
-
 - name: Get kernel version
   command: 'uname -r'
   register: uname_result
@@ -34,7 +27,7 @@
   - proxy_has_https_proxy is true
 
 # TODO Audit this list of dependencies and split into "development" and "production" (not everything is needed for production)
-- name: Install dependencies used in provisioning
+- name: Install dependencies used in provisioning (Ubuntu)
   apt:
     pkg:
     - apt-transport-https
@@ -59,6 +52,31 @@
     autoclean: yes
   tags:
     - update-dependencies
+  when:
+    - target_os == "ubuntu"
+
+- name: Install dependencies used in provisioning (RedHat)
+  yum:
+    pkg:
+    - ca-certificates
+    - net-tools
+    - nmap
+    - curl
+    - zip
+    - wget
+    - gnupg
+    - logrotate
+    - python3
+    - python3-pip
+    # This is needed for TODO: Move this to Robin install only
+    # - linux-modules-extra-{{ uname_r }}
+    state: latest
+    update_cache: yes
+    #autoclean: yes
+  tags:
+    - update-dependencies
+  when:
+    - target_os == "redhat"
 
 - name: Remove un-necessary dependencies
   apt:
@@ -67,6 +85,8 @@
     state: absent
   tags:
     - update-dependencies
+  when:
+    - target_os == "ubuntu"
 
 #### Stop and disable apparmor
 - name: Stop apparmor
@@ -75,6 +95,8 @@
     name: apparmor
   tags:
   - remove
+  when:
+  - target_os == "ubuntu"
 
 - name: Disable apparmor
   systemd:
@@ -82,6 +104,8 @@
     enabled: no
   tags:
   - remove
+  when:
+  - target_os == "ubuntu"
 
 #### Disable ufw
 - name: Disable wfw
@@ -89,12 +113,16 @@
   register: ufw
   tags:
   - remove
+  when:
+  - target_os == "ubuntu"
 
 - name: Show output for firewall stopping
   debug:
     msg: "{{ ufw.stdout }}"
   tags:
   - remove
+  when:
+  - target_os == "ubuntu"
 
 ## Create the user that builds and communicates across cluster machines
 - name: Create a user for ABM Control
@@ -109,6 +137,23 @@
   tags:
   - abm-install
   - abm-user
+  when:
+  - target_os == "ubuntu"
+
+- name: Create a user for ABM Control
+  ansible.builtin.user:
+    name: "{{ abm_install_user }}"
+    shell: /bin/bash
+    groups: "wheel"
+    append: yes
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/{{ ssh_key_name }}
+  tags:
+  - abm-install
+  - abm-user
+  when:
+  - target_os == "redhat"
 
 ## Setup password less SSH into same box
 - name: "Place ssh config with no-host-check turned on"
@@ -159,7 +204,17 @@
 
 - name: "Setup docker on host machine"
   import_tasks: setup-docker-apt.yml
-  when: ( docker_version.stdout == "" or docker_version.stdout is version('20.9.0', '<') )
+  when:
+  - ( docker_version.stdout == "" or docker_version.stdout is version('20.9.0', '<') )
+  - target_os == "ubuntu"
+  tags:
+  - docker
+
+- name: "Setup docker on host machine"
+  import_tasks: setup-docker-yum.yml
+  when:
+  - ( docker_version.stdout == "" or docker_version.stdout is version('20.9.0', '<') )
+  - target_os == "redhat"
   tags:
   - docker
 
@@ -208,12 +263,13 @@
 
 #### Install kernel module for Robin
 - name: Generate modules.dep
-  command: depmod -a
+  shell: |
+    depmod -a
   tags:
   - robin
 
 - name: Load tcm_loop kernel module
-  community.general.system.modprobe:
+  community.general.modprobe:
     name: tcm_loop
     state: present
   tags:
