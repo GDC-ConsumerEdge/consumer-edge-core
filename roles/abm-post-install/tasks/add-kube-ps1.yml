@@ -61,4 +61,4 @@
     - optional
     - kube-ps1
     when:
-    - target_os == "redhat"
+    - target_os == "ubuntu"

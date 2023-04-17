@@ -6,11 +6,41 @@
 
 ## NOTE: Host names are DNS resolved to your physical host. Some routers assign .lan or other suffix. Comment out, add or adjust this file to represent your physical hardware
 
-workers:
+edge_cluster:
+  vars:
+    # Name of the cluster
+    cluster_name: "edge-1"
+    # Name of the "store" per the ACM repo
+    acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('edge-1', True) }}"
+    # The other IPs in the cluster
+    peer_node_ips: [
+      "192.168.3.11",
+      "192.168.3.12",
+      "192.168.3.13"
+    ]
+    # KubeAPI IP address
+    control_plane_vip: "192.168.3.100"
+    # Ingress (k8s) address, must be in LoadBalancer pool below
+    ingress_vip: "192.168.3.20"
+    # Load balancers created in this range
+    load_balancer_pool_cidr: [
+      "192.168.3.20-192.168.3.30" # 9 IPs for LB + 1 Ingress
+    ]
+    # Install observability using Legacy agents (override)
+    install_observability: false # skip observability on install
+    # Ansible Pull Authenticaiton String
+    ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
+    # Ansible Pull repo for Remote Execution
+    ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
+    # Ansible pull repo for cluster operations
+    ansible_pull_cluster_ops_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/cluster-operations/update-cluster-repo.git"
+    ### SDS Node-level Configurations
+    # These are the paths as reported by the OS that you want to make available to Robin. This is a destructive process, the contents of the disk path WILl BE REMOVED,
+    #      so please use with caution. This is a setting per host/machine, but is often the same between manufacturers.
+    robin_disk_paths: [
+      "/dev/nvme0n1p3"
+    ]
   hosts:
     edge-1:
     edge-2:
     edge-3:
-    # edge-4:
-    # edge-5:
-    # edge-6:

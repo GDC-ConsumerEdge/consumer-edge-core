@@ -6,10 +6,9 @@ cluster_name: "{{ cluster_name }}"
 machine_label: "{{ machine_label }}"
 # This machine's IP address
 machine_ip: "{{ node_ip }}"
-
-# GitHub or GitLab Read-only User Token (authentication to private repos)
-scm_token_user: "{{ scm_token_user }}"
-# GitHub or GitLab Read-only Token Value (authentication to private repos)
-scm_token_token: "{{ scm_token_token }}"
+# IPs of the peer nodes
+peer_node_ips: "{{ peer_node_ips }}"
+# is a primary machine
+primary_cluster_machine: "{{ (primary_cluster_machine is defined and primary_cluster_machine==true) | ternary(true , false) }}"
 
 google_secret_project_id: "{{ lookup('env', 'SECRET_PROJECT_ID') | default(google_project_id, True) }}"

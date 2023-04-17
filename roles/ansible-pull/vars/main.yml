@@ -6,11 +6,11 @@ ansible_pull_workdir_permissions: "0700" # lock out all others except root
 # Command-line flags for Ansible Pull
 ansible_pull_cmd_flags: "--only-if-changed"
 
-# Every Minute
+# Ansible Pull Command Execution - Check Every Minute
 ansible_pull_remote_execute_cron: "* * * * *"
 ansible_pull_remote_execution_log: "/var/log/ansible-pull-remote-execution.log"
 
-# Ansible Pull Drift
+# Ansible Pull Drift - Check at specific time daily
 ansible_pull_drift_cron: "30 23 * * *" # 11:30pm
 ansible_pull_drift_log: "/var/log/ansible-pull-drift-execution.log"
 

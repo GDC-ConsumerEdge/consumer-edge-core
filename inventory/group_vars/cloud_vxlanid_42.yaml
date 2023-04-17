@@ -1,0 +1,36 @@
+# Name of the cluster
+cluster_name: "cnuc-7"
+
+google_region: "us-east1"
+google_zone: "{{ google_region }}-b"
+
+# Name of the "store" per the ACM repo
+acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('location-3', True) }}"
+
+# The other IPs in the cluster
+peer_node_ips: [
+  "10.200.0.2",
+  "10.200.0.3",
+  "10.200.0.4"
+]
+# KubeAPI IP address
+control_plane_vip: "10.200.0.49"
+# Ingress (k8s) address, must be in LoadBalancer pool below
+ingress_vip: "10.200.0.50"
+# Load balancers created in this range
+load_balancer_pool_cidr: [
+  "10.200.0.50-10.200.0.70"
+]
+
+###
+### Cluster Network (Multus)
+###
+# Ansible Pull Authenticaiton String
+ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
+
+# Ansible Pull repo for Remote Execution
+ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
+
+# Ansible pull repo to manage cluster ops
+ansible_pull_cluster_ops_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/cluster-operations/update-cluster-repo.git"
+

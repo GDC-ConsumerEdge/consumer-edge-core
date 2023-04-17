@@ -64,7 +64,7 @@ function pretty_print() {
 }
 
 function setupgcpfirewall() {
-    if [[ -z "${MANAGE_FIREWALL_RULES}" && "${MANAGE_FIREWALL_RULES}" != true ]]; then
+    if [[ ! -z "${MANAGE_FIREWALL_RULES}" && "${MANAGE_FIREWALL_RULES}" != true ]]; then
         pretty_print "INFO: Skipping modification of local-to-cloud ssh firewall rules. Set MANAGE_FIREWALL_RULES=true in your .envrc files to mangae firewall access" "INFO"
         return
     fi

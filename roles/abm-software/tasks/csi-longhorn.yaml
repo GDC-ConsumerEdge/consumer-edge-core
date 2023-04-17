@@ -6,9 +6,6 @@
   template:
     src: longhorn-default-setting.yml.j2
     dest: "{{ sds_config_files }}/longhorn-default-setting.yml"
-  when:
-  - (primary_cluster_machine is defined)
-  - (primary_cluster_machine == true)
   tags:
   - longhorn-config-management
   - longhorn-install

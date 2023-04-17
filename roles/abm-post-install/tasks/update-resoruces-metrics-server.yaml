@@ -3,9 +3,6 @@
     src: "metric-server-patch.yaml"
     dest: "{{ acm_config_files }}/metric-server-patch.yaml"
     mode: '0444'
-  when:
-  - "primary_cluster_machine is defined"
-  - "primary_cluster_machine == true"
 
 - name: "Apply patch to metrics server"
   command:
@@ -15,3 +12,6 @@
   when:
   - "primary_cluster_machine is defined"
   - "primary_cluster_machine == true"
+  tags:
+  - imperative-command
+  - one-time

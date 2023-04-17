@@ -1,43 +1,6 @@
-
-# Name of the cluster
-cluster_name: "edge-1"
 # Used for logging/metrics
 machine_label: "edge-1"
 # Indicates that this is the primary machine in the cluster (only important for provisioning)
 primary_cluster_machine: true
-# Name of the "store" per the ACM repo
-acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('location-1', True) }}"
 # This machine's IP
 node_ip: "192.168.3.11"
-# The other IPs in the cluster
-peer_node_ips: [
-  "192.168.3.11",
-  "192.168.3.12",
-  "192.168.3.13"
-]
-# KubeAPI IP address
-control_plane_vip: "192.168.3.100"
-# Ingress (k8s) address, must be in LoadBalancer pool below
-ingress_vip: "192.168.3.20"
-# Load balancers created in this range
-load_balancer_pool_cidr: [
-  "192.168.3.20-192.168.3.30" # 9 IPs for LB + 1 Ingress
-]
-
-###
-### Cluster Network (Multus)
-###
-# Install Multus
-enable_multus_network: false
-
-# Install observability using Legacy agents (override)
-install_observability: false # skip observability on install
-
-# Ansible Pull Authenticaiton String
-ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
-
-# Ansible Pull repo for Remote Execution
-ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
-
-# Ansible pull repo to manage simplified drift
-ansible_pull_drift_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/drift-repo.git"
