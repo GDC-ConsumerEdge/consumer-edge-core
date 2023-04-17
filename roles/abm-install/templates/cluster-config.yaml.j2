@@ -18,7 +18,7 @@ metadata:
     # Used to enable Network Connectivity Gateway for cluster VPN
     baremetal.cluster.gke.io/enable-gng: "{{ network_connectivity_gateway_install }}"
     # This annotation allows AddOn Configuraiton to be applied to clusters (go/gdc-consumer-edge:ansible-playbook-explain-addon-config). Currently setup for Stackdriver config patching in ACM
-    preview.baremetal.cluster.gke.io/add-on-configuration: enable
+    # preview.baremetal.cluster.gke.io/add-on-configuration: enable
   name: {{ cluster_name }}
   namespace: {{ cluster_name }}
 spec:

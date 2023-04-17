@@ -21,9 +21,6 @@
     path: '{{ sds_config_files }}'
     state: directory
     mode: '0755'
-  when:
-  - (primary_cluster_machine is defined)
-  - (primary_cluster_machine == true)
   tags:
   - sds-common-setup
   - sds-cluster-trait-repo
@@ -33,10 +30,6 @@
   template:
     src: sds-cluster-trait-repo.yaml.j2
     dest: "{{ sds_config_files }}/sds-cluster-trait-repo.yaml"
-  when:
-  - (primary_cluster_machine is defined)
-  - (primary_cluster_machine == true)
-  - storage_provider_install == true
   tags:
   - sds-common-setup
   - sds-cluster-trait-repo

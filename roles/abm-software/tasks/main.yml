@@ -46,7 +46,7 @@
   when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  ignore_errors: yes
+  ignore_errors: true
   tags:
   - abm-software
   - abm-config
@@ -57,7 +57,7 @@
   when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
-  ignore_errors: yes
+  ignore_errors: true
   tags:
   - abm-software
   - abm-config
@@ -68,8 +68,6 @@
     state: directory
     mode: '0755'
   when:
-  - (primary_cluster_machine is defined)
-  - (primary_cluster_machine == true)
   - (enable_vmruntime == true)
   tags:
   - abm-software
@@ -80,8 +78,6 @@
     src: vmruntime-config.yaml.j2
     dest: "{{ vmruntime_config_path }}/vmruntime.yaml"
   when:
-  - (primary_cluster_machine is defined)
-  - (primary_cluster_machine == true)
   - (enable_vmruntime == true)
   tags:
   - abm-software
@@ -89,9 +85,7 @@
 
 - name: "Install VMRuntime"
   shell: |
-      kubectl apply -f {{ vmruntime_config_path }}/vmruntime.yaml
-      # Allow for the API to register the API
-      sleep 5s
+    kubectl apply -f {{ vmruntime_config_path }}/vmruntime.yaml
   args:
     executable: /bin/bash
   environment:
@@ -102,8 +96,8 @@
   - (enable_vmruntime == true)
   retries: "{{ default_retry_count }}"
   delay: "{{ default_retry_delay }}"
-  register: result
-  until: result.rc == 0
+  register: vm_result
+  until: vm_result.rc == 0
   tags:
   - abm-software
   - vmruntime
@@ -113,7 +107,6 @@
     path: '{{ acm_config_files }}'
     state: directory
     mode: '0755'
-  when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
   tags:
   - abm-software
   - abm-config

@@ -1,11 +1,20 @@
+### Create Local PVC folder (future will be mounted or something)
+- name: Create ncgctl folder
+  file:
+    path: "{{ tools_base_path }}/ncgctl-{{ ncgctl_version }}"
+    state: directory
+    mode: '0755'
+  tags:
+  - ncg-install
+  - post-acm
 
 - name: "Install Network Connectivity CRDs"
   shell: |
-      cd {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}
-      {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl --enable-ncg-on-existing-cluster
-      {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl --verify
-      {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl --install --kubeconfig /var/abm-install/kubeconfig/kubeconfig
+    {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl --enable-ncg-on-existing-cluster
+    {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl --verify
+    {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl --install --kubeconfig "{{ kubeconfig_shared_location }}"
   args:
+    chdir: "{{ tools_base_path }}/ncgctl-{{ ncgctl_version }}"
     executable: /bin/bash
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
@@ -25,9 +34,6 @@
   loop:
   - {"template": "overlay-vpn-tunnel.yaml.j2", "final_name": "overlay-vpn-tunnel.yaml"}
   - {"template": "overlay-vpn-bgp-peer.yaml.j2", "final_name": "overlay-vpn-bgp-peer.yaml"}
-  when:
-  - primary_cluster_machine is defined
-  - primary_cluster_machine == true
   tags:
   - ncg-install
   - post-acm

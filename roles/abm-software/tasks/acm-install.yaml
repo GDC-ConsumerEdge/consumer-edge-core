@@ -81,9 +81,6 @@
   template:
     src: apply-spec.yaml.j2
     dest: "{{ acm_config_files }}/apply-spec.yaml"
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
   tags:
   - acm-config-management
   - updated-acm
@@ -113,9 +110,6 @@
   template:
     src: root-sync.yaml.j2
     dest: "{{ acm_config_files }}/root-sync.yaml"
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
   tags:
   - acm-root-repo
   - generate-root-sync
@@ -129,30 +123,11 @@
     kubeconfig: "{{ kubeconfig_shared_location }}"
     fact_name: "has_root_repo_installed"
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
   tags:
   - acm-root-repo
 
-# - name: "Apply Primary Root Repo configuration"
-#   shell: |
-#     kubectl apply -f {{ acm_config_files }}/root-sync.yaml
-#     sleep 10s
-#     kubectl apply -f {{ acm_config_files }}/root-sync.yaml
-#   environment:
-#     KUBECONFIG: "{{ kubeconfig_shared_location }}"
-#   retries: "{{ default_retry_count }}"
-#   delay: "{{ default_retry_delay }}"
-#   register: root_apply_result
-#   until: root_apply_result.rc == 0
-#   when:
-#     - (primary_cluster_machine is defined)
-#     - (primary_cluster_machine == true)
-#     - (has_root_repo_installed == false)
-#   tags:
-#   - acm-root-repo
-
-## TODO: If the above fails, stop all
 - name: Primary Root Repo has not deployed correctly
   fail:
     msg: "Primary Root Repo failed. Failure caused by expected {{ ansible_play_hosts_all | length }} hosts but have {{ ansible_play_hosts | length }}"
@@ -170,9 +145,9 @@
   register: root_recon_result
   until: root_recon_result.rc == 0
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-    - (has_root_repo_installed == false)
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  - (has_root_repo_installed == false)
   tags:
   - acm-root-repo
 
@@ -186,8 +161,8 @@
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
   when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
   tags:
   - acm-root-repo
   - external-secret-install

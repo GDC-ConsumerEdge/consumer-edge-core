@@ -7,8 +7,8 @@
       exit 1
     fi
   when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
   tags:
   - gcloud-command
   - keys-initialization
@@ -23,8 +23,8 @@
     executable: /bin/bash
     creates: "{{ ansible_ssh_private_key_file }}"
   when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
   tags:
   - gcloud-command
   - keys-initialization
@@ -33,12 +33,12 @@
 - name: Change permission on downloaded key
   become: false
   delegate_to: localhost
-  file: 
+  file:
     path: "{{ ansible_ssh_private_key_file }}"
     mode: 0600
   when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
   tags:
   - keys-initialization
 
@@ -50,7 +50,7 @@
     cat {{ ansible_ssh_private_key_file }} | ssh-add -t {{ ansible_ssh_key_timeout }} -
   register: tmp_output
   when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
   tags:
   - keys-initialization

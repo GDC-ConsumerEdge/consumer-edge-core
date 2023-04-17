@@ -19,7 +19,7 @@ ansible_ssh_transfer_method: scp # smart|sftp|scp|piped
 ####
 # Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
 # Version of Anthos Bare Metal to install
-abm_version: "1.14.3" # verify coupling of ABM to BMCTL versions
+abm_version: "1.15.0" # verify coupling of ABM to BMCTL versions
 # bmctl binary version
 #TODO: set this up to query for the version, then upgrade automatically if updated
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
@@ -39,7 +39,7 @@ abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"
 remote_keys_folder: "{{ abm_install_folder }}/keys"
 
 # Force Upgrade of tools (typically used when updating the ABM version above)
-force_tools_upgrade: false
+force_tools_upgrade: true
 
 ###
 ###
@@ -104,14 +104,14 @@ optional_tools: true # defaults to true
 ansible_pull_remote_execute_repo: ""
 
 # Default for ansible pull drift assistance (defaults to empty or no run)
-ansible_pull_drift_repo: ""
+ansible_pull_cluster_ops_repo: ""
 
 ####
 #### Anthos Config Management
 ####
 # gsutil ls -al gs://config-management-release/released/
 # Anthos Config Management version
-acm_version: "1.14.3"
+acm_version: "1.15.0"
 
 # Where to store ACM files during provisoning
 acm_config_files: "{{ abm_install_folder }}/acm-configs"
@@ -190,6 +190,9 @@ enable_multus_network: false # Enable Multus (Cannot be true when enable_vmrunti
 ###
 # VM Runtime
 enable_vmruntime: true  # Enable VMRuntime & Networking (this cannot be true if multus network is true) -- https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/vm-runtime/create-networks
+
+# By default, do not use QEMU emulation
+kubevirt_use_emulation: false
 
 ###
 ### Global Snapshot & Update Variables

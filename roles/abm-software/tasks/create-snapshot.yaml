@@ -49,9 +49,12 @@
     upload_snapshot: "{{ snapshot_gcs_bucket_base is defined and snapshot_gcs_bucket_base | length > 0 }}"
 
 # Perform Snapshot collection & push to bucket
+# TODO: This fails after the node has been provisioned (subsequent runs)
 - name: Create snapshot
+  ignore_errors: true
   command:
     cmd: bmctl check cluster --snapshot --snapshot-config {{ snapshot_config_file }} --cluster {{ cluster_name }} --service-account-key-file {{ remote_keys_folder }}/provisioning-gsa.json --snapshot-output {{ snapshot_output_file }} --kubeconfig {{ kubeconfig_shared_location }}
+  register: snapshot_create
   args:
     chdir: "{{ abm_install_folder }}"
   environment:
@@ -66,6 +69,7 @@
     chdir: "{{ abm_install_folder }}"
   when:
   - upload_snapshot == True
+  - snapshot_create.rc == 0
 
 - name: Ouptut IF error uploading compressed file
   debug:

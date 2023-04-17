@@ -13,11 +13,11 @@
   shell: |
     export HAS_SECRET=$(gcloud secrets list --filter="name~{{ ansible_ssh_priv_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
     if [ -z "$HAS_SECRET" ]; then
-      exit 1 
+      exit 1
     fi
   when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
   tags:
   - gcloud-command
   - keys-cleanup
@@ -30,11 +30,11 @@
   shell: |
     export HAS_SECRET=$(gcloud secrets list --filter="name~{{ provisioning_gsa_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
     if [ -z "$HAS_SECRET" ]; then
-      exit 1 
+      exit 1
     fi
   when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
   tags:
   - gcloud-command
   - keys-cleanup
@@ -47,11 +47,11 @@
   shell: |
     export HAS_SECRET=$(gcloud secrets list --filter="name~{{ node_gsa_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
     if [ -z "$HAS_SECRET" ]; then
-      exit 1 
+      exit 1
     fi
   when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
   tags:
   - gcloud-command
   - keys-cleanup
@@ -59,6 +59,7 @@
   - node-gsa-keys-cleanup
   - never
 
+## Primary machine becuase it runs against local host, so NBD
 - name: Remove local {{ ansible_ssh_private_key_file }}
   become: false
   delegate_to: localhost
@@ -66,12 +67,12 @@
     path: "{{ ansible_ssh_private_key_file }}"
     state: "absent"
   when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
   tags:
-    - keys-cleanup
-    - ssh-keys-cleanup
-    - never
+  - keys-cleanup
+  - ssh-keys-cleanup
+  - never
 
 
 - name: Remove local {{ provisioning_gsa_key }}
@@ -81,13 +82,13 @@
     path: "{{ provisioning_gsa_key }}"
     state: "absent"
   when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
   tags:
-    - keys-cleanup
-    - gsa-keys-cleanup
-    - provisioning-gsa-keys-cleanup
-    - never
+  - keys-cleanup
+  - gsa-keys-cleanup
+  - provisioning-gsa-keys-cleanup
+  - never
 
 - name: Remove local {{ node_gsa_key }}
   become: false
@@ -96,10 +97,10 @@
     path: "{{ node_gsa_key }}.test"
     state: "absent"
   when:
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == True
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
   tags:
-    - keys-cleanup
-    - gsa-keys-cleanup
-    - node-gsa-keys-cleanup
-    - never
+  - keys-cleanup
+  - gsa-keys-cleanup
+  - node-gsa-keys-cleanup
+  - never

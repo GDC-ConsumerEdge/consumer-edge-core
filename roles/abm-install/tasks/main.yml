@@ -41,11 +41,10 @@
     - build-config
 
 ### Create cluster configuration file
-  - name: "Place configuration file into ABM install folder"
+  - name: "Copy configuration file into ABM install folder"
     template:
       src: cluster-config.yaml.j2
       dest: "{{ abm_workspace_folder }}/{{ cluster_name }}/{{ cluster_name }}.yaml"
-    when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
     tags:
     - abm-install
     - abm-config

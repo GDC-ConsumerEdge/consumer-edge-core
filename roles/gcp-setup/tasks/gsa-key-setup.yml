@@ -35,6 +35,7 @@
 
 ### All requried GSAs should be created and/or enabled
 ### NOTE: Always run just in case additional policies are added. Does NOT remove existing roles, only adds
+# TODO: THERE IS A BUG - gcloud can only run one of these at any given time, there is no concurrency. Only one cluster can be run at a time until further notice
 - name: Add role bindings to service accounts
   command:
     cmd: gcloud projects add-iam-policy-binding {{ google_project_id }} --member="serviceAccount:{{ item.0.name }}@{{ google_project_id }}.iam.gserviceaccount.com" --role="{{ item.1 }}"

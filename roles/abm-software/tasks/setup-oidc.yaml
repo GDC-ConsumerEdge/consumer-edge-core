@@ -5,9 +5,6 @@
   loop:
   - {"template": "oidc-setup.yaml.j2", "final_name": "oidc-setup.yaml"}
   - {"template": "oidc-rolebindings.yaml.j2", "final_name": "oidc-rolebindings.yaml"}
-  when:
-  - primary_cluster_machine is defined
-  - primary_cluster_machine == true
   tags:
   - oidc
   - post-acm
