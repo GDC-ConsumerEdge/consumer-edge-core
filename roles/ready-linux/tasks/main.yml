@@ -325,3 +325,9 @@
   - nfs-storage-robin
   - robin-setup
   - modprobe
+
+- name: Setup cron jobs for backup
+  import_tasks: setup-cron-jobs.yml
+  tags:
+  - os-setup
+  - cron-jobs
