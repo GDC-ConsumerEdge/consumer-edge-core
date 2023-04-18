@@ -5,3 +5,11 @@
 prinetint: "{{ ansible_default_ipv4.interface }}"
 
 docker_service_path: "/etc/systemd/system/docker.service.d"
+
+# Value used to set cron-job for gcloud update to be performed
+gcloud_update_cron_value: "00 02 * * 3" # Wednesday 02:00am (default)
+gcloud_update_log: "/var/log/gcloud-udpate-script.log"
+
+# Variables for apt update (host OS patching)
+automatic_update_update_time: "02:15" # Every 2:15am -- TODO: Pull this in some other method for updates (like query an agent on the machine)
+automatic_update_upgrade_time: "02:30"
