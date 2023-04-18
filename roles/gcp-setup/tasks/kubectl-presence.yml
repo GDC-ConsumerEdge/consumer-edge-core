@@ -1,0 +1,23 @@
+---
+
+- name: "Test presence of {{ type }}.{{ name }} in {{ namespace }}"
+  command:
+    cmd: "kubectl get {{ type }} {{ name }} {{ (namespace != '') | ternary( '-n ' + namespace, '') }}"
+  ignore_errors: true
+  register: result
+  vars:
+    name: ""
+    type: ""
+    namespace: "default" # Default namespace is used IF not defined
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+
+- name: Set {{ fact_name }} to True
+  set_fact:
+    "{{ fact_name }}": True
+  when: result is succeeded
+
+- name: Set {{ fact_name }} to False
+  set_fact:
+    "{{ fact_name }}": False
+  when: result is failed
