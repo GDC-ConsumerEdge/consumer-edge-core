@@ -6,14 +6,6 @@
     tags:
     - verify
 
-### Setup GSA keys for box
-  - name: "Setup and download GSA keys for provisioning"
-    import_tasks: gsa-key-setup.yml
-    tags:
-    - abm-install
-    - gsa-setup
-    - keys-setup
-
 ### Create or ensure root folder exists for storage provider
   - name: Create the storage provider folder(s)
     ansible.builtin.file:

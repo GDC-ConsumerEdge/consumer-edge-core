@@ -1,0 +1,64 @@
+# Get HMAC secret from Secret Manager
+- name: Get the HMAC cloud storage key from Secret Manager if it exists
+  run_once: true  # fleet-wide (not cluster-level) so run_once is valid
+  ignore_errors: true
+  shell: |
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ storage_provider_hmac_gcm_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
+    if [ -z "$HAS_SECRET" ]; then
+      exit 1
+    else
+      VERSION_EXISTS=$(gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_secret_project_id }}")
+      if [ -z "${VERSION_EXISTS}" ]; then
+        # no valid versions found, need to create a new one
+        exit 1
+      fi
+      exit 0
+    fi
+  args:
+    executable: /bin/bash
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+  register: hmac_longhorn_secret
+  changed_when: hmac_longhorn_secret.rc != 0
+  tags:
+  - longhorn-hmac-keys
+  - longhorn-install
+  - gcloud-command
+
+# TODO: Check for exsiting secret and/or HMAC key on bucket before creating a new one
+- name: Create new HMAC key for longhorn backup to cloud storage and push to Secret Manager
+  shell: |
+    EXISTING_NUM_OF_HMAC_KEYS=$(gsutil hmac list -u sds-backup-agent-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com -p {{ google_project_id }} | grep sds-backup-agent-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com | wc | awk '{print $1}')
+    if [ ${EXISTING_NUM_OF_HMAC_KEYS} -gt 4 ]
+    then
+      # Max HMAC keys limit reached
+      VERSION_EXISTS=$(gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
+      if [ -z "${VERSION_EXISTS}" ]; then
+        # Max HMAC keys limit is reached and existing key in secret manager not found so we must fail here
+        exit 1
+      else
+        # Max HMAC keys limit is reached and existing key in secret manager is found so we can skip
+        exit 0
+      fi
+    fi
+
+    gsutil hmac create sds-backup-agent-{{ cluster_name }}@{{ google_project_id }}.iam.gserviceaccount.com > /tmp/hmackey.txt
+    access_key=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $1}'`
+    access_secret=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $2}'`
+    echo "{\"access_key\": \"${access_key}\",  \"access_secret\": \"${access_secret}\" , \"endpoint\" : \"https://storage.googleapis.com\" }" > /tmp/hmacsecret.json
+    gcloud secrets create {{ storage_provider_hmac_gcm_secret }} --replication-policy="automatic" --project="{{ google_project_id }}"
+    gcloud secrets versions add {{ storage_provider_hmac_gcm_secret }} --data-file="/tmp/hmacsecret.json"
+    rm -rf /tmp/hmacsecret.json /tmp/hmackey.txt # delete temp file
+    exit $?
+  args:
+    executable: /bin/bash
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+  when:
+  - hmac_longhorn_secret.rc > 0
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - longhorn-hmac-keys
+  - longhorn-install
+  - gcloud-mutate
