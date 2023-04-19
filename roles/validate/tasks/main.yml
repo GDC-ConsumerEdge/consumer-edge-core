@@ -94,22 +94,34 @@
   tags:
   - verify
 
-- name: Ensure at least 120GB on primary disk
+- name: Ensure disk prerequisites
+  ignore_errors: true
+  no_log: true
   shell: |
-    export PRIMARY_DISK=$(df -BG / | awk '{if (NR!=1) print $2}' | tr -d 'G')
-    if [ "$PRIMARY_DISK" -lt 120 ]; then
-      echo "ERROR: $PRIMARY_DISK is less than required 120GB"
+    export DISK_SIZE=$(df -BG {{ item.key }} | awk '{if (NR!=1) print $2}' | tr -d 'G')
+    if [ "$DISK_SIZE" -lt {{ item.value }} ]; then
+      >&2 echo "ERROR: '{{ item.key }}' is reporting '${DISK_SIZE}GB'. This is less than required {{ item.value }}GB"
       exit 1
     fi
   failed_when: disk_check.rc > 0
   changed_when: disk_check.rc != 0
   register: disk_check
+  loop: "{{ lookup('ansible.builtin.dict',fs_size_required) }}"
   tags:
   - verify
+  - fs-size
 
-- name: deubg
+- name: Display warning about disk size
   debug:
-    msg: "VM: {{ enable_vmruntime }} and Multus {{ enable_multus_network }}"
+    msg:
+    - "Filesystems need to have a minimum size. The following are not the minimum size"
+    - "    {{ item.stderr_lines }}"
+  loop: "{{ disk_check.results }}"
+  when:
+  - item is failed
+  tags:
+  - verify
+  - fs-size
 
 - name: VMRuntime vs Multus
   fail:

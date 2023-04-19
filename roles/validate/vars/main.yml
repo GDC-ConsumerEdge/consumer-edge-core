@@ -1,0 +1,7 @@
+
+## Required sizes for disks per https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/installing/node-machine-prerequisites#node_machine_prerequisites
+fs_size_required:
+  "/": 17
+  "/var/lib/containerd": 30
+  "/var/lib/kubelet": 1
+  "/var/lib/etcd": 20
