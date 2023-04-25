@@ -1,0 +1,79 @@
+###
+### This role sets up GCP for the cluster instance run. None of the tasks in this role should mutate the hosts themselves, only
+###    set up the GCP project or perform actions against GCP dependencies that could be peformed with IaC or oustide processes
+###
+
+# Configures GCP
+- name: Enable services
+  command:
+    cmd: gcloud services enable {{ gcp_services_required | join(' ') }} --project={{ google_project_id }}
+  run_once: true # only one in whole inventory to run this
+  when:
+  - gcp_services_required is defined
+  - (gcp_services_required|length>0)
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - initial-install
+  - terraform
+  - gcloud-mutate
+  - skip-gcp-create
+
+### Setup GSA keys for box
+- name: "Setup and download GSA keys for provisioning"
+  import_tasks: gsa-key-setup.yml
+  tags:
+  - abm-install
+  - gsa-setup
+  - keys-setup
+  - skip-gcp-create
+
+### ACM
+- name: "Enable ACM API in GCP"
+  command:
+    cmd: gcloud beta container hub config-management enable
+  run_once: true # fleet-wide operation, only needs to run once per instance run
+  when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
+  environment:
+    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+  tags:
+  - abm-software
+  - enable-acm
+  - gcloud-mutate
+  - skip-gcp-create
+
+###
+### Create (if needed) GCS bucket for uploading bmctl/cluster snapshots to
+###
+- name: Check the bmctl snapshot backup bucket
+  command:
+    cmd: gsutil ls -p {{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}
+  ignore_errors: true
+  register: bucket_exists
+  tags:
+  - gcloud-command
+  - skip-gcp-create
+
+- name: Create the bmctl snapshot backup GCS bucket
+  command:
+    cmd: gsutil mb -p {{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}
+  when:
+  - bucket_exists.rc > 0
+  tags:
+  - gcloud-mutate
+  - skip-gcp-create
+
+### Setup CSI/SDS GCP dependencies
+- name: "Setup SDS GCP dependencies"
+  import_tasks: sds-gcp-setup.yaml
+  tags:
+  - sds-setup
+  - skip-gcp-create
+
+- name: "Setup SDS GCP dependencies"
+  import_tasks: sds-longhorn-gcp.yaml
+  when:
+  - storage_provider == "longhorn"
+  tags:
+  - sds-setup
+  - skip-gcp-create

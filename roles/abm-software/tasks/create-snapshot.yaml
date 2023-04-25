@@ -48,32 +48,6 @@
   set_fact:
     upload_snapshot: "{{ snapshot_gcs_bucket_base is defined and snapshot_gcs_bucket_base | length > 0 }}"
 
-# Create (if needed) GCS bucket for uploading
-- name: Check snapshot bucket existance
-  debug:
-    msg: "Checking/creating bucket '{{ snapshot_gcs_bucket_base }}'"
-  when:
-  - upload_snapshot == True
-  tags:
-  - debug
-  - never
-
-- name: Does GCS bucket exist?
-  command:
-    cmd: gsutil ls -p {{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}
-  ignore_errors: true
-  register: bucket_exists
-  tags:
-  - gcloud-command
-
-- name: Create if missing
-  command:
-    cmd: gsutil mb -p {{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}
-  when:
-  - bucket_exists.rc > 0
-  tags:
-  - gcloud-mutate
-
 # Perform Snapshot collection & push to bucket
 - name: Create snapshot
   command:

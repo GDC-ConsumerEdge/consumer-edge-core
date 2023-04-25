@@ -1,17 +1,3 @@
-
-### ACM
-- name: "Enable ACM API in GCP"
-  command:
-    cmd: gcloud beta container hub config-management enable
-  run_once: true # fleet-wide operation, only needs to run once per instance run 
-  when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
-  environment:
-    PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
-  tags:
-  - abm-software
-  - enable-acm
-  - gcloud-mutate
-
 ### ACM Setup
 
 # Check for ACM Operator

@@ -225,20 +225,6 @@
     tags:
       - initial-install
 
-  - name: Enable services
-    command:
-      cmd: gcloud services enable {{ gcp_services_required | join(' ') }} --project={{ google_project_id }}
-    run_once: true # only one in whole inventory to run this
-    when:
-    - gcp_services_required is defined
-    - (gcp_services_required|length>0)
-    - primary_cluster_machine is defined
-    - primary_cluster_machine == true
-    tags:
-    - initial-install
-    - terraform
-    - gcloud-mutate
-
   - name: Set Default Region
     command:
       cmd: gcloud config set compute/region {{ google_region }} --project={{ google_project_id }}
