@@ -1,0 +1,70 @@
+###
+### Add git-creds for SDS to GCP Secrets
+###
+
+
+###
+### git-creds secret for SDS Cluster Trait Repo
+###
+- name: "Test for existing SDS git-creds secret"
+  include_tasks: kubectl-presence.yml
+  vars:
+    name: "{{ storage_provider_auth_secret }}"
+    type: "secrets"
+    namespace: "config-management-system"
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+    fact_name: "has_sds_repo_secret"
+  tags:
+  - sds-common-setup
+
+- name: "Add new version to SDS git-creds to Google Secrets Manager if none exist or none active"
+  run_once: true # confirmed, this is fleet-level so run-once is OK
+  shell: |
+    EXISTS=$(gcloud secrets versions list {{ storage_provider_auth_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
+    if [ -z "${EXISTS}" ]; then
+      echo -n "{\"token\"{{':'}} \"{{ scm_token_token }}\", \"username\"{{':'}} \"{{ scm_token_user }}\"}" | gcloud secrets versions add {{ storage_provider_auth_secret }} --project="{{ google_project_id }}" --data-file=-
+      echo "ADDED"
+    fi
+  register: sds_secret_version  # used only for the changed_when
+  changed_when: '"ADDED" in sds_secret_version.stdout_lines'
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  - (has_sds_repo_secret is not defined)
+  - (has_sds_repo_secret != true)
+  tags:
+  - sds-common-setup
+  - sds-git-creds
+  - gcloud-mutate
+
+# Check on GCS Bucket status
+- name: Check SDS GCS Backup Bucket
+  run_once: true  # confirmed, this is fleet-level so run-once is OK
+  ignore_errors: true
+  command:
+    cmd: gsutil -q ls gs://{{ storage_provider_gcs_bucket_name }}/.dontremove > /dev/null 2>&1
+  changed_when: has_bucket.rc > 0
+  register: has_bucket
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  tags:
+  - sds-common-setup
+  - sds-bucket
+  - gcloud-command
+
+- name: Create SDS Backup Bucket
+  run_once: true # confirmed, this is fleet-level so run-once is OK
+  shell: |
+    gsutil mb -p "{{ google_project_id }}" gs://{{ storage_provider_gcs_bucket_name }}
+    echo "do not remove this file" | gsutil cp - gs://{{ storage_provider_gcs_bucket_name }}/.dontremove
+  args:
+    executable: /bin/bash
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  - has_bucket.rc > 0
+  tags:
+  - sds-common-setup
+  - sds-bucket
+  - gcloud-mutate

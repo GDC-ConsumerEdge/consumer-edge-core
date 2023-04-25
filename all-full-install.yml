@@ -21,6 +21,7 @@
   - validate
   - set-proxy
   - google-tools
+  - gcp-setup
   - ready-linux
   - setup-kvm
   - abm-install
