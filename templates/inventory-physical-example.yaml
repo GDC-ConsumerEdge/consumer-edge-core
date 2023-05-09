@@ -28,19 +28,54 @@ edge_cluster:
     ]
     # Install observability using Legacy agents (override)
     install_observability: false # skip observability on install
-    # Ansible Pull Authenticaiton String
+    # Ansible Pull Authenticaiton String (if left undefined, no ansible-pull will be installed)
     ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
     # Ansible Pull repo for Remote Execution
     ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
     # Ansible pull repo for cluster operations
     ansible_pull_cluster_ops_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/cluster-operations/update-cluster-repo.git"
-    ### SDS Node-level Configurations
-    # These are the paths as reported by the OS that you want to make available to Robin. This is a destructive process, the contents of the disk path WILl BE REMOVED,
-    #      so please use with caution. This is a setting per host/machine, but is often the same between manufacturers.
-    robin_disk_paths: [
-      "/dev/nvme0n1p3"
-    ]
   hosts:
     edge-1:
+      node_ip: "192.168.3.11"
+      primary_cluster_machine: true
+      machine_label: "edge-1"
     edge-2:
+      node_ip: "192.168.3.12"
+      machine_label: "edge-2"
     edge-3:
+      node_ip: "192.168.3.13"
+      machine_label: "edge-3"
+
+####
+#### Each cluster is defined within one block. Below is an example of a second cluster
+####
+# example_second_cluster:
+#   vars:
+#     # Name of the cluster
+#     cluster_name: "example-second"
+#     acm_cluster_name: "example-second-cluster"
+#     # The other IPs in the cluster
+#     peer_node_ips: [
+#       "192.168.1.11",
+#       "192.168.1.12",
+#       "192.168.1.13"
+#     ]
+#     # KubeAPI IP address
+#     control_plane_vip: "192.168.1.100"
+#     # Ingress (k8s) address, must be in LoadBalancer pool below
+#     ingress_vip: "192.168.1.20"
+#     # Load balancers created in this range
+#     load_balancer_pool_cidr: [
+#       "192.168.1.20-192.168.1.30" # 9 IPs for LB + 1 Ingress
+#     ]
+#   hosts:
+#     example-host-1:
+#       node_ip: "192.168.1.11"
+#       primary_cluster_machine: true
+#       machine_label: "example-host-1"
+#     example-host-2:
+#       node_ip: "192.168.1.12"
+#       machine_label: "example-host-2"
+#     example-host-3:
+#       node_ip: "192.168.1.13"
+#       machine_label: "example-host-3"

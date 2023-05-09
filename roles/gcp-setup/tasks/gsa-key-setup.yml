@@ -78,14 +78,14 @@
     Create GSM Secret and GSA Keys]
     DESC [Create GSA keys and add to secret as latest version
   shell: |
-    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.item.name }}" --format="value(name)" --project="{{ google_secret_project_id }}")
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.item.name }}" --format="value(name)" --project="{{ google_secret_project_id }}" 2> /dev/null)
     if [ -z "$HAS_SECRET" ]; then
       gcloud secrets create {{ item.item.name }} --replication-policy="automatic" --project={{ google_secret_project_id }} --no-user-output-enabled
     fi
     # In all cases, a key will need to be generated
-    gcloud iam service-accounts keys create /tmp/{{ item.item.keyfile }} --iam-account={{ item.item.name }}@{{ google_project_id }}.iam.gserviceaccount.com --project={{ google_project_id }}
+    gcloud iam service-accounts keys create /tmp/{{ item.item.keyfile }} --iam-account={{ item.item.name }}@{{ google_project_id }}.iam.gserviceaccount.com --project={{ google_project_id }} --no-user-output-enabled
     # create a secret version
-    gcloud secrets versions add {{ item.item.name }} --data-file="/tmp/{{ item.item.keyfile }}"
+    gcloud secrets versions add {{ item.item.name }} --data-file="/tmp/{{ item.item.keyfile }}" --no-user-output-enabled
     # Remove temp file
     rm -rf /tmp/{{ item.item.keyfile }}
   loop: "{{ has_valid_secret.results }}"

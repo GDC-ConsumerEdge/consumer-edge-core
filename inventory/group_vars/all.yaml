@@ -299,41 +299,45 @@ install_observability: false
 #       Do not change the ID. The name is independent of the ID or the filename.
 service_accounts: [
   {
+    # This SA is used in gcrKeyPath in the {{ cluster_name }}.yaml located in /var/abm-install/bmctl-workspace/{{ cluster_name }}. This is used to download gcr images on the cluster
     name: "abm-gcr-{{ cluster_name }}",
     id: "abm-gcr-agent",
     keyfile: abm-gcr-agent-creds.json,
     enabled: true,
-    description: "ABM GCR Agent Account. This SA is used in gcrKeyPath in the {{ cluster_name }}.yaml located in /var/abm-install/bmctl-workspace/{{ cluster_name }}. This is used to download gcr images on the cluster ",
+    description: "ABM GCR Agent Account.",
     roles: [
       "roles/storage.objectViewer"
     ]
   },
   {
+    # This SA is used in gkeConnectAgentServiceAccountKeyPath in the {{ cluster_name }}.yaml located in /var/abm-install/bmctl-workspace/{{ cluster_name }}.
     name: "abm-gke-con-{{ cluster_name }}",
     id: "abm-gke-connect-agent",
     keyfile: abm-gke-connect-agent-creds.json,
     enabled: true,
-    description: "ABM GKE Connect Agent Service Account. This SA is used in gkeConnectAgentServiceAccountKeyPath in the {{ cluster_name }}.yaml located in /var/abm-install/bmctl-workspace/{{ cluster_name }}. ",
+    description: "ABM GKE Connect Agent Service Account",
     roles: [
       "roles/gkehub.connect"
     ]
   },
   {
+    #  This SA is used in gkeConnectRegisterServiceAccountKeyPath in the {{ cluster_name }}.yaml located in /var/abm-install/bmctl-workspace/{{ cluster_name }}
     name: "abm-gke-reg-{{ cluster_name }}",
     id: "abm-gke-register-agent",
     keyfile: abm-gke-register-agent-creds.json,
     enabled: true,
-    description: "ABM GKE Connect Register Account. This SA is used in gkeConnectRegisterServiceAccountKeyPath in the {{ cluster_name }}.yaml located in /var/abm-install/bmctl-workspace/{{ cluster_name }}",
+    description: "ABM GKE Connect Register Account.",
     roles: [
       "roles/gkehub.admin"
     ]
   },
   {
+    # This SA is used in cloudOperationsServiceAccountKeyPath in the {{ cluster_name }}.yaml located in /var/abm-install/bmctl-workspace/{{ cluster_name }}. The cloud ops agents uses this SA to send telementry and logs to Cloud Ops.
     name: "abm-ops-{{ cluster_name }}",
     id: "abm-ops-agent",
     keyfile: abm-cloud-operations-agent-creds.json,
     enabled: true,
-    description: "ABM Cloud Operations Service Account. This SA is used in cloudOperationsServiceAccountKeyPath in the {{ cluster_name }}.yaml located in /var/abm-install/bmctl-workspace/{{ cluster_name }}. The cloud ops agents uses this SA to send telementry and logs to Cloud Ops.",
+    description: "ABM Cloud Operations Service Account.",
     roles: [
       "roles/logging.logWriter",
       "roles/monitoring.metricWriter",
@@ -342,22 +346,13 @@ service_accounts: [
       "roles/opsconfigmonitoring.resourceMetadata.writer"
     ]
   },
-  # {
-  #   name: "acm-mon-{{ cluster_name }}",
-  #   id: "acm-monitoring-agent",
-  #   keyfile: acm-monitoring-agent.json,
-  #   enabled: false,
-  #   description: "ACM Monitoring Account. This service account is only used by the playbook task 'Setup Workload Identity for ACM Monitoring'. This SA will use workload identity to monitor and update cloud ops with ACM telemetry ",
-  #   roles: [
-  #     "roles/monitoring.metricWriter"
-  #   ]
-  # },
-   {
+  {
+    # This service account is used by external secret operators that connects to secret manager and syncs the secret values into k8s secret objects. This is referenced in jinja template external-secrets-store.yaml.j2 and task 'Create secret for External Secrets'
     name: "es-k8s-{{ cluster_name }}",
     id: "external-secrets-k8s",
     keyfile: external-secrets-k8s-creds.json,
     enabled: true,
-    description: "External Secrets Service Account. This service account is used by external secret operators that connects to secret manager and syncs the secret values into k8s secret objects. This is referenced in jinja template external-secrets-store.yaml.j2 and task 'Create secret for External Secrets'",
+    description: "External Secrets Service Account.",
     roles: [
       "roles/secretmanager.secretAccessor",
       "roles/secretmanager.viewer"
@@ -365,48 +360,39 @@ service_accounts: [
   },
   #####  SDS agent for backups (storage provider used is identified in the description)
   {
+    # This SA is used by robin.io or longhorn to take snapshots and backups to GCS. For longhorn this service account is used to create a HMAC key tied to a GCS bucket https://cloud.google.com/storage/docs/authentication/hmackeys. The HMAC key is stored in a yaml file and uploaded to secret manager . In Anible playbook this is done n the file csi-longhorn.yaml . The SM secret name that has this HMAC key is {{ storage_provider_hmac_gcm_secret }} . Finally using ACM an external secret object (longhorn-backup-external-secret.yaml) downloads the HMAC key secret and creates a k8s secret gcp-cloud-storage-backup-secret. This k8s secret is used by longhorn configmap whic is provisioned in this ansible playbook with the jinja file longhorn-default-setting.yml.j2. For robin #TODO add details .....
     name: "sds-backup-{{ cluster_name }}",
     id: "sds-backup-agent",
     keyfile: sds-backup-agent-creds.json,
     enabled: "{{ lookup('env', 'SDS_BACKUP_ENABLED')| default('true', True)| string }}",
-    description: "SDS agent taking volume backups on cloud storage ({{ storage_provider }}). This SA is used by robin.io or longhorn to take snapshots and backups to GCS. For longhorn this service account is used to create a HMAC key tied to a GCS bucket https://cloud.google.com/storage/docs/authentication/hmackeys. The HMAC key is stored in a yaml file and uploaded to secret manager . In Anible playbook this is done n the file csi-longhorn.yaml . The SM secret name that has this HMAC key is {{ storage_provider_hmac_gcm_secret }} . Finally using ACM an external secret object (longhorn-backup-external-secret.yaml) downloads the HMAC key secret and creates a k8s secret gcp-cloud-storage-backup-secret. This k8s secret is used by longhorn configmap whic is provisioned in this ansible playbook with the jinja file longhorn-default-setting.yml.j2. For robin #TODO add details .....",
+    description: "SDS agent taking volume backups on cloud storage ({{ storage_provider }}).",
     roles: [
       "roles/storage.admin"
     ]
   },
   {
+    # This service account is not used in this playbook.  This is intended to be used for running kubectl commands using Connect Gateway. https://cloud.google.com/anthos/multicluster-management/gateway/using . This SA is only used in this script gateway-connect.sh. The playbook and the cluster nodes do not use this service account. This SA is for admins running kubectl commands directly on the cluster. This service account should not have any keys and should not go in secret manager . The admins who wants to use connect gateway should simply impersonate their principal to use this service account .
     name: "gtw-con-{{ cluster_name }}",
     id: "gateway-connect-agent",
     keyfile: gateway-connect-agent-creds.json,
     enabled: "{{ lookup('env', 'CONNECT_GATEWAY_ENABLED')| default('false', True)| string }}",
-    description: "Agent used for Connect Gateway. This service account is not used in this playbook.  This is intended to be used for running kubectl commands using Connect Gateway. https://cloud.google.com/anthos/multicluster-management/gateway/using . This SA is only used in this script gateway-connect.sh. The playbook and the cluster nodes do not use this service account. This SA is for admins running kubectl commands directly on the cluster. This service account should not have any keys and should not go in secret manager . The admins who wants to use connect gateway should simply impersonate their principal to use this service account .",
+    description: "Agent used for Connect Gateway. ",
     roles: [
       "roles/gkehub.gatewayAdmin",
       "roles/gkehub.viewer"
     ]
   },
   {
+    # This service account is not used inside this playbook. The key for this SA is uploaded to a secret manager secret . An external secret artifact yaml is deployed using ACM (Namespace repo) that downloads the key from secret manager and creates a k8s secret. Eventually that key is used when describing the VM artifact yaml as show here https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/vm-runtime/create-storage-credentials#use_a_secret_to_import_an_image
     name: "cdi-import-{{ cluster_name }}",
     id: "cdi-import-agent",
     keyfile: cdi-import-agent-creds.json,
     enabled: true,
-    description: "Agent used for CDI image access. This service account is not used inside this playbook. The key for this SA is uploaded to a secret manager secret . An external secret artifact yaml is deployed using ACM (Namespace repo) that downloads the key from secret manager and creates a k8s secret. Eventually that key is used when describing the VM artifact yaml as show here https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/vm-runtime/create-storage-credentials#use_a_secret_to_import_an_image ",
+    description: "Agent used for CDI image access. ",
     roles: [
       "roles/storage.objectViewer"
     ]
   }
-  # ,
-  # {
-  #   name: "storage-{{ cluster_name }}",
-  #   id: "storage-agent",
-  #   keyfile: storage-agent-svc-account-creds.json,
-  #   enabled: flase,
-  #   description: "Agent used for Snapshot Cloud Storage. This service account is intended to be used for storing cluster snapshots on GCS bucket. The process that takes the cluster snapshotusing bmctl is using GSA service account. This SA is only for GCS bucket access. However the playbook is not ussing this serviec account to copy data back to GCS bucket . The playbook uses GSA to take snapshot and copy data to GCS bucket ",
-  #   roles: [
-  #     "roles/storage.admin"
-  #   ]
-  # }
-
 ]
 
 longest_gca_name: 12 # count the length of the names above without the {{cluster_name}}
