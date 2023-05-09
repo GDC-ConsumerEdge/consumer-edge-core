@@ -1,4 +1,0 @@
-# Used for logging/metrics
-machine_label: "edge-2"
-# This machine's IP address
-node_ip: "192.168.3.12"

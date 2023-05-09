@@ -1,6 +1,0 @@
-# Used for logging/metrics
-machine_label: "edge-1"
-# Indicates that this is the primary machine in the cluster (only important for provisioning)
-primary_cluster_machine: true
-# This machine's IP
-node_ip: "192.168.3.11"
