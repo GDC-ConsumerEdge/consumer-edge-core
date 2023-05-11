@@ -194,6 +194,13 @@ else
     pretty_print "PASS: screen command found"
 fi
 
+if [[ ! -x $(command -v gettext) ]]; then
+    pretty_print "ERROR: gettext command is required, but not installed." "ERROR"
+    ERROR=1
+else
+    pretty_print "PASS: gettext command found"
+fi
+
 if [[ "${ERROR}" -eq 1 ]]; then
 	ERROR=0 # Reset
 	pretty_print "=========================" "ERROR"
@@ -242,13 +249,18 @@ if [[ "${ERROR}" -eq 1 ]]; then
 			source ~/.bashrc
 			direnv allow
 		fi
+
+		if [[ ! -x $(command -v gettext) ]]; then
+			pretty_print "Installing gettext" "INFO"
+			sudo apt -y install gettext
+		fi
 	else
 		pretty_print "Exiting. Please fix depenencies on your own or re-run and select 'Y'" "ERROR"
 		exit 1
 	fi
 fi
 
-# Start screen configuration & session
+# Enable mouse scroll and scrollback in screen configuration & session
 echo "termcapinfo xterm* ti@:te@" > .screenrc
 
 SSH_KEY_LOC="./build-artifacts/consumer-edge-machine"
