@@ -30,10 +30,6 @@ spec:
   # GKE connect configuration
   gkeConnect:
     projectID: {{ google_project_id }}
-  #edgeManagement:
-  #  optIn: {{ edge_api_enabled }}
-  #  # TODO: Future, this will be configurable as API is rolled out
-  #  location: {{ edge_api_location }}
   # Control plane configuration
   controlPlane:
     nodePoolSpec:
@@ -43,9 +39,8 @@ spec:
       {% endfor %}
   # Cluster networking configuration
   clusterNetwork:
+    # multus (if true, Mulutus is used over Anthos Netowrking (not common))
     multipleNetworkInterfaces: {{ multi_network_enabled | capitalize  }}
-    # eBPF
-    # enableDataplaneV2: {{ dataplane_v2 | capitalize }}
     pods:
       cidrBlocks:
       - {{ pod_cidr }}
@@ -74,12 +69,6 @@ spec:
     {% for no_proxy_ip in (proxy_no_proxy_list | union ( proxy_no_proxy_default_ips ) ) %}
     - {{ no_proxy_ip }}
     {% endfor %}
-  {% else %}
-  # proxy:
-  #   url: <place proxy url here>
-  #   noProxy:
-  #   - 127.0.0.1
-  #   - other.domains.here
   {% endif %}
   # Logging and Monitoring
   clusterOperations:
@@ -87,7 +76,7 @@ spec:
     projectID: {{ google_project_id }}
     # Cloud location for logs and metrics.
     location: {{ google_region }}
-    enableApplication: {{ enable_application_logging }}
+    enableApplication: {{ enable_stackdriver_customer_app_logging }}
   # Storage configuration
   storage:
     lvpNodeMounts:

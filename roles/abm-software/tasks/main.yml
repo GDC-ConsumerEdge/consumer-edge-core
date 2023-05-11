@@ -102,14 +102,15 @@
   - abm-software
   - vmruntime
 
-- name: Folder for ACM configurations
-  file:
-    path: '{{ acm_config_files }}'
-    state: directory
-    mode: '0755'
+### Setup Customer Logging (Google Managed Prometheus + CloudLogging vs Stackdriver)
+- name: Setup Stackdriver AddOnConfiguration
+  import_tasks: stackdriver-addon.yaml
+  vars:
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+  when:
+  - enable_google_managed_prometheus_customer_app_metrics is true
   tags:
-  - abm-software
-  - abm-config
+  - customer-logging-setup
 
 ### Anthos Config Management
 - name: "Install Anthos Config Management (ACM)"

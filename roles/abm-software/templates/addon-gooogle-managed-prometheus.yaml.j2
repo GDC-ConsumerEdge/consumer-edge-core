@@ -1,0 +1,23 @@
+apiVersion: baremetal.cluster.gke.io/v1alpha1
+kind: AddOnConfiguration
+metadata:
+  name: stackdriver-addon
+  namespace: {{ cluster_name }}
+spec:
+  anthosBareMetalVersions:
+  - {{ abm_version }}
+  configs:
+  - name: stackdriver
+    namespace: kube-system
+    apiVersion: addons.gke.io/v1alpha1
+    kind: Stackdriver
+    patchContent: |
+      apiVersion: addons.gke.io/v1alpha1
+      kind: Stackdriver
+      metadata:
+        name: stackdriver
+        namespace: kube-system
+      spec:
+        enableStackdriverForApplications: {{ enable_stackdriver_customer_app_logging }}
+        enableCloudLoggingForApplications: {{ enable_cloudops_customer_app_logging }}
+        enableGMPForApplications: {{ enable_google_managed_prometheus_customer_app_metrics }}

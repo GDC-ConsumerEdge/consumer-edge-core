@@ -1,4 +1,12 @@
 ### ACM Setup
+- name: Folder for ACM configurations
+  file:
+    path: '{{ acm_config_files }}'
+    state: directory
+    mode: '0755'
+  tags:
+  - abm-software
+  - abm-config
 
 # Check for ACM Operator
 - name: "Test for config-management-system namespace"
@@ -106,13 +114,6 @@
 ###
 ### Configure PrimaryRootRepo
 ###
-- name: Copy RootRepo Sync Config File
-  template:
-    src: root-sync.yaml.j2
-    dest: "{{ acm_config_files }}/root-sync.yaml"
-  tags:
-  - acm-root-repo
-  - generate-root-sync
 
 - name: "Test for Root Repo CRDs installed"
   include_tasks: kubectl-presence.yml

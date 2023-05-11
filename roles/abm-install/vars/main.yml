@@ -11,8 +11,14 @@ abm_install_user: "el-gato"
 # Cluster Configuration
 install_type: standalone
 multi_network_enabled: "{{ enable_multus_network | default('false', True) }}"
-enable_application_logging: false # Recommend using the AddonConfig with Stackdriver object 
-dataplane_v2: false # primarily vSphere installs
+
+# Configure Customer Application's logging and metrics
+# NOTE: CloudOPs + Google Managed Prometheus is the peferred method, but requires two parameters to be set. While not mutually exclusive, enabling both options is expensive and redundant
+enable_stackdriver_customer_app_logging: false
+# Use CloudOps to push customer logs (preferred) - NOTE: GMP and CloudOps should be enabled together (not required, but recommended)
+enable_cloudops_customer_app_logging: true
+# Use Google Managed Prometheus to push metrics (preferred)
+enable_google_managed_prometheus_customer_app_metrics: true
 
 # Skip preflight checks?
 skip_preflight: false

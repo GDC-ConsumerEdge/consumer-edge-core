@@ -1,0 +1,64 @@
+- name: Folder for AddOn configurations
+  file:
+    path: '{{ addon_config_path }}'
+    state: directory
+    mode: '0755'
+  when:
+  - enable_google_managed_prometheus_customer_app_metrics is true
+  tags:
+  - customer-logging-setup
+
+- name: Copy Stackdriver AddOn
+  template:
+    src: addon-gooogle-managed-prometheus.yaml.j2
+    dest: "{{ addon_config_path }}/addon-gooogle-managed-prometheus.yaml"
+  when:
+  - enable_google_managed_prometheus_customer_app_metrics is true
+  tags:
+  - customer-logging-setup
+
+- name: Copy Stackdriver AddOn CRD
+  template:
+    src: addons-crd.yaml.j2
+    dest: "{{ addon_config_path }}/addons-crd.yaml"
+  when:
+  - enable_google_managed_prometheus_customer_app_metrics is true
+  tags:
+  - customer-logging-setup
+
+- name: Enable Cluster AddOns
+  command:
+    cmd: kubectl annotate cluster {{ cluster_name }} preview.baremetal.cluster.gke.io/add-on-configuration=enable -n {{ cluster_name }}
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  - enable_google_managed_prometheus_customer_app_metrics is true
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - customer-logging-setup
+  - customer-logging-cluster-enable
+
+- name: Add Stackdriver CRD
+  command:
+    cmd: kubectl apply -f {{ addon_config_path }}/addons-crd.yaml
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  - enable_google_managed_prometheus_customer_app_metrics is true
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - customer-logging-setup
+
+- name: Enable Stackdriver Patching
+  command:
+    cmd: kubectl apply -f {{ addon_config_path }}/addon-gooogle-managed-prometheus.yaml -n {{ cluster_name }}
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  - enable_google_managed_prometheus_customer_app_metrics is true
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - customer-logging-setup
