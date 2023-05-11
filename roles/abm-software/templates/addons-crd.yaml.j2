@@ -1,0 +1,220 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: stackdrivers.addons.gke.io
+spec:
+  group: addons.gke.io
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            properties:
+              anthosDistribution:
+                enum:
+                - baremetal
+                - on-prem
+                type: string
+              namespaceProfile:
+                enum:
+                - baremetal
+                - on-prem
+                - gdce
+                type: string
+              clusterLocation:
+                type: string
+              clusterName:
+                type: string
+              enableCustomMetricsAdapter:
+                type: boolean
+              enableStackdriverForApplications:
+                type: boolean
+              enableGMPForApplications:
+                type: boolean
+              enableCloudLoggingForApplications:
+                type: boolean
+              enableVPC:
+                type: boolean
+              enableMultiline:
+                type: boolean
+                default: true
+              featureGates:
+                properties:
+                  disableFluentBitMetrics:
+                    type: boolean
+                  hostContainerSourcePath:
+                    type: string
+                  disableSummaryAPIResourceMetrics:
+                    type: boolean
+                  fluentBitPreferIPV4:
+                    type: boolean
+                  enableFluentBitStorageChecksum:
+                    type: boolean
+                  disableABMBootstrapLogsForwarder:
+                    type: boolean
+                  disableABMControlPlaneMetricsProxy:
+                    type: boolean
+                  disownMonitoringComponents:
+                    type: boolean
+                type: object
+              fleetWorkloadIdentitySecretName:
+                type: string
+              gcpServiceAccountSecretName:
+                type: string
+              optimizedMetrics:
+                type: boolean
+              portable:
+                type: boolean
+              projectID:
+                type: string
+              proxyConfigSecretName:
+                type: string
+              resourceAttrOverride:
+                additionalProperties:
+                  properties:
+                    limits:
+                      properties:
+                        cpu:
+                          type: string
+                        memory:
+                          type: string
+                      type: object
+                    requests:
+                      properties:
+                        cpu:
+                          type: string
+                        memory:
+                          type: string
+                      type: object
+                  type: object
+                type: object
+              appLogFilter:
+                description: 'Optional.  When enableCloudLoggingForApplications is
+                  set to true, you can filter application logs by namespace, pod label
+                  selector, and content regex. Two types of filter rules are supported:
+                  ''Keep'' and ''Drop''. Collected logs are `(keepRule1 + keepRule2
+                  + ...  + keepRuleN) - dropRule1 - dropRule2 - ... - dropRuleN`.
+                  Two keepRules shouldn''t have same namespace. Otherwise, it collects
+                  (keepRule1 & keepRule2) instead of (keepRule1 + keepRule2) when
+                  namespaces are same. PodLabelSelector has a delay about 10 minutes
+                  if pod labels are changed. It collects all application logs if rules
+                  aren not specified if enableCloudLoggingForApplications is set to
+                  true.'
+                properties:
+                  dropLogRules:
+                    items:
+                      description: DropLogRule drops logs.
+                      minProperties: 2
+                      properties:
+                        namespaces:
+                          description: Optional, default=["*"]. Each kubernetes non-system
+                            namespace is connected with "OR".
+                          items:
+                            description: Namespace name. It supports fnmatch using
+                              "*?[!][]".
+                            pattern: ^[a-z0-9A-Z.*?\[\]!-]+$
+                            type: string
+                          type: array
+                        podLabelSelectors:
+                          description: At most 1 pod label selector can be used. It
+                            has a delay about 10 minutes if pod labels are changed.
+                            For example, env=test
+                          items:
+                            description: Each podLabelSelector is a pod label selector
+                              label_name=value. For example, `env=prod` is allowed
+                              while `env=prod,app!=book` is not allowed.
+                            pattern: ^[a-z0-9A-Z.-]+(!)?=[*\|a-z0-9A-Z.-]+$
+                            type: string
+                          maxItems: 1
+                          type: array
+                        ruleName:
+                          description: Name is a unique identifier across all logging
+                            configurations
+                          pattern: ^[a-z0-9A-Z-_]+$
+                          type: string
+                      required:
+                      - ruleName
+                      type: object
+                    type: array
+                  keepLogRules:
+                    items:
+                      description: KeepLogRule keeps logs.
+                      minProperties: 2
+                      properties:
+                        contentRegexes:
+                          description: Optional, default=["*"]. Regex matches log
+                            entry. Each regex is connected with OR. For example, ".*ERROR.*",
+                            ".*WARN.*".
+                          items:
+                            type: string
+                          type: array
+                        namespaces:
+                          description: Optional, default=["*"]. Each kubernetes non-system
+                            namespace is connected with "OR".
+                          items:
+                            description: Namespace name. It supports fnmatch using
+                              "*?[!][]".
+                            pattern: ^[a-z0-9A-Z.*?\[\]!-]+$
+                            type: string
+                          type: array
+                        podLabelSelectors:
+                          description: Optional, default=null. At most 1 pod label
+                            selector can be used in preview stage. Regex "|" is supported.
+                            It has a delay about 10 minutes if pod labels are changed.
+                            For example, app=book|travel
+                          items:
+                            description: Each podLabelSelector is a pod label selector
+                              label_name=value. For example, `env=prod` is allowed
+                              while `env=prod,app!=book` is not allowed.
+                            pattern: ^[a-z0-9A-Z.-]+(!)?=[*\|a-z0-9A-Z.-]+$
+                            type: string
+                          maxItems: 1
+                          type: array
+                        ruleName:
+                          description: Name is a unique identifier across all logging
+                            configurations
+                          type: string
+                      required:
+                      - ruleName
+                      type: object
+                    type: array
+                type: object
+              scalableLogging:
+                type: boolean
+              scalableMonitoring:
+                type: boolean
+              scaling:
+                type: string
+              stackdriverComponentLogVerbosityLevel:
+                type: string
+                enum:
+                - error
+                - warning
+                - info
+                - debug
+                - trace
+              storageClassName:
+                type: string
+              storageSizeOverride:
+                additionalProperties:
+                  type: string
+                type: object
+              storeMonitoringAPIRequestsInFiles:
+                type: boolean
+              version:
+                type: string
+            required:
+            - clusterLocation
+            - clusterName
+            - projectID
+            type: object
+        type: object
+  names:
+    kind: Stackdriver
+    plural: stackdrivers
+  scope: Namespaced

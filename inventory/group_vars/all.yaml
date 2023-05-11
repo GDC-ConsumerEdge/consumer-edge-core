@@ -115,7 +115,10 @@ acm_version: "1.15.0"
 
 # Where to store ACM files during provisoning
 acm_config_files: "{{ abm_install_folder }}/acm-configs"
+# Folder containing VMRuntime configuration
 vmruntime_config_path: "{{ abm_install_folder }}/vmruntime"
+# Folder containing AddOn configurations (typically Stackdriver based)
+addon_config_path: "{{ abm_install_folder }}/addon-configs"
 # Home directory for external secrets download and operations (TODO: Duplciated in post-install)
 external_secrets_files: "{{ abm_install_folder }}/external-secrets"
 use_workload_identity_for_external_secrets: false
