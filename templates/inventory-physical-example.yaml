@@ -6,48 +6,50 @@
 
 ## NOTE: Host names are DNS resolved to your physical host. Some routers assign .lan or other suffix. Comment out, add or adjust this file to represent your physical hardware
 
+### This object/block is the definition for a single cluster. The name of the block/variable is arbitrary, but can not overlap with other cluster block names
 edge_cluster:
   vars:
-    # Name of the cluster
+    # Name of the cluster that should be regstered in GCP
     cluster_name: "edge-1"
-    # Name of the "store" per the ACM repo
+    # Name of the cluster name as it is configured in the Primary Root Repository (/config/clusters/<cluster-name>)
     acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('edge-1', True) }}"
-    # The other IPs in the cluster
+    # The other IPs in the cluster. If the cluster is a 1-node cluster, only 1 IP should be included. The solution does not support a 2-node, so 1 or 3 IPs are required here
     peer_node_ips: [
       "192.168.3.11",
       "192.168.3.12",
       "192.168.3.13"
     ]
-    # KubeAPI IP address
+    # KubeAPI IP address. This is a VIP and cannot be already in-use
     control_plane_vip: "192.168.3.100"
-    # Ingress (k8s) address, must be in LoadBalancer pool below
+    # Ingress (k8s) address, must be in LoadBalancer pool below. This is a VIP and cannot be already in-use
     ingress_vip: "192.168.3.20"
-    # Load balancers created in this range
+    # Load balancers created in this range. These are VIPs and cannot be already in-use
     load_balancer_pool_cidr: [
       "192.168.3.20-192.168.3.30" # 9 IPs for LB + 1 Ingress
     ]
     # Install observability using Legacy agents (override)
-    install_observability: false # skip observability on install
-    # Ansible Pull Authenticaiton String (if left undefined, no ansible-pull will be installed)
+    install_observability: false # skip legacy observability install
+    # Ansible Pull Authenticaiton String (omit if not using Ansible Pull. Omitting is common)
     ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
-    # Ansible Pull repo for Remote Execution
+    # Ansible Pull repo for Remote Execution (omit if not using Ansible Pull)
     ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
-    # Ansible pull repo for cluster operations
+    # Ansible pull repo for cluster operations (omit if not using Ansible Pull)
     ansible_pull_cluster_ops_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/cluster-operations/update-cluster-repo.git"
   hosts:
-    edge-1:
-      node_ip: "192.168.3.11"
-      primary_cluster_machine: true
-      machine_label: "edge-1"
-    edge-2:
+    # Definition of each hosts in the cluster
+    edge-1:                                   # host name for first machine
+      node_ip: "192.168.3.11"                 # IP of the host
+      primary_cluster_machine: true           # Identify the first machine to act as the "primary" while provisioning. Primary machine is one of the machines to perform one-machine only commands like kubectl and gcloud commands.
+      machine_label: "edge-1"                 # Label to be used in CloudOps logging
+    edge-2:                                   # host name for second machine
       node_ip: "192.168.3.12"
       machine_label: "edge-2"
-    edge-3:
+    edge-3:                                   # host name for third machine
       node_ip: "192.168.3.13"
       machine_label: "edge-3"
 
 ####
-#### Each cluster is defined within one block. Below is an example of a second cluster
+#### Each cluster is defined within one block. Below is an example of a second cluster. Remove if not using additional clusters
 ####
 # example_second_cluster:
 #   vars:

@@ -21,29 +21,29 @@ There are two options to provision a machine, an automated installation process 
     cat <PATH TO Consumer Edge installation>/build-artifacts/consumer-edge-machine.pub > ./pub-keys
     ```
 1. Run the following command from that folder:
-    > NOTE: `-H` specifies a hostname and generates configuration specific to that hostname. Each ISO will be unique to the host name chosen.
+    > NOTE: `-h` specifies a hostname and generates configuration specific to that hostname. Each ISO will be unique to the host name chosen.
 
     > NOTE: Possibly create a loop on this, or just run `3n` of these (1..3 or 1..6) as physical hardware is available for your use case.
     ```bash
-    ./build_iso.sh -u abm-admin -H nuc-1 -P -F /some/location/nuc-1.iso
+    ./build_iso.sh -h edge -F ./iso-outputs/
     ```
 1. Flash the created ISO to a USB stick (Rufus, Balena, etc)
 1. Insert USB into target machine
-1. Reboot and enter Boot preference tab (`F7`)
+1. Reboot and enter Boot preference tab (e.g. `F7`)
     1. Select the USB stick option
     1. Save and continue (machine will reboot)
 1. Wait for auto-installer to complete (15-20 min)
     1. Watch for machine to reboot, pull out the USB stick after that
     1. Default password (at time of writing this doc) is `troubled-marble-150`
 
-## Step 1 (Option 2) - Manually provisioning Ubuntu (Advanced users only)
+## Step 1 (Option 2) - Manually provisioning Ubuntu (Advanced users only, not generally recommended)
 
 1. Create a bootable USB stick with Ubuntu 20.04 LTS
     * USB Boot Stick (Ubuntu option) -- https://ubuntu.com/tutorials/create-a-usb-stick-on-ubuntu#1-overview
     * USB Boot Stick (Windows option) -- https://ubuntu.com/tutorials/create-a-usb-stick-on-windows#1-overview
     * USB Boot Stick (MacOS option) -- https://ubuntu.com/tutorials/create-a-usb-stick-on-macos#1-overview
 
-    > NOTE: 20.10 will NOT work, only 18.04 LTS or 20.04 LTS is supported
+    > NOTE: 20.10 will NOT work, only 20.04 LTS is supported
 
 1. Insert USB and install Ubuntu 20.04 LTS
 
