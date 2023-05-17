@@ -5,6 +5,21 @@
   tags:
   - verify
 
+- name: Add Fleet Cluster Labels
+  command:
+    cmd: gcloud container fleet memberships update {{ cluster_name }} --update-labels="{{ fleet_cluster_labels | join(',') }}" --project "{{ google_project_id }}"
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/provisioning-gsa.json"
+  register: fleet_output
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == True
+  - fleet_cluster_labels is defined
+  - fleet_cluster_labels | length>0
+  tags:
+  - gcloud-command
+  - set-fleet-labels
+
 #
 # Install ACM
 #

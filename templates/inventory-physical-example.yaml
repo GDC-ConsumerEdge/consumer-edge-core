@@ -4,6 +4,8 @@
 #
 ####
 
+## NOTE: Variables in this file DO NOT override all.yaml file parameters
+
 ## NOTE: Host names are DNS resolved to your physical host. Some routers assign .lan or other suffix. Comment out, add or adjust this file to represent your physical hardware
 
 ### This object/block is the definition for a single cluster. The name of the block/variable is arbitrary, but can not overlap with other cluster block names
@@ -35,6 +37,8 @@ edge_cluster:
     ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
     # Ansible pull repo for cluster operations (omit if not using Ansible Pull)
     ansible_pull_cluster_ops_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/cluster-operations/update-cluster-repo.git"
+    # Labels applied to the cluster
+    fleet_cluster_labels: ["type=development", "location=stanwood", "country=usa", "earlyaccess=false"] # Examples, need to be key=value comma separated
   hosts:
     # Definition of each hosts in the cluster
     edge-1:                                   # host name for first machine
