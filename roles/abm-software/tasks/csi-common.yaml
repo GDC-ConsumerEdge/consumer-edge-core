@@ -30,6 +30,8 @@
   template:
     src: sds-cluster-trait-repo.yaml.j2
     dest: "{{ sds_config_files }}/sds-cluster-trait-repo.yaml"
+  when:
+  - storage_cluster_trait_repo_install == true
   tags:
   - sds-common-setup
   - sds-cluster-trait-repo
@@ -42,7 +44,7 @@
   when:
   - (primary_cluster_machine is defined)
   - (primary_cluster_machine == true)
-  - storage_provider_install == true
+  - storage_cluster_trait_repo_install == true
   tags:
   - sds-common-setup
   - sds-cluster-trait-repo

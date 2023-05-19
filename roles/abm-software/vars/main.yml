@@ -21,3 +21,8 @@ cdi_cron_script_file: "{{ abm_install_folder }}/cdi-check-node.sh"
 
 # Location of SDS configuration files
 sds_config_files: "{{ abm_install_folder }}/sds-configs"
+
+# This MUST match the WWN matcher regex in the SDS Operator's Custom Resource (DUPLICATED TO abm-remove role)
+robin_lvm_group_name: "robin-lvm"
+
+robin_license_file_location: "{{ sds_config_files }}/{{ robin_license_file_name }}"

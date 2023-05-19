@@ -2,3 +2,6 @@
 abm_workspace_folder: "{{ abm_install_folder }}/bmctl-workspace"
 
 gcs_bucketname_regex: "[a-zA-Z0-9.\\-_]{1,255}"
+
+# This MUST match the WWN matcher regex in the SDS Operator's Custom Resource (DUPLICATED FROM abm-software role)
+robin_lvm_group_name: "robin-lvm"

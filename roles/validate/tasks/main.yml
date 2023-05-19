@@ -70,6 +70,38 @@
   tags:
   - verify
 
+- name: "Check to see if Robin License is in GCP Secrets and has an active"
+  run_once: true
+  ignore_errors: true
+  delegate_to: localhost
+  command:
+    cmd: gcloud secrets versions list {{ robin_gcp_secret_name }} --filter="state=enabled" --format="value(name)"  --project="{{ google_secret_project_id }}"
+  when:
+  - storage_provider == "robin"
+  - storage_cluster_trait_repo_install is true
+  register: robin_gcp_license_check
+  changed_when: false
+  failed_when: robin_gcp_license_check.rc > 0
+  tags:
+  - verify
+  - verify-robin-license
+
+- name: "Fail if Robin license file does not exist in artifacts folder"
+  delegate_to: localhost
+  run_once: true
+  assert:
+    that:
+    - "{{ lookup('ansible.builtin.fileglob', robin_license_local_uri) != [] }}"
+    success_msg: "Robin SDS license file OR GCP Secret w/ active version exists"
+    fail_msg: "Robin SDS requires a (valid) license file to be placed in `./build-artifacts/robinio-sds.json.license`"
+  when:
+  - storage_provider == "robin"
+  - storage_cluster_trait_repo_install is true
+  - robin_gcp_license_check.rc > 0 # does not exist
+  tags:
+  - verify
+  - verify-robin-license
+
 - name: Fail if local SCM_TOKEN_USER ENV is not defined
   assert:
     that:

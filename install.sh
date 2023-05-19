@@ -154,15 +154,15 @@ fi
 # Check for Private Encrypted SSH Keys
 if [[ ! -f "./build-artifacts/consumer-edge-machine" ]]; then
     pretty_print "ERROR: Private SSH Key './build-artifacts/consumer-edge-machine' was not found. Please run ./setup.sh to generate and push to Google Secrets" "ERROR"
-    exit 1
+    ERROR=1
 else
-    pretty_print "PASS: SSH Private key is found"
+    pretty_print "PASS: Private SSH key found"
 fi
 
 # Check for Public SSH Key
 if [[ ! -f "./build-artifacts/consumer-edge-machine.pub" ]]; then
     pretty_print "ERROR: Public SSH Key './build-artifacts/consumer-edge-machine.pub' was not found. Please run ./setup.sh to generate and push to Google Secrets" "ERROR"
-    exit 1
+    ERROR=1
 else
     pretty_print "PASS: Public SSH Key found"
 fi
@@ -217,6 +217,19 @@ elif [[ ! -f $NODE_GSA_FILE ]]; then
     ERROR=1
 else
     pretty_print "PASS: Node GSA key (${NODE_GSA_FILE})"
+fi
+
+# Display if robin.io license was detected
+if [[ -f "./build-artifacts/robinio-sds.json.license" ]]; then
+    pretty_print "INFO: RobinIO License file detected" "INFO"
+fi
+
+# SDS
+if [[ -z "${SDS_REPO_URL}" ]]; then
+    pretty_print "WARN: No SDS Cluster Trait Repository is defined. An SDS will NOT be installed by default " "WARN"
+else
+    pretty_print "PASS: SDS Cluster Trait Repo URL: ${SDS_REPO_URL}"
+    pretty_print "PASS: SDS Cluster Trait Repo Branch: ${SDS_REPO_BRANCH}"
 fi
 
 ### Validate ROOT_REPO_TYPE & ROOT_REPO URL

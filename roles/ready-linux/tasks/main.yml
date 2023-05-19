@@ -314,6 +314,14 @@
   tags:
   - multipath-config
 
+- name: Load tcm_loop kernel module
+  community.general.system.modprobe:
+    name: nfs
+    state: present
+  tags:
+  - robin
+  - nfs-storage-robin
+
 - name: "Enable recover lost locks for NFS"
   lineinfile:
     path: "/etc/modprobe.d/nfs4-locks.conf"

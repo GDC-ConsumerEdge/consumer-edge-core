@@ -1,0 +1,35 @@
+- name: Debug -- Show Disk Paths
+  debug:
+    var: robin_disk_paths
+  tags:
+  - lvm-group-removal
+  - robin-io
+  - check-work
+
+- name: Check for LVM Group
+  command:
+    cmd: "vgdisplay {{ robin_lvm_group_name }}"
+  register: existing_group
+  ignore_errors: true
+  when:
+  - robin_disk_paths is defined and robin_disk_paths | length > 0
+  tags:
+  - lvm-group-removal
+  - robin-io
+  - check-work
+
+- name: Remove Logical and Physical Volumes
+  ignore_errors: true
+  shell: |
+    sgdisk --zap {{ disk_path }}
+    partprobe {{ disk_path }} # this will fail due to partitions being already in-use, need to reboot
+  loop: "{{ robin_disk_paths | list }}"
+  loop_control:
+    loop_var: disk_path
+    index_var: index
+  when:
+  - robin_disk_paths is defined and robin_disk_paths | length > 0
+  - existing_group.rc > 0
+  tags:
+  - lvm-group-removal
+  - robin-io

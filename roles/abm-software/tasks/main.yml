@@ -146,6 +146,17 @@
 ###
 ### Setting up SDS common settings (git-creds, GSM Secret), if SDS is not none
 ###
+#  Setup/Configure SDS: Robin
+- name: SDS Setup Robin
+  import_tasks: csi-robin-pre-install.yaml
+  vars:
+    kubeconfig: "{{ kubeconfig_shared_location }}"
+  when:
+  - storage_provider == "robin"
+  tags:
+  - robin
+  - storage-setup
+
 - name: Setup common SDS components
   import_tasks: csi-common.yaml
   vars:

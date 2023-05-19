@@ -24,6 +24,7 @@
     - primary_cluster_machine == True
 
 - name: Archive snapshots to archive folder
+  ignore_errors: true
   command:
     cmd: "gsutil mv gs://{{ item[0] }}/{{ item[1] }}/{{ item[2] }} gs://{{ item[0] }}/{{ item[1] }}/archive/{{ item[2] }}"
   with_items:
@@ -31,4 +32,5 @@
   when:
     - primary_cluster_machine is defined
     - primary_cluster_machine == True
-    - buckets is defined and (buckets | length>0 )
+    - buckets is defined
+    - buckets | length > 0

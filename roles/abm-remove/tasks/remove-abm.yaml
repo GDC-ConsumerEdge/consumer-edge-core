@@ -9,6 +9,7 @@
   tags:
     - abm-remove
     - never
+    - backup-before-removal
 
 - name: Copy provisiong GSA to nodes for ABM reset
   copy:
