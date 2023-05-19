@@ -39,3 +39,18 @@
   tags:
     - abm-remove
     - never
+
+- name: Remove LVMs for SDS
+  import_tasks: remove-lvm-robin.yaml
+  tags:
+    - abm-remove
+    - never
+
+- name: Reboot the machine after removing everything
+  reboot:
+    msg: "Reboot to reset LVM, IPs and in-memory ABM functionality"
+    reboot_timeout: 600
+  tags:
+  - abm-remove
+  - remove-reboot
+  - never

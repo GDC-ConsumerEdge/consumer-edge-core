@@ -7,11 +7,11 @@ spec:
   sourceFormat: "{{ storage_provider_repo_type }}"
   git:
     repo: "{{ storage_provider_repo_url }}"
-    branch: "main"
+    branch: "{{ storage_provider_repo_branch }}"
     dir: "/config"
     auth: "{{ storage_provider_auth_type }}"
     secretRef:
-      name: {{storage_provider}}-git-creds # matches the external seret below
+      name: "{{storage_provider}}-git-creds" # matches the external seret below
 
 ---
 
@@ -31,9 +31,9 @@ spec:
   data:
   - secretKey: username                         # K8s secret key name inside secret
     remoteRef:
-      key: {{storage_provider}}-access-token-creds     #  GCP Secret Name
+      key: {{storage_provider}}-git-creds       #  GCP Secret Name
       property: username                        # field inside GCP Secret
   - secretKey: token                            # K8s secret key name inside secret
     remoteRef:
-      key: {{storage_provider}}-access-token-creds     #  GCP Secret Name
+      key: {{storage_provider}}-git-creds       #  GCP Secret Name
       property: token                           # field inside GCP Secret

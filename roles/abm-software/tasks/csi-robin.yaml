@@ -36,3 +36,69 @@
   - robin-install
   - robin-client
   - robin-cron
+
+# Create License Secret for Robin
+- name: "Create Robin GCP Secret (robin-sds-license)"
+  run_once: true
+  shell: |
+    EXISTS=$(gcloud secrets list --filter="{{ robin_gcp_secret_name }}" --format="value(name)" --project="{{ google_secret_project_id }}")
+    if [ -z "${EXISTS}" ]]; then
+      gcloud secrets create {{ robin_gcp_secret_name }} --replication-policy="automatic" --project="{{ google_secret_project_id }}"
+      echo "ADDED"
+    fi
+  register: sds_license_creds
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  tags:
+  - robin-install
+  - robin-license
+  - gcloud-mutate
+
+# Copy license file over to machine
+
+# Create a new secret version if none are active or exist
+- name: "Add new version of Robin License if none exist"
+  run_once: true
+  shell: |
+    EXISTS=$(gcloud secrets versions list {{ storage_provider_auth_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_secret_project_id }}")
+    if [ -z "${EXISTS}" ]; then
+      cat "{{ robin_license_file_location }}" | gcloud secrets versions add {{ storage_provider_auth_secret }} --project="{{ google_secret_project_id }}" --data-file=-
+      echo "ADDED"
+    fi
+  register: sds_license_secret_version
+  changed_when: '"ADDED" in sds_license_secret_version.stdout_lines'
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  tags:
+  - robin-install
+  - robin-license
+  - gcloud-mutate
+
+- name: "Copy Robin Storage Profile Block Type"
+  template:
+    src: robin-storage-profile.yaml.j2
+    dest: "{{ sds_config_files }}/robin-storage-profile.yaml"
+  tags:
+  - robin-install
+  - robin-storage-block
+
+- name: "Apply Robin Storage Profile Block Type"
+  ignore_errors: true
+  command:
+    cmd: "kubectl apply -f {{ sds_config_files }}/robin-storage-profile.yaml"
+  register: apply_block_type
+  changed_when:
+  - apply_block_type is successful
+  failed_when:
+  - apply_block_type is failed
+  - '"Error from server (AlreadyExists)" not in result.stdout'
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  tags:
+  - robin-install
+  - robin-storage-block

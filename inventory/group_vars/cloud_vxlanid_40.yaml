@@ -22,6 +22,14 @@ load_balancer_pool_cidr: [
   "10.200.0.50-10.200.0.70"
 ]
 
+storage_provider: "robin"
+storage_cluster_trait_repo_install: false
+
+# Disks to use for LVM
+robin_disk_paths: [
+  "/dev/sdb"
+]
+
 ###
 ### Cluster Network (Multus)
 ###

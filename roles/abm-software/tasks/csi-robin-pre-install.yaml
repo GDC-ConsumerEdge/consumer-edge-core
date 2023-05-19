@@ -1,0 +1,66 @@
+###
+### This task list is run BEFORE Robin SDS is installed. This is used to set up the LVM groups IF they have not been created already ( TODO the "IF" is coming in future release)
+###
+
+- name: Validate LVM2 installed and updated
+  apt:
+    pkg:
+    - lvm2
+    state: present
+  when:
+  - setup_default_lvm is true
+  tags:
+  - lvm-setup
+  - robin-io
+
+- name: Setup LVM configuration
+  shell: |
+    sed -i 's:udev_sync = 1:udev_sync = 0:g' /etc/lvm/lvm.conf;
+    sed -i 's:udev_rules = 1:udev_rules = 0:g' /etc/lvm/lvm.conf;
+  when:
+  - create_lvm is true
+  tags:
+  - lvm-setup
+  - robin-io
+
+#####
+##### Setup LVM for Robin
+#####
+
+- name: Set Fact Create LVMs # May not be needed if the declarative is used
+  set_fact:
+    create_lvm: true # "{{ (robin_disk_paths is defined and robin_disk_paths | length > 0) and (existing_group.rc > 0) and (setup_default_lvm is true) }}"
+  tags:
+  - lvm-create
+  - robin-io
+
+- name: Create the "{{ robin_lvm_group_name }}" Volume group
+  lvg:
+    pvs: "{{ robin_disk_paths | join(',') }}"
+    vg: "{{ robin_lvm_group_name }}"
+    pesize: "16G"                         # Maximum LVM size (not sure if this is problematic or not)
+    pv_options: '-Z y'
+    force: yes
+    pvresize: true                        # the volume to maximum size
+    state: present
+  tags:
+  - lvm-create
+  - lvm-vgcreate
+  - robin-io
+
+- name: Create the Logical Volumes
+  lvol:
+    vg: "{{ robin_lvm_group_name }}"
+    lv: "lv_{{ index }}"
+    size: "+100%FREE"
+    active: yes
+    force: true
+    state: present
+  loop: "{{ robin_disk_paths | list }}"
+  loop_control:
+    loop_var: disk_path
+    index_var: index
+  tags:
+  - lvm-create
+  - lvm-lvcreate
+  - robin-io

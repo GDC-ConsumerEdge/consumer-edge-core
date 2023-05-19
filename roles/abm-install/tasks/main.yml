@@ -13,6 +13,8 @@
       state: directory
       mode: '0755'
     loop: "{{ storage_provider_roots }}"
+    when:
+    - storage_provider != "robin" # Robin does not need a path, Robin consumes the disk or LVM volume whole
     tags:
     - abm-install
     - abm-config

@@ -81,6 +81,17 @@ export HTTPS_PROXY_ADDR=""
 export HTTPS_PROXY_PORT=""
 export HTTPS_PROXY_PROTOCOL="" # http or https
 
+### SDS Configuration
+# Optional configuration for the Cluter Trait Repo of the target SDS. All of the below commented out configuration
+#   are the default configurations programmed in the provisioning process (ie, they do not need to be explicitly set if
+#   they are not different than the below values)
+####
+# export SDS_REPO_URL="https://gitlab.com/gcp-solutions-public/retail-edge/available-cluster-traits/robin-io-anthos.git"
+# export SDS_REPO_BRANCH="main"
+# export SDS_REPO_STRUCTURE="hierarchy" # vs "unstructred"
+# export SDS_TOKEN_USER="${SCM_TOKEN_USER}"
+# export SDS_TOKEN_TOKEN="${SCM_TOKEN_TOKEN}"
+
 # Uncomment to use RHEL8 or fill in with supported OS/family/project as needed (advanced)
 # export MACHINE_OS_FAMILY="rhel-8"
 # export MACHINE_OS_PROJECT="rhel-cloud"
