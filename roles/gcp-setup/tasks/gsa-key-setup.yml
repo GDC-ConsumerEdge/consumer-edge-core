@@ -103,7 +103,7 @@
 ###
 - name: Download key files from secret manager locally
   shell: |
-    gcloud secrets versions access latest --secret="{{ item.name }}" >> {{ remote_keys_folder }}/{{ item.keyfile }} --project="{{ google_secret_project_id }}"
+    gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" >> {{ remote_keys_folder }}/{{ item.keyfile }}
     chmod 444 {{ remote_keys_folder }}/{{ item.keyfile }} # read-only
   args:
     executable: /bin/bash
