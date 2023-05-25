@@ -280,7 +280,7 @@ provisioning_gsa_key: "{{ lookup('env', 'PROVISIONING_GSA_FILE') }}"
 provisioning_gsa_key_secret: "provisioning-gsa-{{ cluster_name }}"
 node_gsa_key: "{{ lookup('env', 'NODE_GSA_FILE') }}"
 node_gsa_key_secret: "node-gsa-{{ cluster_name }}"
-tools_base_path: "{{ abm_install_folder }}/google-tools-install"
+tools_base_path: "{{ abm_install_folder }}/tools"
 
 ## kubeconfig link directory and file (so all users can access kubeconfig and env KUBECONFIG set to this location/file)
 kubeconfig_shared_root: "{{ abm_install_folder }}/kubeconfig"

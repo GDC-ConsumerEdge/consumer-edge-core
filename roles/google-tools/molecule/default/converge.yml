@@ -11,3 +11,7 @@
     google_zone: "{{google_region}}-a"
     gcp_services_required: []
     bmctl_version: "1.11.1"
+    google_project_id: "{{ lookup('env', 'PROJECT_ID') }}"
+    # Local GSA Key (needs to be provided via command line vars)
+    provisioning_gsa_key: "{{ lookup('env', 'PROVISIONING_GSA_FILE') }}"
+    node_gsa_key: "{{ lookup('env', 'NODE_GSA_FILE') }}"
