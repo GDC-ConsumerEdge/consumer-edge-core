@@ -328,7 +328,7 @@
 
   - name: Adding k9s utility to machine (optional, but recommended)
     ansible.builtin.unarchive:
-      src: https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_x86_64.tar.gz
+      src: https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_amd64.tar.gz
       dest: /usr/local/bin
       remote_src: yes
     ignore_errors: true
@@ -336,6 +336,7 @@
     tags:
     - optional
     - tool-install
+    - k9s
 
   - name: Add kubestr storage debugging utility
     ansible.builtin.unarchive:

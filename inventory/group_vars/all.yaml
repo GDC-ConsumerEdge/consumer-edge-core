@@ -231,11 +231,6 @@ storage_provider_hmac_gcm_secret: "{{ google_project_id }}-{{ cluster_name }}-sd
 # Storage provider roots for disc storage
 storage_provider_roots: [ "/customer" ]
 
-### Robin SDS Specific Variables
-robin_disk_paths: [
-  # Override this in host-specific files
-  # Provide a list of disks that should be included in the LVM Group that the SDS is configured to use for discovery
-]
 # Prefix used in the naming of the Logical Volume. NOTE: This MUST match the SDS configuration in the Repository. Default is `robin-lvm`
 robin_lvm_name: "robin-lv"
 

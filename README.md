@@ -173,6 +173,12 @@ There are two approaches to creating a baseline machine. This method is a bit mo
 
 ## ![Provisioning Baselined Machines](docs/img/3.png "3") Provisioning Baselined Machines
 
+1. Create any overrides to variables using the `templates/instance-run-vars-template.yaml`. Adjust to match the provisioning instance run needs
+
+    ```bash
+    envsubst < templates/instance-run-vars-template.yaml > build-artifacts/instance-run-vars.yaml
+    ```
+
 1. Run the following and answer 'y' when propmted. This command will enter into the container image shell to run
 commands, do not `exit` until completed.
 
@@ -235,3 +241,19 @@ performed using SSH.
       kubectl get nodes
       ```
     * `exit` to return to container shell
+
+## Using more than 1 cluster?
+
+Consumer Edge is setup to provision one cluster at a time (future, multiple at a time). In the meantime, here are a few suggestions
+
+* Create a symlink to your `build-artifacts/` folder so it is easy to swap back/forth
+    ```bash
+    cp -r build-artifacts/ build-artifacts-1
+    ln -s build-artifacts-1 build-artifacts
+    # repeat as needed
+    ```
+* Move the .envrc file into your `build-artifacts` folder, then have the `.envrc` source variables from that folder
+    ```bash
+    mv .envrc build-artifacts/envrc
+    echo 'source build-artifacts/envrc' >> .envrc
+    ```
