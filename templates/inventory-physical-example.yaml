@@ -29,14 +29,6 @@ edge_cluster:
     load_balancer_pool_cidr: [
       "192.168.3.20-192.168.3.30" # 9 IPs for LB + 1 Ingress
     ]
-    # Install observability using Legacy agents (override)
-    install_observability: false # skip legacy observability install
-    # Ansible Pull Authenticaiton String (omit if not using Ansible Pull. Omitting is common)
-    ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
-    # Ansible Pull repo for Remote Execution (omit if not using Ansible Pull)
-    ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
-    # Ansible pull repo for cluster operations (omit if not using Ansible Pull)
-    ansible_pull_cluster_ops_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/cluster-operations/update-cluster-repo.git"
     # Labels applied to the cluster
     fleet_cluster_labels: ["type=development", "location=stanwood", "country=usa", "earlyaccess=false"] # Examples, need to be key=value comma separated
   hosts:
@@ -45,12 +37,15 @@ edge_cluster:
       node_ip: "192.168.3.11"                 # IP of the host
       primary_cluster_machine: true           # Identify the first machine to act as the "primary" while provisioning. Primary machine is one of the machines to perform one-machine only commands like kubectl and gcloud commands.
       machine_label: "edge-1"                 # Label to be used in CloudOps logging
+      ansible_host: "{{ node_ip }}"           # Specific host IP to avoid needing `/etc/hosts` file
     edge-2:                                   # host name for second machine
       node_ip: "192.168.3.12"
       machine_label: "edge-2"
+      ansible_host: "{{ node_ip }}"
     edge-3:                                   # host name for third machine
       node_ip: "192.168.3.13"
       machine_label: "edge-3"
+      ansible_host: "{{ node_ip }}"
 
 ####
 #### Each cluster is defined within one block. Below is an example of a second cluster. Remove if not using additional clusters
@@ -79,9 +74,12 @@ edge_cluster:
 #       node_ip: "192.168.1.11"
 #       primary_cluster_machine: true
 #       machine_label: "example-host-1"
+#       ansible_host: "{{ node_ip }}"
 #     example-host-2:
 #       node_ip: "192.168.1.12"
 #       machine_label: "example-host-2"
+#       ansible_host: "{{ node_ip }}"
 #     example-host-3:
 #       node_ip: "192.168.1.13"
 #       machine_label: "example-host-3"
+#       ansible_host: "{{ node_ip }}"

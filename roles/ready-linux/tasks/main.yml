@@ -315,7 +315,7 @@
   - multipath-config
 
 - name: Load tcm_loop kernel module
-  community.general.system.modprobe:
+  community.general.modprobe:
     name: nfs
     state: present
   tags:

@@ -6,6 +6,9 @@ tmp/
 .fleet/
 .screenrc
 
+# any additional cluster groups
+build-artifacts-*/
+
 # Newrelic agent log
 newrelic_agent.log
 

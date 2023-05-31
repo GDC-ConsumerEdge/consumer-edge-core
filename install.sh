@@ -31,6 +31,9 @@ DEBUG_COLOR="\e[1;35m"
 DEFAULT_COLOR="\e[1;32m"
 ENDCOLOR="\e[0m"
 
+# Used for String output directing user to add extra-vars file to the ansible-playbook run
+VAR_EXTRAS_STRING=""
+
 PROJECT_NAME_MAX_LENGTH=17
 
 function pretty_print() {
@@ -232,6 +235,14 @@ else
     pretty_print "PASS: SDS Cluster Trait Repo Branch: ${SDS_REPO_BRANCH}"
 fi
 
+# Extra Variables
+if [[ -f "./build-artifacts/instance-run-vars.yaml" ]]; then
+    pretty_print "INFO: Detected \"Instance Run Variables\"" "INFO"
+    VAR_EXTRAS_STRING="--extra-vars=\"@build-artifacts/instance-run-vars.yaml\""
+else
+    pretty_print "INFO: No detected \"Instance Run Variables\" file in build-artifacts/" "INFO"
+fi
+
 ### Validate ROOT_REPO_TYPE & ROOT_REPO URL
 # Options are none (default), token, ssh
 # IF default, only ROOT_REPO_URL needs to be filled (http or https prefix)
@@ -367,7 +378,7 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     pretty_print "Starting the docker container. You will need to run the following 2 commands (cut-copy-paste)"
     pretty_print "=============================="
     pretty_print "1: ./scripts/health-check.sh"
-    pretty_print "2: ansible-playbook all-full-install.yml -i inventory"
+    pretty_print "2: ansible-playbook all-full-install.yml -i inventory ${VAR_EXTRAS_STRING}"
     pretty_print "3: Type 'exit' to exit the Docker shell after installation"
     pretty_print "=============================="
     pretty_print "Thank you for using the quick helper script!"

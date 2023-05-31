@@ -1,0 +1,52 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+###
+### This file is used to override any variables for a specific Instance Run (one session of provisioning one or more hosts into a clustered state)
+###
+
+###
+### Required overriden variables
+###
+
+
+### --Robin SDS Specific Variables (uncomment and add as necessary)
+### Storage provider set to Robin
+# storage_provider: "robin"
+### Disk paths to use for LVM creation (Comma delimited strings) NOTE: This is a cluster-run wide, if provisioning more than 1 cluster at a time, this variable should be moved to the inventory cluster-level
+# robin_disk_paths: [ ]
+
+
+###
+### Common optional variables
+###
+
+### Ansible Pull (On-going cluster updates & optional SSH reverse tunnel to OS-level)
+### Authenticaiton String (omit if not using Ansible Pull. Omitting is common)
+# ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
+### Repo for Remote Execution (omit if not using Ansible Pull)
+# ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
+### Repo for cluster operations (omit if not using Ansible Pull)
+# ansible_pull_cluster_ops_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/cluster-operations/update-cluster-repo.git"
+
+
+###
+### Advance Override section
+###
+### This section is dedicated to advance/expert variable overrides only. This is tyipcally left blank unless explicit knowldge of variables and intended results is known.
+
+## NOTE: Reserved for future template updates
+
+# Reserved to ensure at least one variable is active (DO NOT REMOVE unless there is AT-LEAST one variable defined above)
+in_use: true
