@@ -119,7 +119,7 @@ This phase leverages a container to ensure consistent and conflict free `ansible
 1. Create "inventory" file for Ansible provisioning:
 
     ```bash
-    envsubst < templates/inventory-cloud-example.yaml > inventory/gcp.yml
+    envsubst < templates/inventory-cloud-example.yaml > build-artifacts-example/gcp.yml
     ```
 
 1. You are now ready to start provisioing based on cloud instances. Skip to "Step 3"
@@ -163,10 +163,10 @@ There are two approaches to creating a baseline machine. This method is a bit mo
 1. Create "inventory" file for Ansible provisioning:
 
     ```bash
-    envsubst < templates/inventory-physical-example.yaml > inventory/inventory.yml
+    envsubst < templates/inventory-physical-example.yaml > build-artifacts-example/inventory.yml
     ```
 
-1. Review `inventory/inventory.yml` to set the variables for your instances (ie: IP addresses for each host, cluster-level variables set, etc)
+1. Review `build-artifacts/inventory.yml` to set the variables for your instances (ie: IP addresses for each host, cluster-level variables set, etc)
 
 1. You are now ready to start provisioing based on physical instances. Skip to "Step 3"
 
@@ -251,9 +251,4 @@ Consumer Edge is setup to provision one cluster at a time (future, multiple at a
     cp -r build-artifacts/ build-artifacts-1
     ln -s build-artifacts-1 build-artifacts
     # repeat as needed
-    ```
-* Move the .envrc file into your `build-artifacts` folder, then have the `.envrc` source variables from that folder
-    ```bash
-    mv .envrc build-artifacts/envrc
-    echo 'source build-artifacts/envrc' >> .envrc
     ```

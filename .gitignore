@@ -6,8 +6,6 @@ tmp/
 .fleet/
 .screenrc
 
-# any additional cluster groups
-build-artifacts-*/
 
 # Newrelic agent log
 newrelic_agent.log
@@ -17,9 +15,12 @@ bundle.zip
 
 # Folder to hold build-artifacts needed for Docker install (maybe all)
 # keep the .gitkeep file, but ignore everything else
-build-artifacts/*
-!build-artifacts/README.md
-!build-artifacts/ssh-config
+# any additional cluster groups
+build-artifacts-*/
+!build-artifacts-example/
+build-artifacts-example/*
+!build-artifacts-example/README.md
+!build-artifacts-example/ssh-config
 
 # local Inventory files are not stored
 inventory.yml
@@ -28,7 +29,7 @@ inventory.yaml
 gcp.yaml
 gcp.yml
 
-inventory/*.yaml
+!inventory/inventory.yaml
 inventory/host_vars/*.yaml
 # Leave 2 examples of Cloud and Physical configurations
 !inventory/host_vars/edge-1.yaml
@@ -90,9 +91,6 @@ tfplan
 *.key
 *.srl
 *.csr
-
-# direnv
-.envrc
 
 # Code Coverage
 coverage.out
