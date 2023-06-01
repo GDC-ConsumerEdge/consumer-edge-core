@@ -285,7 +285,7 @@ fi
 pretty_print ""
 pretty_print "==============================="
 pretty_print ""
-pretty_print "All of the following variables CAN and SHOULD be verified in the generated '.envrc' file following the completion of this script"
+pretty_print "All of the following variables CAN and SHOULD be verified in the generated 'envrc' file following the completion of this script"
 pretty_print ""
 
 export ROOT_REPO_URL="https://gitlab.com/gcp-solutions-public/retail-edge/primary-root-repo-template.git"
@@ -294,11 +294,11 @@ pretty_print "INFO: Setting default Primary Root Repo: ${ROOT_REPO_URL}" "INFO"
 pretty_print "INFO: Setting up docker configuration to use gcloud for gcr.io" "INFO"
 yes Y | gcloud auth configure-docker --quiet --verbosity=critical --no-user-output-enabled
 
-if [[ ! -f ".envrc" ]]; then
-	pretty_print "INFO: Generating '.envrc' properties file" "INFO"
-	envsubst "${PROJECT_ID}" < templates/envrc-template.sh > .envrc
+if [[ ! -f "build-artifacts/envrc" ]]; then
+	pretty_print "INFO: Generating 'envrc' properties file" "INFO"
+	envsubst "${PROJECT_ID}" < templates/envrc-template.sh > build-artifacts/envrc
 else
-	pretty_print "PASS: Using existing .envrc file"
+	pretty_print "PASS: Using existing envrc file"
 fi
 direnv allow .
 
@@ -318,11 +318,11 @@ else
 	pretty_print "INFO: Docker build image was found, will not re-build automatically." INFO
 fi
 
-if [[ ! -f "inventory/gcp.yml" ]]; then
-	pretty_print "INFO: Default GCP Ansible plugin configuration was not found. Generating a new version at inventory/gcp.yml" "INFO"
-	envsubst < templates/inventory-cloud-example.yaml > inventory/gcp.yml
+if [[ ! -f "build-artifacts/gcp.yml" ]]; then
+	pretty_print "INFO: Default GCP Ansible plugin configuration was not found. Generating a new version at build-artifacts/gcp.yml" "INFO"
+	envsubst < templates/inventory-cloud-example.yaml > build-artifacts/gcp.yml
 else
-	pretty_print "PASS: GCP Inventory file found at inventory/gcp.yml"
+	pretty_print "PASS: GCP Inventory file found at build-artifacts/gcp.yml"
 fi
 
 echo ""
@@ -331,15 +331,15 @@ pretty_print "Your project is set up and ready for use. You will need to do a co
 echo ""
 pretty_print "Cloud-based host machines (default)" "DEBUG"
 pretty_print "1. Create GCE instances: run './scripts/cloud/create-cloud-gce-baseline.sh -c 3'" "INFO"
-pretty_print "2. Use your editor of choice and check the generated '.envrc' file to ensure correct Environment Variables were set."
-pretty_print "3. If you made any changes, save file and run either: 'direnv allow .' or 'source .envrc'"
+pretty_print "2. Use your editor of choice and check the generated 'build-artifacts/envrc' file to ensure correct Environment Variables were set."
+pretty_print "3. If you made any changes, save file and run either: 'direnv allow .' or 'source build-artifacts/envrc'"
 pretty_print "4. Run: ./install.sh "
 echo ""
 pretty_print "Physical Machine based host machines" "DEBUG"
-pretty_print "1. Double check the .envrc file to make sure the variables are staticly defined and are correct." "INFO"
+pretty_print "1. Double check the build-artifacts/envrc file to make sure the variables are staticly defined and are correct." "INFO"
 pretty_print "2. If you made any changes, 'direnv allow .'"
 pretty_print "3. Copy the 3 'edge-X.yaml' files in ./inventory and rename with a hostname of your choice (ie: nucs-1.yaml, nucs-2.yaml, nucs-3.yaml)"
-pretty_print "4. If using physical hardware, create an inventory file: envsubst < templates/inventory-physical-example.yaml > inventory/inventory.yaml."
+pretty_print "4. If using physical hardware, create an inventory file: envsubst < templates/inventory-physical-example.yaml > build-artifacts/inventory.yaml."
 pretty_print "   - Modify this file to match your host_var inventory files (see previous step). Comment out 'edge-1,edge-2,edge-3 and replace with your host names"
 pretty_print "5. Run: ./install.sh "
 echo ""

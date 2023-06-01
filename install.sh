@@ -171,7 +171,7 @@ else
 fi
 
 # Check for GCP Inventory
-if [[ ! -f "./inventory/gcp.yml" ]]; then
+if [[ ! -f "./build-artifacts/gcp.yml" ]]; then
     pretty_print "WARNING: GCP Inventory file was not found. IF using GCE instances, this file MUST be setup and working." "WARN"
 else
     pretty_print "PASS: GCP Inventory file found"
@@ -180,7 +180,7 @@ else
 fi
 
 # Check for GCP Inventory
-if [[ ! -f "./inventory/inventory.yaml" && ! -f "./inventory/inventory.yml" ]]; then
+if [[ ! -f "./build-artifacts/inventory.yaml" && ! -f "./build-artifacts/inventory.yml" ]]; then
     pretty_print "WARNING: Physical Inventory file was not found. IF using physical devices, this file MUST be setup and working." "WARN"
 else
     pretty_print "PASS: Physical inventory file found"
