@@ -183,32 +183,32 @@ Inventory files contain information about how to connect to target machines and 
 
 Inventory for GCP is dynamic, meaning the GCP module will query the project + region for cloud resources to use as inventory. As far as Ansible is concerned, GCP inventory is dynamic so the example inventory has placeholders that are replaced using `envsubst` (NOTE: `envsubst` may need to be added to the **provisioning machine**). When running playbooks, Ansible will use the pre-provisioned GCE instances. The inventory file does NOT build new GCE machines.
 
-1. Establish GCP Inventory File "inventory/gcp.yaml"
+1. Establish GCP Inventory File "build-artifacts/gcp.yaml"
 
     ```bash
     # note "gcp.yaml", this name convention is required for the gcp module plugin
-    envsubst < templates/inventory-cloud-example.yaml > inventory/gcp.yaml
+    envsubst < templates/inventory-cloud-example.yaml > build-artifacts/gcp.yaml
     ```
 
 > NOTE: If the `envsubst` dependency is missing, install using `apt-get install gettext-base`
 
 ### Physical Inventory file
 
-In order to create an inventory file, use the example file `inventory-physical-example.yml` and place the contents in `inventory/inventory.yaml`
+In order to create an inventory file, use the example file `inventory-physical-example.yml` and place the contents in `build-artifacts/inventory.yaml`
 
 ```bash
 # Example using envsubst (not required unless the example file has environment variables)
-envsubst < templates/inventory-physical-example.yaml > inventory/inventory.yaml
+envsubst < templates/inventory-physical-example.yaml > build-artifacts/inventory.yaml
 ```
 
 > NOTE: Check the contents and make sure the quantity of hostnames is correct for your situation and that the hostnames used will resolve (e.g. nuc-1 vs nuc-1.lan)
 
 ## Verifying Inventory Variables
 
-For each host defined in inventory/inventory.yaml, ensure that ip addresses and ranges are appropriate for your network and that IP addresses match host IP.
+For each host defined in build-artifacts/inventory.yaml, ensure that ip addresses and ranges are appropriate for your network and that IP addresses match host IP.
 
 ```bash
-# Repeat for each node defined in inventory/inventory.yaml
+# Repeat for each node defined in build-artifacts/inventory.yaml
 vim inventory/host_vars/nuc-1.yaml
 ```
 
