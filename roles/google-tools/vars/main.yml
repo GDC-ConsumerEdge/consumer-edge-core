@@ -2,7 +2,7 @@
 # vars file for google-tools
 
 # gcloud version to download (gcloud version) -- roughly kept up-to-date, the system will update when installed, keeping up-to-date just makes the install a little faster
-gcloud_version: "432.0.0"
+gcloud_version: "433.0.0"
 
 kubectx_version: "0.9.4"
 
