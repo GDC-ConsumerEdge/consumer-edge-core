@@ -339,3 +339,23 @@
   tags:
   - os-setup
   - cron-jobs
+
+- name: Check if file exists
+  delegate_to: localhost
+  stat:
+    path: "build-artifacts/add-hosts"
+  register: add_hosts_file
+  tags:
+  - os-setup
+  - hosts-file
+
+- name: Postfix add-hosts to /etc/hosts
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    block: "{{ lookup('ansible.builtin.file', 'build-artifacts/add-hosts') }}"
+    backup: yes
+    marker: "# {mark} Peer IPs w/ Hostname (managed block)"
+  when: add_hosts_file.stat.exists
+  tags:
+  - os-setup
+  - hosts-file

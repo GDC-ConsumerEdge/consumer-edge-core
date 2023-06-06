@@ -184,6 +184,11 @@ if [[ ! -f "./build-artifacts/inventory.yaml" && ! -f "./build-artifacts/invento
     pretty_print "WARNING: Physical Inventory file was not found. IF using physical devices, this file MUST be setup and working." "WARN"
 else
     pretty_print "PASS: Physical inventory file found"
+    if [[ ! -f "./build-artifacts/add-hosts" ]]; then
+        pretty_print "WARNING: Physical Inventory file was found, but the add-hosts file was not found. Did you forget to create this file?" "WARN"
+    else
+        pretty_print "PASS: add-hosts file found"
+    fi
 fi
 
 # Check for GCR docker credentials helper
@@ -229,7 +234,7 @@ fi
 
 # SDS
 if [[ -z "${SDS_REPO_URL}" ]]; then
-    pretty_print "WARN: No SDS Cluster Trait Repository is defined. An SDS will NOT be installed by default " "WARN"
+    pretty_print "INFO: No SDS Cluster Trait Repository is defined. An SDS will NOT be installed by default " "INFO"
 else
     pretty_print "PASS: SDS Cluster Trait Repo URL: ${SDS_REPO_URL}"
     pretty_print "PASS: SDS Cluster Trait Repo Branch: ${SDS_REPO_BRANCH}"
