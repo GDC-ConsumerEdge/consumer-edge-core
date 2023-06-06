@@ -6,3 +6,7 @@ spec:
   enabled: {{ enable_vmruntime }}
   useEmulation: {{ kubevirt_use_emulation }}
   vmImageFormat: qcow2
+  disableCDIUploadProxyVIP: {{ disable_cdi_upload_proxy_vip }}
+  # storage:
+  #  properties:
+  #    defaultScratchSpaceStorageClass: "local-shared"
