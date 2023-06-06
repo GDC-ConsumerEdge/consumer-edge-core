@@ -115,8 +115,6 @@ acm_version: "1.15.1"
 
 # Where to store ACM files during provisoning
 acm_config_files: "{{ abm_install_folder }}/acm-configs"
-# Folder containing VMRuntime configuration
-vmruntime_config_path: "{{ abm_install_folder }}/vmruntime"
 # Folder containing AddOn configurations (typically Stackdriver based)
 addon_config_path: "{{ abm_install_folder }}/addon-configs"
 # Home directory for external secrets download and operations (TODO: Duplciated in post-install)
@@ -193,8 +191,9 @@ enable_multus_network: false # Enable Multus (Cannot be true when enable_vmrunti
 ###
 # VM Runtime
 enable_vmruntime: true  # Enable VMRuntime & Networking (this cannot be true if multus network is true) -- https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/vm-runtime/create-networks
-
-# By default, do not use QEMU emulation
+# Disable VM Runtime CDI Proxy
+disable_cdi_upload_proxy_vip: true # Default is to not use CDI HTTP Importer service
+# Use QEMU emulation (true), default to false
 kubevirt_use_emulation: false
 
 ###
