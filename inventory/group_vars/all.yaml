@@ -1,3 +1,17 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ---
 
 # Ansible Setttings (per each run)
@@ -135,7 +149,7 @@ acm_ssh_private_keyfile: "{{ lookup('env', 'SCM_SSH_PRIVATE_KEYFILE') | default(
 # From the above repo, what branch and what directory to use as bases
 root_repository_branch: "{{ lookup('env', 'ROOT_REPO_BRANCH') | default('main', True) }}"
 # Directory to use as base
-root_repository_policy_dir: "{{ lookup('env', 'ROOT_REPO_DIR') | default('/config', True) }}"
+root_repository_policy_dir: "{{ lookup('env', 'ROOT_REPO_DIR') | default('/config/clusters/{{ acm_cluster_name }}/meta', True) }}"
 root_repository_sync_time: 15 # ACM default is 15. NOTE: Do not include a suffix, seconds is assumed and type is INT
 
 # name of the first/primary root-sync object (only used in the root-sync.yaml method of RooSync (DEPRECATED removal ~Q1/2023))
@@ -195,6 +209,8 @@ enable_vmruntime: true  # Enable VMRuntime & Networking (this cannot be true if 
 disable_cdi_upload_proxy_vip: true # Default is to not use CDI HTTP Importer service
 # Use QEMU emulation (true), default to false
 kubevirt_use_emulation: false
+# Folder to place VM Runtime files
+vmruntime_config_path: "{{ abm_install_folder }}/vmruntime-configs"
 
 ###
 ### Global Snapshot & Update Variables
@@ -207,7 +223,7 @@ snapshot_gcs_bucket_base: "{{ lookup('env', 'SNAPSHOT_GCS') | default( [ google_
 ###
 ### Storage providers are installed via Cluster Trait Repos. Configuration for CTR is done in this automation (where possible)
 ###
-storage_provider: "none" # Current Options: longhorn, none & Future Options: openebs, portworx. NOTE: storage_provider_repo_url must match with storage_provider_repo_url
+storage_provider: "robin" # Current Options: longhorn, none & Future Options: openebs, portworx. NOTE: storage_provider_repo_url must match with storage_provider_repo_url
 ### NOTE: Storage providers can be installed during provsioning, but will not be done by default. Adding a trait to the Primary Root Repo is the preferred new method unless variables are required
 ###
 # Set to "true" if the ClusterTraitRepo SDS should be applied during provisioning, otherwise only the supporting functionality (ie: lvm groups or cluster-specific default settings will be added)
@@ -230,10 +246,15 @@ storage_provider_hmac_gcm_secret: "{{ google_project_id }}-{{ cluster_name }}-sd
 # Storage provider roots for disc storage
 storage_provider_roots: [ "/customer" ]
 
+### Robin SDS Specific Variables
+# robin_disk_paths: [
+#   # Override this in host-specific files
+#   # Provide a list of disks that should be included in the LVM Group that the SDS is configured to use for discovery
+# ]
 # Prefix used in the naming of the Logical Volume. NOTE: This MUST match the SDS configuration in the Repository. Default is `robin-lvm`
 robin_lvm_name: "robin-lv"
 
-# name of the JSON formatted Robin IO license file REQUIRED. There MUST be a file named this in the `build-artifacts/` folder
+# name of the JSON formatted Robin IO license file REQUIRED. There MUST be a file named this in the `build-artifacts/` folder. NOTE: This will be created even if the SDS operator is NOT installed
 robin_license_file_name: "robinio-sds.json.license"
 # location of local JSON license file
 robin_license_local_uri: "./build-artifacts/{{ robin_license_file_name }}"
@@ -442,5 +463,5 @@ franchises: [
 
 ## Setting up Redhat or Ubuntu #NOTE: This is not a comprehesive solution that can/may provide other OSes in the future (ternary is not the right choice when 3 options)
 is_redhat: "{{ (ansible_distribution == 'RedHat') and (ansible_distribution_major_version == '8' or ansible_distribution_major_version == '9') }}"
-is_ubuntu: "{{ (ansible_distribution == 'Ubuntu') and (ansible_distribution_version == '18.04' or ansible_distribution_version == '20.04') }}"
+is_ubuntu: "{{ (ansible_distribution == 'Ubuntu') and (ansible_distribution_version == '18.04' or ansible_distribution_version == '20.04' or ansible_distribution_version == '22.04')}}"
 target_os: "{{ (is_ubuntu == true) | ternary('ubuntu', 'redhat') }}"

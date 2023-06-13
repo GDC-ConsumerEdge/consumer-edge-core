@@ -1,3 +1,17 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ###
 ### This task list is run BEFORE Robin SDS is installed. This is used to set up the LVM groups IF they have not been created already ( TODO the "IF" is coming in future release)
 ###
@@ -34,7 +48,25 @@
   - lvm-create
   - robin-io
 
+- name: Wipe the FS on the robin disks
+  ignore_errors: yes
+  filesystem:
+    dev: "{{ disk_path }}"
+    force: yes
+    state: absent
+  loop: "{{ robin_disk_paths | list }}"
+  loop_control:
+    loop_var: disk_path
+    index_var: index
+  when:
+  - create_lvm is true
+  tags:
+  - lvm-create
+  - lvm-wipe-fs
+  - robin-io
+
 - name: Create the "{{ robin_lvm_group_name }}" Volume group
+  ignore_errors: yes
   lvg:
     pvs: "{{ robin_disk_paths | join(',') }}"
     vg: "{{ robin_lvm_group_name }}"
@@ -49,6 +81,7 @@
   - robin-io
 
 - name: Create the Logical Volumes
+  ignore_errors: yes
   lvol:
     vg: "{{ robin_lvm_group_name }}"
     lv: "lv_{{ index }}"
