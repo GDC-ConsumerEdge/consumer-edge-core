@@ -48,7 +48,6 @@ if test "$ENABLE_COREFILES" == 1; then
     ulimit -c unlimited
 fi
 
-# TODO(dhrupadb): Extract common logic between deb and rpm scripts.
 # Attempt to discover the location of the Java libraries.
 find_libjvm_so () {
     local java_lib_dir
