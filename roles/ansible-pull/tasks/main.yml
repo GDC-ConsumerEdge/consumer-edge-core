@@ -79,14 +79,6 @@
   - ansible-pull-install
   - ansible-pull-common
 
-- name: "Update pip"
-  ansible.builtin.command:
-    cmd: "pip install --upgrade pip"
-  tags:
-  - ansible-pull
-  - ansible-pull-install
-  - ansible-pull-common
-
 - name: "Install Ansible"
   ansible.builtin.command:
     cmd: "pip install ansible"
