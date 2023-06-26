@@ -22,6 +22,15 @@
   tags:
   - enable-cpu-manager
 
+- name: Add on-exit remove cpu-manager-state
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    line: "ExecStopPost=/bin/bash -c 'if [ \"$EXIT_STATUS\" != 0 ]; then /bin/rm -f /var/lib/kubelet/cpu_manager_state; fi'"
+    state: present
+  tags:
+  - enable-cpu-manager
+  - fix-on-failure-cpu-manager
+
 - name: Remove the existing CPU manager file
   ansible.builtin.file:
     path: /var/lib/kubelet/cpu_manager_state
