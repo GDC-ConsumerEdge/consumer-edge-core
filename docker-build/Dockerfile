@@ -27,7 +27,7 @@ RUN ln -fs /usr/share/zoneinfo/UTC /etc/localtime
 RUN apt-get install -y --no-install-recommends tzdata
 #install dependencies...
 RUN apt-get install -y apt-utils vim nano python3-pip python-is-python3 curl wget openssh-server cron gettext iputils-ping direnv
-RUN pip install --upgrade pip
+# RUN pip install --upgrade pip # Removing for security purposes
 
 RUN mkdir -p /tmp/gcloud-install \
     && mkdir -p /var/gcloud-sdk \
