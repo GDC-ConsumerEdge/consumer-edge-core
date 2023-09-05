@@ -37,11 +37,11 @@ fi
 KUBECONFIG=${KUBECONFIG:-/var/abm-install/kubeconfig/kubeconfig}
 
 # get the IP of the Loadbalaced Service
-SERVICE_IP=$(kubectl get svc robin-admin -n robinio -o jsonpath='{.status.loadBalancer.ingress[0].ip}' --kubeconfig="${KUBECONFIG}")
+SERVICE_IP=$(kubectl get svc robin-console-ui -n robinio -o jsonpath='{.status.loadBalancer.ingress[0].ip}' --kubeconfig="${KUBECONFIG}")
 
 # Make sure we have the IP
 if [[ ! -n "${SERVICE_IP}" ]] || [[ -z "${SERVICE_IP}" ]]; then
-    echo -e "ERROR: Service password does not exist in K8s Sercret 'login-secret' for 'robinio' namespace. Abnormally exiting."
+    echo -e "ERROR: Service 'robin-console-ui' was not found in 'robinio' namespace. Abnormally exiting."
     exit 1
 fi
 

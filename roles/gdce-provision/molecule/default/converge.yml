@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include gdce-provision"
+      include_role:
+        name: "gdce-provision"

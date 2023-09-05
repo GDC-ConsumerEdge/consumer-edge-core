@@ -18,10 +18,12 @@
 ###
 ###
 ###
+# Location where all of the local instance run variables and state exists
+instance_run_state_folder: "build-artifacts/"
 
 # Ansible will use the key below
-ansible_ssh_private_key_file: "build-artifacts/consumer-edge-machine"
-ansible_ssh_common_args: "-F build-artifacts/ssh-config -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=1200s -o BatchMode=yes"
+ansible_ssh_private_key_file: "{{ instance_run_state_folder }}/consumer-edge-machine"
+ansible_ssh_common_args: "-F {{ instance_run_state_folder }}/ssh-config -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=1200s -o BatchMode=yes"
 ansible_control_path_dir: "/tmp/ansible-cp"
 ansible_ssh_priv_key_secret: "ssh-priv-key-{{ cluster_name }}"
 ansible_async_dir: "/tmp/.ansible_async"
@@ -254,10 +256,10 @@ storage_provider_roots: [ "/customer" ]
 # Prefix used in the naming of the Logical Volume. NOTE: This MUST match the SDS configuration in the Repository. Default is `robin-lvm`
 robin_lvm_name: "robin-lv"
 
-# name of the JSON formatted Robin IO license file REQUIRED. There MUST be a file named this in the `build-artifacts/` folder. NOTE: This will be created even if the SDS operator is NOT installed
+# name of the JSON formatted Robin IO license file REQUIRED. There MUST be a file named this in the `{{ instance_run_state_folder }}/` folder. NOTE: This will be created even if the SDS operator is NOT installed
 robin_license_file_name: "robinio-sds.json.license"
 # location of local JSON license file
-robin_license_local_uri: "./build-artifacts/{{ robin_license_file_name }}"
+robin_license_local_uri: "./{{ instance_run_state_folder }}/{{ robin_license_file_name }}"
 # Name of GCP Secret used by Robin. Secret contains JSON formatted information on the license. Defining this secret in GCP secret manager and providing an ACTIVE version will skip the license check locally
 robin_gcp_secret_name: "robin-sds-license"
 

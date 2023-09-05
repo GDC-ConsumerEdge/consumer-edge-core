@@ -38,47 +38,12 @@
 # Run installation (command could be run manually too or instead)
 # docker run -v "$(pwd):/var/consumer-edge-install:ro" -it gcr.io/${GCP_PROJECT}/consumer-edge-install:latest /bin/bash -c ansible-playbook -i inventory all-full-install.yaml
 
-ERROR_COLOR="\e[1;31m"
-INFO_COLOR="\e[1;37m"
-WARN_COLOR="\e[1;33m"
-DEBUG_COLOR="\e[1;35m"
-DEFAULT_COLOR="\e[1;32m"
-ENDCOLOR="\e[0m"
+source ./scripts/install-shell-helper.sh
 
 # Used for String output directing user to add extra-vars file to the ansible-playbook run
 VAR_EXTRAS_STRING=""
 
 PROJECT_NAME_MAX_LENGTH=17
-
-function pretty_print() {
-    MSG=$1
-    LEVEL=${2:-DEFAULT}
-
-    if [[ -z "${MSG}" ]]; then
-        return
-    fi
-
-    case "$LEVEL" in
-        "DEFAULT")
-            echo -e $(printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}")
-            ;;
-        "ERROR")
-            echo -e $(printf "${ERROR_COLOR}${MSG}${ENDCOLOR}")
-            ;;
-        "WARN")
-            echo -e $(printf "${WARN_COLOR}${MSG}${ENDCOLOR}")
-            ;;
-        "INFO")
-            echo -e $(printf "${INFO_COLOR}${MSG}${ENDCOLOR}")
-            ;;
-        "DEBUG")
-            echo -e $(printf "${DEBUG_COLOR}${MSG}${ENDCOLOR}")
-            ;;
-        *)
-            echo "NO MATCH"
-            ;;
-    esac
-}
 
 function setupgcpfirewall() {
     if [[ ! -z "${MANAGE_FIREWALL_RULES}" && "${MANAGE_FIREWALL_RULES}" != true ]]; then
@@ -392,17 +357,7 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
         exit 1
     fi
 
-    pretty_print " "
-    pretty_print "=============================="
-    pretty_print "Starting the docker container. You will need to run the following 2 commands (cut-copy-paste)"
-    pretty_print "=============================="
-    pretty_print "1: ./scripts/health-check.sh"
-    pretty_print "2: ansible-playbook all-full-install.yml -i inventory ${VAR_EXTRAS_STRING}"
-    pretty_print "3: Type 'exit' to exit the Docker shell after installation"
-    pretty_print "=============================="
-    pretty_print "Thank you for using the quick helper script!"
-    pretty_print "(you are now inside the Docker shell)"
-    pretty_print " "
+    display_help # print helper text
 
     # Running docker image
     docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd)/build-artifacts:/var/consumer-edge-install/build-artifacts:rw" -v "$(pwd):/var/consumer-edge-install:ro" -it ${IMAGE_PATH}

@@ -37,6 +37,7 @@ RUN mkdir -p /tmp/gcloud-install \
 
 # Auto-update upon building
 RUN /var/gcloud-sdk/google-cloud-sdk/bin/gcloud components update --quiet --verbosity=critical --no-user-output-enabled
+RUN /var/gcloud-sdk/google-cloud-sdk/bin/gcloud components install kubectl --quiet --verbosity=critical --no-user-output-enabled
 
 # Setup Ansible and other PIP-based dependencies
 COPY requirements.txt /tmp/requirements.txt

@@ -13,12 +13,11 @@
 # limitations under the License.
 
 ---
-- hosts: all
+
+- hosts: localhost
+  become: false
   gather_facts: false
   pre_tasks:
-  - name: Download SSH key
-    include_role:
-      name: download-ssh-key
   - name: Gathering Facts
     setup: {}
     tags:
@@ -28,16 +27,7 @@
     tags:
     - always
   roles:
-  - abm-login-token
-  vars:
-    kubeconfig_shared_location: "{{ abm_install_folder }}/kubeconfig/kubeconfig"
+  - gdce-provision
+  vars: []
   tags:
-  - hardware
-
-- hosts: cloud_type_abm
-  roles:
-  - abm-login-token
-  vars:
-    kubeconfig_shared_location: "{{ abm_install_folder }}/kubeconfig/kubeconfig"
-  tags:
-  - cloud
+  - gdce-setup

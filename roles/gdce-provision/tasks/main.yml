@@ -1,0 +1,28 @@
+---
+
+- name: Get kubeconfig if not already existing (uses Gateway Connect)
+  delegate_to: localhost
+  ansible.builtin.command:
+    cmd: gcloud container hub memberships get-credentials {{ cluster_name }} --project {{ google_project_id }}
+    creates: "{{ instance_run_state_folder }}/{{ cluster_name }}.kubeconfig"
+  environment:
+    KUBECONFIG: "{{ instance_run_state_folder }}/{{ cluster_name }}.kubeconfig"
+  register: kubeconfig
+
+- name: Check kubeconfig Access
+  delegate_to: localhost
+  ansible.builtin.command:
+    cmd: kubectl get nodes
+  environment:
+    KUBECONFIG: "{{ instance_run_state_folder }}/{{ cluster_name }}.kubeconfig"
+  register: kubectl_check
+
+- name: Output kubectl check
+  ansible.builtin.debug:
+    msg: "{{ kubectl_check.stdout_lines }}"
+  when: kubectl_check.stdout_lines is defined
+
+
+
+
+  
