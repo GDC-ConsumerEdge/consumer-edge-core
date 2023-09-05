@@ -1,0 +1,85 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+FROM alpine:3.17
+
+# Dependencies
+# - ENV variables
+ENV DEBIAN_FRONTEND=noninteractive
+ARG GCLOUD_VERSION="444.0.0"
+ARG PROJECT_ID=""
+
+ENV PYTHONUNBUFFERED=1
+RUN apk add --no-cache \
+    build-base \
+    vim \
+    nano \
+    python3-dev=3.10.13-r0 \
+    python3=3.10.13-r0 \
+    curl \
+    openssh-client \
+    gettext \
+    direnv
+
+# Setup Ansible and other PIP-based dependencies
+RUN python -m ensurepip --upgrade
+# RUN pip-compile --generate-hashes requirements.in -v
+# # Copy changed file to location for pip install
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --use-pep517 --require-hashes -r /tmp/requirements.txt
+
+RUN mkdir -p /tmp/gcloud-install \
+    && mkdir -p /var/gcloud-sdk \
+    && curl --output /tmp/gcloud-install/gcloud-sdk.tar.gz https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-linux-x86_64.tar.gz \
+    && tar -xvf /tmp/gcloud-install/gcloud-sdk.tar.gz -C /var/gcloud-sdk \
+    && rm -rf /tmp/gcloud-install
+
+ENV PATH $PATH:/var/gcloud-sdk/google-cloud-sdk/bin
+# Auto-update upon building
+RUN gcloud components update --quiet --verbosity=critical --no-user-output-enabled
+RUN gcloud components install kubectl --quiet --no-user-output-enabled
+
+# Add gcloud to bashrc (for the current/root user)
+RUN printf '\n#gcloud binaries\nexport PATH=/var/gcloud-sdk/google-cloud-sdk/bin:${PATH}\n' >> ~/.bashrc
+
+# add authentication for gcloud when bash starts up
+RUN printf '\n#gcloud authentication\n[ ! -z "${PROJECT_ID}" ] && gcloud auth activate-service-account --key-file=./build-artifacts/provisioning-gsa.json --project ${PROJECT_ID}' >> ~/.bashrc
+RUN printf '\n#### Aliases\nsource <(kubectl completion bash)\nalias l="ls -al"\nalias ll="ls -al"\nalias ".."="cd .."\n\n###########\n' >> ~/.bashrc
+# alias k=kubectl complete -F __start_kubectl k
+
+# Add SSH Config to avoid fingerprint checking
+RUN mkdir -p ~/.ssh && touch ~/.ssh/config
+RUN printf 'Host *\n\tStrictHostKeyChecking no\n' >> ~/.ssh/config
+RUN chmod 600 ~/.ssh/config
+
+#direnv installed above via apt
+RUN printf '\n#direnv hook\neval "$(direnv hook bash)"\n' >> ~/.bashrc
+
+# Configure touch points
+RUN mkdir -p /var/consumer-edge-install
+
+VOLUME [ "/var/consumer-edge-install" ]
+
+WORKDIR /var/consumer-edge-install
+
+RUN ansible-galaxy collection install community.general
+
+# Run a startup script on start so-as to auto-populate functionality from dynamically added volume
+CMD direnv allow . \
+    && export PATH=/var/gcloud-sdk/google-cloud-sdk/bin:${PATH} \
+    && /var/consumer-edge-install/docker-build/docker-cron-startup-script.sh >> /var/log/cron.log 2>&1 \
+    && source /var/consumer-edge-install/scripts/install-shell-helper.sh \
+    && gcloud auth activate-service-account --key-file=./build-artifacts/provisioning-gsa.json --project ${PROJECT_ID} \
+    && gcloud auth configure-docker --quiet --verbosity=critical \
+    && /bin/bash

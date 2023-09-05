@@ -69,6 +69,7 @@
   - skip-gcp-create
 
 - name: Create the bmctl snapshot backup GCS bucket
+  ignore_errors: true
   command:
     cmd: gsutil mb -p {{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}
   when:

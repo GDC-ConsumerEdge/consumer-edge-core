@@ -7,6 +7,7 @@ spec:
   useEmulation: {{ kubevirt_use_emulation }}
   vmImageFormat: qcow2
   disableCDIUploadProxyVIP: {{ disable_cdi_upload_proxy_vip }}
-  # storage:
-  #  properties:
-  #    defaultScratchSpaceStorageClass: "local-shared"
+  evictionPolicy:
+    migrationTargetInitializationTimeout: 90s
+  {# storage:
+    defaultStorageClass: robin-immediate #}

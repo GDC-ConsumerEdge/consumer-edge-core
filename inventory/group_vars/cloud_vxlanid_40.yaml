@@ -13,13 +13,13 @@
 # limitations under the License.
 
 # Name of the cluster
-cluster_name: "cnuc-1"
+cluster_name: "gdc-demo"
 
-google_region: "us-west1"
-google_zone: "us-west1-b"
+google_region: "us-central1"
+google_zone: "{{ google_region }}-c"
 
 # Name of the "store" per the ACM repo
-acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('location-1', True) }}"
+acm_cluster_name: "gdc-demo"
 
 # The other IPs in the cluster
 peer_node_ips: [
@@ -36,23 +36,23 @@ load_balancer_pool_cidr: [
   "10.200.0.50-10.200.0.70"
 ]
 
-storage_provider: "robin"
+storage_provider: "none"
 storage_cluster_trait_repo_install: false
 
 # Disks to use for LVM
 robin_disk_paths: [
-  "/dev/sdb"
+  # "/dev/sdb"
 ]
 
-###
-### Cluster Network (Multus)
-###
-# Ansible Pull Authenticaiton String
-ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
+# ###
+# ### Cluster Network (Multus)
+# ###
+# # Ansible Pull Authenticaiton String
+# ansible_pull_authentication_string: "{{scm_token_user}}:{{scm_token_token}}@"
 
-# Ansible Pull repo for Remote Execution
-ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
+# # Ansible Pull repo for Remote Execution
+# ansible_pull_remote_execute_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/retail-edge/remote-command-repo.git"
 
-# Ansible pull repo to manage cluster ops
-ansible_pull_cluster_ops_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/cluster-operations/update-cluster-repo.git"
+# # Ansible pull repo to manage cluster ops
+# ansible_pull_cluster_ops_repo: "https://{{ ansible_pull_authentication_string | default('', true) }}gitlab.com/gcp-solutions-public/cluster-operations/update-cluster-repo.git"
 

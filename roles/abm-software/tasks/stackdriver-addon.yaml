@@ -40,9 +40,14 @@
   tags:
   - customer-logging-setup
 
+# Note: the cluster's webhooks need to be enabled and functional before this can be performed. Retries are turned on
 - name: Enable Cluster AddOns
   command:
     cmd: kubectl annotate cluster {{ cluster_name }} preview.baremetal.cluster.gke.io/add-on-configuration=enable -n {{ cluster_name }}
+  retries: "{{ default_retry_count }}"
+  delay: "{{ default_retry_delay }}"
+  register: result
+  until: result.rc == 0
   when:
   - primary_cluster_machine is defined
   - primary_cluster_machine == true
