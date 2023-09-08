@@ -30,19 +30,19 @@ function pretty_print() {
 
     case "$LEVEL" in
         "DEFAULT")
-            echo -e $(printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}")
+            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n"
             ;;
         "ERROR")
-            echo -e $(printf "${ERROR_COLOR}${MSG}${ENDCOLOR}")
+            printf "${ERROR_COLOR}${MSG}${ENDCOLOR}\n"
             ;;
         "WARN")
-            echo -e $(printf "${WARN_COLOR}${MSG}${ENDCOLOR}")
+            printf "${WARN_COLOR}${MSG}${ENDCOLOR}\n"
             ;;
         "INFO")
-            echo -e $(printf "${INFO_COLOR}${MSG}${ENDCOLOR}")
+            printf "${INFO_COLOR}${MSG}${ENDCOLOR}\n"
             ;;
         "DEBUG")
-            echo -e $(printf "${DEBUG_COLOR}${MSG}${ENDCOLOR}")
+            printf "${DEBUG_COLOR}${MSG}${ENDCOLOR}\n"
             ;;
         *)
             echo "NO MATCH"
@@ -51,8 +51,7 @@ function pretty_print() {
 }
 
 function display_help() {
-    pretty_print " "
-    pretty_print "=============================="
+    pretty_print "\n=============================="
     pretty_print "Starting the docker container. You will need to run the following 2 commands (cut-copy-paste)"
     pretty_print "=============================="
     pretty_print "1: ./scripts/health-check.sh"
@@ -61,9 +60,7 @@ function display_help() {
     pretty_print "=============================="
     pretty_print "Thank you for using the quick helper script!"
     pretty_print "(you are now inside the Docker shell)"
-    pretty_print " "
-    pretty_print "Type "help-me" at any time to display this message"
-    pretty_print " "
+    pretty_print "\nType "help-me" at any time to display this message\n"
 }
 
 alias "help-me"="display_help"
