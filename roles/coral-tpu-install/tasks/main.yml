@@ -1,0 +1,56 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Check if apt-package has been installed
+  stat:
+    path: /etc/apt/sources.list.d/coral-edgetpu.list
+  register: coral_apt_source
+  when:
+  - install_coral_tpu is defined and install_coral_tpu is true
+
+- name: debug
+  debug:
+    msg: "coral_apt_source: {{ coral_apt_source }}"
+
+- name: Setup apt-packages
+  shell: |
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+    echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
+  when:
+  - coral_apt_source is defined and coral_apt_source.stat.exists == False
+  - install_coral_tpu is defined and install_coral_tpu is true
+  tags:
+  - coral-tpu-install
+  - apt-packages
+
+- name: Install Coral TPU
+  apt:
+    update_cache: true
+    pkg:
+    - libedgetpu1-std # USB and M2 Accelerator
+    - gasket-dkms # M2 Accelerator
+    state: present
+  when:
+  - install_coral_tpu is defined and install_coral_tpu is true
+  tags:
+  - coral-tpu-install
+  - apt-packages
+
+- name: Reboot to load the new kernel module
+  ansible.builtin.reboot:
+    reboot_timeout: 300 # 5 minutes
+  when:
+  - install_coral_tpu is defined and install_coral_tpu is true
+  tags:
+  - coral-tpu-install
