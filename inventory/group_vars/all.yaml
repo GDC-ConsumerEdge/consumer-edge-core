@@ -35,7 +35,7 @@ ansible_ssh_transfer_method: scp # smart|sftp|scp|piped
 ####
 # Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
 # Version of Anthos Bare Metal to install
-abm_version: "1.15.1" # verify coupling of ABM to BMCTL versions
+abm_version: "1.16.0" # verify coupling of ABM to BMCTL versions
 # bmctl binary version
 #TODO: set this up to query for the version, then upgrade automatically if updated
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
@@ -110,6 +110,16 @@ proxy_has_https_proxy: "{{ proxy_https_addr | length > 0 }}"
 optional_tools: true # defaults to true
 
 ###
+### Install the binaries for EdgeTPU Coral Accelerators
+###
+install_coral_tpu: false # defaults to false
+
+###
+### Install the binaries for NVIDIA GPUs
+###
+install_nvidia_gpu: false # defaults to false
+
+###
 ### Ansible Pull Configurations
 ###
 
@@ -127,7 +137,7 @@ ansible_pull_cluster_ops_repo: ""
 ####
 # gsutil ls -al gs://config-management-release/released/
 # Anthos Config Management version
-acm_version: "1.15.1"
+acm_version: "1.16.0"
 
 # Where to store ACM files during provisoning
 acm_config_files: "{{ abm_install_folder }}/acm-configs"

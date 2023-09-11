@@ -43,4 +43,6 @@
   - abm-post-install
   - ansible-pull
   - abm-login-token
+  - coral-tpu-install
+  - nvidia-drivers-install
   vars: []
