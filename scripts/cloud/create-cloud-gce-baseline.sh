@@ -22,7 +22,19 @@
 ## -- is used in case the directory name starts with a -
 PREFIX_DIR=$(dirname -- "$0")
 WORKDIR=$(pwd)
+BASE_DIR=$(basename $WORKDIR)
 source ${PREFIX_DIR}/gce-helper.vars
+
+# This script is likely to be run from two primary locations, so detecting that
+# and sourcing the pretty print library. If this script is run from some other
+# location, manually define pretty_print so this script doesn't fail.
+if [ "$BASE_DIR" = "core" ]; then
+  source scripts/install-shell-helper.sh
+elif [ "$BASE_DIR" = "cloud" ]; then
+  source ../install-shell-helper.sh
+else
+  pretty_print() { echo -e "$1"; }
+fi
 
 # Defaults
 GCE_COUNT=1
@@ -46,7 +58,7 @@ done
 
 usage()
 {
-    echo "Usage: $0
+    echo -e "\nUsage: $0
         [ -c NUM_INSTANCES ]
         [ -k SSH_PUB_KEY_LOCATION ]
         [ -p PROJECT_ID]
@@ -78,17 +90,17 @@ function store_public_key_secret() {
 
 ERROR=0
 if [[ ! -x $(command -v gcloud) ]]; then
-    echo "Error: gcloud (Google Cloud SDK) command is required, but not installed."
+    pretty_print "Error: gcloud (Google Cloud SDK) command is required, but not installed." "ERROR"
     ERROR=1
 fi
 
 if [[ ! -x $(command -v envsubst) ]]; then
-    echo "Error: envsubst (gettext) command is required, but not installed."
+    pretty_print "Error: envsubst (gettext) command is required, but not installed." "ERROR"
     ERROR=1
 fi
 
 if [[ ! -x $(command -v ssh-keygen) ]]; then
-    echo "Error: ssh-keygen (SSH) command is required, but not installed."
+    pretty_print "Error: ssh-keygen (SSH) command is required, but not installed." "ERROR"
     ERROR=1
 fi
 
@@ -103,7 +115,7 @@ if [[ -z "${PROJECT_ID}" ]]; then
 fi
 
 if [[ -z "${PROJECT_ID}" ]]; then
-    echo "Error: No project ID set"
+    pretty_print "Error: No project ID set" "ERROR"
     ERROR=1
 fi
 
@@ -113,17 +125,18 @@ if [[ -z "${ZONE}" ]]; then
 fi
 
 if [[ -z "${ZONE}" ]]; then
-    echo "Error: No zone set"
+    pretty_print "Error: No zone set. Re-run this script with the -z option, or set \
+a default zone with the gcloud CLI" "ERROR"
     ERROR=1
 fi
 
 if [[ -z "${GCE_COUNT}" || ! "${GCE_COUNT}" =~ ^[0-9]+$ || "${GCE_COUNT}" -le 0 ]]; then
-    echo "Error: Missing or invalid count variable"
+    pretty_print "Error: Missing or invalid count variable" "ERROR"
     ERROR=1
 fi
 
 if [[ -z "${CLUSTER_START_INDEX}" || ! "${CLUSTER_START_INDEX}" =~ ^[0-9]+$ || "${CLUSTER_START_INDEX}" -le 0 ]]; then
-    echo "Error: Missing or invalid starting index"
+    pretty_print "Error: Missing or invalid starting index" "ERROR"
     ERROR=1
 fi
 
@@ -132,26 +145,25 @@ if [[ "${ERROR}" -eq 1 ]]; then
     exit 1
 fi
 
-echo "GCE_COUNT: ${GCE_COUNT}"
-echo "PROJECT_ID: ${PROJECT_ID}"
-echo "START_INDEX: ${CLUSTER_START_INDEX}"
-echo "ZONE: ${ZONE}"
-echo "GCE Prefix: ${GCE_NAME_PREFIX}"
-echo "==========================================="
-echo ""
+pretty_print "\nGCE_COUNT: ${GCE_COUNT}" "INFO"
+pretty_print "PROJECT_ID: ${PROJECT_ID}" "INFO"
+pretty_print "START_INDEX: ${CLUSTER_START_INDEX}" "INFO"
+pretty_print "ZONE: ${ZONE}" "INFO"
+pretty_print "GCE Prefix: ${GCE_NAME_PREFIX}" "INFO"
+pretty_print "===========================================\n" "INFO"
 
 if [[ ! -z "$PREEMPTIBLE_OPTION" ]]; then
-    echo "NOTE: USING PREEMPTIBLE MACHINE. The GCE will be up at most 24h and will need to be re-created and re-provisioned. This option keeps the costs of testing/trying ABM Retail Edge to a minimum"
+    pretty_print "NOTE: USING PREEMPTIBLE MACHINE. The GCE will be up at most 24h and will need to be re-created and re-provisioned. This option keeps the costs of testing/trying ABM Retail Edge to a minimum" "INFO"
 fi
 
 # Check to make sure that the # of VMs is divisible by 3 (need 3 per location)
 if [[ $((GCE_COUNT%REQUIRED_CLUSTER_SIZE)) != 0 ]]; then
-    echo "The count ( $GCE_COUNT ) requested CNUCs needs to be multiples of 3"
+    pretty_print "The count ( $GCE_COUNT ) requested CNUCs needs to be multiples of 3" "ERROR"
     exit 1
 fi
 
 CLUSTER_COUNT=$(( GCE_COUNT/REQUIRED_CLUSTER_SIZE ))
-echo "Final Cluster Count = $CLUSTER_COUNT"
+pretty_print "Final Cluster Count = $CLUSTER_COUNT" "INFO"
 
 ###############################
 #####   MAIN   ################
@@ -159,7 +171,7 @@ echo "Final Cluster Count = $CLUSTER_COUNT"
 
 # Setup firewalls for GCE VXLAN (only needed by cloud-version) #TODO: Modify this to use tags on the GCE instances
 
-# Look for any firewall rules with "vxlan" in them (see below for vxlan fireall entries...this works for both rules)
+# Look for any firewall rules with "vxlan" in them (see below for vxlan firewall entries...this works for both rules)
 FIREWALLS=$(gcloud compute firewall-rules list --filter=name=vxlan --format="value(name)")
 if [[ -z "${FIREWALLS}" ]]; then
     gcloud compute firewall-rules create vxlan-egress \
@@ -190,6 +202,4 @@ create_gce_vms $GCE_COUNT
 
 display_gce_vms_ips
 
-echo ""
-echo "Check the Cloud Init scripts: sudo journalctl -u google-startup-scripts.service"
-echo ""
+pretty_print "\nCheck the Cloud Init scripts: sudo journalctl -u google-startup-scripts.service\n"
