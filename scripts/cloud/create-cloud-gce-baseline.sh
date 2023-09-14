@@ -145,6 +145,13 @@ if [[ "${ERROR}" -eq 1 ]]; then
     exit 1
 fi
 
+# Check if md5 or md5sum is avail
+md5bin=$(checkformd5)
+if [[ -z "$md5bin" ]]; then
+    pretty_print  "ERROR: I couldn't find md5 or md5sum, which I need. Exiting." "WARN"
+    exit 1
+fi
+
 pretty_print "\nGCE_COUNT: ${GCE_COUNT}" "INFO"
 pretty_print "PROJECT_ID: ${PROJECT_ID}" "INFO"
 pretty_print "START_INDEX: ${CLUSTER_START_INDEX}" "INFO"
