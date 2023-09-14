@@ -174,8 +174,10 @@ if [ ${#MISSING_APPS[@]} -gt 0 ]; then
 	read -p "Would you like this script to install the required dependencies? (Y/N) " -n 1 -r
 	echo
 	if [[ "${REPLY}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-    pretty_print "\nInstalling ${MISSING_APPS[@]}.\n" "INFO"
+    pretty_print "\nInstalling ${MISSING_APPS[@]}.\n"
     sudo apt install -y ${MISSING_APPS[@]}
+    pretty_print "Finished installing dependencies."
+    pretty_print "\nPLEASE add: eval \"$(direnv hook bashrc)\" (or zsh) to your ~/.bashrc or ~/.zshrc file" "INFO"
   else
 		pretty_print "\nExiting. Please fix dependencies on your own, or re-run this script and select 'Y'" "ERROR"
 		exit 1

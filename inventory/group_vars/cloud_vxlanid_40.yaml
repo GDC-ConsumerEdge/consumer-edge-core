@@ -15,8 +15,8 @@
 # Name of the cluster
 cluster_name: "gdc-demo"
 
-google_region: "us-central1"
-google_zone: "{{ google_region }}-c"
+google_region: "{{ lookup('env', 'REGION') | default('us-central1', True) }}"
+google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}"
 
 # Name of the "store" per the ACM repo
 acm_cluster_name: "gdc-demo"
@@ -36,13 +36,15 @@ load_balancer_pool_cidr: [
   "10.200.0.50-10.200.0.70"
 ]
 
-storage_provider: "none"
+storage_provider: "robin"
 storage_cluster_trait_repo_install: false
 
 # Disks to use for LVM
 robin_disk_paths: [
-  # "/dev/sdb"
+  "/dev/sdb"
 ]
+
+fleet_cluster_labels: ["type=production", "location=sydney", "country=aus", "earlyaccess=true"] # Examples, need to be key=value comma separated
 
 # ###
 # ### Cluster Network (Multus)

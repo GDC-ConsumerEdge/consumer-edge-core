@@ -16,11 +16,13 @@ bundle.zip
 # Folder to hold build-artifacts needed for Docker install (maybe all)
 # keep the .gitkeep file, but ignore everything else
 # any additional cluster groups
+build-artifacts
 build-artifacts-*/
 !build-artifacts-example/
 build-artifacts-example/*
 !build-artifacts-example/README.md
 !build-artifacts-example/ssh-config
+!build-artifacts-example/instance-run-vars.yaml
 
 # local Inventory files are not stored
 inventory.yml

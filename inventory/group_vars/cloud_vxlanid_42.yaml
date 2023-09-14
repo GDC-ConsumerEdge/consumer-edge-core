@@ -15,8 +15,8 @@
 # Name of the cluster
 cluster_name: "cnuc-7"
 
-google_region: "us-east1"
-google_zone: "{{ google_region }}-b"
+google_region: "{{ lookup('env', 'REGION') | default('us-central1', True) }}"
+google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}"
 
 # Name of the "store" per the ACM repo
 acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('location-3', True) }}"
