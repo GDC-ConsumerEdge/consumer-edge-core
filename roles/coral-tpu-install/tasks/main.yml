@@ -19,10 +19,6 @@
   when:
   - install_coral_tpu is defined and install_coral_tpu is true
 
-- name: debug
-  debug:
-    msg: "coral_apt_source: {{ coral_apt_source }}"
-
 - name: Setup apt-packages
   shell: |
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
