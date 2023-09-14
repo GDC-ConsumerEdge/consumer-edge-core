@@ -271,16 +271,16 @@ else
 fi
 
 pretty_print "\n\nYour project is set up and ready for use. You will need to do a combination of the following options next:\n"
+pretty_print "1. Use your editor of choice and check the generated 'build-artifacts/envrc' file to ensure correct Environment Variables were set." "INFO"
+pretty_print "2. If you made any changes, save file and run either: 'direnv allow .' or 'source build-artifacts/envrc'"
+
 pretty_print "Cloud-based host machines (default)" "DEBUG"
 pretty_print "1. Create GCE instances: run './scripts/cloud/create-cloud-gce-baseline.sh -c 3'" "INFO"
-pretty_print "2. Use your editor of choice and check the generated 'build-artifacts/envrc' file to ensure correct Environment Variables were set."
-pretty_print "3. If you made any changes, save file and run either: 'direnv allow .' or 'source build-artifacts/envrc'"
-pretty_print "4. Run: ./install.sh\n"
-pretty_print "Physical Machine based host machines" "DEBUG"
-pretty_print "1. Double check the build-artifacts/envrc file to make sure the variables are staticly defined and are correct." "INFO"
-pretty_print "2. If you made any changes, 'direnv allow .'"
-pretty_print "3. Copy the 3 'edge-X.yaml' files in ./inventory and rename with a hostname of your choice (ie: nucs-1.yaml, nucs-2.yaml, nucs-3.yaml)"
-pretty_print "4. If using physical hardware, create an inventory file: envsubst < templates/inventory-physical-example.yaml > build-artifacts/inventory.yaml."
+
+pretty_print "\nPhysical Machine based host machines" "DEBUG"
+pretty_print "1. Copy the 3 'edge-X.yaml' files in ./inventory and rename with a hostname of your choice (ie: nucs-1.yaml, nucs-2.yaml, nucs-3.yaml)"
+pretty_print "2. If using physical hardware, create an inventory file: envsubst < templates/inventory-physical-example.yaml > build-artifacts/inventory.yaml."
 pretty_print "   - Modify this file to match your host_var inventory files (see previous step). Comment out 'edge-1,edge-2,edge-3 and replace with your host names"
-pretty_print "5. Run: ./install.sh\n"
-pretty_print "NOTE: Physical machines require a bit more setup not outlined here. Please ping the go/gdc-consumer-edge:gchat team for more info.\n\n"
+
+pretty_print "\n==== Last Step ===\n1. Run: ./install.sh\n"
+pretty_print "NOTE: Physical machines require a bit more setup not outlined here. Please ping the https://www.google.com/goto/gdc-consumer-edge:gchat team for more info.\n\n"
