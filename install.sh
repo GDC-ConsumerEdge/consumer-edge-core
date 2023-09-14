@@ -341,7 +341,7 @@ if [[ -z "${proceed}" || "${proceed}" =~ ^([nN][oO]|[nN])$ ]]; then
 fi
 
 echo ""
-read -p "Check the values above and if correct, do you want to proceed? (y/N): " proceed
+read -p "Check the values above and if correct. This will mutate the state of GCP Project ${PROJECT_ID}, are you ready to proceed? (y/N): " proceed
 
 if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 
