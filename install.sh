@@ -43,6 +43,11 @@ source ./scripts/install-shell-helper.sh
 # Used for String output directing user to add extra-vars file to the ansible-playbook run
 VAR_EXTRAS_STRING=""
 
+DEBUG_MODE=false
+if [[ ! -z "$1" ]]; then
+    DEBUG_MODE=true
+fi
+
 PROJECT_NAME_MAX_LENGTH=17
 
 function setupgcpfirewall() {
@@ -360,7 +365,12 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     display_help # print helper text
 
     # Running docker image
-    docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd)/build-artifacts:/var/consumer-edge-install/build-artifacts:rw" -v "$(pwd):/var/consumer-edge-install:ro" -it ${IMAGE_PATH}
+    CONTAINER_WRITE_MODE="ro"
+    if [[ $DEBUG_MODE == true ]]; then
+        CONTAINER_WRITE_MODE="rw"
+    fi
+    
+    docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd)/build-artifacts:/var/consumer-edge-install/build-artifacts:rw" -v "$(pwd):/var/consumer-edge-install:${CONTAINER_WRITE_MODE}" -it ${IMAGE_PATH}
 
     if [[ $? -gt 0 ]]; then
         pretty_print "ERROR: Docker container cannot open." "ERROR"

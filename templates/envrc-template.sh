@@ -42,7 +42,7 @@ export PROVISIONING_IMAGE_PROJECT_ID=${PROVISIONING_IMAGE_PROJECT_ID:-$PROJECT_I
 ###
 ######  Cluster Name for ACM #############
 # Set the name of the cluster for ACM to use (NOTE: If provisioning multiple clusters, this is not an effective naming method)
-export CLUSTER_ACM_NAME="con-edge-cluster"    # con-edge-cluster is the default for demos, for POC and other builds, set name in primary_machine of each cluster
+export CLUSTER_ACM_NAME="gdc-demo"    # con-edge-cluster is the default for demos, for POC and other builds, set name in primary_machine of each cluster
 
 # Bucket to store cluster snapshot information
 export SNAPSHOT_GCS="${PROJECT_ID}-${CLUSTER_ACM_NAME}-snapshot"
