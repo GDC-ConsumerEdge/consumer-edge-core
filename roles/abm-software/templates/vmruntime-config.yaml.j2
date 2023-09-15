@@ -9,5 +9,5 @@ spec:
   disableCDIUploadProxyVIP: {{ disable_cdi_upload_proxy_vip }}
   evictionPolicy:
     migrationTargetInitializationTimeout: 90s
-  {# storage:
-    defaultStorageClass: robin-immediate #}
+  storage:                                                    # Robin Block Immediate is required for LiveMigration
+    defaultStorageClass: robin-block-immediate
