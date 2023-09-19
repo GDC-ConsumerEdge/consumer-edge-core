@@ -176,6 +176,17 @@ google_service_account_project_id: "{{ lookup('env', 'SA_PROJECT_ID') | default(
 google_region: "{{ lookup('env', 'REGION') | default('us-central1', True) }}" # NOTE: A copy of this variable is in Molecule test `for google_tools`
 google_zone: "{{ lookup('env', 'ZONE') | default('us-central1-a', True) }}" # NOTE: A copy of this variable is in Molecule test `for google_tools`
 
+# Choose from: timedatectl list-timezones
+machine_timezone: "UTC" # Default to UTC
+
+# List of Time Servers to use for time sync (in ascending order, top is most preferred)
+timesync_servers: [
+  "0.pool.ntp.org",
+  "1.pool.ntp.org",
+  "2.pool.ntp.org",
+  "3.pool.ntp.org"
+]
+
 ###
 ### Use the "pre-cache" bundle instead of downloading binaries from outside (does not include containers)
 ###     DEFAULT = false
