@@ -102,6 +102,12 @@
   when:
     - target_os == "ubuntu"
 
+## Setup Time Sync
+- name: "Include tasks for Time Synchronization"
+  import_tasks: setup-time-sync.yaml
+  tags:
+  - time-sync
+
 #### Stop and disable apparmor
 - name: Stop apparmor
   systemd:
@@ -139,6 +145,7 @@
   - target_os == "ubuntu"
 
 ## Create the user that builds and communicates across cluster machines
+## TODO: Create a group for the two users for file permissions later
 - name: Create a user for ABM Control
   ansible.builtin.user:
     name: "{{ abm_install_user }}"

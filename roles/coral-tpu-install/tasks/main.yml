@@ -24,8 +24,8 @@
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
     echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
   when:
-  - coral_apt_source is defined and coral_apt_source.stat.exists == False
   - install_coral_tpu is defined and install_coral_tpu is true
+  - coral_apt_source is defined and coral_apt_source.stat is defined and coral_apt_source.stat.exists is False
   tags:
   - coral-tpu-install
   - apt-packages

@@ -1,0 +1,45 @@
+###
+### Setup Time Sync using Datetime Config
+###
+
+- name: Remove NTP Pacakger
+  apt:
+    pkg:
+    - ntp
+    state: absent
+    autoclean: yes
+  tags:
+  - time-sync-setup
+  when:
+  - target_os == "ubuntu"
+
+- name: Reinstall of package by command.
+  command:
+    cmd: "apt --reinstall install systemd-timesyncd"
+  tags:
+  - time-sync-setup
+  when:
+  - target_os == "ubuntu"
+
+- name: Setup TimeZone Data
+  community.general.timezone:
+    name: "{{ machine_timezone }}"
+  tags:
+  - time-sync-setup
+
+- name: Template timesyncd.conf
+  template:
+    src: timesyncd.conf.j2
+    dest: /etc/systemd/timesyncd.conf
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+  - time-sync-setup
+
+- name: Reload service systemd-timesyncd
+  ansible.builtin.systemd:
+    name: systemd-timesyncd
+    state: reloaded
+  tags:
+  - time-sync-setup

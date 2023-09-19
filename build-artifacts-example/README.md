@@ -1,6 +1,13 @@
-# Overview
+# Checklist
 
-This folder is used to keep JSON key and SSH files that are needed during installation phase when using the Docker install.
-
-NO FILES ARE COMMITTED in this folder except this README.md per `.gitignore` file
-
+[ ] - `add-hosts` file with contents of hosts
+[ ] - New or correct public/private keypair for hosts access
+[ ] - `envrc` variables verified
+  [ ] - Project Name (replaces everywhere necessary)
+  [ ] - PAT token for Primary Root Repo
+  [ ] - ACM name properly set
+[ ] - `instance-run-vars.yaml` variables set
+  [ ] - ACM name
+  [ ] - ABM/ACM versions
+  [ ] - Storage provider information
+[ ] - Correct provisioning GSA value
