@@ -252,3 +252,27 @@ Consumer Edge is setup to provision one cluster at a time (future, multiple at a
     ln -s build-artifacts-1 build-artifacts
     # repeat as needed
     ```
+
+## Network Pre-requisites
+
+Several domains are used in the deployment of this solution and will need to be allow-listed outbound if domain fitering is used.
+
+Please allow-list the following domains and their ports:
+
+| Domain Pattern | Port & Protocols | Notes/Explanation | Optional |
+|:---|:---:|:---|:---:|
+| `gcr.io`<br/>`*.gcr.io`<br/>`*.pkg.dev`                        | 443 TCP | Many of the GDC core packages are deployed to gcr.io and pkg.dev (Artifact Registry). This pattern covers all regions (ie: eu.gcr.io, asia.gcr.io, etc) | No |
+| `*.googleapis.com`<br/>`*.gdce.googleapis.com`                 | 443 TCP | Google Services like GKE Hub, CloudOps, Secrets Manager, IAM, Compute, Network, GDC, etc | No |
+| `*.google`                                                     | 443 TCP | Covers Google services deployed on GCP not via GCP APIs | Yes |
+| `registry.k8s.io`<br/>`k8s.io`                                 | 443 TCP | Kubernetes public container registry (ie: Kind cluster, k8s containers, etc) | No |
+| `github.com`<br/>`*.github.com`<br/>`ghcr.io`<br/>`*.ghcr.io`<br/>`*.githubusercontent.com`  | 443 TCP | Containers and Utilities deployed in GitHub | No |
+| `quay.io`<br/>`*.quay.io`                                      | 443 TCP | VirtVNC and some more mature container apps | No |
+| `*.gitlab`                                                     | 443 TCP | External Secrets and Cluster Trait Repositories | No* |
+| `*.ubuntu.com`                                                 | 443 TCP<br/> 80 TCP| Ubuntu services | No |
+| `*.canonical.com`<br/>`*.snapcraft.io`<br/>`*.snapcraftcontent.com` | 443 TCP | Package manager for Ubuntu and Canonical services via Snap | No |
+| `*.docker.com`                                                 | 443 TCP | Docker software and dependencies | No |
+| `packages.cloud.google.com`                                    | 443 TCP | Google CLI Tools and Binaries | No |
+| `time.google.com`<br/>`time1.google.com`<br/>`time2.google.com`<br/>`time3.google.com`<br/><br/>`pool.ntp.org`<br/>`0.pool.ntp.org`<br/>`1.pool.ntp.org`<br/>`2.pool.ntp.org`<br/>`3.pool.ntp.org`| 123 UDP | Time sync server (pick one or the other, not Google and NTP.org) | Yes |
+
+> *: Required only if not re-hosting CTRs
+
