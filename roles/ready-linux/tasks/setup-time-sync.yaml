@@ -15,7 +15,7 @@
 
 - name: Reinstall of package by command.
   command:
-    cmd: "apt --reinstall install systemd-timesyncd"
+    cmd: "apt --reinstall install systemd-timesyncd -y"
   tags:
   - time-sync-setup
   when:
@@ -40,6 +40,7 @@
 - name: Reload service systemd-timesyncd
   ansible.builtin.systemd:
     name: systemd-timesyncd
-    state: reloaded
+    state: restarted
+    daemon_reload: true
   tags:
   - time-sync-setup
