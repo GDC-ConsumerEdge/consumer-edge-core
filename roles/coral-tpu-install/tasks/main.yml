@@ -12,12 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Check if apt-package has been installed
-  stat:
-    path: /etc/apt/sources.list.d/coral-edgetpu.list
-  register: coral_apt_source
+- name: Check if Coral TPU already installed
+  shell: |
+    lspci -nn | grep 089a
+  register: coral_already_installed
   when:
   - install_coral_tpu is defined and install_coral_tpu is true
+  tags:
+  - coral-tpu-install
+  - apt-packages
+
+- name: Set fact for Coral Installed
+  set_fact:
+    has_installed_coral: "{{ (coral_already_installed is defined) and (coral_already_installed|length > 0) }}" # Found
+  tags:
+  - coral-tpu-install
+  - apt-packages
 
 - name: Setup apt-packages
   shell: |
@@ -25,7 +35,7 @@
     echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
   when:
   - install_coral_tpu is defined and install_coral_tpu is true
-  - coral_apt_source is defined and coral_apt_source.stat is defined and coral_apt_source.stat.exists is False
+  - has_installed_coral is false
   tags:
   - coral-tpu-install
   - apt-packages
@@ -39,14 +49,16 @@
     state: present
   when:
   - install_coral_tpu is defined and install_coral_tpu is true
+  - has_installed_coral is false
   tags:
   - coral-tpu-install
   - apt-packages
 
 - name: Reboot to load the new kernel module
   ansible.builtin.reboot:
-    reboot_timeout: 300 # 5 minutes
+    reboot_timeout: 600 # 10 minutes
   when:
   - install_coral_tpu is defined and install_coral_tpu is true
+  - has_installed_coral is false
   tags:
   - coral-tpu-install
