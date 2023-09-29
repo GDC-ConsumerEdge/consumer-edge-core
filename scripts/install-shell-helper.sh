@@ -19,6 +19,7 @@ WARN_COLOR="\e[1;33m"
 DEBUG_COLOR="\e[1;35m"
 DEFAULT_COLOR="\e[1;32m"
 ENDCOLOR="\e[0m"
+BOLD="\e[1m"
 
 function pretty_print() {
     MSG=$1
