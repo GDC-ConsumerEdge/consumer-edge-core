@@ -213,8 +213,9 @@
   tags:
   - ncg-install
 
-- name: "Add CPU Monitor KubeVirt service files"
+- name: "Add Legacy CPU Monitor KubeVirt service files"
   import_tasks: cpumonitor-service.yaml
+  when: cpu_monitor_install == true
   tags:
   - cpu-monitor
   - cdi

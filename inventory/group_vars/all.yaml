@@ -290,6 +290,9 @@ setup_default_lvm: true
 ### Multipath Disk Service - Can cause issues with SDS, very uncommon to need multipath unless using iSCSI. Defaults to false
 enable_multipath_service: false
 
+## Enable legacy cpu manager TODO: 1.16.1 the Performance Tuning Operator will be available for use. OOTB, PTO is NOT avalabile for Standalone ABM
+cpu_monitor_install: true
+
 ###
 ### OIDC in cluster (setup OIDC before provisioning, set environment variables to the values)
 ###
