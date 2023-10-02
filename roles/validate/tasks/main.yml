@@ -116,6 +116,20 @@
   - verify
   - verify-robin-license
 
+- name: "Fail if Robin Install Bundle is not in the artifacts folder"
+  delegate_to: localhost
+  run_once: true
+  assert:
+    that:
+    - "{{ lookup('ansible.builtin.fileglob', robin_install_bundle_file) != [] }}"
+    success_msg: "Robin bundle found at '{{ robin_install_bundle_file }}'"
+    fail_msg: "Robin Install Chosen and Robin Install Bundle Does NOT exist at '{{ robin_install_bundle_file }}'"
+  when:
+  - storage_provider == "robin"
+  tags:
+  - verify
+  - verify-robin
+
 - name: Fail if local SCM_TOKEN_USER ENV is not defined
   assert:
     that:

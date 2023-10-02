@@ -23,14 +23,25 @@ if [[ ! -f "/usr/local/bin/robin" ]]; then
     exit 1
 fi
 
-SERVICE_PASSWORD=$(kubectl -n robinio get secret ${ROBIN_SECRET_NAME} -o jsonpath='{.data.password}' --kubeconfig="${KUBECONFIG}" | base64 -d)
+ROBIN_LOGIN_PASSWORD=$(kubectl -n robinio get secret ${ROBIN_SECRET_NAME} -o jsonpath='{.data.password}' --kubeconfig="${KUBECONFIG}" | base64 -d)
 
-if [[ ! -n "${SERVICE_PASSWORD}" ]] || [[ -z "${SERVICE_PASSWORD}" ]]; then
-    echo -e "ERROR: Service LoadBalancer IP does not exist in 'robinio' namespace for 'robin-admin'. Exiting"
+if [[ ! -n "${ROBIN_LOGIN_PASSWORD}" ]] || [[ -z "${ROBIN_LOGIN_PASSWORD}" ]]; then
+    echo -e "ERROR: Secret for Default Admin Login does not exist in 'robinio' namespace for Exiting in error"
     exit 1
 fi
 
+# Get the IP of the Loadbalaced Service (If provided and available)
+SERVICE_IP=$(kubectl get svc robin-console-ui -n robinio -o jsonpath='{.status.loadBalancer.ingress[0].ip}' --kubeconfig="${KUBECONFIG}")
+
+if [[ -z "${SERVICE_IP}" ]]; then
+    # Default, Get the IP of the current Robin Master
+    SERVICE_IP=$(kubectl get pod -n robinio -l robin.io/robinrole=master -o jsonpath='{.items[0].status.hostIP}')
+fi
+
+# This should always work, it will overwrite the existing IF it exists
+robin client add-context $SERVICE_IP --port 29442 --file-port 29445 --event-port 29449 --set-current
+
 # Logging in as admin
-robin login admin --password "${SERVICE_PASSWORD}"
+robin login admin --password "${ROBIN_LOGIN_PASSWORD}"
 # Quick context on login status
 robin whoami

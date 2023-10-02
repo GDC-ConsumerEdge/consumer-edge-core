@@ -40,3 +40,18 @@ sds_config_files: "{{ abm_install_folder }}/sds-configs"
 robin_lvm_group_name: "robin-lvm"
 
 robin_license_file_location: "{{ sds_config_files }}/{{ robin_license_file_name }}"
+
+# Robin bundle file location (empty by default)
+robin_install_bundle_file: ""
+
+# folder to put the Robin bundle into
+robin_install_folder: "{{ abm_install_folder }}/robin-install"
+
+# Default ACM repo secret name for Robin license
+robin_acm_secret_name: "robin-sds-license"
+
+# Number of retries to get the Robin Client (50 retries every 10 seconds = 5 minutes)
+robin_client_retries: 50
+
+# Seconds delay on retries for Robin Client
+robin_client_delay: 10
