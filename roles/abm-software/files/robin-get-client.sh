@@ -18,7 +18,7 @@
 
 ### NOTE: This is meant to be called on-demand due to ephemeral nature of "master.robin-server.service.robin" not being in /etc/hosts or discoverable
 
-# 1. kubectl get svc robin-admin -n robinio -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+# 1. kubectl get svc robin-console-ui -n robinio -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 # 2. curl -k 'https://${SERVICE_IP}:29442/api/v3/robin_server/download?file=robincli&os=linux' -o robin-client
 # 3. chmod +x ./robin-client
 # 4. mv ./robin-client /usr/local/bin
@@ -45,22 +45,10 @@ if [[ ! -n "${SERVICE_IP}" ]] || [[ -z "${SERVICE_IP}" ]]; then
     exit 1
 fi
 
-# Pull the client from the running service
-curl -s -k "https://${SERVICE_IP}:29442/api/v3/robin_server/download?file=robincli&os=linux" -o robin-client
+# Pull the client from the running service, timout is 2 minutes
+curl -s -t 120 -k "https://${SERVICE_IP}:29442/api/v3/robin_server/download?file=robincli&os=linux" -o robin-client
+
 # make sure it is executable
 chmod +x robin-client
 # Move it to usr-bin so it can be access on the path
 mv robin-client /usr/local/bin/robin
-
-### Add entry to /etc/hosts file so Client can login
-HOST="master.robin-server.service.robin" # determined by Robin (hard-coded)
-TARGET="/etc/hosts"
-COMMENT="# SET BY Ansible"
-
-# determine if hostname has been added
-HAS_LINE=$(grep -i "${HOST}" "${TARGET}")
-if [[ $? -eq 0 ]] ; then
-    sed -i  "/${HOST}/ s/.*/${SERVICE_IP}\t${HOST}\t${COMMENT}\#/g" ${TARGET}
-else
-    echo -e "${SERVICE_IP}\t${HOST}\t${COMMENT}\n" >> ${TARGET}
-fi

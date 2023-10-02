@@ -24,8 +24,9 @@
     group: root
     mode: "755"
   tags:
+  - robin-io
   - robin-install
-  - robin-client
+  - robin-install-client
 
 - name: "Copy Robin Login Client script for this cluster"
   copy:
@@ -35,8 +36,9 @@
     group: root
     mode: "0755"
   tags:
+  - robin-io
   - robin-install
-  - robin-client
+  - robin-install-client
 
 # Runs the above script on a regular basis to get a fresh robin-cli
 - name: Create cron-job to run Robin Client
@@ -47,8 +49,9 @@
     group: root
     mode: "0744"
   tags:
+  - robin-io
   - robin-install
-  - robin-client
+  - robin-install-client
   - robin-cron
 
 # Create License Secret for Robin
@@ -60,59 +63,181 @@
       gcloud secrets create {{ robin_gcp_secret_name }} --replication-policy="automatic" --project="{{ google_secret_project_id }}"
       echo "ADDED"
     fi
-  register: sds_license_creds
   when:
   - (primary_cluster_machine is defined)
   - (primary_cluster_machine == true)
   tags:
+  - robin-io
   - robin-install
   - robin-license
   - gcloud-mutate
 
-# Copy license file over to machine
+- name: Create robin install folder
+  file:
+    path: "{{ robin_install_folder }}"
+    state: directory
+    mode: "0755"
+  tags:
+  - robin-io
+  - robin-install
+  - robin-intall-setup
 
-# Create a new secret version if none are active or exist
-- name: "Add new version of Robin License if none exist"
-  run_once: true
-  shell: |
-    EXISTS=$(gcloud secrets versions list {{ storage_provider_auth_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_secret_project_id }}")
-    if [ -z "${EXISTS}" ]; then
-      cat "{{ robin_license_file_location }}" | gcloud secrets versions add {{ storage_provider_auth_secret }} --project="{{ google_secret_project_id }}" --data-file=-
-      echo "ADDED"
-    fi
-  register: sds_license_secret_version
-  changed_when: '"ADDED" in sds_license_secret_version.stdout_lines'
+- name: Copy TAR over to the primary cluster
+  copy:
+    src: "{{ robin_install_bundle_file }}"
+    dest: "{{ robin_install_folder }}/robin.tar"
+    owner: root
+    group: root
+    mode: "0644"
   when:
-  - (primary_cluster_machine is defined)
-  - (primary_cluster_machine == true)
+  - (robin_install_bundle_file | length > 0)
   tags:
+  - robin-io
   - robin-install
-  - robin-license
-  - gcloud-mutate
+  - robin-intall-setup
 
-- name: "Copy Robin Storage Profile Block Type"
-  template:
-    src: robin-storage-profile.yaml.j2
-    dest: "{{ sds_config_files }}/robin-storage-profile.yaml"
+- name: Extract Robin tar file
+  unarchive:
+    src: "{{ robin_install_folder }}/robin.tar"
+    dest: "{{ robin_install_folder }}"
+    remote_src: true
+    creates: "{{ robin_install_folder }}/robin" # binary is inside the tar
+  when:
+  - (robin_install_bundle_file | length > 0)
   tags:
+  - robin-io
   - robin-install
-  - robin-storage-block
+  - robin-intall-setup
 
-- name: "Apply Robin Storage Profile Block Type"
+- name: "Install Robin"
   ignore_errors: true
-  command:
-    cmd: "kubectl apply -f {{ sds_config_files }}/robin-storage-profile.yaml"
-  register: apply_block_type
-  changed_when:
-  - apply_block_type is successful
-  failed_when:
-  - apply_block_type is failed
-  - '"Error from server (AlreadyExists)" not in result.stdout'
+  shell: |
+    {{ robin_install_folder }}/install-robin.sh --reporting-secret={{ robin_acm_secret_name }} --repo=gcr.io/robinio-public/robin-storage -y
   environment:
     KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  args:
+    chdir: "{{ robin_install_folder }}"
+  register: robin_install_status
   when:
   - (primary_cluster_machine is defined)
   - (primary_cluster_machine == true)
   tags:
   - robin-install
-  - robin-storage-block
+  - robin-install-commit
+
+- name: Robin install output
+  debug:
+    msg: "{{ robin_install_status }}"
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  tags:
+  - robin-io
+  - robin-install
+  - robin-install-commit
+
+- name: Get Robin Client and can take 5 minutes
+  command:
+    cmd: /usr/local/bin/robin-get-client.sh
+  args:
+    creates: "/usr/local/bin/robin"
+  until: robin_binary_status.rc == 0
+  register: robin_binary_status
+  retries: "{{ robin_client_retries }}"
+  delay: "{{ robin_client_delay }}"
+  tags:
+  - robin-io
+  - robin-install
+  - robin-install-client
+
+- name: Login the Robin Client
+  command:
+    cmd: /usr/local/bin/robin-login-client.sh
+  until: robin_client_status.rc == 0
+  register: robin_client_status
+  retries: "{{ robin_client_retries }}"
+  delay: "{{ robin_client_delay }}"
+  tags:
+  - robin-io
+  - robin-install
+  - robin-install-client
+
+# Wait on Robin to have all services up
+# TODO: This is NOT ready, this needs to loop till all services are up and none are critical
+- name: Wait on robin to have all services up on all hosts
+  shell:
+    # NOTE -vqz for grep is to pass IF not found, do not pass if found (THIS CAN BE AN ISSUE IF OUTPUT CHANGES, SAY FROM critical TO error)
+    # 'critical' is the current state of failing services for robin host
+    cmd: "robin host list --services --json | jq -r '.items[].services' | grep -vqz critical"
+  until: robin_host_status.rc == 0
+  register: robin_host_status
+  retries: "{{ robin_client_retries }}"
+  delay: "{{ robin_client_delay }}"
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  tags:
+  - robin-install
+  - robin-install-commit
+  - robin-install-post
+
+
+# ansible-playbook all-install-abm-software.yml -i inventory --extra-vars="@build-artifacts/instance-run-vars.yaml" --skip-tags gcloud-mutate --limit patagonia* --tags always,robin-install-disk-ready
+
+# - name: Verify all Robin Host has Storage
+#   shell:
+#     cmd: robin host list
+
+### Manually add disks to robin by setting Role to Storage
+- name: Copy Disk Setup script for Robin
+  copy:
+    src: robin-disk-storage-setup.sh
+    dest: "{{ robin_install_folder }}"
+    owner: root
+    group: root
+    mode: "0744"
+  tags:
+  - robin-install
+  - robin-install-commit
+  - robin-install-post
+  - robin-install-disk-setup
+
+- name: Run disk setup script
+  command:
+    cmd: "{{ robin_install_folder }}/robin-disk-storage-setup.sh"
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  tags:
+  - robin-install
+  - robin-install-commit
+  - robin-install-post
+  - robin-install-disk-setup
+
+### Verify Disks have been convereted to ONLINE
+- name: Copy Disk Verify Script for Robin
+  copy:
+    src: robin-disk-completed.sh
+    dest: "{{ robin_install_folder }}"
+    owner: root
+    group: root
+    mode: "0744"
+  tags:
+  - robin-install
+  - robin-install-disk-ready
+  - robin-install-post
+
+- name: Verify we have host number of disks as Storage. Retry command until successful or timeout
+  command:
+    cmd: "{{ robin_install_folder }}/robin-disk-completed.sh {{ ansible_play_hosts_all | length }}"
+  register: robin_storage_role_status
+  until: robin_storage_role_status.rc == 0
+  retries: "{{ robin_client_retries }}"
+  delay: "{{ robin_client_delay }}"
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  tags:
+  - robin-install
+  - robin-install-disk-ready
+  - robin-install-post

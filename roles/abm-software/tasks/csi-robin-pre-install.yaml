@@ -43,7 +43,9 @@
 
 - name: Set Fact Create LVMs # May not be needed if the declarative is used
   set_fact:
-    create_lvm: true # "{{ (robin_disk_paths is defined and robin_disk_paths | length > 0) and (existing_group.rc > 0) and (setup_default_lvm is true) }}"
+    create_lvm: true
+  when:
+  - (robin_disk_paths is defined and robin_disk_paths | length > 0)
   tags:
   - lvm-create
   - robin-io
@@ -75,6 +77,8 @@
     force: yes
     pvresize: true                        # the volume to maximum size
     state: present
+  when:
+  - create_lvm is true
   tags:
   - lvm-create
   - lvm-vgcreate
@@ -93,6 +97,8 @@
   loop_control:
     loop_var: disk_path
     index_var: index
+  when:
+  - create_lvm is true
   tags:
   - lvm-create
   - lvm-lvcreate
