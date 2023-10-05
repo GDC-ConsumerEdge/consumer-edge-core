@@ -22,14 +22,35 @@ MARKER="*"
 
 want_new_folder=false
 desired_folder="build-artifacts-example" # Default desired_folder
-list_folders=false
+list_folders=true
 
-while getopts lf: flag; do
-    case "${flag}" in
-    f) desired_folder=${OPTARG}; want_new_folder=true;;
-    l) list_folders=true ;;
-    esac
-done
+function usage() {
+    pretty_print "Usage: change-instance-context.sh [-c] [folder-name]"
+    pretty_print "  Change the active build-artifacts folder to use during an instance run.\n"
+    pretty_print "  folder-name\tThe name of the build-artifacts folder to use (Optional)"
+    pretty_print "\n  Options/Flags:"
+    pretty_print "  -h\t\tPrint this help message (optional)"
+    pretty_print "  -c\t\tPrint the current context (optional)"
+}
+
+function check_options() {
+
+    has_option=false
+
+    while getopts ch flag; do
+        case "${flag}" in
+        c) print_context; list_folders=false; has_option=true ;;
+        h) usage; exit 0 ;;
+        esac
+    done
+
+    if [[ ! -z "$1" ]]; then
+        if [[ $has_option == false ]]; then
+            desired_folder=$1
+            want_new_folder=true
+        fi
+    fi
+}
 
 function get_list_of_folders() {
     local folders=$(ls -d ./build-artifacts-*)
@@ -79,7 +100,19 @@ function get_active_folder() {
     echo $current_folder
 }
 
+function print_context() {
+    pretty_print "\nContext Details"
+    pretty_print "=============="
+    pretty_print "GCP Project ID:\t\t${PROJECT_ID}"
+    pretty_print "GCP Region & Zone:\t${REGION} / ${ZONE}"
+    pretty_print "ACM Cluster Name:\t${CLUSTER_ACM_NAME}"
+    pretty_print "Primary Root Repo:\t${ROOT_REPO_URL}"
+    echo "" # blank line
+}
+
 #### Main Execution
+
+check_options "$@"
 
 if [[ $list_folders == true ]]; then
 
@@ -94,6 +127,7 @@ if [[ ${want_new_folder} == true ]]; then
     active=$(get_active_folder)
     if [[ $desired_folder == $active ]]; then
         pretty_print "Current context is already ${active}, no action will be taken" "DEBUG"
+        print_context
     else
         # check to see if the desired folder is in the list of folders, if not, offer to create a new context
 
