@@ -380,3 +380,17 @@
   tags:
   - os-setup
   - hosts-file
+
+- name: Postfix add-hosts to /etc/hosts
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    block: |
+      {{ item.ip }} {{ item.name }}
+    marker: "# {mark} Ansible Added {{ item.name }}"
+  loop: "{{ cloud_vxlan_hosts | list }}"
+  when:
+  - cloud_vxlan_hosts is defined
+  - (is_cloud_resource is defined) and (is_cloud_resource is true)
+  tags:
+  - os-setup
+  - hosts-file

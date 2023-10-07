@@ -136,7 +136,7 @@
   - robin-install
   - robin-install-commit
 
-- name: Get Robin Client and can take 5 minutes
+- name: Get Robin Client and can take 10 minutes
   command:
     cmd: /usr/local/bin/robin-get-client.sh
   args:
