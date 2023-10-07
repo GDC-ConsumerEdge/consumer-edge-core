@@ -50,8 +50,8 @@ robin_install_folder: "{{ abm_install_folder }}/robin-install"
 # Default ACM repo secret name for Robin license
 robin_acm_secret_name: "robin-sds-license"
 
-# Number of retries to get the Robin Client (50 retries every 10 seconds = 5 minutes)
-robin_client_retries: 50
+# Number of retries to get the Robin Client (100 retries every 10 seconds = 10 minutes)
+robin_client_retries: 100
 
 # Seconds delay on retries for Robin Client
 robin_client_delay: 10
