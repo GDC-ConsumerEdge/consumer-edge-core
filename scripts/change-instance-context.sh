@@ -114,13 +114,6 @@ function print_context() {
 
 check_options "$@"
 
-if [[ $list_folders == true ]]; then
-
-    active_folder=$(get_active_folder)
-
-    display_folders ${active_folder}
-fi
-
 # Change the active folder if -l used
 if [[ ${want_new_folder} == true ]]; then
     # check if the desired folder is the same as the current
@@ -174,3 +167,9 @@ if [[ ${want_new_folder} == true ]]; then
 
 fi
 
+if [[ $list_folders == true ]]; then
+
+    active_folder=$(get_active_folder)
+
+    display_folders ${active_folder}
+fi
