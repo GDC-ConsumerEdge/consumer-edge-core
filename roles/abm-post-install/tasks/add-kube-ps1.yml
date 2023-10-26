@@ -77,10 +77,23 @@
     when:
     - target_os == "ubuntu"
 
-  - name: Add k alias with completion
+  - name: Add k alias for kubectl
     lineinfile:
       path: "/home/{{ item }}/.bashrc"
-      line: alias k="kubectl complete -F __start_kubectl k"
+      line: alias k=kubectl
+    loop:
+      - "{{ ansible_user }}"
+      - "{{ abm_install_user }}"
+    tags:
+    - optional
+    - kube-ps1
+    when:
+    - target_os == "ubuntu"
+
+  - name: Add completion for alias
+    lineinfile:
+      path: "/home/{{ item }}/.bashrc"
+      line: complete -F __start_kubectl k
     loop:
       - "{{ ansible_user }}"
       - "{{ abm_install_user }}"
