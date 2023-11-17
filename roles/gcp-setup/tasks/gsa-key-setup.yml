@@ -80,8 +80,8 @@
   loop: "{{ service_accounts }}"
   when:
   - item.enabled | bool == true
-  - primary_cluster_machine is defined
-  - primary_cluster_machine == true
+  # - primary_cluster_machine is defined
+  # - primary_cluster_machine == true
   tags:
   - gsa-keys-check
   - gsa-keys
@@ -105,8 +105,8 @@
   loop: "{{ has_valid_secret.results }}"
   when:
   - item is not succeeded
-  - primary_cluster_machine is defined
-  - primary_cluster_machine == true
+  # - primary_cluster_machine is defined
+  # - primary_cluster_machine == true
   tags:
   - gsa-keys-create
   - gsa-keys
@@ -125,8 +125,8 @@
   loop: "{{ service_accounts }}"
   when:
   - item.enabled | bool == true
-  - primary_cluster_machine is defined
-  - primary_cluster_machine == true
+  # - primary_cluster_machine is defined
+  # - primary_cluster_machine == true
   tags:
   - gsa-keys-download
   - gsa-keys
