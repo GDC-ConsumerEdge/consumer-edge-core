@@ -247,7 +247,9 @@ snapshot_gcs_bucket_base: "{{ lookup('env', 'SNAPSHOT_GCS') | default( [ google_
 ### Storage providers are installed via Cluster Trait Repos. Configuration for CTR is done in this automation (where possible)
 ###
 storage_provider: "robin" # Current Options: longhorn, none & Future Options: openebs, portworx. NOTE: storage_provider_repo_url must match with storage_provider_repo_url
-### NOTE: Storage providers can be installed during provsioning, but will not be done by default. Adding a trait to the Primary Root Repo is the preferred new method unless variables are required
+
+# Use the secret from the secret manager and apply during provisioning (default false, installs 90d trial license)
+robin-install-reporting-secret: false
 ###
 # Set to "true" if the ClusterTraitRepo SDS should be applied during provisioning, otherwise only the supporting functionality (ie: lvm groups or cluster-specific default settings will be added)
 storage_cluster_trait_repo_install: false

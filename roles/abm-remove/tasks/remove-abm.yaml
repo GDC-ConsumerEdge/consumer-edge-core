@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: "Backup install and configuration files before fully removing"
-  community.general.archive:
-    path: "{{ abm_install_folder }}"
-    dest: "/tmp/abm-full-{{ ansible_date_time.iso8601_basic_short }}.tar.gz"
-    format: gz
-  when:
-  - primary_cluster_machine is defined
-  - primary_cluster_machine == True
-  tags:
-    - abm-remove
-    - never
-    - backup-before-removal
+# - name: "Backup install and configuration files before fully removing"
+#   community.general.archive:
+#     path: "{{ abm_install_folder }}"
+#     dest: "/tmp/abm-full-{{ ansible_date_time.iso8601_basic_short }}.tar.gz"
+#     format: gz
+#   when:
+#   - primary_cluster_machine is defined
+#   - primary_cluster_machine == True
+#   tags:
+#     - abm-remove
+#     - never
+#     - backup-before-removal
 
 - name: Copy provisiong GSA to nodes for ABM reset
   copy:
