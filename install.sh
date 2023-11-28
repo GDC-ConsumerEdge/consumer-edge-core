@@ -369,8 +369,8 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     if [[ $DEBUG_MODE == true ]]; then
         CONTAINER_WRITE_MODE="rw"
     fi
-    
-    docker run -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd)/build-artifacts:/var/consumer-edge-install/build-artifacts:rw" -v "$(pwd):/var/consumer-edge-install:${CONTAINER_WRITE_MODE}" -it ${IMAGE_PATH}
+
+    docker run --name=${PROJECT_ID}-consumer-edge-install --rm -e PROJECT_ID="${PROJECT_ID}" -v "$(pwd)/build-artifacts:/var/consumer-edge-install/build-artifacts:rw" -v "$(pwd):/var/consumer-edge-install:${CONTAINER_WRITE_MODE}" -it ${IMAGE_PATH}
 
     if [[ $? -gt 0 ]]; then
         pretty_print "ERROR: Docker container cannot open." "ERROR"

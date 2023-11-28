@@ -182,3 +182,26 @@
   - acm-root-repo
   - external-secret-install
 
+- name: Create simple simple ACM stop sync
+  copy:
+    src: config-sync-stop.sh
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    mode: "0755"
+  tags:
+  - acm-root-repo
+  - optional
+  - acm-quick-tooling
+
+- name: Create simple simple ACM start sync
+  copy:
+    src: config-sync-start.sh
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    mode: "0755"
+  tags:
+  - acm-root-repo
+  - optional
+  - acm-quick-tooling

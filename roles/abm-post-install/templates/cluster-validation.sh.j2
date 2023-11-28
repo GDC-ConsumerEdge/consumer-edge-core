@@ -1,0 +1,239 @@
+#!/bin/bash
+
+# Cluster Name
+CLUSTER_NAME="${CLUSTER_NAME:-{{ cluster_name }}}"
+### Gateway Project ID (default to the project ID)
+VPN_PROJECT_ID="${VPN_PROJECT_ID:-{{ google_project_id }}}"
+### Gateway VPN Tunnel Name (NO DEFAULT, THIS IS REQUIRED if checking VPN status) -- NOTE: If this value is not set, the VPN check will be skipped
+VPN_GATEWAY_NAME="{{ vpn_tunnel_name }}"
+### Region VPN tunnel is in
+VPN_REGION="${VPN_REGION:-{{ google_region }}}"
+### Is this the primary machine machine in a cluster (used for calls where multiple kubectl isn't ideal, defaults to true)
+IS_PRIMARY="${IS_PRIMARY:-true}"
+### Is Plain Output
+IS_PLAIN_OUTPUT="${IS_PLAIN_OUTPUT:-false}"
+
+if [[ -z "${CLUSTER_NAME}" ]]; then
+    echo "CLUSTER_NAME ENV var is not set, exiting"
+    exit 0
+fi
+
+if [[ -z "${VPN_PROJECT_ID}" ]]; then
+    echo "VPN_PROJECT_ID var is not set, exiting"
+    exit 0
+fi
+
+if [[ ! -x "kubectl" ]]; then
+    echo "Kubectl is not found, exiting"
+    exit 0
+fi
+
+function pretty_print() {
+    ERROR_COLOR="\e[1;31m"
+    INFO_COLOR="\e[1;37m"
+    WARN_COLOR="\e[1;33m"
+    DEBUG_COLOR="\e[1;35m"
+    DEFAULT_COLOR="\e[1;32m"
+    ENDCOLOR="\e[0m"
+    BOLD="\e[1m"
+    MSG=$1
+    LEVEL=${2:-DEFAULT}
+
+    if [[ -z "${MSG}" ]]; then
+        return
+    fi
+
+    if [[ "${IS_PLAIN_OUTPUT}" ]]; then
+        printf "${LEVEL}: ${MSG}\n"
+        return
+    fi
+
+    case "$LEVEL" in
+        "DEFAULT")
+            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n"
+            ;;
+        "ERROR")
+            printf "${ERROR_COLOR}${MSG}${ENDCOLOR}\n"
+            ;;
+        "WARN")
+            printf "${WARN_COLOR}${MSG}${ENDCOLOR}\n"
+            ;;
+        "INFO")
+            printf "${INFO_COLOR}${MSG}${ENDCOLOR}\n"
+            ;;
+        "DEBUG")
+            printf "${DEBUG_COLOR}${MSG}${ENDCOLOR}\n"
+            ;;
+        *)
+            echo "NO MATCH"
+            ;;
+    esac
+}
+
+HAS_ERROR=false
+
+# Gateway
+RESULT=$(ping -c 3 172.16.20.1)
+if [[ $? -ne 0 ]]; then
+  pretty_print "Gateway ping failed" "ERROR"
+  HAS_ERROR=true
+else
+  pretty_print "Gateway ping Success"
+fi
+
+RESULT=$(ping -c 3 gcr.io)
+if [[ $? -ne 0 ]]; then
+  pretty_print "Ping to gcr.io failed" "ERROR"
+  HAS_ERROR=true
+else
+  pretty_print "GCR ping Success"
+fi
+
+# Kube access
+kubectl get nodes --kubeconfig /var/abm-install/kubeconfig/kubeconfig 2>&1 > /dev/null
+if [[ $? -ne 0 ]]; then
+  pretty_print "Kube access failed" "ERROR"
+  HAS_ERROR=true
+else
+  pretty_print "Quick Nodes Check succeeded"
+fi
+
+# Storage
+if [[ -f /usr/local/bin/robin ]]; then
+    pretty_print "Robin CLI already installed" "INFO"
+    # Login Robin CLI
+    robin-login-client.sh  2>&1 > /dev/null
+    if [[ $? -ne 0 ]]; then
+      pretty_print "Robin CLI login failed" "ERROR"
+      HAS_ERROR=true
+    else
+      pretty_print "Robin CLI login succeeded"
+    fi
+
+    # get state of robin hosts
+    DELIM=';'
+    declare -a HOSTS_KP=( $(robin host list --json | jq -r '(.items[] | [.name, .state] | join(";"))') )
+    for keypair in "${HOSTS_KP[@]}"; do
+        IFS=';' read -ra host_split <<< "$keypair"
+        host=${host_split[0]}
+        state=${host_split[1]}
+        if [[ "${state}" != "ONLINE" ]]; then
+            pretty_print "Robin Host: ${host} = ${state}" "ERROR"
+            HAS_ERROR=true
+        else
+            pretty_print "Robin Host: ${host} = ${state}"
+        fi
+    done
+
+    # Robin Disk List
+    declare -a DISKS_KP=( $(robin disk list --json | jq -r '(.items[] | select( .role == "Storage" ) | [.node_hostname,.state] | join(";"))') )
+    for keypair in "${DISKS_KP[@]}"; do
+        IFS=';' read -ra disk_split <<< "$keypair"
+        disk=${disk_split[0]}
+        state=${disk_split[1]}
+        if [[ "${state}" != "READY" ]]; then
+            pretty_print "Robin Disk: ${host} = ${state}" "ERROR"
+            HAS_ERROR=true
+        else
+            pretty_print "Robin Disk: ${host} = ${state}"
+        fi
+    done
+
+else
+    pretty_print "Robin CLI is not installed, skipping Robin tests" "INFO"
+fi
+
+# check nodes
+declare -a NODES_KP=($(  kubectl get nodes -A --no-headers --kubeconfig /var/abm-install/kubeconfig/kubeconfig | awk 'BEGIN{OFS=";"} {print $1,$2}' ))
+for keypair in "${NODES_KP[@]}"; do
+    IFS=';' read -ra nodes_split <<< "$keypair"
+    node=${nodes_split[0]}
+    state=${nodes_split[1]}
+    if [[ "${state}" != "Ready" ]]; then
+        pretty_print "Node ${node} = ${state}" "ERROR"
+        HAS_ERROR=true
+    else
+        pretty_print "Node ${node} = ${state} is OK" # this may never get seen, the return is ONLY failed
+    fi
+done
+
+# Pod Status
+declare -a PODS_KP=($(  kubectl get pods -A --kubeconfig /var/abm-install/kubeconfig/kubeconfig -o json | jq -r '.items[] | select( .metadata.name | startswith("bm-system")) | select(.status.phase != "Running" and .status.phase != "Succeeded" ) | .metadata.namespace + "/" + .metadata.name + ";" + .status.phase' 2> /dev/null ))
+for keypair in "${PODS_KP[@]}"; do
+    IFS=';' read -ra pods_split <<< "$keypair"
+    namespace=${pods_split[0]}
+    state=${pods_split[1]}
+    if [[ "${state}" != "Failed" ]]; then
+        pretty_print "Pod in ${namespace} = ${state} is OK" # this may never get seen, the return is ONLY failed
+    elif [[ "$namespace" == *"bm-system"* ]]; then
+        pretty_print "Pod in ${namespace} = ${state} is OK" # this may never get seen, the return is ONLY failed
+    else
+        pretty_print "Pod in ${namespace} = ${state}. Only concer if NOT a bm-system JOB" "ERROR"
+        HAS_ERROR=true
+    fi
+done
+
+{# # VPN Status (VARIABLE)
+gcloud compute vpn-tunnels describe --project ${VPN_PROJECT_ID} --region "${VPN_REGION}" ${VPN_GATEWAY_NAME} | grep --color -E '^|Tunnel is up and running.|ESTABLISHED*' 2>&1 > /dev/null
+if [[ $? -ne 0 ]]; then
+  pretty_print "Google Side VPN tunnel is NOT up" "ERROR"
+  HAS_ERROR=true
+else
+  pretty_print "Google Side VPN tunnel is established"
+fi #}
+
+if [[ -z "${VPN_GATEWAY_NAME}" ]]; then
+    OVERLAYS="$(kubectl get overlayvpntunnels -n kube-system --kubeconfig /var/abm-install/kubeconfig/kubeconfig -o json | jq -r ".items[].status.Status")"
+    if [[ "${OVERLAYS}" != "established" ]]; then
+        pretty_print "Overlay VPN tunnel is NOT up" "ERROR"
+        HAS_ERROR=true
+    else
+        pretty_print "Overlay VPN tunnel is established"
+    fi
+
+    BGPPEERS="$(kubectl get overlaybgppeers.networking.gke.io -n kube-system --kubeconfig /var/abm-install/kubeconfig/kubeconfig -o json | jq -r ".items[].status.Status")"
+    if [[ "${BGPPEERS}" != "established" ]]; then
+        pretty_print "Overlay BGP Peers is NOT up" "ERROR"
+        HAS_ERROR=true
+    else
+        pretty_print "Overlay BGP Peers is established"
+    fi
+else
+    pretty_print "VPN_GATEWAY_NAME variable not set, skipping VPN tests" "INFO"
+fi
+
+# Nomos Status  .items[].metadata.name
+declare -a RECONCILING_KP=($( kubectl get rootsync -n config-management-system --kubeconfig /var/abm-install/kubeconfig/kubeconfig -o json | jq -r '(.items[] | select(.status.conditions[].type == "Reconciling" and .status.conditions[].status!="False") | [.metadata.name,.status.conditions[].status] | join(";"))' ))
+for keypair in "${RECONCILING_KP[@]}"; do
+    IFS=';' read -ra reconcile_split <<< "$keypair"
+    repo=${reconcile_split[0]}
+    state=${reconcile_split[1]}
+    if [[ "${state}" != "False" ]]; then
+        pretty_print "Repo ${repo} is Reconciling ${state} is OK"
+    else
+        pretty_print "Repo ${repo} is Reconciling ${state}" "DEBUG"
+    fi
+done
+
+### Ensure virt-api are not on the same host
+VIRT_IPS=$(kubectl get po -n vm-system -l kubevirt.io=virt-controller  --kubeconfig /var/abm-install/kubeconfig/kubeconfig -o json | jq -r ".items[].status.hostIP")
+if [[ "${VIRT_IPS[0]}" == "${VIRT_IPS[1]}" ]]; then
+    pretty_print "Both virt-api controller pods are running on the same host. Please delete one pod to re-schedule and check again" "ERROR"
+    HAS_ERROR=true
+else
+    pretty_print "virt-api contorllers are not running on the same host"
+fi
+
+### LOGGED IN NOW (fixure out how not to be, or change script to be on host)
+
+# Check L2 interface for smb-shares
+# TODO: Create a busybox with an L2 attached network and do "pings to the things"
+#k describe po -n smb-shares backup-share-6c648868b7-mz7h7
+
+if [[ "${HAS_ERROR}" == true  ]]; then
+    pretty_print "Errors exist during run, please review log" "ERROR"
+    exit 1
+else
+    pretty_print "All tests passed"
+    exit 0
+fi

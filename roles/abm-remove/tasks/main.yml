@@ -37,14 +37,14 @@
     - abm-remove
     - never
 
-- name: Archive current cluster snapshots
-  import_tasks: remove-snapshot.yaml
-  when:
-    - (primary_cluster_machine is defined)
-    - (primary_cluster_machine == true)
-  tags:
-    - snapshot-remove
-    - never
+# - name: Archive current cluster snapshots
+#   import_tasks: remove-snapshot.yaml
+#   when:
+#     - (primary_cluster_machine is defined)
+#     - (primary_cluster_machine == true)
+#   tags:
+#     - snapshot-remove
+#     - never
 
 - name: Remove ABM Workspace
   ansible.builtin.file:
@@ -54,11 +54,11 @@
     - abm-remove
     - never
 
-- name: Remove LVMs for SDS
-  import_tasks: remove-lvm-robin.yaml
-  tags:
-    - abm-remove
-    - never
+# - name: Remove LVMs for SDS
+#   import_tasks: remove-lvm-robin.yaml
+#   tags:
+#     - abm-remove
+#     - never
 
 - name: Reboot the machine after removing everything
   reboot:

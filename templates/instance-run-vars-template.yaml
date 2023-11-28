@@ -17,21 +17,25 @@
 ###
 
 ###
-### Required overriden variables
+### Recommended overriden variables
 ###
 
+### VPN Tunnel Info
+# vpn_tunnel_name: "<tunnel-name-in-acm-and-gcp>"
+# vpn_project_id: "<tunnel-project>"
+# vpn_region: "<gcp-region>"
 
 ### --Robin SDS Specific Variables (uncomment and add as necessary)
 ### Storage provider set to Robin
 # storage_provider: "robin"
 
-# Robin bundle file location
+### Robin bundle file location
 # robin_install_bundle_file: "build-artifacts/robin-5.3.16-1855.tar"
 
 ### Disk paths to use for LVM creation (Comma delimited strings)
 ### NOTE: This is a cluster-run wide variable, if provisioning more than 1 cluster at a time, this variable should be moved to the inventory cluster-level
 # robin_disk_paths: [
-#   "/dev/nvme0n1p4" # NOTE: DO NOT set this for Cloud/GCE based provisioning runs
+#   "/dev/nvme0n1p4" # NOTE: DO NOT set this for Cloud/GCE based provisioning runs (/dev/mapper/customer_crypt for the LUKS)
 # ]
 
 

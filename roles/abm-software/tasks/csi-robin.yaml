@@ -109,7 +109,7 @@
   - robin-install
   - robin-intall-setup
 
-- name: "Install Robin"
+- name: "Install Robin using Reporting Secret"
   ignore_errors: true
   shell: |
     {{ robin_install_folder }}/install-robin.sh --reporting-secret={{ robin_acm_secret_name }} --repo=gcr.io/robinio-public/robin-storage -y
@@ -119,11 +119,30 @@
     chdir: "{{ robin_install_folder }}"
   register: robin_install_status
   when:
-  - (primary_cluster_machine is defined)
-  - (primary_cluster_machine == true)
+  - primary_cluster_machine is defined and primary_cluster_machine == true
+  - robin-install-reporting-secret is defined and robin-install-reporting-secret == true
   tags:
   - robin-install
   - robin-install-commit
+  - robin-install-actual
+
+- name: "Install Robin using 90day Trial"
+  ignore_errors: true
+  shell: |
+    {{ robin_install_folder }}/install-robin.sh --repo=gcr.io/robinio-public/robin-storage -y
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  args:
+    chdir: "{{ robin_install_folder }}"
+  register: robin_install_status
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  - robin-install-reporting-secret is not defined or robin-install-reporting-secret == false
+  tags:
+  - robin-install
+  - robin-install-commit
+  - robin-install-actual
 
 - name: Robin install output
   debug:
@@ -135,6 +154,20 @@
   - robin-io
   - robin-install
   - robin-install-commit
+  - robin-install-actual
+
+#####  Wait till basic robin operator & components installs
+
+- name: Wait on Robin Basic install top complete
+  shell:
+    cmd: "kubectl wait --for=condition=ready pod -l robin.io/vnodetype=robin -n robinio"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  tags:
+  - robin-io
+  - robin-verify
+  - robin-install
+  - robin-install-actual
 
 - name: Get Robin Client and can take 10 minutes
   command:
@@ -149,6 +182,7 @@
   - robin-io
   - robin-install
   - robin-install-client
+  - robin-install-actual
 
 - name: Login the Robin Client
   command:
@@ -161,6 +195,7 @@
   - robin-io
   - robin-install
   - robin-install-client
+  - robin-install-actual
 
 # Wait on Robin to have all services up
 # TODO: This is NOT ready, this needs to loop till all services are up and none are critical
@@ -180,7 +215,7 @@
   - robin-install
   - robin-install-commit
   - robin-install-post
-
+  - robin-install-actual
 
 # ansible-playbook all-install-abm-software.yml -i inventory --extra-vars="@build-artifacts/instance-run-vars.yaml" --skip-tags gcloud-mutate --limit patagonia* --tags always,robin-install-disk-ready
 
@@ -201,6 +236,7 @@
   - robin-install-commit
   - robin-install-post
   - robin-install-disk-setup
+  - robin-install-actual
 
 - name: Run disk setup script
   command:
@@ -213,6 +249,7 @@
   - robin-install-commit
   - robin-install-post
   - robin-install-disk-setup
+  - robin-install-actual
 
 ### Verify Disks have been convereted to ONLINE
 - name: Copy Disk Verify Script for Robin
@@ -226,6 +263,7 @@
   - robin-install
   - robin-install-disk-ready
   - robin-install-post
+  - robin-install-actual
 
 - name: Verify we have host number of disks as Storage. Retry command until successful or timeout
   command:
@@ -241,3 +279,4 @@
   - robin-install
   - robin-install-disk-ready
   - robin-install-post
+  - robin-install-actual
