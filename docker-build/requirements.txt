@@ -4,9 +4,9 @@
 #
 #    pip-compile --allow-unsafe --generate-hashes requirements.in
 #
-ansible==6.7.0 \
-    --hash=sha256:3cda6e67b1d42516f64ce376bb94c5186ff33d215d155432be5b3c2ec60bf112 \
-    --hash=sha256:c188f3ac8a8583794aadcff0bea87895ead58c19d6f244cd0c342562706e176c
+ansible==8.5.0 \
+    --hash=sha256:2749032e26b0dbc9a694528b85fd89e7f950b8c7b53606f17dd997f23ac7cc88 \
+    --hash=sha256:327c509bdaf5cdb2489d85c09d2c107e9432f9874c8bb5c0702a731160915f2d
     # via -r requirements.in
 ansible-compat==3.0.2 \
     --hash=sha256:1c051fb7cedd7a067c5b8fca86e76109bff69cdd31115dea751e3166296a73da \
@@ -14,9 +14,9 @@ ansible-compat==3.0.2 \
     # via
     #   ansible-lint
     #   molecule
-ansible-core==2.13.11 \
-    --hash=sha256:0cabe60d0594fb002b6034d118a6e475bb90e47c4a07395d951aff5a91ffe639 \
-    --hash=sha256:9ea00594dceeb4b56828852832abeded2e88a294a03c3959da499a43e516f680
+ansible-core==2.15.12 \
+    --hash=sha256:390edd603420122f7cb1c470d8d1f8bdbbd795a1844dd03c1917db21935aecb9 \
+    --hash=sha256:5fde82cd3928d9857ad880782c644f27d3168b0f25321d5a8d6befa524aa1818
     # via
     #   ansible
     #   ansible-compat
