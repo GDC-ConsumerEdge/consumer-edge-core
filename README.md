@@ -1,49 +1,50 @@
 # Overview
 
-This project provides an opinionated installation of Anthos Bare Metal / GDC-V and several
-Google Cloud Platform tools designed specifically for Consumer Edge
-requirements.
+This project provides an opinionated installation of GDC Software Only and several
+Google Cloud Platform tools designed specifically for Consumer Edge requirements.
 
-There are two deployment target types: **Hardware** and **Cloud**. Both
-deployment types can co-exist, but are not in the same network space by default.
+There are two deployment target types: **Hardware** and **Cloud**. Both deployment types can co-exist for a project, but are not in the same network space by default.
 
-**Cloud** deployments will have the virtual machines instantiated as a part of
-the deployment process automatically.
+The primary tooling to provision **Hardware** or **Cloud** clusters is performed with Ansible via a Docker container. Once built, the docker container provides the runtime with all necessary dependencies so the provisioner does not need to modify the host machine. The docker container also mounts the project folder structure containing the configuration contexts.
 
-**Hardware** targets require additional steps before execution of this deployment
-process. See **Hardware Quick Start** below for additional details.
+**Cloud** targets will have the virtual machines instantiated as a part of the deployment process automatically. GCE VMs will be used in the target GCP Project simulating physical hardware
+
+**Hardware** targets physical PCs or servers and require additional steps before execution of this deployment process. See **Hardware Quick Start** below for additional details.
+
+## Install Phases
 
 There are three phases to installing Consumer Retail Edge for either **Cloud** or **Hardware**:
 
-1. Setup Baseline Compute - Create and setup the underlying machines
-to be ready for provisioning
-1. Provision Inventory - Provision/install Consumer Edge onto the baseline
-compute machines
-1. Verify Installation - Login to one of the machines and perform `kubectl` and
-other tool operations
+1. Establish Baseline Compute - Create and setup the underlying machines to be ready for provisioning
+1. Configure & Provision - Provision/install Consumer Edge onto the baseline compute machines
+1. Verify Installation - Login to one of the machines and perform `kubectl` and other tool operations
 
-## Terms to know
+### Terms to know
 
 > **Target machine**
 
-*The machines that the cluster is being installed into/onto
+* The machines that the cluster is being installed into/onto
 (i.e., NUC, GCE, etc). This is often called a "host" in public
 documentation.*
 
 > **Provisioning machine**
 
-*The machine that initiates the `ansible` run. This is typically a laptop or a
+* The machine that initiates the `ansible` run. This is typically a laptop or a
 bastion host within the GCP console.*
 
 > **Hardware**
 
-*Physical systems deployed and network accessible. Hardware machines will
+* Physical systems deployed and network accessible. Hardware machines will
 have `nuc` or `edge` as a prefixes on their hostname and variable names.*
 
 > **Cloud**
 
-*Google Cloud VMs deployed automatically via this project. All cloud
+* Google Cloud VMs deployed automatically via this project. All cloud
 machines will have `cnuc` as a prefix for hostname and variable names.*
+
+> **Configuration Context**
+
+* `build-artifacts/` is a symbolic link to a folder with the following pattern: `build-artifacts-<cluster-name>`. Using the script `./script/change-instance-context.sh`, configuration settings for a cluster or cluster group can be kept locally. Future implementations will provide the ability to compress and upload & download the contexts to a GCS bucket. The `build-artifact/` symlink should not be manually edited, please use the `./script/change-instance-context.sh` script to create new or change contexts for a run.
 
 ---
 
@@ -59,19 +60,22 @@ The primary option to provision the solution is to use physical hardware. Physic
 
 ---
 
-## Both Installation Types
+## Installation
 
-## ![Setup GCP Project](docs/img/1.png "1") Setup GCP Project
+### ![Setup GCP Project](docs/img/1.png "1") Setup GCP Project
 
 1. Create a GCP project with a valid billing account, then clone this repository.
 
-1. Execute `setup.sh` on the **Provisioning Machine** and remediate until the script completes with the message `Your project is set up and ready for use. You will need to do a combination of the following options next:`...
+1. Execute `setup.sh` on the **Provisioning Machine** and remediate until the script completes with the message `Your project is set up and ready for use. You will need to do a combination of the following options next:`
 
     ```bash
+    # Run
     ./setup.sh
     ```
 
-1. If RobinIO is the selected SDS Provider, see [Robin SDS Create Key](docs/ROBIN_SDS_CREATE_KEY.md)
+    > Note: The `setup.sh` will create a Docker image in your project's Artifact Registry. The purpose is to use the docker image as a build and provisioning base so the provisioning machine does not need to manage dependencies.
+
+1. If SymCloud (formerly Robin.io) is the selected SDS Provider, see [Robin SDS Create Key](docs/ROBIN_SDS_CREATE_KEY.md)
 
 1. This project uses Personal Access Tokens (PATs) for ACM's authentication of
     the `root-repo`. See [Create Gitlab PAT](docs/CREATE_GITLAB_PAT.md) to complete this step.
@@ -97,7 +101,7 @@ The primary option to provision the solution is to use physical hardware. Physic
 
 ------
 
-## ![Setup Cloud](docs/img/2.png "2") Cloud Quick Start (Option 1)
+## ![Setup Cloud](docs/img/2.png "2") Cloud Quick Start (Install Option 1)
 
 This **Quick Start** will use GCE instances to simulate physical hardware and
 utilize VXLAN overlays to simulate L2 networking support.
@@ -126,7 +130,7 @@ This phase leverages a container to ensure consistent and conflict free `ansible
 
 ---
 
-## ![Setup Cloud](docs/img/2.png "2") Hardware Quick Start (Option 2)
+## ![Setup Cloud](docs/img/2.png "2") Hardware Quick Start (Install Option 2)
 
 This **Quick Start** will use physical systems that are on an L2 network. These systems are recommended to be provisioned via the automated installer, have SSH keys shared to enable passwordless SSH authentication from **Provisioning machine**, and have Internet access (NAT recommended but proxy is supported) to complete the installation.
 
