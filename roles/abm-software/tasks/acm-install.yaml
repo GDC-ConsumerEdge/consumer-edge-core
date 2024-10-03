@@ -21,6 +21,7 @@
   tags:
   - abm-software
   - abm-config
+  - acm-root-repo
 
 # Check for ACM Operator
 - name: "Test for config-management-system namespace"
@@ -33,6 +34,7 @@
     fact_name: "has_acm_ns"
   when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
   tags:
+  - acm-root-repo
   - acm-operator
 
 # # Download operator
@@ -61,6 +63,7 @@
     fact_name: "has_root_repo_secret"
   tags:
   - acm-root-repo
+  - acm-root-repo-git-creds
 
 - name: "Create dependencies for RootRepos (if not exists) [Token Method]"
   import_tasks: "config-acm-repo-tokens.yaml"
@@ -72,6 +75,7 @@
   - (has_root_repo_secret == false)
   tags:
   - acm-root-repo
+  - acm-root-repo-git-creds
   - acm-root-repo-token-method
 
 - name: "Create dependencies for RootRepos (if not exists) [SSH Method]"
@@ -84,6 +88,7 @@
   - (has_root_repo_secret == false)
   tags:
   - acm-root-repo
+  - acm-root-repo-git-creds
   - acm-root-repo-ssh-method
 
 # Check for ACM Operator
