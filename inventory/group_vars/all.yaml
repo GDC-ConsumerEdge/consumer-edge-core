@@ -34,8 +34,8 @@ ansible_ssh_transfer_method: scp # smart|sftp|scp|piped
 #### Commonly changed variables
 ####
 # Latest version can be found: gsutil ls -al gs://anthos-baremetal-release/bmctl
-# Version of Anthos Bare Metal to install
-abm_version: "1.16.0" # verify coupling of ABM to BMCTL versions
+# Version of GDC-Software Only (aka: Anthos Bare Metal) to install
+abm_version: "1.29.700-gke.113" # verify coupling of ABM to BMCTL versions
 # bmctl binary version
 #TODO: set this up to query for the version, then upgrade automatically if updated
 #NOTE: A copy of this variable is in Molecule test `for google_tools`
@@ -137,6 +137,7 @@ ansible_pull_cluster_ops_repo: ""
 ####
 # gsutil ls -al gs://config-management-release/released/
 # Anthos Config Management version
+# DEPRECATED: Not used other than in "bundle" for config use (not really up-to-date either)
 acm_version: "1.16.0"
 
 # Where to store ACM files during provisoning
@@ -339,6 +340,7 @@ gcp_services_required:
   - container.googleapis.com
   - gkeconnect.googleapis.com
   - gkehub.googleapis.com
+  - kubernetesmetadata.googleapis.com
   - iam.googleapis.com
   - iamcredentials.googleapis.com
   - logging.googleapis.com
@@ -408,7 +410,9 @@ service_accounts: [
       "roles/monitoring.metricWriter",
       "roles/stackdriver.resourceMetadata.writer",
       "roles/monitoring.dashboardEditor",
-      "roles/opsconfigmonitoring.resourceMetadata.writer"
+      "roles/opsconfigmonitoring.resourceMetadata.writer",
+      "roles/kubernetesmetadata.publisher",
+      "roles/compute.osLogin"
     ]
   },
   {
