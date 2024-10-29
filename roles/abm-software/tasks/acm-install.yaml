@@ -91,19 +91,6 @@
   - acm-root-repo-git-creds
   - acm-root-repo-ssh-method
 
-# Check for ACM Operator
-- name: "Test for config-management operator presence"
-  include_tasks: kubectl-presence.yml
-  vars:
-    name: "config-management"
-    type: "configmanagements.configmanagement.gke.io"
-    namespace: ""
-    kubeconfig: "{{ kubeconfig_shared_location }}"
-    fact_name: "has_acm_operator"
-  when: "(primary_cluster_machine is defined) and (primary_cluster_machine == true)"
-  tags:
-  - acm-operator
-
 - name: "Copy over apply-spec file"
   template:
     src: apply-spec.yaml.j2
@@ -121,7 +108,6 @@
   when:
   - (primary_cluster_machine is defined)
   - (primary_cluster_machine == true)
-  - (has_acm_operator == false)
   retries: "{{ default_retry_count }}"
   delay: "{{ default_retry_delay }}"
   register: result
