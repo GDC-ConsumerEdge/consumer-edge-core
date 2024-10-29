@@ -1,0 +1,7 @@
+# Edge Servers
+
+192.168.x.y            host-name-1
+192.168.x.y            host-name-2
+192.168.x.y            host-name-3
+
+# AUTO-GENERATED-CONSUMER-EDGE

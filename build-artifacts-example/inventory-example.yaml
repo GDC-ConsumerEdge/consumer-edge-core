@@ -1,0 +1,63 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+####
+#
+#   Refer to the README.md for instructions on how to use this template file for your inventory.
+#
+####
+
+####
+#### NOTE: This is an example inventory file. You should replace the placeholders with your own values.
+####
+####
+"[[ cluster-name]]_cluster":
+  vars:
+    # Name of the cluster
+    cluster_name: "[[ cluster_name ]]"
+    acm_cluster_name: "[[ cluster_name ]]"
+    # The other IPs in the cluster
+    peer_node_ips: [
+      "192.168.X.Y",
+      "192.168.X.Y",
+      "192.168.X.Y"
+    ]
+    # KubeAPI IP address
+    control_plane_vip: "192.168.X.Y"
+    # Ingress (k8s) address, must be in LoadBalancer pool below
+    ingress_vip: "192.168.x.y"
+    # Load balancers created in this range
+    load_balancer_pool_cidr: [
+      "192.168.x.y-192.168.x.y"       # Pick enough for LBs and +1 for the Ingress
+    ]
+    fleet_cluster_labels: ["type=production", "location=dubai", "country=uae", "earlyaccess=false"] # Examples, need to be key=value comma separated
+
+    machine_label: "{{ inventory_hostname }}"
+    ansible_host: "{{ node_ip }}"
+
+  hosts:
+    "[[ cluster-host-name ]]-1":                  # host name for first machine
+      node_ip: "192.168.x.y"                      # IP of the host
+      primary_cluster_machine: true               # Identify the first machine to act as the "primary" while provisioning. Primary machine is one of the machines to perform one-machine only commands like kubectl and gcloud commands.
+      machine_label: "{{ inventory_hostname }}"   # Label to be used in CloudOps logging
+      ansible_host: "{{ node_ip }}"               # Specific host IP to avoid needing `/etc/hosts` file
+    "[[ cluster-host-name ]]-2":                  # host name for second machine
+      node_ip: "192.168.x.y"
+      machine_label: "{{ inventory_hostname }}"
+      ansible_host: "{{ node_ip }}"
+    "[[ cluster-host-name ]]-3":                  # host name for third machine
+      node_ip: "192.168.x.y"
+      machine_label: "{{ inventory_hostname }}"
+      ansible_host: "{{ node_ip }}"
+
