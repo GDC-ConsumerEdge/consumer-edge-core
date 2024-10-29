@@ -22,7 +22,10 @@ build-artifacts-*/
 build-artifacts-example/*
 !build-artifacts-example/README.md
 !build-artifacts-example/ssh-config
-!build-artifacts-example/instance-run-vars.yaml
+!build-artifacts-example/add-hosts-example
+!build-artifacts-example/envrc-example
+!build-artifacts-example/instance-run-vars-example.yaml
+!build-artifacts-example/inventory-example.yaml
 
 # local Inventory files are not stored
 inventory.yml
