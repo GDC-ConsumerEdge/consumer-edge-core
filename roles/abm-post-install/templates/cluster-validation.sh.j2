@@ -73,7 +73,7 @@ function pretty_print() {
 HAS_ERROR=false
 
 # Gateway
-RESULT=$(ping -c 3 172.16.20.1)
+RESULT=$(ping -c 3 "{{ gateway_ip }}")
 if [[ $? -ne 0 ]]; then
   pretty_print "Gateway ping failed" "ERROR"
   HAS_ERROR=true

@@ -210,6 +210,30 @@
   - verify
   - oidc
 
+- name: Test the bmctl version
+  script:
+    - gsutil ls -al gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/bmctl
+  register: bmctl_version_check
+  ignore_errors: true
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - verify
+  - bmctl-verify
+
+- name: Validate Success of bmctl version check
+  assert:
+    that:
+    - bmctl_version_check.rc == 0
+    fail_msg: "BMCTL version {{ bmctl_version }} is not available in the GCS release bucket"
+  when:
+  - primary_cluster_machine is defined
+  - primary_cluster_machine == true
+  tags:
+  - verify
+  - bmctl-verify
+
 - name: Fail playbook if any failures
   fail:
     msg: "Failure caused by expected {{ ansible_play_hosts_all | length }} hosts but have {{ ansible_play_hosts | length }}. Check failures above to see what issue happened."
