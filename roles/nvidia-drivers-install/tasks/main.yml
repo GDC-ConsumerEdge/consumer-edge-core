@@ -16,9 +16,18 @@
   apt:
     update_cache: true
     pkg:
-    - nvidia-driver-525
-    - nvidia-dkms-525
+    - nvidia-driver-535
+    - nvidia-dkms-535
     state: present
+  when:
+  - install_nvidia_gpu is defined and install_nvidia_gpu is true
+  tags:
+  - nvidia-gpu-install
+  - apt-packages
+
+- name: Reboot after kernel install for GPU
+  reboot:
+    reboot_timeout: 600
   when:
   - install_nvidia_gpu is defined and install_nvidia_gpu is true
   tags:
