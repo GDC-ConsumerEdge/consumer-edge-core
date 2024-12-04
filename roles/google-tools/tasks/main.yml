@@ -127,8 +127,6 @@
       - { app: nomos }
       - { app: gsutil }
       - { app: kustomize }
-      - { app: anthoscli }
-      - { app: kpt }
       - { app: kubectl }
       - { app: kubectl-oidc }
     when: optional_tools is true
@@ -146,8 +144,6 @@
       - { app: nomos }
       - { app: gsutil }
       - { app: kustomize }
-      - { app: anthoscli }
-      - { app: kpt }
       - { app: kubectl }
       - { app: kubectl-oidc }
     when: optional_tools is true
@@ -310,6 +306,32 @@
     tags:
       - initial-install
       - tool-install
+
+  ## Ensure the target GDC Connectes Software Only version is available
+  - name: Test the bmctl version
+    command: gsutil ls gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl
+    register: bmctl_version_check
+    ignore_errors: true
+    when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == true
+    tags:
+    - initial-install
+    - tool-install
+    - bmctl-verify
+
+  - name: Validate Success of bmctl version check
+    assert:
+      that:
+      - bmctl_version_check.rc == 0
+      fail_msg: "BMCTL version {{ bmctl_version }} is not available in the GCS release bucket"
+    when:
+    - primary_cluster_machine is defined
+    - primary_cluster_machine == true
+    tags:
+    - initial-install
+    - tool-install
+    - bmctl-verify
 
 ### Find versions with:  gsutil ls -al gs://anthos-baremetal-release/bmctl
   - name: Install Anthos Bare Metal CLI
