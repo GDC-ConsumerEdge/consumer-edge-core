@@ -22,9 +22,9 @@ ENV PYTHONUNBUFFERED=1
 RUN apk add --no-cache \
   build-base \
   vim \
+  python3=3.10.15-r0 \
+  python3-dev=3.10.15-r0 \
   nano \
-  python3-dev= 3.12.7-r1 \
-  python3= 3.12.7-r1 \
   curl \
   openssh-client \
   gettext \
