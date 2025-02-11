@@ -150,6 +150,11 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
     --role="roles/storage.objectViewer" --no-user-output-enabled
 
+pretty_print "INFO: Adding roles/artifactregistry.createOnPushWriter to default compute service account." "INFO"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+    --role="roles/artifactregistry.createOnPushWriter" --no-user-output-enabled
+
 # Validate that required applications are installed
 REQUIRED_APPS=(direnv docker gcloud gettext git jq screen)
 MISSING_APPS=()
