@@ -23,8 +23,8 @@ RUN apk add --no-cache \
   build-base \
   vim \
   nano \
-  python3-dev=3.10.13-r0 \
-  python3=3.10.13-r0 \
+  python3-dev=3.10.15-r0 \
+  python3=3.10.15-r0 \
   curl \
   openssh-client \
   gettext \
