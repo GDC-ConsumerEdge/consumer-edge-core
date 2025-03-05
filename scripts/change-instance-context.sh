@@ -31,6 +31,12 @@ function usage() {
     pretty_print "\n  Options/Flags:"
     pretty_print "  -h\t\tPrint this help message (optional)"
     pretty_print "  -c\t\tPrint the current context (optional)"
+
+    if [[ -z "${BUILD_ARTIFACTS_BUCKET}" ]]; then
+        pretty_print "\n  No remote instance config bucket configured. Set \${BUILD_ARTIFACTS_BUCKET} if desired" "INFO"
+    else
+        pretty_print "\n  Configured Remote Instance Config Bucket: \${BUILD_ARTIFACTS_BUCKET}=${BUILD_ARTIFACTS_BUCKET}"
+    fi
 }
 
 function check_options() {
@@ -40,6 +46,7 @@ function check_options() {
     while getopts ch flag; do
         case "${flag}" in
         c) print_context; list_folders=false; has_option=true ;;
+        b) list_gcs=true; list_folders=false; has_option=true ;;
         h) usage; exit 0 ;;
         esac
     done
@@ -50,6 +57,52 @@ function check_options() {
             want_new_folder=true
         fi
     fi
+}
+
+function verify_bucket_access() {
+    local bucket_name="${1}"
+
+    if [[ -z "${bucket_name}" ]]; then
+        pretty_print "Bucket was not passed to function." "ERROR"
+        exit 1
+    fi
+
+    if ! command -v gsutil &> /dev/null
+    then
+        pretty_print "gsutil could not be found, is it installed?" "ERROR"
+    fi
+
+    if [[ -z "${SNAPSHOT_GCS_BUCKET_BASE}" ]]; then
+        pretty_print "SNAPSHOT_GCS_BUCKET_BASE not set, make sure you are sourcing .envrc" "ERROR"
+        exit 1
+    fi
+
+}
+
+function get_list_of_remote_folders() {
+    local bucket_name="gs://${BUILD_ARTIFACT_BUCKET}" # Assuming this is exported in .envrc
+
+    if [[ $(verify_bucket_access "${bucket_name}") ]]; then
+        echo "Yes, access is possible"
+    fi
+
+    gsutil ls "${bucket_name}"
+}
+
+function create_remote_artifact_bundle() {
+    # Use the active folder only
+    local folder=$(get_active_folder)
+    if [[ -z "${folder}" ]]; then
+        echo "No active configuration in scope" "ERROR"
+        exit 1
+    fi
+
+    tmp_dir=$(mktemp -d)
+
+    tar -zcvf "${tmp_dir}/build-artifacts-${folder}.tar.gz" "build-artifacts-${folder}/"
+    gsutil cp "${tmp_dir}/build-artifacts-${folder}.tar.gz" "gs://${BUILD_ARTIFACT_BUCKET}/build-artifacts-${folder}.tar.gz"
+
+    rm -rf "${tmp_dir}"
 }
 
 function get_list_of_folders() {
@@ -84,9 +137,23 @@ function display_folders() {
         else
             pretty_print $folder
         fi
-
     done
 
+    # List remote build artifacts
+    if [[ ! -z "${BUILD_ARTIFACTS_BUCKET}" ]]; then
+        # verify_bucket_access() (maybe)
+        pretty_print "\nAvailable Remote Instance Run Contexts in gs://${BUILD_ARTIFACTS_BUCKET}\n=============================="
+
+        remote_folders=$(get_list_of_remote_folders)
+        if [[ -z "$remote_folders" ]]; then
+            for rfolder in $remote_folders; do
+                pretty_print $rfolder
+            done
+
+        else
+            pretty_print "No remote configruations found in gs://${BUILD_ARTIFACTS_BUCKET}"
+        fi
+    fi
 }
 
 function get_active_folder() {
