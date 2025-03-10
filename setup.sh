@@ -235,8 +235,10 @@ pretty_print ""
 pretty_print "All of the following variables CAN and SHOULD be verified in the generated 'envrc' file following the completion of this script"
 pretty_print ""
 
-export ROOT_REPO_URL="https://gitlab.com/gcp-solutions-public/retail-edge/primary-root-repo-template.git"
-pretty_print "INFO: Setting default Primary Root Repo: ${ROOT_REPO_URL}" "INFO"
+if [[ -z "${ROOT_REPO_URL}" ]]; then
+  pretty_print "INFO: Setting default Primary Root Repo: ${ROOT_REPO_URL}" "INFO"
+  export ROOT_REPO_URL="https://gitlab.com/gcp-solutions-public/retail-edge/primary-root-repo-template.git"
+fi
 
 pretty_print "INFO: Setting up docker configuration to use gcloud for gcr.io" "INFO"
 yes Y | gcloud auth configure-docker --quiet --verbosity=critical --no-user-output-enabled
