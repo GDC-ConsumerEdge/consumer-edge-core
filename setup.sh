@@ -277,6 +277,11 @@ else
 	pretty_print "PASS: GCP Inventory file found at build-artifacts/gcp.yml"
 fi
 
+if [[ ! -f "inventory/inventory.yaml" ]]; then
+  pretty_print "INFO: Setting up inventory link to build-artifacts" "INFO"
+  ln -s ../build-artifacts/inventory.yaml ./inventory/inventory.yaml
+fi
+
 pretty_print "\n\nYour project is set up and ready for use. You will need to do a combination of the following options next:\n"
 pretty_print "1. Use your editor of choice and check the generated 'build-artifacts/envrc' file to ensure correct Environment Variables were set." "INFO"
 pretty_print "2. If you made any changes, save file and run either: 'direnv allow .' or 'source build-artifacts/envrc'"
