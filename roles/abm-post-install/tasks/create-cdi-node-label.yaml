@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## TODO: This should run on each of the clusters, but only one of them should apply at once so
-##       there isn't a rush on kubeapi calls to adding node labels
+# Two files, the script that is run, and the crontab 
 
 - name: Copy script over to machine
   template:

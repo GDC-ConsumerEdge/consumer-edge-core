@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # Dependencies
 # - ENV variables
 
 ENV DEBIAN_FRONTEND=noninteractive
-ARG GCLOUD_VERSION="432.0.0"
+ARG GCLOUD_VERSION="513.0.0"
 
 RUN apt-get update && apt-get -y upgrade
 

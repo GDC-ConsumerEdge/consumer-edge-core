@@ -12,15 +12,77 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Install Nvidia GPU
-  apt:
-    update_cache: true
-    pkg:
-    - nvidia-driver-525
-    - nvidia-dkms-525
-    state: present
+- name: Import GPG key
+  get_url:
+    url: "{{ nvidia_gpg_key }}"
+    dest: "{{ nvidia_key_location }}"
+    mode: 0644
+    owner: root
+    group: root
   when:
   - install_nvidia_gpu is defined and install_nvidia_gpu is true
   tags:
+  - nvidia-setup
   - nvidia-gpu-install
-  - apt-packages
+
+- name: Sources file to apt list for nvidia toolkit
+  template:
+    src: nvidia-container-toolkit-source.list.j2
+    dest: "{{ nvidia_source_list }}"
+    owner: root
+    group: root
+    mode: 0644
+  when:
+  - install_nvidia_gpu is defined and install_nvidia_gpu is true
+  tags:
+  - nvidia-setup
+  - nvidia-gpu-install
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  when:
+  - install_nvidia_gpu is defined and install_nvidia_gpu is true
+  tags:
+  - nvidia-setup
+  - nvidia-gpu-install
+
+# Install nvidia-container-toolkit package
+- name: Install nvidia-container-toolkit
+  apt:
+    name: nvidia-container-toolkit
+    state: present
+    update_cache: false # explicitly updated in previous task
+  when:
+  - install_nvidia_gpu is defined and install_nvidia_gpu is true
+  tags:
+  - nvidia-install
+  - nvidia-gpu-install
+
+- name: Install runtime for kubernetes
+  command: nvidia-ctk runtime configure --runtime=containerd
+  when:
+  - install_nvidia_gpu is defined and install_nvidia_gpu is true
+  tags:
+  - nvidia-configure
+  - nvidia-gpu-install
+
+# Restart containerd service
+- name: Restart container.d service
+  service:
+    name: containerd
+    state: restarted
+  when:
+  - install_nvidia_gpu is defined and install_nvidia_gpu is true
+  tags:
+  - nvidia-configure
+  - nvidia-gpu-install
+
+# - name: Reboot after kernel install for GPU
+#   reboot:
+#     reboot_timeout: 600
+#   when:
+#   - install_nvidia_gpu is defined and install_nvidia_gpu is true
+#   tags:
+#   - nvidia-gpu-install
+#   - apt-packages
