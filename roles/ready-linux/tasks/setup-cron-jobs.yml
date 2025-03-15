@@ -49,9 +49,9 @@
 - name: Script for gcloud cron update
   template:
     src: "gcloud-update-script.sh"
-    dest: "{{ abm_install_folder }}/gcloud-update-script.sh"
-    owner: root
-    group: root
+    dest: "{{ abm_install_folder }}/scripts/gcloud-update-script.sh"
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
     mode: '0700'
 
 - name: Set up logrotate for gcloud updates

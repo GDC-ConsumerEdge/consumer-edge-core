@@ -30,6 +30,13 @@
   - abm-post-install
   - kube-ps1
 
+- name: "Setup automated cert rotation"
+  import_tasks: setup-auto-update-cert-job.yaml
+  tags:
+  - abm-post-install
+  - cert-rotation
+  - debug-cert # Remove
+
 ### Setup CDI cpumanager flag for nodes
 - name: "Add CDI required cpumanager label for nodes"
   import_tasks: create-cdi-node-label.yaml
