@@ -44,16 +44,6 @@
   when:
   - target_os == "redhat"
 
-### gcloud cron updates
-
-- name: Script for gcloud cron update
-  template:
-    src: "gcloud-update-script.sh"
-    dest: "{{ abm_install_folder }}/scripts/gcloud-update-script.sh"
-    owner: '{{ ansible_user }}'
-    group: '{{ ansible_user }}'
-    mode: '0700'
-
 - name: Set up logrotate for gcloud updates
   template:
     src: gcloud-update-logrotate.j2
@@ -61,11 +51,29 @@
     owner: root
     group: root
     mode: 0644
+  tags:
+  - cron-updates
+  - gcloud-update
+
+### gcloud cron updates
+- name: Script for gcloud cron update
+  template:
+    src: "gcloud-update-script.sh"
+    dest: "{{ abm_install_folder }}/scripts/gcloud-update-script.sh"
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
+    mode: '0700'
+  tags:
+  - cron-updates
+  - gcloud-update
 
 - name: Cron file for gcloud update
   template:
     src: "gcloud-update-cron.j2"
-    dest: "/etc/cron.d/gcloud-update-cron"
+    dest: "/etc/cron.d/gcloud-update-cron.sh"
     owner: root
     group: root
     mode: '0700'
+  tags:
+  - cron-updates
+  - gcloud-update
