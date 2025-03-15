@@ -280,3 +280,14 @@
   - robin-install-disk-ready
   - robin-install-post
   - robin-install-actual
+
+- name: Change ownership of robin install folder and all files under
+  file:
+    path: "{{ robin_install_folder }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: yes
+  tags:
+  - robin-io
+  - robin-install
+  - robin-intall-setup

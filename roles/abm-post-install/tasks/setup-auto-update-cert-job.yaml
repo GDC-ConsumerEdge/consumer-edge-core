@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,32 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
----
-
-- hosts: all
-  become: true
-  become_user: root
-  gather_facts: false
-  pre_tasks:
-  - name: Download SSH key
-    include_role:
-      name: download-ssh-key
-  - name: Gathering Facts
-    setup: {}
-    tags:
-    - always
-  - name: Populate service facts
-    service_facts:
-    tags:
-    - always
-  roles:
-  - abm-install
-  - abm-software
-  - abm-post-install
-  - ansible-pull
-  - abm-login-token
-  - coral-tpu-install
-  - nvidia-drivers-install
-  vars: []
+- name: "Copy cert refresh script"
+  template:
+    src: rotate-k8s-certs.sh.j2
+    dest: "{{ abm_install_folder }}/scripts/rotate-k8s-certs.sh"
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
+    mode: "0700"
   tags:
-  - software
+  - abm-post-install
+  - cert-rotation
+  - debug-cert # Remove
+
+- name: "Create cron job to rotate certs"
+  template:
+    src: rotate-k8s-certs-cron.sh.j2
+    dest: "/etc/cron.d/rotate-k8s-certs-cron.sh"
+    owner: root
+    group: root
+    mode: "0700"
+  tags:
+  - abm-post-install
+  - cert-rotation
+  - debug-cert # Remove

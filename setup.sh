@@ -235,8 +235,10 @@ pretty_print ""
 pretty_print "All of the following variables CAN and SHOULD be verified in the generated 'envrc' file following the completion of this script"
 pretty_print ""
 
-export ROOT_REPO_URL="https://gitlab.com/gcp-solutions-public/retail-edge/primary-root-repo-template.git"
-pretty_print "INFO: Setting default Primary Root Repo: ${ROOT_REPO_URL}" "INFO"
+if [[ -z "${ROOT_REPO_URL}" ]]; then
+  pretty_print "INFO: Setting default Primary Root Repo: ${ROOT_REPO_URL}" "INFO"
+  export ROOT_REPO_URL="https://gitlab.com/gcp-solutions-public/retail-edge/primary-root-repo-template.git"
+fi
 
 pretty_print "INFO: Setting up docker configuration to use gcloud for gcr.io" "INFO"
 yes Y | gcloud auth configure-docker --quiet --verbosity=critical --no-user-output-enabled
@@ -275,6 +277,11 @@ if [[ ! -f "build-artifacts/gcp.yml" ]]; then
 	envsubst < templates/inventory-cloud-example.yaml > build-artifacts/gcp.yml
 else
 	pretty_print "PASS: GCP Inventory file found at build-artifacts/gcp.yml"
+fi
+
+if [[ ! -f "inventory/inventory.yaml" ]]; then
+  pretty_print "INFO: Setting up inventory link to build-artifacts" "INFO"
+  ln -s ../build-artifacts/inventory.yaml ./inventory/inventory.yaml
 fi
 
 pretty_print "\n\nYour project is set up and ready for use. You will need to do a combination of the following options next:\n"

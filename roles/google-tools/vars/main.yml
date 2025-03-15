@@ -16,12 +16,12 @@
 # vars file for google-tools
 
 # gcloud version to download (gcloud version) -- roughly kept up-to-date, the system will update when installed, keeping up-to-date just makes the install a little faster
-gcloud_version: "450.0.0"
+gcloud_version: "513.0.0"
 
 kubectx_version: "0.9.4"
 
 # K9s binary version (https://github.com/derailed/k9s/releases)
-k9s_version: "v0.27.4"
+k9s_version: "v0.40.5"
 
 # Kubestr Version (https://github.com/kastenhq/kubestr/releases/)
-kubestr_version: "0.4.37"
+kubestr_version: v0.4.48"

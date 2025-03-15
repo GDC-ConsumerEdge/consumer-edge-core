@@ -15,4 +15,4 @@
 #}
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-{{ gcloud_update_cron_value }} runuser -l '{{ ansible_user  }}' -c '{{ abm_install_folder }}/scritps/gcloud-update-script.sh' >> '{{ gcloud_update_log }}''
+0 0 */180 * * runuser -l '{{ ansible_user  }}' -c '{{ abm_install_folder }}/scripts/rotate-k8s-certs.sh' >> '{{ abm_install_folder }}/scripts/rotate-certs.log 2>&1'
