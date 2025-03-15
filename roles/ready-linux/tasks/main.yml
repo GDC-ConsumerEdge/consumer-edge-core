@@ -394,3 +394,12 @@
   tags:
   - os-setup
   - hosts-file
+
+- name: Create Folder to hold scripts
+  file:
+    path: '{{ abm_install_folder }}/scripts'
+    state: directory
+    mode: '0755'
+  tags:
+  - os-setup
+  - scripts-folder
