@@ -105,6 +105,7 @@ for role in ${ROLES[@]}; do
   echo "Adding ${role}"
   gcloud projects add-iam-policy-binding ${PROJECT_ID} \
     --member="serviceAccount:${PROVISIONING_GSA}" \
+    --condition="None" \
     --role="${role}" \
     --no-user-output-enabled
 done
