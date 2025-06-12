@@ -36,8 +36,6 @@ GSAs=(
     "external-secrets-k8s-${CLUSTER_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
      )
 
-# gcloud iam service-accounts keys create /var/keys/abm-gke-register-agent-creds.json --iam-account=abm-gke-register-agent@anthos-bare-metal-lab-1.iam.gserviceaccount.com --project=anthos-bare-metal-lab-1
-
 for GSA in "${GSAs[@]}"
 do
     KEYS=( $(gcloud iam service-accounts keys list --iam-account=$GSA --format="value(name)" --managed-by="user" --project="${PROJECT_ID}") )
