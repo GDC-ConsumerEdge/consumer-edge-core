@@ -56,6 +56,17 @@
   - gcloud-update
 
 ### gcloud cron updates
+- name: Create scripts folder for jobs
+  file:
+    path: "{{ abm_install_folder }}/scripts"
+    state: directory
+    mode: '0700'
+    owner: root
+    group: root
+  tags:
+  - cron-updates
+  - gcloud-update
+
 - name: Script for gcloud cron update
   template:
     src: "gcloud-update-script.sh"
