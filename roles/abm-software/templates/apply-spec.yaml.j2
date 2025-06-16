@@ -12,24 +12,3 @@ spec:
     syncWait: {{ root_repository_sync_time }}
     policyDir: "{{ root_repository_policy_dir }}"
     secretType: "{{ root_repository_git_auth_type }}"
-### Policy Controller
-  policyController:
-    # Set to true to install and enable Policy Controller
-    enabled: true
-    # Uncomment to prevent the template library from being installed
-    templateLibraryInstalled: true
-    # Uncomment to enable support for referential constraints
-    referentialRulesEnabled: true
-    # Uncomment to disable audit, adjust value to set audit interval
-    auditIntervalSeconds: 0
-    # Uncomment to log all denies and dryrun failures
-    logDeniesEnabled: true
-    # Uncomment to enable mutation
-    mutationEnabled: true
-    # Uncomment to exempt namespaces
-    exemptableNamespaces: ["default"]
-    # Uncomment to change the monitoring backends
-    # monitoring:
-    #     backends:
-    #     - cloudmonitoring
-    #     - prometheus
