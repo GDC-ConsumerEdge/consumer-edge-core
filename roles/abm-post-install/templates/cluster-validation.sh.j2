@@ -5,7 +5,7 @@ CLUSTER_NAME="${CLUSTER_NAME:-{{ cluster_name }}}"
 ### Gateway Project ID (default to the project ID)
 VPN_PROJECT_ID="${VPN_PROJECT_ID:-{{ google_project_id }}}"
 ### Gateway VPN Tunnel Name (NO DEFAULT, THIS IS REQUIRED if checking VPN status) -- NOTE: If this value is not set, the VPN check will be skipped
-VPN_GATEWAY_NAME="{{ vpn_tunnel_name }}"
+VPN_GATEWAY_NAME="{{ vpn_tunnel_name | default('') }}"
 ### Region VPN tunnel is in
 VPN_REGION="${VPN_REGION:-{{ google_region }}}"
 ### Is this the primary machine machine in a cluster (used for calls where multiple kubectl isn't ideal, defaults to true)
@@ -73,7 +73,7 @@ function pretty_print() {
 HAS_ERROR=false
 
 # Gateway
-RESULT=$(ping -c 3 "{{ gateway_ip }}")
+RESULT=$(ping -c 3 "{{ gateway_ip | default('notdefined.example.com') }}")
 if [[ $? -ne 0 ]]; then
   pretty_print "Gateway ping failed" "ERROR"
   HAS_ERROR=true
