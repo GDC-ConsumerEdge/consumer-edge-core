@@ -88,38 +88,42 @@
   - cluster-validation-test
   - cluster-validation-test-copy
 
-# - name: Run Cluster Validation Test
-#   ignore_errors: true
-#   no_log: true
-#   command:
-#     cmd: "{{ tools_base_path }}/cluster-validation.sh"
-#   environment:
-#     IS_PRIMARY: "{{ (primary_cluster_machine is defined) and (primary_cluster_machine == true) }}"
-#     VPN_GATEWAY_NAME: "{{ vpn_tunnel_name }}"
-#     IS_PLAIN_OUTPUT: "true"
-#   register: cluster_validation_test_result
-#   tags:
-#   - cluster-validation-test
-#   - cluster-validation-test-run
+- name: Run Cluster Validation Test
+  ignore_errors: true
+  no_log: true
+  command:
+    cmd: "{{ tools_base_path }}/cluster-validation.sh"
+  environment:
+    IS_PRIMARY: "{{ (primary_cluster_machine is defined) and (primary_cluster_machine == true) }}"
+    VPN_GATEWAY_NAME: "{{ vpn_tunnel_name }}"
+    IS_PLAIN_OUTPUT: "true"
+  register: cluster_validation_test_result
+  tags:
+  - cluster-validation-test
+  - cluster-validation-test-run
 
-# - name: "Cluster Validation Test Result (success)"
-#   debug:
-#     msg: "{{ item }}"
-#   loop:
-#   - "{{ cluster_validation_test_result.stdout_lines }}"
-#   when:
-#   - cluster_validation_test_result.rc == 0
-#   tags:
-#   - cluster-validation-test
-#   - cluster-validation-test-run
+- name: "Cluster Validation Test Result (success)"
+  ignore_errors: true
+  debug:
+    msg: "{{ item }}"
+  loop:
+  - "{{ cluster_validation_test_result.stdout_lines }}"
+  when:
+  - cluster_validation_test_result.rc == 0
+  - cluster_validation_test_result.stdout_lines is defined and cluster_validation_test_result.stdout_lines | length > 0
+  tags:
+  - cluster-validation-test
+  - cluster-validation-test-run
 
-# - name: "Cluster Validation Test Result (failed)"
-#   debug:
-#     msg: "{{ item }}"
-#   loop:
-#   - "{{ cluster_validation_test_result.stdout_lines }}"
-#   when:
-#   - cluster_validation_test_result.rc != 0
-#   tags:
-#   - cluster-validation-test
-#   - cluster-validation-test-run
+- name: "Cluster Validation Test Result (failed)"
+  ignore_errors: true
+  debug:
+    msg: "{{ item }}"
+  loop:
+  - "{{ cluster_validation_test_result.stderr_lines }}"
+  when:
+  - cluster_validation_test_result.rc != 0
+  - cluster_validation_test_result.stderr_lines is defined and cluster_validation_test_result.stdout_lines | length > 0
+  tags:
+  - cluster-validation-test
+  - cluster-validation-test-run
