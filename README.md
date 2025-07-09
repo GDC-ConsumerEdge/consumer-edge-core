@@ -11,6 +11,8 @@ The primary tooling to provision **Hardware** or **Cloud** clusters is performed
 
 **Hardware** targets physical PCs or servers and require additional steps before execution of this deployment process. See **Hardware Quick Start** below for additional details.
 
+> NOTE: The install does require running a Docker container and having routable access from the provisioning system to all of the hosts. Please verify this is possible
+
 ## Install Phases
 
 There are three phases to installing Consumer Retail Edge for either **Cloud** or **Hardware**:
@@ -66,6 +68,23 @@ The primary option to provision the solution is to use physical hardware. Physic
 
 1. Create a GCP project with a valid billing account, then clone this repository.
 
+1. Setup the "build-artifacts/" for the specific cluster. Follow instructions detialed in [docs/SETTING_BUILD_ARTIFACTS_CONTEXT.md]
+
+1. At this point running `./scripts/change-instance-context.sh` should look similar to this output (+/- differnet context names)
+
+    > NOTE: The selected context should have a star next to it.
+
+    ```shell
+    ./scripts/change-instance-context.sh
+    Available Instance Run Contexts
+    ==============================
+    cascade
+    cloud
+    patagonia*
+    rockies
+    sierra
+    ```
+
 1. Execute `setup.sh` on the **Provisioning Machine** and remediate until the script completes with the message `Your project is set up and ready for use. You will need to do a combination of the following options next:`
 
     ```bash
@@ -120,11 +139,7 @@ Execute the below steps and substeps in consecutive order.
 
 This phase leverages a container to ensure consistent and conflict free `ansible` deployment. Complete the steps below to initialize the container, deploy it to the **Provisioning machine**, and then execute `ansible` inside of the container.
 
-1. Create "inventory" file for Ansible provisioning:
-
-    ```bash
-    envsubst < templates/inventory-cloud-example.yaml > build-artifacts-example/gcp.yml
-    ```
+1. Create a Build Context for `cloud`, but leave out `add-hosts` since the hosts are cloud-based. The `gcp.yaml` file is used to manage cloud GCE instances and most important.
 
 1. You are now ready to start provisioing based on cloud instances. Skip to "Step 3"
 
@@ -140,20 +155,10 @@ Execute the below steps and substeps in consecutive order.
 
 There are two approaches to creating a baseline machine. This method is a bit more complex and requires some knowledge of Linux to complete.
 
-1. Use the [Edge ISO Autoinstaller](https://consumer-edge.googlesource.com/edge-ubuntu-20-04-autoinstall/) project to create ISOs, flash the ISO to USB drives and boot to a baseline state.
-    1. Add all of the hosts to `/etc/hosts` or to DNS service.
-1. Option 2 is manual setup (for each host machine)
-    1. Install Ubuntu 20.04LTS
-    1. Add a user `abm-admin` with a known password for your safe keeping
-    1. Setup user for passwordless `sudoer` access (see Internet for options)
-    1. Setup networking to establish a Static IP. IPs should be reserved. IPs should also be a contigous range (ie: 192.168.3.11, 192.168.3.12, 192.168.3.13...)
-        * Each host should have a short hostname (ie: edge-1, edge-2, edge-3)
-    1. Use the public key established in Section 1 (`build-artifacts/consumer-edge-machine.pub`) to establish a passwordless SSH
-        ```bash
-        ssh-copy-id -i build-artifacts/consumer-edge-machine.pub abm-admin@<hostname>
-        ```
-        > NOTE: Use the password established when creating the user
-    1. Add all of the hosts to `/etc/hosts` or to DNS service.
+1. Use the [Edge ISO Autoinstaller](https://github.com/GDC-ConsumerEdge/gdc-baseline-iso) project to create ISOs, flash the ISO to USB drives and boot to a baseline state.
+    1. Add all of the host machines to `/etc/hosts` or to DNS service available from the provisioning machine.
+
+    > Note: Manual creation of HostOS options listed in [setting up hosts manually](docs/HOST_OS_SETUP.md)
 
 #### Verifying Physical Instances
 
@@ -164,24 +169,19 @@ There are two approaches to creating a baseline machine. This method is a bit mo
 
 ### 2. Provision Inventory (Hardware Quick Start)
 
-1. Create "inventory" file for Ansible provisioning:
-
-    ```bash
-    envsubst < templates/inventory-physical-example.yaml > build-artifacts-example/inventory.yml
-    ```
+1. Setup/verify "Build Contexts" detailed bove
 
 1. Review `build-artifacts/inventory.yml` to set the variables for your instances (ie: IP addresses for each host, cluster-level variables set, etc)
 
+1. Review `build-artifacts/envrc`
+
+1. Review `build-artifacts/instance-run-vars.yaml`
+
 1. You are now ready to start provisioing based on physical instances. Skip to "Step 3"
 
-
+f
 ## ![Provisioning Baselined Machines](docs/img/3.png "3") Provisioning Baselined Machines
 
-1. Create any overrides to variables using the `templates/instance-run-vars-template.yaml`. Adjust to match the provisioning instance run needs
-
-    ```bash
-    envsubst < templates/instance-run-vars-template.yaml > build-artifacts/instance-run-vars.yaml
-    ```
 
 1. Run the following and answer 'y' when propmted. This command will enter into the container image shell to run
 commands, do not `exit` until completed.
@@ -210,7 +210,7 @@ start **does not** use OIDC (yet), so you will not be able to see the workloads
 and services of the cluser until you `login`. To do this, a token needs to be
 generated and cut-copy-pasted into the `Token` prompt of the login screen.
 
-1. From within the container shell (if previously exited, run `./install.sh` again)
+1. From within the docker container shell (if previously exited, run `./install.sh` again)
 
     ```bash
     ansible-playbook all-get-login-tokens.yml -i inventory
