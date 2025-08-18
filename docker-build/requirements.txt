@@ -479,9 +479,9 @@ packaging==23.1 \
     #   docker
     #   molecule
     #   pytest
-paramiko==2.12.0 \
-    --hash=sha256:376885c05c5d6aa6e1f4608aac2a6b5b0548b1add40274477324605903d9cd49 \
-    --hash=sha256:b2df1a6325f6996ef55a8789d0462f5b502ea83b3c990cbb5bbe57345c6812c4
+paramiko==3.4.0 \
+    --hash=sha256:43f0b51115a896f9c00f59618023484cb3a14b98bbceab43394a39c6739b7ee7 \
+    --hash=sha256:aac08f26a31dc4dffd92821527d1682d99d52f9ef6851968114a8728f3c274d3
     # via -r requirements.in
 pathspec==0.11.2 \
     --hash=sha256:1d6ed233af05e679efb96b1851550ea95bbb64b7c490b0f5aa52996c11e92a20 \
@@ -866,7 +866,6 @@ six==1.16.0 \
     # via
     #   google-auth
     #   google-auth-httplib2
-    #   paramiko
     #   python-dateutil
     #   pywinrm
 subprocess-tee==0.4.1 \
