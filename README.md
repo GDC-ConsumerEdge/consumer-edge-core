@@ -68,8 +68,6 @@ The primary option to provision the solution is to use physical hardware. Physic
 
 1. Create a GCP project with a valid billing account, then clone this repository.
 
-1. Setup the "build-artifacts/" for the specific cluster. Follow instructions detialed in [docs/SETTING_BUILD_ARTIFACTS_CONTEXT.md]
-
 1. At this point running `./scripts/change-instance-context.sh` should look similar to this output (+/- differnet context names)
 
     > NOTE: The selected context should have a star next to it.
@@ -84,6 +82,8 @@ The primary option to provision the solution is to use physical hardware. Physic
     rockies
     sierra
     ```
+
+    1. Optionally, manually setting up the "build-artifacts/" for the specific cluster can be done as well. Follow instructions detialed in [docs/SETTING_BUILD_ARTIFACTS_CONTEXT.md]
 
 1. Execute `setup.sh` on the **Provisioning Machine** and remediate until the script completes with the message `Your project is set up and ready for use. You will need to do a combination of the following options next:`
 

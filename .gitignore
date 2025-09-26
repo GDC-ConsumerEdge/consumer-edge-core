@@ -33,6 +33,7 @@ inventory.yaml
 # GCP inventory files generated
 gcp.yaml
 gcp.yml
+!inventory/gcp.yml # this is a symlink, it SHOULD exist
 
 !inventory/inventory.yaml
 inventory/host_vars/*.yaml

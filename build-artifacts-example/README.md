@@ -8,6 +8,7 @@ The following files and/or tasks need to be completed before starting to install
   [ ] - Project Name (replaces everywhere necessary)
   [ ] - PAT token for Primary Root Repo
   [ ] - ACM name properly set
+[ ] - Replace varaiables in the `gcp-example.yml` and rename to `gcp.yml`
 [ ] - `instance-run-vars.yaml` variables set (copy `instance-run-vars-template.yaml` to `instance-run-vars.yaml` and replace values)
   [ ] - ACM name (this is the name of the cluster in your Root Repo)
   [ ] - GDC version (set `abm-version` if overriding the `inventory/group/all.yaml` version)
