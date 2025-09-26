@@ -39,7 +39,9 @@ elif [[ "${OS_BUILD}" == "rhel" ]]; then
 fi
 
 # 1. Establish a user (same user for all GCEs)
+groupadd abm-admin
 useradd -m -c "ABM Admin user" -s /bin/bash -g users ${ANSIBLE_USER}
+usermod -aG abm-admin abm-admin
 echo "${ANSIBLE_USER}  ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/${ANSIBLE_USER}
 
 # 2. Copy/place/setup a authorized_keys from a GCP Secret under that user and under root
