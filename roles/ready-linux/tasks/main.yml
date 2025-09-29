@@ -102,6 +102,31 @@
   when:
     - target_os == "ubuntu"
 
+## Update inotify watchers
+- name: "Copy script to update fs.inotify handlers"
+  template:
+    src: update-fs-inotify.sh.j2
+    dest: "{{ abm_install_folder }}/update-fs-inotify.sh"
+    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user }}"
+    mode: "0744"
+  tags:
+  - update-dependencies
+  - ubuntu-setup
+  - inotify
+  when:
+  - target_os == "ubuntu"
+
+- name: "Run script to update fs.inotify handlers"
+  command: "{{ abm_install_folder }}/update-fs-inotify.sh"
+  register: ufw
+  tags:
+  - update-dependencies
+  - ubuntu-setup
+  - inotify
+  when:
+  - target_os == "ubuntu"
+
 ## Setup Time Sync
 - name: "Include tasks for Time Synchronization"
   import_tasks: setup-time-sync.yaml
