@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Run from inside of either CloudShell or a Bastion VM inside of the same GCP project as the GCP cnuc's 
+# Run from inside of either CloudShell or a Bastion VM inside of the same GCP project as the GCP cnuc's
 
 PREFIX_DIR=$(dirname -- "$0")
 source ${PREFIX_DIR}/scripts/cloud/gce-helper.vars
