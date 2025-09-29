@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# This script calculates new inotify limits based on a desired memory
+# footprint, while maintaining the same ratio as the system defaults.
+#
+
+echo "--- Reading current inotify values ---"
+default_max_user_instances=128 # $(cat /proc/sys/fs/inotify/max_user_instances)
+default_max_queued_events=16384 # $(cat /proc/sys/fs/inotify/max_queued_events)
+default_max_user_watches=501592 # $(cat /proc/sys/fs/inotify/max_user_watches)
+
+echo "Default max_user_instances: $default_max_user_instances"
+echo "Default max_queued_events:  $default_max_queued_events"
+echo "Default max_user_watches:   $default_max_user_watches"
+echo ""
+
+available_memory=$((2 * 1024 * 1024 * 1024)) # 2 GB in bytes
+
+total_weight=$((default_max_user_instances + default_max_queued_events + default_max_user_watches))
+
+echo "--- Calculating new values ---"
+echo "Total weight (ratio sum): $total_weight"
+echo ""
+
+# Use 'bc' for floating-point division.
+# 'scale=10' tells bc to keep 10 decimal places for precision.
+memory_per_unit=$(echo "scale=10; $available_memory / $total_weight" | bc)
+
+final_max_user_watches=$(echo "$memory_per_unit * $default_max_user_watches" | bc | cut -d'.' -f1)
+final_max_user_instances=$(echo "$memory_per_unit * $default_max_user_instances" | bc | cut -d'.' -f1)
+final_max_queued_events=$(echo "$memory_per_unit * $default_max_queued_events" | bc | cut -d'.' -f1)
+
+echo "--- New inotify values ---"
+echo "fs.inotify.max_user_watches = ${final_max_user_watches}"
+echo "fs.inotify.max_user_instances = ${final_max_user_instances}"
+echo "fs.inotify.max_queued_events = ${final_max_queued_events}"
+
+sysctl -w fs.inotify.max_user_watches=${final_max_user_watches}
+sysctl -w fs.inotify.max_user_instances=${final_max_user_instances}
+sysctl -w fs.inotify.max_queued_events=${final_max_queued_events}
