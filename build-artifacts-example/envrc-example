@@ -88,9 +88,9 @@ export OIDC_ENABLED="false"  # Set to "true" to enable OIDC, if "true", then abo
 
 
 ### Extras
-export BASTION="gcloud compute ssh --zone \"us-central1-a\" \"[[ Name of bastion VM ]]\"  --project \"[[ gcp-project ]]\""
-export MACHINE_SIZE="n1-standard-8"
-export MIN_MACHINE_PLATFORM="Intel Ivy Bridge"
+export BASTION="gcloud compute ssh --zone \"${ZONE}\" \"bastion-host-gdc-so\"  --project \"${PROJECT_ID}\""
+export MACHINE_SIZE="n2-standard-8"
+export MIN_MACHINE_PLATFORM="Intel Ice Lake"
 export DISK_SIZE="130G"
 export SECOND_DISK_SIZE="500G"
 
