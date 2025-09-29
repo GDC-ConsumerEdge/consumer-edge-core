@@ -75,7 +75,7 @@ function get_downloadable_key_name {
 }
 
 # Option to add the cluster name to the script
-DEFAULT_CLUSTER_NAME=${1:-cnuc-1}
+DEFAULT_CLUSTER_NAME=${1:-gdc-demo-1}
 if [[ "${DEFAULT_CLUSTER_NAME}" =~ ^([a-z]+[0-9a-z-]*)$ ]]; then
 	pretty_print "INFO: Evaluating setup using cluster name [${DEFAULT_CLUSTER_NAME}]" "INFO"
 else
