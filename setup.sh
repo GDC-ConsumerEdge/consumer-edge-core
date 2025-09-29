@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Run from inside of either CloudShell or a Bastion VM inside of the same GCP project as the GCP cnuc's
+# Run from inside of either CloudShell or a Bastion VM inside of the same GCP project as the GCP cnuc's 
 
 PREFIX_DIR=$(dirname -- "$0")
 source ${PREFIX_DIR}/scripts/cloud/gce-helper.vars
@@ -75,7 +75,7 @@ function get_downloadable_key_name {
 }
 
 # Option to add the cluster name to the script
-DEFAULT_CLUSTER_NAME=${1:-cnuc-1}
+DEFAULT_CLUSTER_NAME=${1:-gdc-demo-1}
 if [[ "${DEFAULT_CLUSTER_NAME}" =~ ^([a-z]+[0-9a-z-]*)$ ]]; then
 	pretty_print "INFO: Evaluating setup using cluster name [${DEFAULT_CLUSTER_NAME}]" "INFO"
 else
