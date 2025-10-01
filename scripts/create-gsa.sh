@@ -83,8 +83,7 @@ gcloud services enable --project ${PROJECT_ID} \
   containerregistry.googleapis.com \
   secretmanager.googleapis.com \
   servicemanagement.googleapis.com \
-  serviceusage.googleapis.com \
-  sourcerepo.googleapis.com
+  serviceusage.googleapis.com
 
 
 ### Set roles for GSA
