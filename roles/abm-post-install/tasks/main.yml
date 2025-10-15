@@ -45,6 +45,12 @@
   - cdi-install
   - cdi-node-hack
 
+- name: Patch gke-config for resources
+  import_tasks: patch-gke-config.yaml
+  tags:
+  - abm-post-install
+  - gke-connect-patch
+
 ### Install Auditd
 - name: "Setup Auditd service"
   import_tasks: setup-auditd.yml

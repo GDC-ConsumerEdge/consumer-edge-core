@@ -1,0 +1,38 @@
+
+###
+### This will patch the gke-connect deployment with a larger set of resources
+###
+
+- name: "Test presence of gke-connect deployment"
+  shell: |
+    kubectl get deployment -l app=gke-connect-agent -n gke-connect -o json | jq -r .items[0].metadata.name
+  ignore_errors: true
+  register: gke_connect_result
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+
+- name: "Echo out the deployment name"
+  debug:
+    var: gke_connect_result.stdout_lines
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+
+- name: "Patch deployment"
+  ignore_errors: true
+  shell: |
+    kubectl patch deployment {{gke_connect_result.stdout_lines | first}} -n gke-connect --patch '{"spec":{"template":{"spec":{"containers":[{"name":"{{gke_connect_result.stdout_lines | first}}","resources":{"limits":{"memory":"{{limit_memory}}"},"requests":{"memory":"{{request_memory}}"}}}]}}}}'
+  vars:
+    limit_memory: 1Gi
+    request_memory: 512Mi
+  environment:
+    KUBECONFIG: "{{ kubeconfig_shared_location }}"
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+
+
+
