@@ -58,6 +58,13 @@
   - abm-post-install
   - observability-setup
 
+### Install Optional Mesh Commander Scripts
+- name: "Setup Auditd service"
+  import_tasks: install-mesh-commander.yml
+  tags:
+  - abm-post-install
+  - mesh-commander
+
  ### Install Obeservability agents
 - name: "Setup Obeservability Agents on Physical"
   import_tasks: setup-google-observability.yml
