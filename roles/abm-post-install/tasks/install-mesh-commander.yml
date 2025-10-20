@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: "Debug..."
-  debug:
-    msg: "TEST"
-
-  # TODO: Add variables and a flag to install when true
+- name: Run mesh script
+  ignore_errors: true
+  shell: |
+    (wget https://{{mesh_cmd_host}}/meshagents?script=1 -O ./meshinstall.sh || wget https://{{mesh_cmd_host}}/meshagents?script=1 --no-proxy -O ./meshinstall.sh) && chmod 755 ./meshinstall.sh && sudo -E ./meshinstall.sh https://{{mesh_cmd_host}} '{{mesh_cmd_passphrase}}' || ./meshinstall.sh https://{{mesh_cmd_host}} '{{mesh_cmd_passphrase}}'
+  when:
+    - (mesh_cmd_host is defined)
+    - (mesh_cmd_passphrase is defined)
