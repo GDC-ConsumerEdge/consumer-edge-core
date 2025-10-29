@@ -19,3 +19,6 @@
   when:
     - (mesh_cmd_host is defined)
     - (mesh_cmd_passphrase is defined)
+  tags:
+  - abm-post-install
+  - mesh-commander
