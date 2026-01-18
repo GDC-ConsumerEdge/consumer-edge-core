@@ -336,7 +336,7 @@
 ### Find versions with:  gsutil ls -al gs://anthos-baremetal-release/bmctl
   - name: Install Anthos Bare Metal CLI
     shell: |
-      gsutil cp gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl {{ tools_base_path }}
+      gcloud storage cp gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl {{ tools_base_path }}
       chmod a+x {{ tools_base_path }}/bmctl
       mv {{ tools_base_path }}/bmctl /usr/local/bin/bmctl
     args:
@@ -351,7 +351,7 @@
 ### Find versions with:  gsutil ls -al gs://ncg-release/anthos-baremetal
   - name: Install Network Connectivity Gateway CLI
     shell: |
-      gsutil cp gs://ncg-release/anthos-baremetal/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz {{ tools_base_path }}
+      gcloud storage cp gs://ncg-release/anthos-baremetal/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz {{ tools_base_path }}
       tar -xvzf {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz -C {{ tools_base_path }}
       chmod a+x {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl
       rm -f {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz
