@@ -1,4 +1,4 @@
-apiVersion: configsync.gke.io/v1beta1
+apiVersion: configsync.gke.io/v1
 kind: RootSync
 metadata:
   name: {{storage_provider}}-trait-sync
@@ -15,7 +15,7 @@ spec:
 
 ---
 
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: {{storage_provider}}-git-creds-es
