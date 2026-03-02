@@ -81,3 +81,7 @@ if [[ $? > 0 ]]; then
     >&2 echo "Certificates are already out of date and cannot be automated for replacmenet"
     exit 1
 fi
+
+# Copy over the new config with the new certs. For now, the kubeadmin is going to work.
+cp /var/abm-install/kubeconfig/kubeconfig /var/abm-install/kubeconfig/kubeconfig.bak
+cp /etc/kubernetes/admin.conf /var/abm-install/kubeconfig/kubeconfig
