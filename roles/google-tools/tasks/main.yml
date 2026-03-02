@@ -107,6 +107,17 @@
     - tool-install
 
 ### All other tools
+  - name: Update gcloud to latest if version variable is not up-to-date
+    command:
+      cmd: gcloud components update -q
+    environment: # NOTE: This environment is needed until the components are all installed and added to /usr/local/bin
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    when: optional_tools is true
+    tags:
+    - initial-install
+    - tool-install
+    - tool-update
+
   - name: Install kubectl, nomos, kustomize and gsutil
     command:
       cmd: gcloud components install kubectl kustomize anthos-auth kpt nomos gsutil kubectl-oidc alpha beta -q
