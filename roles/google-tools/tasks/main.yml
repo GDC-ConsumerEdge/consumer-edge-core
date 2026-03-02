@@ -107,6 +107,17 @@
     - tool-install
 
 ### All other tools
+  - name: Update gcloud to latest if version variable is not up-to-date
+    command:
+      cmd: gcloud components update -q
+    environment: # NOTE: This environment is needed until the components are all installed and added to /usr/local/bin
+      PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
+    when: optional_tools is true
+    tags:
+    - initial-install
+    - tool-install
+    - tool-update
+
   - name: Install kubectl, nomos, kustomize and gsutil
     command:
       cmd: gcloud components install kubectl kustomize anthos-auth kpt nomos gsutil kubectl-oidc alpha beta -q
@@ -336,7 +347,7 @@
 ### Find versions with:  gsutil ls -al gs://anthos-baremetal-release/bmctl
   - name: Install Anthos Bare Metal CLI
     shell: |
-      gsutil cp gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl {{ tools_base_path }}
+      gcloud storage cp gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl {{ tools_base_path }}
       chmod a+x {{ tools_base_path }}/bmctl
       mv {{ tools_base_path }}/bmctl /usr/local/bin/bmctl
     args:
@@ -351,7 +362,7 @@
 ### Find versions with:  gsutil ls -al gs://ncg-release/anthos-baremetal
   - name: Install Network Connectivity Gateway CLI
     shell: |
-      gsutil cp gs://ncg-release/anthos-baremetal/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz {{ tools_base_path }}
+      gcloud storage cp gs://ncg-release/anthos-baremetal/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz {{ tools_base_path }}
       tar -xvzf {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz -C {{ tools_base_path }}
       chmod a+x {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl
       rm -f {{ tools_base_path }}/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz
