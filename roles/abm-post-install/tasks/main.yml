@@ -59,7 +59,7 @@
   - observability-setup
 
 ### Install Optional Mesh Commander Scripts
-- name: "Setup Auditd service"
+- name: "Setup Optional Mesh Commander"
   import_tasks: install-mesh-commander.yml
   tags:
   - abm-post-install
