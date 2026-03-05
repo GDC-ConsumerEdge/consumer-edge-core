@@ -36,13 +36,13 @@
 - name: Check if bucket exists when file does not
   ignore_errors: true
   command:
-    cmd: "gsutil ls -al {{bucket_cache_url}}/{{bundle_file_name}}"
+    cmd: "gcloud storage ls --all-versions --long {{bucket_cache_url}}/{{bundle_file_name}}"
   register: bucket_file_exists
   when: not local_file_exists.stat.exists
 
 - name: Copy bucket bundle to common location IF exists
   command:
-    cmd: "gsutil cp {{bucket_cache_url}}/{{bundle_file_name}} {{ tmpfile.path }}/{{bundle_file_name}}"
+    cmd: "gcloud storage cp {{bucket_cache_url}}/{{bundle_file_name}} {{ tmpfile.path }}/{{bundle_file_name}}"
   when:
   - not local_file_exists.stat.exists
   - bucket_file_exists.rc == 0
