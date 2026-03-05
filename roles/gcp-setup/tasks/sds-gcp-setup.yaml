@@ -56,7 +56,7 @@
   run_once: true  # confirmed, this is fleet-level so run-once is OK
   ignore_errors: true
   command:
-    cmd: gsutil -q ls gs://{{ storage_provider_gcs_bucket_name }}/.dontremove > /dev/null 2>&1
+    cmd: gcloud storage ls gs://{{ storage_provider_gcs_bucket_name }}/.dontremove > /dev/null 2>&1
   changed_when: has_bucket.rc > 0
   register: has_bucket
   when:
@@ -70,8 +70,8 @@
 - name: Create SDS Backup Bucket
   run_once: true # confirmed, this is fleet-level so run-once is OK
   shell: |
-    gsutil mb -p "{{ google_project_id }}" gs://{{ storage_provider_gcs_bucket_name }}
-    echo "do not remove this file" | gsutil cp - gs://{{ storage_provider_gcs_bucket_name }}/.dontremove
+    gcloud storage buckets create --project "{{ google_project_id }}" gs://{{ storage_provider_gcs_bucket_name }}
+    echo "do not remove this file" | gcloud storage cp - gs://{{ storage_provider_gcs_bucket_name }}/.dontremove
   args:
     executable: /bin/bash
   when:
