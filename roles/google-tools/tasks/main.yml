@@ -320,7 +320,7 @@
 
   ## Ensure the target GDC Connectes Software Only version is available
   - name: Test the bmctl version
-    command: gsutil ls gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl
+    command: gcloud storage ls gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl
     register: bmctl_version_check
     ignore_errors: true
     when:
@@ -344,7 +344,7 @@
     - tool-install
     - bmctl-verify
 
-### Find versions with:  gsutil ls -al gs://anthos-baremetal-release/bmctl
+### Find versions with:  gcloud storage ls --all-versions --long gs://anthos-baremetal-release/bmctl
   - name: Install Anthos Bare Metal CLI
     shell: |
       gcloud storage cp gs://anthos-baremetal-release/bmctl/{{ bmctl_version }}/linux-amd64/bmctl {{ tools_base_path }}
@@ -359,7 +359,7 @@
     - initial-install
     - tool-install
 
-### Find versions with:  gsutil ls -al gs://ncg-release/anthos-baremetal
+### Find versions with:  gcloud storage ls --all-versions --long gs://ncg-release/anthos-baremetal
   - name: Install Network Connectivity Gateway CLI
     shell: |
       gcloud storage cp gs://ncg-release/anthos-baremetal/ncgctl-{{ ncgctl_version }}-linux-amd64.tar.gz {{ tools_base_path }}
