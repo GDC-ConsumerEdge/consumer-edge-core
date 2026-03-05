@@ -24,7 +24,7 @@ Build Contexts consists of `symlink` (ie: `ln -s <target> <file>`) folders linki
     1. Change the `inventory-example.yaml` to `inventory.yaml`. Modify the file to include the specific host-names and IPs of your physical machines
     1. Copy the `provisioning-gsa.json` GSA key is used to provision nodes (note: this may only appear AFTER `./setup.sh` has been run, so come back and add after `./setup.sh` has been run, after setting these variables)
     1. Change the file `gcp-example.yaml` to `gcp.yaml` and upate the variables in the file to the desired instance.
-    1. Copy the desired Robin/SymCloud TAR file into this folder. Versions can be found at gsutil ls -al gs://robin-partners/release/ (permission is required and obtained with valid Robin License agreement)
+    1. Copy the desired Robin/SymCloud TAR file into this folder. Versions can be found at gcloud storage ls --all-versions --long gs://robin-partners/release/ (permission is required and obtained with valid Robin License agreement)
 
 1. The context folder should represent something similar to this
 
