@@ -61,7 +61,7 @@
 ###
 - name: Check the bmctl snapshot backup bucket
   command:
-    cmd: gsutil ls -p {{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}
+    cmd: gcloud storage ls --project={{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}
   ignore_errors: true
   register: bucket_exists
   tags:
@@ -71,7 +71,7 @@
 - name: Create the bmctl snapshot backup GCS bucket
   ignore_errors: true
   command:
-    cmd: gsutil mb -p {{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}
+    cmd: gcloud storage buckets create --project={{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}
   when:
   - bucket_exists.rc > 0
   tags:
