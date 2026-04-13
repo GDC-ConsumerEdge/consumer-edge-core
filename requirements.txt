@@ -600,9 +600,9 @@ pyspnego==0.9.2 \
     --hash=sha256:e68fa2cdd7dcc1e4d0b2b42c23ba3a8d2daef2e02f88ecff3fb7c1e6351c8fec \
     --hash=sha256:efa3a5edf2fd5343fdc1d3fbfe02a7166f0747e3c63800a2f241320b78e3fb1d
     # via requests-ntlm
-pytest==7.2.0 \
-    --hash=sha256:892f933d339f068883b6fd5a459f03d85bfcb355e4981e146d2c7616c21fef71 \
-    --hash=sha256:c4014eb40e10f11f355ad4e3c2fb2c6c6d1919c73f3b5a433de4708202cade59
+pytest==9.0.3 \
+    --hash=sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9 \
+    --hash=sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c
     # via -r requirements.in
 python-dateutil==2.8.2 \
     --hash=sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86 \
