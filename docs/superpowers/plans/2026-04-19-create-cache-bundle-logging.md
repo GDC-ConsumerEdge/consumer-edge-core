@@ -125,9 +125,9 @@ tar xf /tmp/ps1.tar.gz -C /tmp --strip-components=1 kube-ps1-${kube_ps1_version}
 mv /tmp/kube-ps1.sh "${staging_dir}/var/kube-ps1/kube-ps1-0.7.0/"
 log_success "Staged kube-ps1."
 
-export kubestr_version="v0.4.49"
+export kubestr_version="0.4.49"
 log_info "Downloading kubestr ${kubestr_version}..."
-wget -q https://github.com/kastenhq/kubestr/releases/download/${kubestr_version}/kubestr_${kubestr_version}_Linux_amd64.tar.gz -O /tmp/kubestr.tar.gz
+wget -q https://github.com/kastenhq/kubestr/releases/download/v${kubestr_version}/kubestr_${kubestr_version}_Linux_amd64.tar.gz -O /tmp/kubestr.tar.gz
 tar xf /tmp/kubestr.tar.gz -C /tmp kubestr
 chmod +x /tmp/kubestr
 mv /tmp/kubestr "${staging_dir}/usr/local/bin/"
