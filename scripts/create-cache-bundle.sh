@@ -37,13 +37,70 @@ trap cleanup EXIT
 
 # Pre-flight checks
 log_info "Running pre-flight checks..."
-for cmd in gcloud wget tar mktemp; do
+for cmd in gcloud wget tar mktemp jq; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     log_error "Required command '$cmd' is not installed."
     exit 1
   fi
 done
 log_success "Pre-flight checks passed."
+
+# Define all versions and links
+export acm_version="1.16.0"
+acm_link="gs://config-management-release/released/${acm_version}/config-management-operator.yaml"
+
+export k9s_version="v0.26.3"
+k9s_link="https://github.com/derailed/k9s/releases/download/${k9s_version}/k9s_Linux_x86_64.tar.gz"
+
+export kubectx_version="0.9.4"
+kubectx_link="https://github.com/ahmetb/kubectx/releases/download/v${kubectx_version}/kubectx_v${kubectx_version}_linux_x86_64.tar.gz"
+kubens_link="https://github.com/ahmetb/kubectx/releases/download/v${kubectx_version}/kubens_v${kubectx_version}_linux_x86_64.tar.gz"
+
+export bmctl_version="1.34.300-gke.59"
+bmctl_link="gs://anthos-baremetal-release/bmctl/${bmctl_version}/linux-amd64/bmctl"
+
+export virtctl_version="v0.49.1"
+virtctl_link="https://github.com/kubevirt/kubevirt/releases/download/${virtctl_version}/virtctl-${virtctl_version}-linux-amd64"
+
+export kube_ps1_version="0.7.0"
+kube_ps1_link="https://github.com/jonmosco/kube-ps1/archive/refs/tags/v${kube_ps1_version}.tar.gz"
+
+export kubestr_version="0.4.49"
+kubestr_link="https://github.com/kastenhq/kubestr/releases/download/v${kubestr_version}/kubestr_${kubestr_version}_Linux_amd64.tar.gz"
+
+export ncgctl_version="v1.12.0"
+ncgctl_link="gs://ncg-release/anthos-baremetal/ncgctl-${ncgctl_version}-linux-amd64.tar.gz"
+
+docker_link="https://get.docker.com"
+mon_agent_link="https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh"
+log_agent_link="https://dl.google.com/cloudagents/add-logging-agent-repo.sh"
+
+export gcloud_version="558.0.0"
+gcloud_link="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${gcloud_version}-linux-x86_64.tar.gz"
+
+# Generate Manifest Markdown
+MANIFEST_MD=$(cat <<EOFMARKDOWN
+# Cache Bundle Manifest
+
+| Binary Name | Version | Download Link |
+|---|---|---|
+| ACM Operator | ${acm_version} | ${acm_link} |
+| k9s | ${k9s_version} | ${k9s_link} |
+| kubectx | ${kubectx_version} | ${kubectx_link} |
+| kubens | ${kubectx_version} | ${kubens_link} |
+| bmctl | ${bmctl_version} | ${bmctl_link} |
+| virtctl | ${virtctl_version} | ${virtctl_link} |
+| kube-ps1 | ${kube_ps1_version} | ${kube_ps1_link} |
+| kubestr | ${kubestr_version} | ${kubestr_link} |
+| ncgctl | ${ncgctl_version} | ${ncgctl_link} |
+| get-docker.sh | N/A | ${docker_link} |
+| add-monitoring-agent-repo.sh | N/A | ${mon_agent_link} |
+| add-logging-agent-repo.sh | N/A | ${log_agent_link} |
+| Google Cloud SDK | ${gcloud_version} | ${gcloud_link} |
+EOFMARKDOWN
+)
+
+log_info "Bundle Manifest:\n${MANIFEST_MD}"
 
 staging_dir=$(mktemp -d -t cache-binaries-XXXXXXXXXX)
 log_info "Using '${staging_dir}' as staging directory to construct the filesystem hierarchy."
@@ -56,81 +113,75 @@ mkdir -p "${staging_dir}/var/kube-ps1/kube-ps1-0.7.0"
 mkdir -p "${staging_dir}/var/abm-install/tools"
 mkdir -p "${staging_dir}/tmp"
 
+# Write manifest to bundle
+echo "${MANIFEST_MD}" > "${staging_dir}/manifest.md"
+
 # ACM Operator
-export acm_version="1.16.0"
 log_info "Downloading ACM Operator v${acm_version}..."
-gcloud storage cp gs://config-management-release/released/${acm_version}/config-management-operator.yaml "${staging_dir}/var/acm-configs/" >/dev/null 2>&1
+gcloud storage cp "${acm_link}" "${staging_dir}/var/acm-configs/" >/dev/null 2>&1
 log_success "Staged ACM Operator."
 
-export k9s_version="v0.26.3"
 log_info "Downloading k9s v${k9s_version}..."
-wget -q https://github.com/derailed/k9s/releases/download/${k9s_version}/k9s_Linux_x86_64.tar.gz -O /tmp/k9s.tar.gz
+wget -q "${k9s_link}" -O /tmp/k9s.tar.gz
 tar xf /tmp/k9s.tar.gz -C /tmp k9s
 chmod +x /tmp/k9s
 mv /tmp/k9s "${staging_dir}/usr/local/bin/"
 log_success "Staged k9s."
 
-export kubectx_version="0.9.4"
 log_info "Downloading kubectx & kubens v${kubectx_version}..."
-wget -q https://github.com/ahmetb/kubectx/releases/download/v${kubectx_version}/kubectx_v${kubectx_version}_linux_x86_64.tar.gz -O /tmp/kubectx.tar.gz
+wget -q "${kubectx_link}" -O /tmp/kubectx.tar.gz
 tar xf /tmp/kubectx.tar.gz -C /tmp kubectx
 chmod +x /tmp/kubectx
 mv /tmp/kubectx "${staging_dir}/usr/local/bin/"
 
-wget -q https://github.com/ahmetb/kubectx/releases/download/v${kubectx_version}/kubens_v${kubectx_version}_linux_x86_64.tar.gz -O /tmp/kubens.tar.gz
+wget -q "${kubens_link}" -O /tmp/kubens.tar.gz
 tar xf /tmp/kubens.tar.gz -C /tmp kubens
 chmod +x /tmp/kubens
 mv /tmp/kubens "${staging_dir}/usr/local/bin/"
 log_success "Staged kubectx and kubens."
 
-export bmctl_version="1.34.300-gke.59"
 log_info "Downloading bmctl v${bmctl_version}..."
-gcloud storage cp gs://anthos-baremetal-release/bmctl/${bmctl_version}/linux-amd64/bmctl "${staging_dir}/usr/local/bin/" >/dev/null 2>&1
+gcloud storage cp "${bmctl_link}" "${staging_dir}/usr/local/bin/" >/dev/null 2>&1
 chmod +x "${staging_dir}/usr/local/bin/bmctl"
 log_success "Staged bmctl."
 
-export VERSION="v0.49.1"
-log_info "Downloading kubevirt virtctl v${VERSION}..."
-wget -q https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/virtctl-${VERSION}-linux-amd64 -O "${staging_dir}/usr/bin/kubectl-virt"
+log_info "Downloading kubevirt virtctl v${virtctl_version}..."
+wget -q "${virtctl_link}" -O "${staging_dir}/usr/bin/kubectl-virt"
 chmod +x "${staging_dir}/usr/bin/kubectl-virt"
 log_success "Staged virtctl."
 
-export kube_ps1_version="0.7.0"
 log_info "Downloading kube-ps1 v${kube_ps1_version}..."
-wget -q https://github.com/jonmosco/kube-ps1/archive/refs/tags/v${kube_ps1_version}.tar.gz -O /tmp/ps1.tar.gz
+wget -q "${kube_ps1_link}" -O /tmp/ps1.tar.gz
 tar xf /tmp/ps1.tar.gz -C /tmp --strip-components=1 kube-ps1-${kube_ps1_version}/kube-ps1.sh
 mv /tmp/kube-ps1.sh "${staging_dir}/var/kube-ps1/kube-ps1-0.7.0/"
 log_success "Staged kube-ps1."
 
-export kubestr_version="0.4.49"
 log_info "Downloading kubestr ${kubestr_version}..."
-wget -q https://github.com/kastenhq/kubestr/releases/download/v${kubestr_version}/kubestr_${kubestr_version}_Linux_amd64.tar.gz -O /tmp/kubestr.tar.gz
+wget -q "${kubestr_link}" -O /tmp/kubestr.tar.gz
 tar xf /tmp/kubestr.tar.gz -C /tmp kubestr
 chmod +x /tmp/kubestr
 mv /tmp/kubestr "${staging_dir}/usr/local/bin/"
 log_success "Staged kubestr."
 
-export ncgctl_version="v1.12.0"
 log_info "Downloading ncgctl v${ncgctl_version}..."
-gcloud storage cp gs://ncg-release/anthos-baremetal/ncgctl-${ncgctl_version}-linux-amd64.tar.gz /tmp/ >/dev/null 2>&1
+gcloud storage cp "${ncgctl_link}" /tmp/ >/dev/null 2>&1
 tar xf /tmp/ncgctl-${ncgctl_version}-linux-amd64.tar.gz -C /tmp
 mv "/tmp/ncgctl-${ncgctl_version}" "${staging_dir}/var/abm-install/tools/"
 log_success "Staged ncgctl."
 
 log_info "Downloading helper scripts (get-docker, agent repos)..."
-wget -q https://get.docker.com -O "${staging_dir}/tmp/get-docker.sh"
+wget -q "${docker_link}" -O "${staging_dir}/tmp/get-docker.sh"
 chmod +x "${staging_dir}/tmp/get-docker.sh"
 
-wget -q https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh -O "${staging_dir}/tmp/add-monitoring-agent-repo.sh"
+wget -q "${mon_agent_link}" -O "${staging_dir}/tmp/add-monitoring-agent-repo.sh"
 chmod +x "${staging_dir}/tmp/add-monitoring-agent-repo.sh"
 
-wget -q https://dl.google.com/cloudagents/add-logging-agent-repo.sh -O "${staging_dir}/tmp/add-logging-agent-repo.sh"
+wget -q "${log_agent_link}" -O "${staging_dir}/tmp/add-logging-agent-repo.sh"
 chmod +x "${staging_dir}/tmp/add-logging-agent-repo.sh"
 log_success "Staged helper scripts."
 
-export gcloud_version="558.0.0"
 log_info "Downloading Google Cloud SDK v${gcloud_version}..."
-wget -q https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${gcloud_version}-linux-x86_64.tar.gz -O /tmp/gcloud.tar.gz
+wget -q "${gcloud_link}" -O /tmp/gcloud.tar.gz
 tar xf /tmp/gcloud.tar.gz -C /tmp
 mv /tmp/google-cloud-sdk "${staging_dir}/var/abm-install/tools/"
 log_success "Staged Google Cloud SDK."
