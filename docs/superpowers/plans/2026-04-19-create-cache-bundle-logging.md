@@ -1,3 +1,27 @@
+# Create Cache Bundle Logging Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Improve `scripts/create-cache-bundle.sh` by adding structured logging, pre-flight checks, and robust error handling.
+
+**Architecture:** We will add standard bash logging functions (INFO, SUCCESS, ERROR, WARN), setup an `EXIT` trap to ensure the staging directory is always cleaned up, setup an `ERR` trap to log line numbers on failure, and add pre-flight checks for required CLI tools. We'll also wrap the download steps with informative logs.
+
+**Tech Stack:** Bash
+
+---
+
+### Task 1: Update `scripts/create-cache-bundle.sh` with Logging and Checks
+
+We will replace the contents of the script to incorporate all the new features from the design.
+
+**Files:**
+- Modify: `scripts/create-cache-bundle.sh`
+
+- [ ] **Step 1: Replace the file content**
+
+Replace the contents of `scripts/create-cache-bundle.sh` with the following:
+
+```bash
 #!/bin/bash
 # Copyright 2023 Google LLC
 #
@@ -142,3 +166,21 @@ log_info "Creating tarball..."
 tar -czf "${WORKDIR}/pre-cache-bundle.tar.gz" -C "${staging_dir}" .
 
 log_success "Pre-cache bundle tarball created at ${WORKDIR}/pre-cache-bundle.tar.gz"
+```
+
+- [ ] **Step 2: Verify Syntax**
+
+Run a syntax check on the script.
+
+```bash
+bash -n scripts/create-cache-bundle.sh
+```
+
+Expected output: No output (which means syntax is valid).
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add scripts/create-cache-bundle.sh
+git commit -m "feat: enhance logging and error handling in create-cache-bundle.sh"
+```
