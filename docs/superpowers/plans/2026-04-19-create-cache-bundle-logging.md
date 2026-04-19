@@ -80,7 +80,7 @@ mkdir -p "${staging_dir}/var/abm-install/tools"
 mkdir -p "${staging_dir}/tmp"
 
 # ACM Operator
-export acm_version="1.34.300-gke.59"
+export acm_version="1.16.0"
 log_info "Downloading ACM Operator v${acm_version}..."
 gcloud storage cp gs://config-management-release/released/${acm_version}/config-management-operator.yaml "${staging_dir}/var/acm-configs/" >/dev/null 2>&1
 log_success "Staged ACM Operator."
@@ -126,7 +126,7 @@ mv /tmp/kube-ps1.sh "${staging_dir}/var/kube-ps1/kube-ps1-0.7.0/"
 log_success "Staged kube-ps1."
 
 export kubestr_version="v0.4.49"
-log_info "Downloading kubestr v${kubestr_version}..."
+log_info "Downloading kubestr ${kubestr_version}..."
 wget -q https://github.com/kastenhq/kubestr/releases/download/${kubestr_version}/kubestr_${kubestr_version}_Linux_amd64.tar.gz -O /tmp/kubestr.tar.gz
 tar xf /tmp/kubestr.tar.gz -C /tmp kubestr
 chmod +x /tmp/kubestr
