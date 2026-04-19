@@ -82,21 +82,21 @@ gcloud_link="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-c
 MANIFEST_MD=$(cat <<EOFMARKDOWN
 # Cache Bundle Manifest
 
-| Binary Name | Version | Download Link |
-|---|---|---|
-| ACM Operator | ${acm_version} | ${acm_link} |
-| k9s | ${k9s_version} | ${k9s_link} |
-| kubectx | ${kubectx_version} | ${kubectx_link} |
-| kubens | ${kubectx_version} | ${kubens_link} |
-| bmctl | ${bmctl_version} | ${bmctl_link} |
-| virtctl | ${virtctl_version} | ${virtctl_link} |
-| kube-ps1 | ${kube_ps1_version} | ${kube_ps1_link} |
-| kubestr | ${kubestr_version} | ${kubestr_link} |
-| ncgctl | ${ncgctl_version} | ${ncgctl_link} |
-| get-docker.sh | N/A | ${docker_link} |
-| add-monitoring-agent-repo.sh | N/A | ${mon_agent_link} |
-| add-logging-agent-repo.sh | N/A | ${log_agent_link} |
-| Google Cloud SDK | ${gcloud_version} | ${gcloud_link} |
+| Binary Name | Version | Destination | Download Link |
+|---|---|---|---|
+| ACM Operator | ${acm_version} | \`/var/acm-configs/\` | ${acm_link} |
+| k9s | ${k9s_version} | \`/usr/local/bin/\` | ${k9s_link} |
+| kubectx | ${kubectx_version} | \`/usr/local/bin/\` | ${kubectx_link} |
+| kubens | ${kubectx_version} | \`/usr/local/bin/\` | ${kubens_link} |
+| bmctl | ${bmctl_version} | \`/usr/local/bin/\` | ${bmctl_link} |
+| virtctl | ${virtctl_version} | \`/usr/bin/kubectl-virt\` | ${virtctl_link} |
+| kube-ps1 | ${kube_ps1_version} | \`/var/kube-ps1/kube-ps1-0.7.0/\` | ${kube_ps1_link} |
+| kubestr | ${kubestr_version} | \`/usr/local/bin/\` | ${kubestr_link} |
+| ncgctl | ${ncgctl_version} | \`/var/abm-install/tools/\` | ${ncgctl_link} |
+| get-docker.sh | N/A | \`/tmp/\` | ${docker_link} |
+| add-monitoring-agent-repo.sh | N/A | \`/tmp/\` | ${mon_agent_link} |
+| add-logging-agent-repo.sh | N/A | \`/tmp/\` | ${log_agent_link} |
+| Google Cloud SDK | ${gcloud_version} | \`/var/abm-install/tools/google-cloud-sdk\` | ${gcloud_link} |
 EOFMARKDOWN
 )
 
