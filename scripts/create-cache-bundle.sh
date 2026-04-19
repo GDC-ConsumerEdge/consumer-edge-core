@@ -22,9 +22,10 @@ log_error() { echo -e "\033[1;31m[ERROR]\033[0m $1"; }
 
 handle_error() {
   local line=$1
-  log_error "Command failed at line $line"
+  local command="$2"
+  log_error "Command '${command}' failed at line $line"
 }
-trap 'handle_error ${LINENO}' ERR
+trap 'handle_error ${LINENO} "$BASH_COMMAND"' ERR
 
 cleanup() {
   if [[ -n "${staging_dir:-}" && -d "${staging_dir}" ]]; then
@@ -56,7 +57,7 @@ mkdir -p "${staging_dir}/var/abm-install/tools"
 mkdir -p "${staging_dir}/tmp"
 
 # ACM Operator
-export acm_version="1.34.300-gke.59"
+export acm_version="1.16.0"
 log_info "Downloading ACM Operator v${acm_version}..."
 gcloud storage cp gs://config-management-release/released/${acm_version}/config-management-operator.yaml "${staging_dir}/var/acm-configs/" >/dev/null 2>&1
 log_success "Staged ACM Operator."
