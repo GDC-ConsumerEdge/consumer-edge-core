@@ -35,6 +35,10 @@ echo "fs.inotify.max_user_watches = ${final_max_user_watches}"
 echo "fs.inotify.max_user_instances = ${final_max_user_instances}"
 echo "fs.inotify.max_queued_events = ${final_max_queued_events}"
 
-sysctl -w fs.inotify.max_user_watches=${final_max_user_watches}
-sysctl -w fs.inotify.max_user_instances=${final_max_user_instances}
-sysctl -w fs.inotify.max_queued_events=${final_max_queued_events}
+cat <<EOF > /etc/sysctl.d/99-inotify.conf
+fs.inotify.max_user_watches=${final_max_user_watches}
+fs.inotify.max_user_instances=${final_max_user_instances}
+fs.inotify.max_queued_events=${final_max_queued_events}
+EOF
+
+sysctl -p /etc/sysctl.d/99-inotify.conf
