@@ -75,6 +75,7 @@
     url: "https://dl.google.com/cloudagents/{{ item.script }}"
     dest: "/tmp/{{ item.script }}"
     mode: '0744'
+    force: no
   when: (ansible_facts.services[item.service + '.service'] is undefined) or
         (ansible_facts.services[item.service + '.service'].status != "enabled")
   with_items:

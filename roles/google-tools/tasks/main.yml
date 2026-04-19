@@ -369,6 +369,7 @@
       exit $?
     args:
       executable: /bin/bash
+      creates: "{{ tools_base_path }}/ncgctl-{{ ncgctl_version }}/bin/ncgctl"
     tags:
     - initial-install
     - tool-install

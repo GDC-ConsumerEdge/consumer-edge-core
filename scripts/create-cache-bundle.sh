@@ -49,7 +49,6 @@ gcloud storage cp gs://anthos-baremetal-release/bmctl/${bmctl_version}/linux-amd
 chmod +x bmctl
 mv bmctl "${tmp_dir}/bin"
 
-
 export VERSION="v0.49.1"
 wget https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/virtctl-${VERSION}-linux-amd64 -O virtctl
 chmod +x virtctl
@@ -60,6 +59,31 @@ wget https://github.com/jonmosco/kube-ps1/archive/refs/tags/v${kube_ps1_version}
 tar xvf ps1.tar.gz --strip-components=1
 mv kube-ps1.sh "${tmp_dir}/bin"
 
+export kubestr_version="v0.4.49"
+wget https://github.com/kastenhq/kubestr/releases/download/${kubestr_version}/kubestr_${kubestr_version}_Linux_amd64.tar.gz -O kubestr.tar.gz
+tar xvf kubestr.tar.gz kubestr
+chmod +x kubestr
+mv kubestr "${tmp_dir}/bin"
+
+export ncgctl_version="v1.12.0"
+gcloud storage cp gs://ncg-release/anthos-baremetal/ncgctl-${ncgctl_version}-linux-amd64.tar.gz .
+tar xvf ncgctl-${ncgctl_version}-linux-amd64.tar.gz
+mv ncgctl-${ncgctl_version} "${tmp_dir}/bin/"
+
+wget https://get.docker.com -O get-docker.sh
+mv get-docker.sh "${tmp_dir}/bin"
+
+wget https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh -O add-monitoring-agent-repo.sh
+mv add-monitoring-agent-repo.sh "${tmp_dir}/bin"
+
+wget https://dl.google.com/cloudagents/add-logging-agent-repo.sh -O add-logging-agent-repo.sh
+mv add-logging-agent-repo.sh "${tmp_dir}/bin"
+
+export gcloud_version="558.0.0"
+wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${gcloud_version}-linux-x86_64.tar.gz -O gcloud.tar.gz
+tar xvf gcloud.tar.gz
+mv google-cloud-sdk "${tmp_dir}/bin/"
+
 # Create "config" file
 
 cat << EOF > ${tmp_dir}/config.csv
@@ -68,8 +92,14 @@ virtctl,/usr/bin/kubectl-virt
 kubens,/usr/local/bin/kubens
 kubectx,/usr/local/bin/kubectx
 k9s,/usr/local/bin/k9s
+kubestr,/usr/local/bin/kubestr
 config-management-operator.yaml,/var/acm-configs/config-management-operator.yaml
 kube-ps1.sh,/var/kube-ps1/kube-ps1-0.7.0/kube-ps1.sh
+ncgctl-${ncgctl_version},/var/abm-install/tools
+get-docker.sh,/tmp/get-docker.sh
+add-monitoring-agent-repo.sh,/tmp/add-monitoring-agent-repo.sh
+add-logging-agent-repo.sh,/tmp/add-logging-agent-repo.sh
+google-cloud-sdk,/var/abm-install/tools/google-cloud-sdk
 EOF
 
 # List out binaries

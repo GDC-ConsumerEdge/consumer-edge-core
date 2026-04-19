@@ -19,10 +19,17 @@
   ignore_errors: true
   register: docker_output
 
+- name: Check for cached get-docker.sh
+  stat:
+    path: /tmp/get-docker.sh
+  register: cached_docker_script
+
 - name: Install docker with shell
   shell: |
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sh get-docker.sh
+    if [ ! -f /tmp/get-docker.sh ]; then
+      curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+    fi
+    sh /tmp/get-docker.sh
   when: docker_output is failed
 
 - name: Start docker, if not started

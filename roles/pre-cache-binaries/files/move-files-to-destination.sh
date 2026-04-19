@@ -31,6 +31,6 @@ fi
 ## For each line in the file, split by "," and assign to rec_column*
 while IFS="," read -r rec_column1 rec_column2
 do
-   echo "cp ${BASE_FOLDER}/bin/$rec_column1 $rec_column2"
-   cp "${BASE_FOLDER}/bin/$rec_column1" "$rec_column2" && true
+   echo "cp -r ${BASE_FOLDER}/bin/$rec_column1 $rec_column2"
+   cp -r "${BASE_FOLDER}/bin/$rec_column1" "$rec_column2" && true
 done < <(tail ${BASE_FOLDER}/config.csv)
