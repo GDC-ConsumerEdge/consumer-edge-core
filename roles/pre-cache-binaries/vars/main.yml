@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-bundle_file_name: "bundle.zip"
+bundle_file_name: "pre-cache-bundle.tar.gz"
 
 local_cache_folder: /tmp/pre-cache
 bucket_cache_url: gs://a-bucket-that-is-not-found
