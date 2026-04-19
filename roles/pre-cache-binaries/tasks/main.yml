@@ -24,17 +24,17 @@
 
 - name: Create a directory if it does not exist to keep ACM from failing
   ansible.builtin.file:
-    path: "{{ acm_config_files }}"
+    path: "{{ acm_config_files | default('/var/acm-configs') }}"
     state: directory
     mode: '0755'
 
-- name: Display path to to Temp file
+- name: Display path to Temp file
   debug:
     msg: "{{ tmpfile.path }}"
   tags:
   - pre-cache-unbundle
 
-- name: Unbundle binaries to temp folder
+- name: Fetch bundle to temp folder
   include_tasks: unbundle-binaries.yml
   vars:
     fact_name: "unbundle_status"
@@ -42,44 +42,22 @@
   tags:
   - pre-cache-unbundle
 
-- name: Fail if cannot unbundle and system MUST use cache
+- name: Fail if cannot fetch bundle and system MUST use cache
   ansible.builtin.fail:
-    msg: The Binaries Artifact ZIP are not found and are required.
+    msg: "The Binaries Artifact tarball ({{ bundle_file_name }}) was not found and is required."
   when:
     - unbundle_status == false
-    - must_use_precache == true
+    - must_use_precache | default(false) | bool
 
-#####################################
-#####################################
-
-- name: Unpack bundle.zip and put the files in their right location
+- name: Unpack bundle and explode to root filesystem
   ansible.builtin.unarchive:
-    src: "{{ tmpfile.path }}/{{bundle_file_name}}"
-    dest: "{{ tmpfile.path }}"
-    remote_src: yes # file exists on the provisoned servers already
-    creates: "{{ tmpfile.path }}/config.csv" # one of the files
+    src: "{{ tmpfile.path }}/{{ bundle_file_name }}"
+    dest: "/"
+    remote_src: yes
+  when: unbundle_status == true
 
-- name: List all files in the bundle
-  command:
-    cmd: "ls -al {{ tmpfile.path }}"
-  register: output
-
-- name: display listing
-  debug:
-    msg: "{{ output.stdout_lines }}"
-
-- name: "Copy script to remote server"
-  copy:
-    src: "move-files-to-destination.sh"
-    dest: "/tmp/move-files-to-destination.sh"
-    mode: "0755"
-
-- name: Execute command
-  command:
-    cmd: "/tmp/move-files-to-destination.sh {{ tmpfile.path }}"
-  register: script_output
-
-- name: Display script output
-  debug:
-    msg: "{{ script_output.stderr_lines }}"
-  when: script_output.rc > 0
+- name: Cleanup temporary directory
+  ansible.builtin.file:
+    path: "{{ tmpfile.path }}"
+    state: absent
+  when: tmpfile.path is defined
