@@ -176,6 +176,50 @@ function dehydrate_context() {
     fi
 }
 
+function ensure_gsa_key() {
+    local target_file="$1"
+    local secret_name="$2"
+    local cl_name="$3"
+    local p_id="$4"
+    local sa_description="$5"
+
+    # Try to fetch from GSM first
+    local key_content=$(gsm_get "$secret_name" "$p_id")
+    
+    if [[ -n "$key_content" ]]; then
+        echo "$key_content" > "$target_file"
+        return 0
+    fi
+
+    # Not in GSM, check local filesystem
+    if [[ -f "$target_file" ]]; then
+        # If local but missing in GSM, push it
+        gsm_put "$secret_name" "$(cat "$target_file")" "$cl_name" "$p_id"
+        return 0
+    fi
+
+    # Missing in both, prompt user
+    pretty_print "$sa_description key ('$target_file') not found in GSM or locally." "WARN"
+    echo -n "Would you like to create a new key for a Google Service Account? (y/n): "
+    read answer
+    if [[ "$answer" == "y" ]]; then
+        echo -n "Enter the Service Account email for $sa_description: "
+        read sa_email
+        if [[ -n "$sa_email" ]]; then
+            gcloud iam service-accounts keys create "$target_file" \
+                --iam-account="$sa_email" \
+                --project="$p_id"
+            
+            if [[ $? -eq 0 ]]; then
+                gsm_put "$secret_name" "$(cat "$target_file")" "$cl_name" "$p_id"
+                pretty_print "Successfully created and uploaded $sa_description." "INFO"
+            else
+                pretty_print "Failed to create Service Account key." "ERROR"
+            fi
+        fi
+    fi
+}
+
 function hydrate_context() {
     local target_dir="$1"
     if [[ -z "$target_dir" || "$target_dir" == "." ]]; then 
@@ -202,12 +246,13 @@ function hydrate_context() {
 
     pretty_print "Opening context for cluster $cl_name in project $p_id..." "INFO"
 
-    # Fetch Files
+    # Fetch/Ensure Files
     gsm_get "gdc-${cl_name}-ssh-key" "$p_id" > "$target_dir/consumer-edge-machine"
     chmod 600 "$target_dir/consumer-edge-machine"
     gsm_get "gdc-${cl_name}-ssh-key-pub" "$p_id" > "$target_dir/consumer-edge-machine.pub"
-    gsm_get "gdc-${cl_name}-prov-gsa" "$p_id" > "$target_dir/provisioning-gsa.json"
-    gsm_get "gdc-${cl_name}-node-gsa" "$p_id" > "$target_dir/node-gsa.json"
+    
+    ensure_gsa_key "$target_dir/provisioning-gsa.json" "gdc-${cl_name}-prov-gsa" "$cl_name" "$p_id" "Provisioning GSA"
+    ensure_gsa_key "$target_dir/node-gsa.json" "gdc-${cl_name}-node-gsa" "$cl_name" "$p_id" "Node GSA"
 
     # Fetch envrc vars
     local scm_user=$(gsm_get "gdc-${cl_name}-scm-user" "$p_id")
@@ -391,17 +436,20 @@ function generate_context() {
     # 4. Generate SSH Keys
     ssh-keygen -t rsa -b 4096 -f "$target/consumer-edge-machine" -N "" -q
     
-    # 5. Push to GSM and start CLOSED
+    # 5. Ensure GSA keys are handled (prompt if missing)
+    ensure_gsa_key "$target/provisioning-gsa.json" "gdc-${cl_name}-prov-gsa" "$cl_name" "$p_id" "Provisioning GSA"
+    ensure_gsa_key "$target/node-gsa.json" "gdc-${cl_name}-node-gsa" "$cl_name" "$p_id" "Node GSA"
+
+    # 6. Push SSH to GSM and start CLOSED
     gsm_put "gdc-${cl_name}-ssh-key" "$(cat "$target/consumer-edge-machine")" "${cl_name}" "${p_id}"
     gsm_put "gdc-${cl_name}-ssh-key-pub" "$(cat "$target/consumer-edge-machine.pub")" "${cl_name}" "${p_id}"
     
     dehydrate_context "$target"
 
-    pretty_print "Context $ctx_name generated and pushed to GSM." "INFO"
+    pretty_print "Context $ctx_name generated and secrets synced to GSM." "INFO"
     pretty_print "ACTION REQUIRED:" "INFO"
-    pretty_print "1. Add provisioning-gsa.json to GSM (gdc-${cl_name}-prov-gsa) --labels=cluster=$cl_name" "INFO"
-    pretty_print "2. Add node-gsa.json to GSM (gdc-${cl_name}-node-gsa) --labels=cluster=$cl_name" "INFO"
-    pretty_print "3. Run './scripts/instance-context.sh -o $ctx_name' to hydrate secrets." "INFO"
+    pretty_print "1. Add SCM tokens to GSM (gdc-${cl_name}-scm-user, gdc-${cl_name}-scm-token)" "INFO"
+    pretty_print "2. Run './scripts/instance-context.sh -o $ctx_name' to hydrate for use." "INFO"
     exit 0
 }
 
