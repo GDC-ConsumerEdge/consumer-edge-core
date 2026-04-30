@@ -26,27 +26,30 @@ list_folders=true
 generate_yaml=""
 want_open=false
 want_close=false
+ingest_folder=""
 
 function usage() {
-    pretty_print "Usage: instance-context.sh [-c] [-l] [-g <yaml_file>] [-o] [-x] [folder-name]"
-    pretty_print "  Change or generate the active build-artifacts folder to use during an instance run.\n"
+    pretty_print "Usage: instance-context.sh [-c] [-l] [-g <yaml_file>] [-i <folder>] [-o] [-x] [folder-name]"
+    pretty_print "  Change, generate, or ingest a build-artifacts folder to use during an instance run.\n"
     pretty_print "  folder-name\tThe name of the build-artifacts folder to use (Optional)"
     pretty_print "\n  Options/Flags:"
     pretty_print "  -h\t\tPrint this help message (optional)"
     pretty_print "  -c\t\tPrint the current context (optional)"
     pretty_print "  -l\t\tList available contexts (optional)"
     pretty_print "  -g file\tGenerate a new context from the provided YAML file"
+    pretty_print "  -i folder\tIngest an existing folder into GSM (one-time migration)"
     pretty_print "  -o\t\tOpen (Hydrate) the current context from GSM"
     pretty_print "  -x\t\tClose (Dehydrate) the context (wipes secrets from disk)"
 }
 
 function check_options() {
     has_option=false
-    while getopts "chlg:ox" flag; do
+    while getopts "chlg:i:ox" flag; do
         case "${flag}" in
         c) print_context; list_folders=false; has_option=true ;;
         l) list_folders=true; has_option=true ;;
         g) generate_yaml="${OPTARG}"; list_folders=false; has_option=true ;;
+        i) ingest_folder="${OPTARG}"; list_folders=false; has_option=true ;;
         o) want_open=true; list_folders=false; has_option=true ;;
         x) want_close=true; list_folders=false; has_option=true ;;
         h) usage; exit 0 ;;
@@ -55,7 +58,7 @@ function check_options() {
 
     shift "$((OPTIND-1))"
     if [[ ! -z "$1" ]]; then
-        if [[ $has_option == false || -n "$generate_yaml" || $want_open == true || $want_close == true ]]; then
+        if [[ $has_option == false || -n "$generate_yaml" || -n "$ingest_folder" || $want_open == true || $want_close == true ]]; then
             desired_folder=$1
             want_new_folder=true
         fi
@@ -122,17 +125,26 @@ function print_context() {
 
 function gsm_get() {
     local secret_name="$1"
-    gcloud secrets versions access latest --secret="${secret_name}" 2>/dev/null
+    local p_id="$2"
+    gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null
 }
 
 function gsm_put() {
     local secret_name="$1"
     local secret_value="$2"
+    local cl_name="$3"
+    local p_id="$4"
     
-    if ! gcloud secrets describe "${secret_name}" &>/dev/null; then
-        gcloud secrets create "${secret_name}" --replication-policy="automatic"
+    if ! gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
+        local labels=""
+        if [[ -n "$cl_name" ]]; then
+            # GSM labels must be lowercase, alphanumeric, hyphens or underscores
+            local label_val=$(echo "$cl_name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]/_/g')
+            labels="--labels=cluster=$label_val"
+        fi
+        gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}"
     fi
-    echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=-
+    echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}"
 }
 
 function dehydrate_context() {
@@ -175,27 +187,33 @@ function hydrate_context() {
         return
     fi
 
-    # Extract cluster name from envrc
+    # Extract metadata from envrc
     local cl_name=$(grep "export CLUSTER_ACM_NAME=" "$target_dir/envrc" | cut -d'"' -f2)
+    local p_id=$(grep "export PROJECT_ID=" "$target_dir/envrc" | cut -d'"' -f2)
+    
     if [[ -z "$cl_name" ]]; then
         pretty_print "Error: Could not find CLUSTER_ACM_NAME in $target_dir/envrc" "ERROR"
         return
     fi
+    if [[ -z "$p_id" ]]; then
+        pretty_print "Error: Could not find PROJECT_ID in $target_dir/envrc" "ERROR"
+        return
+    fi
 
-    pretty_print "Opening context for cluster $cl_name..." "INFO"
+    pretty_print "Opening context for cluster $cl_name in project $p_id..." "INFO"
 
     # Fetch Files
-    gsm_get "gdc-${cl_name}-ssh-key" > "$target_dir/consumer-edge-machine"
+    gsm_get "gdc-${cl_name}-ssh-key" "$p_id" > "$target_dir/consumer-edge-machine"
     chmod 600 "$target_dir/consumer-edge-machine"
-    gsm_get "gdc-${cl_name}-ssh-key-pub" > "$target_dir/consumer-edge-machine.pub"
-    gsm_get "gdc-${cl_name}-prov-gsa" > "$target_dir/provisioning-gsa.json"
-    gsm_get "gdc-${cl_name}-node-gsa" > "$target_dir/node-gsa.json"
+    gsm_get "gdc-${cl_name}-ssh-key-pub" "$p_id" > "$target_dir/consumer-edge-machine.pub"
+    gsm_get "gdc-${cl_name}-prov-gsa" "$p_id" > "$target_dir/provisioning-gsa.json"
+    gsm_get "gdc-${cl_name}-node-gsa" "$p_id" > "$target_dir/node-gsa.json"
 
     # Fetch envrc vars
-    local scm_user=$(gsm_get "gdc-${cl_name}-scm-user")
-    local scm_token=$(gsm_get "gdc-${cl_name}-scm-token")
-    local oidc_id=$(gsm_get "gdc-${cl_name}-oidc-id")
-    local oidc_secret=$(gsm_get "gdc-${cl_name}-oidc-secret")
+    local scm_user=$(gsm_get "gdc-${cl_name}-scm-user" "$p_id")
+    local scm_token=$(gsm_get "gdc-${cl_name}-scm-token" "$p_id")
+    local oidc_id=$(gsm_get "gdc-${cl_name}-oidc-id" "$p_id")
+    local oidc_secret=$(gsm_get "gdc-${cl_name}-oidc-secret" "$p_id")
 
     # Inject into envrc
     if [[ -n "$scm_user" ]]; then sed -i "s/SCM_TOKEN_USER=.*/export SCM_TOKEN_USER=\"$scm_user\"/" "$target_dir/envrc"; fi
@@ -204,6 +222,62 @@ function hydrate_context() {
     if [[ -n "$oidc_secret" ]]; then sed -i "s/OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$oidc_secret\"/" "$target_dir/envrc"; fi
 
     pretty_print "Context hydrated successfully." "INFO"
+}
+
+function ingest_context() {
+    local name="$1"
+    local target_dir="build-artifacts-${name}"
+    
+    if [[ ! -d "$target_dir" ]]; then
+        pretty_print "Error: Directory '$target_dir' not found." "ERROR"
+        exit 1
+    fi
+
+    if [[ ! -f "$target_dir/envrc" ]]; then
+        pretty_print "Error: $target_dir/envrc not found. Cannot ingest." "ERROR"
+        exit 1
+    fi
+
+    # Extract metadata
+    local cl_name=$(grep "export CLUSTER_ACM_NAME=" "$target_dir/envrc" | cut -d'"' -f2)
+    local p_id=$(grep "export PROJECT_ID=" "$target_dir/envrc" | cut -d'"' -f2)
+
+    if [[ -z "$cl_name" || -z "$p_id" ]]; then
+        pretty_print "Error: CLUSTER_ACM_NAME and PROJECT_ID must be set in envrc for ingestion." "ERROR"
+        exit 1
+    fi
+
+    pretty_print "Ingesting $name into project $p_id (cluster: $cl_name)..." "INFO"
+
+    # 1. Ingest Files
+    if [[ -f "$target_dir/consumer-edge-machine" ]]; then
+        gsm_put "gdc-${cl_name}-ssh-key" "$(cat "$target_dir/consumer-edge-machine")" "$cl_name" "$p_id"
+    fi
+    if [[ -f "$target_dir/consumer-edge-machine.pub" ]]; then
+        gsm_put "gdc-${cl_name}-ssh-key-pub" "$(cat "$target_dir/consumer-edge-machine.pub")" "$cl_name" "$p_id"
+    fi
+    if [[ -f "$target_dir/provisioning-gsa.json" ]]; then
+        gsm_put "gdc-${cl_name}-prov-gsa" "$(cat "$target_dir/provisioning-gsa.json")" "$cl_name" "$p_id"
+    fi
+    if [[ -f "$target_dir/node-gsa.json" ]]; then
+        gsm_put "gdc-${cl_name}-node-gsa" "$(cat "$target_dir/node-gsa.json")" "$cl_name" "$p_id"
+    fi
+
+    # 2. Ingest Vars
+    local scm_user=$(grep "export SCM_TOKEN_USER=" "$target_dir/envrc" | cut -d'"' -f2)
+    local scm_token=$(grep "export SCM_TOKEN_TOKEN=" "$target_dir/envrc" | cut -d'"' -f2)
+    local oidc_id=$(grep "export OIDC_CLIENT_ID=" "$target_dir/envrc" | cut -d'"' -f2)
+    local oidc_secret=$(grep "export OIDC_CLIENT_SECRET=" "$target_dir/envrc" | cut -d'"' -f2)
+
+    if [[ -n "$scm_user" && "$scm_user" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-scm-user" "$scm_user" "$cl_name" "$p_id"; fi
+    if [[ -n "$scm_token" && "$scm_token" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-scm-token" "$scm_token" "$cl_name" "$p_id"; fi
+    if [[ -n "$oidc_id" && "$oidc_id" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-oidc-id" "$oidc_id" "$cl_name" "$p_id"; fi
+    if [[ -n "$oidc_secret" && "$oidc_secret" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-oidc-secret" "$oidc_secret" "$cl_name" "$p_id"; fi
+
+    # 3. Secure the folder
+    dehydrate_context "$target_dir"
+    
+    pretty_print "Ingestion complete for $name." "INFO"
 }
 
 function generate_context() {
@@ -238,7 +312,7 @@ function generate_context() {
         exit 1
     fi
 
-    pretty_print "Generating $target..." "INFO"
+    pretty_print "Generating $target in project $p_id..." "INFO"
     cp -r build-artifacts-example "$target"
 
     # 1. Update envrc
@@ -318,15 +392,15 @@ function generate_context() {
     ssh-keygen -t rsa -b 4096 -f "$target/consumer-edge-machine" -N "" -q
     
     # 5. Push to GSM and start CLOSED
-    gsm_put "gdc-${cl_name}-ssh-key" "$(cat "$target/consumer-edge-machine")"
-    gsm_put "gdc-${cl_name}-ssh-key-pub" "$(cat "$target/consumer-edge-machine.pub")"
+    gsm_put "gdc-${cl_name}-ssh-key" "$(cat "$target/consumer-edge-machine")" "${cl_name}" "${p_id}"
+    gsm_put "gdc-${cl_name}-ssh-key-pub" "$(cat "$target/consumer-edge-machine.pub")" "${cl_name}" "${p_id}"
     
     dehydrate_context "$target"
 
     pretty_print "Context $ctx_name generated and pushed to GSM." "INFO"
     pretty_print "ACTION REQUIRED:" "INFO"
-    pretty_print "1. Add provisioning-gsa.json to GSM (gdc-${cl_name}-prov-gsa)" "INFO"
-    pretty_print "2. Add node-gsa.json to GSM (gdc-${cl_name}-node-gsa)" "INFO"
+    pretty_print "1. Add provisioning-gsa.json to GSM (gdc-${cl_name}-prov-gsa) --labels=cluster=$cl_name" "INFO"
+    pretty_print "2. Add node-gsa.json to GSM (gdc-${cl_name}-node-gsa) --labels=cluster=$cl_name" "INFO"
     pretty_print "3. Run './scripts/instance-context.sh -o $ctx_name' to hydrate secrets." "INFO"
     exit 0
 }
@@ -337,6 +411,10 @@ check_options "$@"
 
 if [[ -n "$generate_yaml" ]]; then
     generate_context "$generate_yaml"
+fi
+
+if [[ -n "$ingest_folder" ]]; then
+    ingest_context "$ingest_folder"
 fi
 
 if [[ $want_close == true && $want_new_folder == true ]]; then
