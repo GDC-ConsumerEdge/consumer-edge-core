@@ -317,10 +317,17 @@ function generate_context() {
     # 4. Generate SSH Keys
     ssh-keygen -t rsa -b 4096 -f "$target/consumer-edge-machine" -N "" -q
     
-    pretty_print "Context $ctx_name generated." "INFO"
+    # 5. Push to GSM and start CLOSED
+    gsm_put "gdc-${cl_name}-ssh-key" "$(cat "$target/consumer-edge-machine")"
+    gsm_put "gdc-${cl_name}-ssh-key-pub" "$(cat "$target/consumer-edge-machine.pub")"
+    
+    dehydrate_context "$target"
+
+    pretty_print "Context $ctx_name generated and pushed to GSM." "INFO"
     pretty_print "ACTION REQUIRED:" "INFO"
-    pretty_print "1. Add provisioning-gsa.json to $target (GSA key with Editor permissions)" "INFO"
-    pretty_print "2. Add node-gsa.json to $target (GSA key for cluster nodes)" "INFO"
+    pretty_print "1. Add provisioning-gsa.json to GSM (gdc-${cl_name}-prov-gsa)" "INFO"
+    pretty_print "2. Add node-gsa.json to GSM (gdc-${cl_name}-node-gsa)" "INFO"
+    pretty_print "3. Run './scripts/instance-context.sh -o $ctx_name' to hydrate secrets." "INFO"
     exit 0
 }
 
