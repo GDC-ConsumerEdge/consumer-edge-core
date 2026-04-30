@@ -46,8 +46,16 @@ direnv allow .
 ├── scripts/           # Bash utilities for Google Cloud environment preparation and VM setup
 ├── install.sh         # The primary orchestration script for executing edge deployments
 ├── setup.sh           # Initializes the workstation, local dependencies, and GCP project
-└── site.yml           # The root Ansible playbook for comprehensive cluster installations
+├── site.yml           # The root Ansible playbook for comprehensive cluster installations
 ```
+
+## Documentation
+
+For detailed instructions on specific workflows, see the `docs/` directory:
+
+*   **[Instance Context Management](docs/INSTANCE-CONTEXT-HOW-TO.md)**: How to create, secure (hydrate/dehydrate), and switch between cluster configurations.
+*   **[Hardware Provisioning](docs/HARDWARE_PROVISION.md)**: Setup and baseline installation for physical edge nodes.
+*   **[GCP Deployment Guide](docs/README-GCP-Deployment.md)**: Simulating edge environments using Google Compute Engine.
 
 ## Tech Stack & Dependencies
 
