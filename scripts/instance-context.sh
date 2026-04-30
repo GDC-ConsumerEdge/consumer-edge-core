@@ -25,7 +25,7 @@ desired_folder="build-artifacts-example" # Default desired_folder
 list_folders=true
 
 function usage() {
-    pretty_print "Usage: change-instance-context.sh [-c] [folder-name]"
+    pretty_print "Usage: instance-context.sh [-c] [folder-name]"
     pretty_print "  Change the active build-artifacts folder to use during an instance run.\n"
     pretty_print "  folder-name\tThe name of the build-artifacts folder to use (Optional)"
     pretty_print "\n  Options/Flags:"
