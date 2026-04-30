@@ -155,10 +155,11 @@ function generate_context() {
         cp templates/envrc-template.sh "$target/envrc"
     fi
     
-    sed -i "s/export PROJECT_ID=\"\${PROJECT_ID}\"/export PROJECT_ID=\"${p_id}\"/" "$target/envrc"
-    sed -i "s/export REGION=\"us-central1\"/export REGION=\"${reg}\"/" "$target/envrc"
-    sed -i "s/export ZONE=\"us-central1-a\"/export ZONE=\"${zn}\"/" "$target/envrc"
-    sed -i "s/export CLUSTER_ACM_NAME=\"gdc-demo\"/export CLUSTER_ACM_NAME=\"${cl_name}\"/" "$target/envrc"
+    sed -i "1i # This file sets environment variables for the cluster provisioning run." "$target/envrc"
+    sed -i "s/export PROJECT_ID=\"\${PROJECT_ID}\"/export PROJECT_ID=\"${p_id}\" # GCP Project ID (from YAML project_id)/" "$target/envrc"
+    sed -i "s/export REGION=\"us-central1\"/export REGION=\"${reg}\" # GCP Region (from YAML region)/" "$target/envrc"
+    sed -i "s/export ZONE=\"us-central1-a\"/export ZONE=\"${zn}\" # GCP Zone (from YAML zone)/" "$target/envrc"
+    sed -i "s/export CLUSTER_ACM_NAME=\"gdc-demo\"/export CLUSTER_ACM_NAME=\"${cl_name}\" # Cluster name used by ACM (from YAML cluster_name)/" "$target/envrc"
 
     # 2. Update inventory.yaml
     mv "$target/inventory-example.yaml" "$target/inventory.yaml" 2>/dev/null || true
@@ -181,11 +182,17 @@ function generate_context() {
       .[\"${cl_name}_cluster\"].vars.peer_node_ips = []
     " "$target/inventory.yaml"
 
+    # Add comments to inventory.yaml fields using yq head comments if possible, but simpler to use sed for blocks
+    sed -i "/cluster_name: \"${cl_name}\"/s/$/ # Name of the cluster (from YAML cluster_name)/" "$target/inventory.yaml"
+    sed -i "/control_plane_vip: \"${cp_vip}\"/s/$/ # K8s API endpoint (from YAML control_plane_vip)/" "$target/inventory.yaml"
+    sed -i "/ingress_vip: \"${in_vip}\"/s/$/ # Entry point for services (from YAML ingress_vip)/" "$target/inventory.yaml"
+
     # Parse nodes for inventory hosts
     local num_nodes=$(yq e '.nodes | length' "$yaml_file")
     
     # Overwrite add-hosts completely
-    echo "# Edge Servers for ${ctx_name}" > "$target/add-hosts"
+    echo "# Edge Servers for ${ctx_name} (Auto-generated from YAML nodes)" > "$target/add-hosts"
+    echo "# Used for local DNS resolution to cluster nodes." >> "$target/add-hosts"
 
     for (( i=0; i<$num_nodes; i++ )); do
         local n_name=$(yq e ".nodes[$i].name" "$yaml_file")
@@ -213,14 +220,15 @@ function generate_context() {
     if [[ ! -f "$target/instance-run-vars.yaml" ]]; then
         cp templates/instance-run-vars-template.yaml "$target/instance-run-vars.yaml"
     fi
+    sed -i "1i # Variables specific to this provisioning run (e.g. storage provider)" "$target/instance-run-vars.yaml"
 
     # 4. Generate SSH Keys
     ssh-keygen -t rsa -b 4096 -f "$target/consumer-edge-machine" -N "" -q
     
     pretty_print "Context $ctx_name generated." "INFO"
     pretty_print "ACTION REQUIRED:" "INFO"
-    pretty_print "1. Add provisioning-gsa.json to $target" "INFO"
-    pretty_print "2. Add node-gsa.json to $target" "INFO"
+    pretty_print "1. Add provisioning-gsa.json to $target (GSA key with Editor permissions)" "INFO"
+    pretty_print "2. Add node-gsa.json to $target (GSA key for cluster nodes)" "INFO"
     exit 0
 }
 
