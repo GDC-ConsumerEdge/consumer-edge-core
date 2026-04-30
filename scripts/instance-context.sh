@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright 2023 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -114,9 +114,24 @@ function print_context() {
     echo "" # blank line
 }
 
+function gsm_get() {
+    local secret_name="$1"
+    gcloud secrets versions access latest --secret="${secret_name}" 2>/dev/null
+}
+
+function gsm_put() {
+    local secret_name="$1"
+    local secret_value="$2"
+    
+    if ! gcloud secrets describe "${secret_name}" &>/dev/null; then
+        gcloud secrets create "${secret_name}" --replication-policy="automatic"
+    fi
+    echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=-
+}
+
 function generate_context() {
     local yaml_file="$1"
-    
+
     if ! command -v yq &> /dev/null; then
         pretty_print "Error: 'yq' is required. Please install it." "ERROR"
         exit 1
@@ -154,7 +169,7 @@ function generate_context() {
     if [[ ! -f "$target/envrc" ]]; then
         cp templates/envrc-template.sh "$target/envrc"
     fi
-    
+
     sed -i "1i # This file sets environment variables for the cluster provisioning run." "$target/envrc"
     sed -i "s/export PROJECT_ID=\"\${PROJECT_ID}\"/export PROJECT_ID=\"${p_id}\" # GCP Project ID (from YAML project_id)/" "$target/envrc"
     sed -i "s/export REGION=\"us-central1\"/export REGION=\"${reg}\" # GCP Region (from YAML region)/" "$target/envrc"
@@ -189,7 +204,7 @@ function generate_context() {
 
     # Parse nodes for inventory hosts
     local num_nodes=$(yq e '.nodes | length' "$yaml_file")
-    
+
     # Overwrite add-hosts completely
     echo "# Edge Servers for ${ctx_name} (Auto-generated from YAML nodes)" > "$target/add-hosts"
     echo "# Used for local DNS resolution to cluster nodes." >> "$target/add-hosts"
@@ -197,12 +212,12 @@ function generate_context() {
     for (( i=0; i<$num_nodes; i++ )); do
         local n_name=$(yq e ".nodes[$i].name" "$yaml_file")
         local n_ip=$(yq e ".nodes[$i].ip" "$yaml_file")
-        
+
         # Add to inventory hosts
         yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".node_ip = \"${n_ip}\" |
                  .[\"${cl_name}_cluster\"].hosts.\"${n_name}\".machine_label = \"{{ inventory_hostname }}\" |
                  .[\"${cl_name}_cluster\"].hosts.\"${n_name}\".ansible_host = \"{{ node_ip }}\"" "$target/inventory.yaml"
-        
+
         # Identify first node as primary
         if [ $i -eq 0 ]; then
             yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".primary_cluster_machine = true" "$target/inventory.yaml"
@@ -210,7 +225,7 @@ function generate_context() {
 
         # Add to peer_node_ips list
         yq e -i ".[\"${cl_name}_cluster\"].vars.peer_node_ips += [\"${n_ip}\"]" "$target/inventory.yaml"
-        
+
         # Add to add-hosts
         echo "$n_ip    $n_name" >> "$target/add-hosts"
     done
@@ -224,7 +239,7 @@ function generate_context() {
 
     # 4. Generate SSH Keys
     ssh-keygen -t rsa -b 4096 -f "$target/consumer-edge-machine" -N "" -q
-    
+
     pretty_print "Context $ctx_name generated." "INFO"
     pretty_print "ACTION REQUIRED:" "INFO"
     pretty_print "1. Add provisioning-gsa.json to $target (GSA key with Editor permissions)" "INFO"
