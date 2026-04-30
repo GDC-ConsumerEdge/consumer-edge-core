@@ -129,6 +129,35 @@ function gsm_put() {
     echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=-
 }
 
+function dehydrate_context() {
+    local target_dir="$1"
+    if [[ -z "$target_dir" || "$target_dir" == "." ]]; then 
+        target_dir="build-artifacts"
+    fi
+    
+    if [[ ! -L "$target_dir" && ! -d "$target_dir" ]]; then
+        pretty_print "Target $target_dir not found" "ERROR"
+        return
+    fi
+
+    pretty_print "Closing context in $target_dir..." "INFO"
+    
+    # 1. Wipe sensitive files
+    rm -f "$target_dir/consumer-edge-machine"
+    rm -f "$target_dir/consumer-edge-machine.pub"
+    rm -f "$target_dir/provisioning-gsa.json"
+    rm -f "$target_dir/node-gsa.json"
+    
+    # 2. Scrub envrc
+    if [[ -f "$target_dir/envrc" ]]; then
+        local closed="****closed*******"
+        sed -i "s/SCM_TOKEN_USER=.*/export SCM_TOKEN_USER=\"$closed\"/" "$target_dir/envrc"
+        sed -i "s/SCM_TOKEN_TOKEN=.*/export SCM_TOKEN_TOKEN=\"$closed\"/" "$target_dir/envrc"
+        sed -i "s/OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$closed\"/" "$target_dir/envrc"
+        sed -i "s/OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$closed\"/" "$target_dir/envrc"
+    fi
+}
+
 function generate_context() {
     local yaml_file="$1"
 
