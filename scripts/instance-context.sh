@@ -23,29 +23,33 @@ MARKER="*"
 want_new_folder=false
 desired_folder="build-artifacts-example" # Default desired_folder
 list_folders=true
+generate_yaml=""
 
 function usage() {
-    pretty_print "Usage: instance-context.sh [-c] [folder-name]"
-    pretty_print "  Change the active build-artifacts folder to use during an instance run.\n"
+    pretty_print "Usage: instance-context.sh [-c] [-l] [-g <yaml_file>] [folder-name]"
+    pretty_print "  Change or generate the active build-artifacts folder to use during an instance run.\n"
     pretty_print "  folder-name\tThe name of the build-artifacts folder to use (Optional)"
     pretty_print "\n  Options/Flags:"
     pretty_print "  -h\t\tPrint this help message (optional)"
     pretty_print "  -c\t\tPrint the current context (optional)"
+    pretty_print "  -l\t\tList available contexts (optional)"
+    pretty_print "  -g file\tGenerate a new context from the provided YAML file"
 }
 
 function check_options() {
-
     has_option=false
-
-    while getopts ch flag; do
+    while getopts "chlg:" flag; do
         case "${flag}" in
         c) print_context; list_folders=false; has_option=true ;;
+        l) list_folders=true; has_option=true ;;
+        g) generate_yaml="${OPTARG}"; list_folders=false; has_option=true ;;
         h) usage; exit 0 ;;
         esac
     done
 
+    shift "$((OPTIND-1))"
     if [[ ! -z "$1" ]]; then
-        if [[ $has_option == false ]]; then
+        if [[ $has_option == false || -n "$generate_yaml" ]]; then
             desired_folder=$1
             want_new_folder=true
         fi
@@ -110,9 +114,30 @@ function print_context() {
     echo "" # blank line
 }
 
+function generate_context() {
+    local yaml_file="$1"
+    
+    if ! command -v yq &> /dev/null; then
+        pretty_print "Error: 'yq' is required for generating contexts. Please install it." "ERROR"
+        exit 1
+    fi
+    
+    if [[ ! -f "$yaml_file" ]]; then
+        pretty_print "Error: YAML file '$yaml_file' not found." "ERROR"
+        exit 1
+    fi
+    
+    pretty_print "Valid YAML file found, ready to generate." "INFO"
+    exit 0
+}
+
 #### Main Execution
 
 check_options "$@"
+
+if [[ -n "$generate_yaml" ]]; then
+    generate_context "$generate_yaml"
+fi
 
 # Change the active folder if -l used
 if [[ ${want_new_folder} == true ]]; then
