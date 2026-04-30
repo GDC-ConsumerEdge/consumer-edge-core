@@ -12,14 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# {{local_cache_folder}}/config.csv
-# bmctl,/usr/local/bin
-# virtctl,/usr/bin/kubectl-virt
-# kubens,/usr/local/bin/kubens
-# kubectx,/usr/local/bin/kubectx
-# k9s,/usr/local/bin/k9s
-# config-management-operator.yaml,/var/acm-configs/config-management-operator.yaml
-
 - name: Check if file exists at local folder
   stat:
     path: "{{ local_cache_folder }}/{{bundle_file_name}}"
@@ -45,15 +37,15 @@
     cmd: "gcloud storage cp {{bucket_cache_url}}/{{bundle_file_name}} {{ tmpfile.path }}/{{bundle_file_name}}"
   when:
   - not local_file_exists.stat.exists
-  - bucket_file_exists.rc == 0
+  - bucket_file_exists.rc is defined and bucket_file_exists.rc == 0
 
 - name: Set flag to not-found
   set_fact:
     "{{ fact_name }}": False
-  when:
-  - not local_file_exists.stat.exists
-  - bucket_file_exists.rc > 0
 
 - name: Set fact that bundle was found
   set_fact:
     "{{ fact_name }}": True
+  when: >
+    local_file_exists.stat.exists or
+    (bucket_file_exists.rc is defined and bucket_file_exists.rc == 0)
