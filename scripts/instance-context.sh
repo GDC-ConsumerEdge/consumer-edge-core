@@ -169,10 +169,10 @@ function dehydrate_context() {
     # 2. Scrub envrc
     if [[ -f "$target_dir/envrc" ]]; then
         local closed="****closed*******"
-        sed -i "s/SCM_TOKEN_USER=.*/export SCM_TOKEN_USER=\"$closed\"/" "$target_dir/envrc"
-        sed -i "s/SCM_TOKEN_TOKEN=.*/export SCM_TOKEN_TOKEN=\"$closed\"/" "$target_dir/envrc"
-        sed -i "s/OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$closed\"/" "$target_dir/envrc"
-        sed -i "s/OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$closed\"/" "$target_dir/envrc"
+        sed -i "s/.*SCM_TOKEN_USER=.*/export SCM_TOKEN_USER=\"$closed\"/" "$target_dir/envrc"
+        sed -i "s/.*SCM_TOKEN_TOKEN=.*/export SCM_TOKEN_TOKEN=\"$closed\"/" "$target_dir/envrc"
+        sed -i "s/.*OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$closed\"/" "$target_dir/envrc"
+        sed -i "s/.*OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$closed\"/" "$target_dir/envrc"
     fi
 }
 
@@ -216,10 +216,10 @@ function hydrate_context() {
     local oidc_secret=$(gsm_get "gdc-${cl_name}-oidc-secret" "$p_id")
 
     # Inject into envrc
-    if [[ -n "$scm_user" ]]; then sed -i "s/SCM_TOKEN_USER=.*/export SCM_TOKEN_USER=\"$scm_user\"/" "$target_dir/envrc"; fi
-    if [[ -n "$scm_token" ]]; then sed -i "s/SCM_TOKEN_TOKEN=.*/export SCM_TOKEN_TOKEN=\"$scm_token\"/" "$target_dir/envrc"; fi
-    if [[ -n "$oidc_id" ]]; then sed -i "s/OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$oidc_id\"/" "$target_dir/envrc"; fi
-    if [[ -n "$oidc_secret" ]]; then sed -i "s/OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$oidc_secret\"/" "$target_dir/envrc"; fi
+    if [[ -n "$scm_user" ]]; then sed -i "s/.*SCM_TOKEN_USER=.*/export SCM_TOKEN_USER=\"$scm_user\"/" "$target_dir/envrc"; fi
+    if [[ -n "$scm_token" ]]; then sed -i "s/.*SCM_TOKEN_TOKEN=.*/export SCM_TOKEN_TOKEN=\"$scm_token\"/" "$target_dir/envrc"; fi
+    if [[ -n "$oidc_id" ]]; then sed -i "s/.*OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$oidc_id\"/" "$target_dir/envrc"; fi
+    if [[ -n "$oidc_secret" ]]; then sed -i "s/.*OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$oidc_secret\"/" "$target_dir/envrc"; fi
 
     pretty_print "Context hydrated successfully." "INFO"
 }
