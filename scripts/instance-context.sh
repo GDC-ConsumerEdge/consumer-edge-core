@@ -402,6 +402,7 @@ function generate_context() {
     local num_nodes=$(yq e '.nodes | length' "$yaml_file")
     
     # Overwrite add-hosts completely
+    rm -f "$target/add-hosts-example"
     echo "# Edge Servers for ${ctx_name} (Auto-generated from YAML nodes)" > "$target/add-hosts"
     echo "# Used for local DNS resolution to cluster nodes." >> "$target/add-hosts"
 
