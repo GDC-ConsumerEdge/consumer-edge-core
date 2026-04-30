@@ -1,0 +1,13 @@
+context_name: "test-cluster"
+cluster_name: "edge-test"
+project_id: "test-gcp-project"
+region: "us-east1"
+zone: "us-east1-b"
+control_plane_vip: "10.0.0.100"
+ingress_vip: "10.0.0.101"
+load_balancer_pool_cidr: "10.0.0.101-10.0.0.110"
+nodes:
+  - name: "node-1"
+    ip: "10.0.0.10"
+  - name: "node-2"
+    ip: "10.0.0.11"

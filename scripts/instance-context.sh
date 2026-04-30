@@ -118,16 +118,109 @@ function generate_context() {
     local yaml_file="$1"
     
     if ! command -v yq &> /dev/null; then
-        pretty_print "Error: 'yq' is required for generating contexts. Please install it." "ERROR"
+        pretty_print "Error: 'yq' is required. Please install it." "ERROR"
         exit 1
     fi
-    
     if [[ ! -f "$yaml_file" ]]; then
         pretty_print "Error: YAML file '$yaml_file' not found." "ERROR"
         exit 1
     fi
+
+    local ctx_name=$(yq e '.context_name' "$yaml_file")
+    local cl_name=$(yq e '.cluster_name' "$yaml_file")
+    local p_id=$(yq e '.project_id' "$yaml_file")
+    local reg=$(yq e '.region // "us-central1"' "$yaml_file")
+    local zn=$(yq e '.zone // "us-central1-a"' "$yaml_file")
+    local cp_vip=$(yq e '.control_plane_vip' "$yaml_file")
+    local in_vip=$(yq e '.ingress_vip' "$yaml_file")
+    local lb_pool=$(yq e '.load_balancer_pool_cidr' "$yaml_file")
+
+    if [[ -z "$ctx_name" || "$ctx_name" == "null" ]]; then
+        pretty_print "Error: 'context_name' required in YAML." "ERROR"
+        exit 1
+    fi
+
+    local target="build-artifacts-${ctx_name}"
+    if [[ -d "$target" ]]; then
+        pretty_print "Error: Directory '$target' already exists." "ERROR"
+        exit 1
+    fi
+
+    pretty_print "Generating $target..." "INFO"
+    cp -r build-artifacts-example "$target"
+
+    # 1. Update envrc
+    mv "$target/envrc-example" "$target/envrc" 2>/dev/null || true
+    if [[ ! -f "$target/envrc" ]]; then
+        cp templates/envrc-template.sh "$target/envrc"
+    fi
     
-    pretty_print "Valid YAML file found, ready to generate." "INFO"
+    sed -i "s/export PROJECT_ID=\"\${PROJECT_ID}\"/export PROJECT_ID=\"${p_id}\"/" "$target/envrc"
+    sed -i "s/export REGION=\"us-central1\"/export REGION=\"${reg}\"/" "$target/envrc"
+    sed -i "s/export ZONE=\"us-central1-a\"/export ZONE=\"${zn}\"/" "$target/envrc"
+    sed -i "s/export CLUSTER_ACM_NAME=\"gdc-demo\"/export CLUSTER_ACM_NAME=\"${cl_name}\"/" "$target/envrc"
+
+    # 2. Update inventory.yaml
+    mv "$target/inventory-example.yaml" "$target/inventory.yaml" 2>/dev/null || true
+    if [[ ! -f "$target/inventory.yaml" ]]; then
+        cp templates/inventory-physical-example.yaml "$target/inventory.yaml"
+    fi
+
+    # Rename root key and update basic vars
+    yq e -i "
+      .[\"${cl_name}_cluster\"] = .[\"[[ cluster-name]]_cluster\"] |
+      del(.[\"[[ cluster-name]]_cluster\"]) |
+      .[\"${cl_name}_cluster\"].vars.cluster_name = \"${cl_name}\" |
+      .[\"${cl_name}_cluster\"].vars.acm_cluster_name = \"${cl_name}\" |
+      .[\"${cl_name}_cluster\"].vars.control_plane_vip = \"${cp_vip}\" |
+      .[\"${cl_name}_cluster\"].vars.ingress_vip = \"${in_vip}\" |
+      .[\"${cl_name}_cluster\"].vars.load_balancer_pool_cidr = [\"${lb_pool}\"] |
+      del(.[\"${cl_name}_cluster\"].hosts) |
+      .[\"${cl_name}_cluster\"].hosts = {} |
+      del(.[\"${cl_name}_cluster\"].vars.peer_node_ips) |
+      .[\"${cl_name}_cluster\"].vars.peer_node_ips = []
+    " "$target/inventory.yaml"
+
+    # Parse nodes for inventory hosts
+    local num_nodes=$(yq e '.nodes | length' "$yaml_file")
+    
+    # Overwrite add-hosts completely
+    echo "# Edge Servers for ${ctx_name}" > "$target/add-hosts"
+
+    for (( i=0; i<$num_nodes; i++ )); do
+        local n_name=$(yq e ".nodes[$i].name" "$yaml_file")
+        local n_ip=$(yq e ".nodes[$i].ip" "$yaml_file")
+        
+        # Add to inventory hosts
+        yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".node_ip = \"${n_ip}\" |
+                 .[\"${cl_name}_cluster\"].hosts.\"${n_name}\".machine_label = \"{{ inventory_hostname }}\" |
+                 .[\"${cl_name}_cluster\"].hosts.\"${n_name}\".ansible_host = \"{{ node_ip }}\"" "$target/inventory.yaml"
+        
+        # Identify first node as primary
+        if [ $i -eq 0 ]; then
+            yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".primary_cluster_machine = true" "$target/inventory.yaml"
+        fi
+
+        # Add to peer_node_ips list
+        yq e -i ".[\"${cl_name}_cluster\"].vars.peer_node_ips += [\"${n_ip}\"]" "$target/inventory.yaml"
+        
+        # Add to add-hosts
+        echo "$n_ip    $n_name" >> "$target/add-hosts"
+    done
+
+    # 3. Rename instance-run-vars
+    mv "$target/instance-run-vars-example.yaml" "$target/instance-run-vars.yaml" 2>/dev/null || true
+    if [[ ! -f "$target/instance-run-vars.yaml" ]]; then
+        cp templates/instance-run-vars-template.yaml "$target/instance-run-vars.yaml"
+    fi
+
+    # 4. Generate SSH Keys
+    ssh-keygen -t rsa -b 4096 -f "$target/consumer-edge-machine" -N "" -q
+    
+    pretty_print "Context $ctx_name generated." "INFO"
+    pretty_print "ACTION REQUIRED:" "INFO"
+    pretty_print "1. Add provisioning-gsa.json to $target" "INFO"
+    pretty_print "2. Add node-gsa.json to $target" "INFO"
     exit 0
 }
 
