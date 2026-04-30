@@ -158,6 +158,48 @@ function dehydrate_context() {
     fi
 }
 
+function hydrate_context() {
+    local target_dir="$1"
+    if [[ -z "$target_dir" || "$target_dir" == "." ]]; then 
+        target_dir="build-artifacts"
+    fi
+
+    if [[ ! -f "$target_dir/envrc" ]]; then
+        pretty_print "Error: $target_dir/envrc not found. Cannot hydrate." "ERROR"
+        return
+    fi
+
+    # Extract cluster name from envrc
+    local cl_name=$(grep "export CLUSTER_ACM_NAME=" "$target_dir/envrc" | cut -d'"' -f2)
+    if [[ -z "$cl_name" ]]; then
+        pretty_print "Error: Could not find CLUSTER_ACM_NAME in $target_dir/envrc" "ERROR"
+        return
+    fi
+
+    pretty_print "Opening context for cluster $cl_name..." "INFO"
+
+    # Fetch Files
+    gsm_get "gdc-${cl_name}-ssh-key" > "$target_dir/consumer-edge-machine"
+    chmod 600 "$target_dir/consumer-edge-machine"
+    gsm_get "gdc-${cl_name}-ssh-key-pub" > "$target_dir/consumer-edge-machine.pub"
+    gsm_get "gdc-${cl_name}-prov-gsa" > "$target_dir/provisioning-gsa.json"
+    gsm_get "gdc-${cl_name}-node-gsa" > "$target_dir/node-gsa.json"
+
+    # Fetch envrc vars
+    local scm_user=$(gsm_get "gdc-${cl_name}-scm-user")
+    local scm_token=$(gsm_get "gdc-${cl_name}-scm-token")
+    local oidc_id=$(gsm_get "gdc-${cl_name}-oidc-id")
+    local oidc_secret=$(gsm_get "gdc-${cl_name}-oidc-secret")
+
+    # Inject into envrc
+    if [[ -n "$scm_user" ]]; then sed -i "s/SCM_TOKEN_USER=.*/export SCM_TOKEN_USER=\"$scm_user\"/" "$target_dir/envrc"; fi
+    if [[ -n "$scm_token" ]]; then sed -i "s/SCM_TOKEN_TOKEN=.*/export SCM_TOKEN_TOKEN=\"$scm_token\"/" "$target_dir/envrc"; fi
+    if [[ -n "$oidc_id" ]]; then sed -i "s/OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$oidc_id\"/" "$target_dir/envrc"; fi
+    if [[ -n "$oidc_secret" ]]; then sed -i "s/OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$oidc_secret\"/" "$target_dir/envrc"; fi
+
+    pretty_print "Context hydrated successfully." "INFO"
+}
+
 function generate_context() {
     local yaml_file="$1"
 
