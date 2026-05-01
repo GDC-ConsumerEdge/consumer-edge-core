@@ -473,11 +473,19 @@ function generate_context() {
     local scm_token_status=$(validate_gsm_secret "gdc-${cl_name}-scm-token" "$p_id")
     local prov_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-prov-gsa" "$p_id")
     local node_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-node-gsa" "$p_id")
+    local ssh_key_status=$(validate_gsm_secret "gdc-${cl_name}-ssh-key" "$p_id")
+    local ssh_pub_status=$(validate_gsm_secret "gdc-${cl_name}-ssh-key-pub" "$p_id")
+    local oidc_id_status=$(validate_gsm_secret "gdc-${cl_name}-oidc-id" "$p_id")
+    local oidc_sec_status=$(validate_gsm_secret "gdc-${cl_name}-oidc-secret" "$p_id")
     
     pretty_print "SCM User Secret:\t[$scm_user_status]"
     pretty_print "SCM Token Secret:\t[$scm_token_status]"
     pretty_print "Prov GSA Secret:\t[$prov_gsa_status]"
     pretty_print "Node GSA Secret:\t[$node_gsa_status]"
+    pretty_print "SSH Private Key:\t[$ssh_key_status]"
+    pretty_print "SSH Public Key:\t\t[$ssh_pub_status]"
+    pretty_print "OIDC Client ID:\t\t[$oidc_id_status]"
+    pretty_print "OIDC Client Secret:\t[$oidc_sec_status]"
     echo ""
 
     local missing=()
@@ -502,11 +510,15 @@ function generate_context() {
     local scm_token_val=$(gsm_get "gdc-${cl_name}-scm-token" "$p_id")
     local prov_gsa_email=$(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id")
     local node_gsa_email=$(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id")
+    local oidc_id_val=$(gsm_get "gdc-${cl_name}-oidc-id" "$p_id")
+    local oidc_sec_val=$(gsm_get "gdc-${cl_name}-oidc-secret" "$p_id")
     
     pretty_print "SCM User Secret:\t${scm_user_val:-NOT SET}"
     pretty_print "SCM Token Secret:\t$(mask_secret "$scm_token_val")"
     pretty_print "Provisioning GSA:\t$prov_gsa_email"
     pretty_print "Node GSA:\t\t$node_gsa_email"
+    pretty_print "OIDC Client ID:\t\t${oidc_id_val:-NOT SET}"
+    pretty_print "OIDC Client Secret:\t$(mask_secret "$oidc_sec_val")"
     pretty_print "Cluster Name:\t\t$cl_name"
     pretty_print "Region/Zone:\t\t$reg / $zn"
     echo ""
@@ -635,6 +647,8 @@ function generate_context() {
     pretty_print "SCM Token Secret:\t$(mask_secret "$scm_token_val")"
     pretty_print "Provisioning GSA:\t$prov_gsa_email"
     pretty_print "Node GSA:\t\t$node_gsa_email"
+    pretty_print "OIDC Client ID:\t\t${oidc_id_val:-NOT SET}"
+    pretty_print "OIDC Client Secret:\t$(mask_secret "$oidc_sec_val")"
     echo ""
 
     # 5. Context State & Next Steps
