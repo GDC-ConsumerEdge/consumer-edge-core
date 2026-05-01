@@ -68,3 +68,14 @@ function display_help() {
 }
 
 alias "help-me"="display_help"
+function trim_key_file() {
+    local target_file="$1"
+    if [[ -f "$target_file" ]]; then
+        # Remove trailing whitespace from all lines
+        sed -i 's/[[:space:]]*$//' "$target_file"
+        # Remove all trailing blank lines
+        sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$target_file"
+        # Ensure exactly one newline at EOF
+        echo "" >> "$target_file"
+    fi
+}

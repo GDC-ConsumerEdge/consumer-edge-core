@@ -29,3 +29,24 @@ else
   echo "FAIL: Context directory not created"
   exit 1
 fi
+
+# Test trim_key_file function
+echo "Testing trim_key_file..."
+source scripts/install-shell-helper.sh
+
+# Case 1: Trailing spaces and multiple newlines
+cat << 'INNER_EOF' > test_key.txt
+test-key  
+line 2   
+
+
+INNER_EOF
+trim_key_file test_key.txt
+cat -e test_key.txt > test_key_out.txt
+if ! grep -q "line 2$" test_key_out.txt; then
+    echo "FAIL: trim_key_file failed to trim trailing spaces and newlines"
+    cat test_key_out.txt
+    exit 1
+fi
+rm test_key.txt test_key_out.txt
+echo "PASS: trim_key_file works as expected"
