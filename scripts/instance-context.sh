@@ -424,10 +424,11 @@ function print_gsm_examples() {
 function validate_gsm_secret() {
     local secret_name="$1"
     local p_id="$2"
+    local missing_action="${3:-MISSING}"
     if gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
         echo "OK"
     else
-        echo "MISSING"
+        echo "$missing_action"
     fi
 }
 
@@ -471,12 +472,20 @@ function generate_context() {
     
     local scm_user_status=$(validate_gsm_secret "gdc-${cl_name}-scm-user" "$p_id")
     local scm_token_status=$(validate_gsm_secret "gdc-${cl_name}-scm-token" "$p_id")
-    local prov_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-prov-gsa" "$p_id")
-    local node_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-node-gsa" "$p_id")
-    local ssh_key_status=$(validate_gsm_secret "gdc-${cl_name}-ssh-key" "$p_id")
-    local ssh_pub_status=$(validate_gsm_secret "gdc-${cl_name}-ssh-key-pub" "$p_id")
-    local oidc_id_status=$(validate_gsm_secret "gdc-${cl_name}-oidc-id" "$p_id")
-    local oidc_sec_status=$(validate_gsm_secret "gdc-${cl_name}-oidc-secret" "$p_id")
+    
+    local prov_missing_action="WILL_PROMPT"
+    local node_missing_action="WILL_PROMPT"
+    if [[ -f "$target/provisioning-gsa.json" ]]; then prov_missing_action="WILL_UPLOAD_LOCAL"; fi
+    if [[ -f "$target/node-gsa.json" ]]; then node_missing_action="WILL_UPLOAD_LOCAL"; fi
+
+    local prov_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-prov-gsa" "$p_id" "$prov_missing_action")
+    local node_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-node-gsa" "$p_id" "$node_missing_action")
+    
+    local ssh_key_status=$(validate_gsm_secret "gdc-${cl_name}-ssh-key" "$p_id" "WILL_GENERATE")
+    local ssh_pub_status=$(validate_gsm_secret "gdc-${cl_name}-ssh-key-pub" "$p_id" "WILL_GENERATE")
+    
+    local oidc_id_status=$(validate_gsm_secret "gdc-${cl_name}-oidc-id" "$p_id" "OPTIONAL")
+    local oidc_sec_status=$(validate_gsm_secret "gdc-${cl_name}-oidc-secret" "$p_id" "OPTIONAL")
     
     pretty_print "SCM User Secret:\t[$scm_user_status]"
     pretty_print "SCM Token Secret:\t[$scm_token_status]"
@@ -492,10 +501,6 @@ function generate_context() {
     if [[ "$scm_user_status" == "MISSING" ]]; then missing+=("scm-user"); fi
     if [[ "$scm_token_status" == "MISSING" ]]; then missing+=("scm-token"); fi
     
-    # Only stop for GSAs if they also don't exist locally
-    if [[ "$prov_gsa_status" == "MISSING" && ! -f "$target/provisioning-gsa.json" ]]; then missing+=("prov-gsa"); fi
-    if [[ "$node_gsa_status" == "MISSING" && ! -f "$target/node-gsa.json" ]]; then missing+=("node-gsa"); fi
-
     if [[ ${#missing[@]} -gt 0 ]]; then
         pretty_print "STOP: Missing required secrets in GSM." "ERROR"
         print_gsm_examples "$cl_name" "$p_id" "${missing[@]}"
