@@ -261,8 +261,9 @@ function hydrate_context() {
 
     # Fetch/Ensure Files
     gsm_get "gdc-${cl_name}-ssh-key" "$p_id" > "$target_dir/consumer-edge-machine"
-    chmod 600 "$target_dir/consumer-edge-machine"
+    chmod 400 "$target_dir/consumer-edge-machine"
     gsm_get "gdc-${cl_name}-ssh-key-pub" "$p_id" > "$target_dir/consumer-edge-machine.pub"
+    chmod 644 "$target_dir/consumer-edge-machine.pub"
     
     ensure_gsa_key "$target_dir/provisioning-gsa.json" "gdc-${cl_name}-prov-gsa" "$cl_name" "$p_id" "Provisioning GSA"
     ensure_gsa_key "$target_dir/node-gsa.json" "gdc-${cl_name}-node-gsa" "$cl_name" "$p_id" "Node GSA"
