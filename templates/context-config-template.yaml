@@ -43,3 +43,11 @@ nodes:
     ip: "192.168.1.11"
   - name: "node-3"
     ip: "192.168.1.12"
+
+# The URL to the SCM repository used for Anthos Config Management (ACM) Root Sync.
+# Used in: envrc (ROOT_REPO_URL)
+root_repo_url: "https://gitlab.com/gcp-solutions-public/retail-edge/primary-root-repo-template.git"
+
+# The branch to sync from the root repo. Defaults to "main" if not provided.
+# Used in: envrc (ROOT_REPO_BRANCH)
+root_repo_branch: "main"

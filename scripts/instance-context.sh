@@ -114,12 +114,18 @@ function get_active_folder() {
 }
 
 function print_context() {
+    # Try to source the envrc of the active context to ensure variables are populated
+    local current=$(get_active_folder)
+    if [[ -n "$current" && -f "build-artifacts-${current}/envrc" ]]; then
+        source "build-artifacts-${current}/envrc" >/dev/null 2>&1
+    fi
+
     pretty_print "\nContext Details"
     pretty_print "=============="
     pretty_print "GCP Project ID:\t\t${PROJECT_ID}"
     pretty_print "GCP Region & Zone:\t${REGION} / ${ZONE}"
     pretty_print "ACM Cluster Name:\t${CLUSTER_ACM_NAME}"
-    pretty_print "Primary Root Repo:\t${ROOT_REPO_URL}"
+    pretty_print "Primary Root Repo:\t${ROOT_REPO_URL} (${ROOT_REPO_BRANCH:-main})"
     echo "" # blank line
 }
 
@@ -452,6 +458,8 @@ function generate_context() {
     local cp_vip=$(yq e '.control_plane_vip' "$yaml_file")
     local in_vip=$(yq e '.ingress_vip' "$yaml_file")
     local lb_pool=$(yq e '.load_balancer_pool_cidr' "$yaml_file")
+    local root_repo_url=$(yq e '.root_repo_url // "https://gitlab.com/gcp-solutions-public/retail-edge/primary-root-repo-template.git"' "$yaml_file")
+    local root_repo_branch=$(yq e '.root_repo_branch // "main"' "$yaml_file")
 
     if [[ -z "$ctx_name" || "$ctx_name" == "null" ]]; then
         pretty_print "Error: 'context_name' required in YAML." "ERROR"
@@ -552,10 +560,18 @@ function generate_context() {
     fi
     
     sed -i "1i # This file sets environment variables for the cluster provisioning run." "$target/envrc"
-    sed -i "s/export PROJECT_ID=\"\${PROJECT_ID}\"/export PROJECT_ID=\"${p_id}\" # GCP Project ID (from YAML project_id)/" "$target/envrc"
-    sed -i "s/export REGION=\"us-central1\"/export REGION=\"${reg}\" # GCP Region (from YAML region)/" "$target/envrc"
-    sed -i "s/export ZONE=\"us-central1-a\"/export ZONE=\"${zn}\" # GCP Zone (from YAML zone)/" "$target/envrc"
-    sed -i "s/export CLUSTER_ACM_NAME=\"gdc-demo\"/export CLUSTER_ACM_NAME=\"${cl_name}\" # Cluster name used by ACM (from YAML cluster_name)/" "$target/envrc"
+    sed -i "s|export PROJECT_ID=.*|export PROJECT_ID=\"${p_id}\" # GCP Project ID (from YAML project_id)|" "$target/envrc"
+    sed -i "s|export REGION=.*|export REGION=\"${reg}\" # GCP Region (from YAML region)|" "$target/envrc"
+    sed -i "s|export ZONE=.*|export ZONE=\"${zn}\" # GCP Zone (from YAML zone)|" "$target/envrc"
+    sed -i "s|export CLUSTER_ACM_NAME=.*|export CLUSTER_ACM_NAME=\"${cl_name}\" # Cluster name used by ACM (from YAML cluster_name)|" "$target/envrc"
+    sed -i "s|export ROOT_REPO_URL=.*|export ROOT_REPO_URL=\"${root_repo_url}\" # Root SCM Repo|" "$target/envrc"
+    
+    # ROOT_REPO_BRANCH might not exist in the template, so safely append or replace
+    if grep -q "export ROOT_REPO_BRANCH=" "$target/envrc"; then
+        sed -i "s|export ROOT_REPO_BRANCH=.*|export ROOT_REPO_BRANCH=\"${root_repo_branch}\"|" "$target/envrc"
+    else
+        sed -i "/export ROOT_REPO_URL=/a export ROOT_REPO_BRANCH=\"${root_repo_branch}\"" "$target/envrc"
+    fi
 
     # 2. Update inventory.yaml
     mv "$target/inventory-example.yaml" "$target/inventory.yaml" 2>/dev/null || true
