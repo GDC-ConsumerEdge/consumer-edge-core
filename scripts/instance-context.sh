@@ -143,6 +143,13 @@ function gsm_put() {
             labels="--labels=cluster=$label_val"
         fi
         gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}"
+    else
+        # Secret exists, check if the value is different from the latest version
+        local current_val=$(gsm_get "${secret_name}" "${p_id}")
+        if [[ "$current_val" == "$secret_value" ]]; then
+            # Values are identical, skip update
+            return 0
+        fi
     fi
     echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}"
 }
@@ -595,16 +602,28 @@ function generate_context() {
     fi
     sed -i "1i # Variables specific to this provisioning run (e.g. storage provider)" "$target/instance-run-vars.yaml"
 
-    # 4. Generate SSH Keys
-    ssh-keygen -t rsa -b 4096 -f "$target/consumer-edge-machine" -N "" -q
+    # 4. Handle SSH Keys
+    local existing_ssh=$(gsm_get "gdc-${cl_name}-ssh-key" "$p_id")
+    if [[ -n "$existing_ssh" ]]; then
+        pretty_print "Existing SSH key found in GSM, using it." "INFO"
+        echo "$existing_ssh" > "$target/consumer-edge-machine"
+        chmod 600 "$target/consumer-edge-machine"
+        gsm_get "gdc-${cl_name}-ssh-key-pub" "$p_id" > "$target/consumer-edge-machine.pub"
+    else
+        pretty_print "No SSH key found in GSM, generating new pair..." "INFO"
+        ssh-keygen -t rsa -b 4096 -f "$target/consumer-edge-machine" -N "" -q
+        # Push new keys to GSM later in step 6
+    fi
     
     # 5. Ensure GSA keys are handled (prompt if missing)
     ensure_gsa_key "$target/provisioning-gsa.json" "gdc-${cl_name}-prov-gsa" "$cl_name" "$p_id" "Provisioning GSA"
     ensure_gsa_key "$target/node-gsa.json" "gdc-${cl_name}-node-gsa" "$cl_name" "$p_id" "Node GSA"
 
-    # 6. Push SSH to GSM and start CLOSED
-    gsm_put "gdc-${cl_name}-ssh-key" "$(cat "$target/consumer-edge-machine")" "${cl_name}" "${p_id}"
-    gsm_put "gdc-${cl_name}-ssh-key-pub" "$(cat "$target/consumer-edge-machine.pub")" "${cl_name}" "${p_id}"
+    # 6. Push SSH to GSM (if new) and start CLOSED
+    if [[ -z "$existing_ssh" ]]; then
+        gsm_put "gdc-${cl_name}-ssh-key" "$(cat "$target/consumer-edge-machine")" "${cl_name}" "${p_id}"
+        gsm_put "gdc-${cl_name}-ssh-key-pub" "$(cat "$target/consumer-edge-machine.pub")" "${cl_name}" "${p_id}"
+    fi
     
     dehydrate_context "$target"
 
