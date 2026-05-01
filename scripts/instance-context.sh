@@ -463,10 +463,25 @@ function generate_context() {
     local storage_provider=$(yq e '.storage_provider // ""' "$yaml_file")
     local abm_version=$(yq e '.abm_version // ""' "$yaml_file")
     local acm_version=$(yq e '.acm_version // ""' "$yaml_file")
+    local robin_bundle=$(yq e '.robin_install_bundle_file // ""' "$yaml_file")
 
     if [[ -z "$ctx_name" || "$ctx_name" == "null" ]]; then
         pretty_print "Error: 'context_name' required in YAML." "ERROR"
         exit 1
+    fi
+
+    # Validate Robin bundle file exists if specified
+    if [[ "$storage_provider" == "robin" && -n "$robin_bundle" && "$robin_bundle" != "null" ]]; then
+        # Check if it exists either absolutely or relative to execution dir
+        if [[ ! -f "$robin_bundle" ]]; then
+            # Sometimes it might be defined relative to the target folder, check that too
+            local target_relative="build-artifacts-${ctx_name}/${robin_bundle##*/}"
+            if [[ ! -f "$target_relative" && ! -f "build-artifacts-example/${robin_bundle##*/}" ]]; then
+                pretty_print "Error: Storage provider is 'robin' but bundle file '$robin_bundle' does not exist." "ERROR"
+                pretty_print "Please ensure the file is present before generating the context." "WARN"
+                exit 1
+            fi
+        fi
     fi
 
     local target="build-artifacts-${ctx_name}"
@@ -677,6 +692,21 @@ function generate_context() {
             sed -i "s|.*acm_version:.*|acm_version: \"${acm_version}\"|" "$target/instance-run-vars.yaml"
         else
             echo "acm_version: \"${acm_version}\"" >> "$target/instance-run-vars.yaml"
+        fi
+    fi
+
+    if [[ "$storage_provider" == "robin" && -n "$robin_bundle" && "$robin_bundle" != "null" ]]; then
+        if grep -q "robin_install_bundle_file:" "$target/instance-run-vars.yaml"; then
+            sed -i "s|.*robin_install_bundle_file:.*|robin_install_bundle_file: \"${robin_bundle}\"|" "$target/instance-run-vars.yaml"
+        else
+            echo "robin_install_bundle_file: \"${robin_bundle}\"" >> "$target/instance-run-vars.yaml"
+        fi
+        
+        # Copy the file into the context if it's outside
+        if [[ ! -f "$target/${robin_bundle##*/}" && -f "$robin_bundle" ]]; then
+            cp "$robin_bundle" "$target/"
+        elif [[ ! -f "$target/${robin_bundle##*/}" && -f "build-artifacts-example/${robin_bundle##*/}" ]]; then
+            cp "build-artifacts-example/${robin_bundle##*/}" "$target/"
         fi
     fi
 

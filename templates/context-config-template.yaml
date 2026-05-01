@@ -67,3 +67,8 @@ robin_disk_paths:
 abm_version: "1.34.300-gke.59"
 # Anthos Config Management Version
 acm_version: "1.34.300-gke.59"
+
+# The path to the Robin installation tarball (Required if storage_provider is "robin")
+# Example: "build-artifacts/robin-install-5.4.8-313.tar"
+# Used in: instance-run-vars.yaml
+# robin_install_bundle_file: ""
