@@ -215,6 +215,16 @@ function dehydrate_context() {
         sed -i "s/.*OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$closed\"/" "$target_dir/envrc"
         sed -i "s/.*OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$closed\"/" "$target_dir/envrc"
     fi
+
+    # 3. Wipe configs yaml
+    local link_target="$target_dir"
+    if [[ -L "$target_dir" ]]; then
+        link_target=$(readlink "$target_dir")
+    fi
+    local name="${link_target#"build-artifacts-"}"
+    if [[ -n "$name" && "$name" != "$link_target" ]]; then
+        rm -f "configs/${name}-config.yaml"
+    fi
 }
 
 function ensure_gsa_key() {
@@ -290,9 +300,11 @@ function hydrate_context() {
     pretty_print "Opening context for cluster $cl_name in project $p_id..." "INFO"
 
     # Fetch/Ensure Files
+    rm -f "$target_dir/consumer-edge-machine"
     gsm_get "gdc-${cl_name}-ssh-key" "$p_id" "$reg" > "$target_dir/consumer-edge-machine"
     trim_key_file "$target_dir/consumer-edge-machine"
     chmod 400 "$target_dir/consumer-edge-machine"
+    rm -f "$target_dir/consumer-edge-machine.pub"
     gsm_get "gdc-${cl_name}-ssh-key-pub" "$p_id" "$reg" > "$target_dir/consumer-edge-machine.pub"
     trim_key_file "$target_dir/consumer-edge-machine.pub"
     chmod 644 "$target_dir/consumer-edge-machine.pub"
@@ -311,6 +323,39 @@ function hydrate_context() {
     if [[ -n "$scm_token" ]]; then sed -i "s/.*SCM_TOKEN_TOKEN=.*/export SCM_TOKEN_TOKEN=\"$scm_token\"/" "$target_dir/envrc"; fi
     if [[ -n "$oidc_id" ]]; then sed -i "s/.*OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$oidc_id\"/" "$target_dir/envrc"; fi
     if [[ -n "$oidc_secret" ]]; then sed -i "s/.*OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$oidc_secret\"/" "$target_dir/envrc"; fi
+
+    local link_target="$target_dir"
+    if [[ -L "$target_dir" ]]; then
+        link_target=$(readlink "$target_dir")
+    fi
+    local name="${link_target#"build-artifacts-"}"
+    if [[ -n "$name" && "$name" != "$link_target" ]]; then
+        local config_yaml=$(gsm_get "gdc-${cl_name}-config-yaml" "$p_id" "$reg")
+        if [[ -n "$config_yaml" ]]; then
+            mkdir -p configs
+            local target_yaml="configs/${name}-config.yaml"
+            if [[ -f "$target_yaml" ]]; then
+                # Check if contents differ
+                local current_yaml=$(cat "$target_yaml")
+                if [[ "$current_yaml" != "$config_yaml" ]]; then
+                    pretty_print "Warning: $target_yaml already exists and differs from GSM." "WARN"
+                    echo -n "Would you like to overwrite it with the version from GSM? (y/n): "
+                    read answer
+                    if [[ "$answer" == "y" ]]; then
+                        echo "$config_yaml" > "$target_yaml"
+                        pretty_print "Overwrote $target_yaml with GSM version" "INFO"
+                    else
+                        pretty_print "Skipped restoring $target_yaml (kept local version)" "INFO"
+                    fi
+                else
+                    pretty_print "Verified $target_yaml matches GSM version" "INFO"
+                fi
+            else
+                echo "$config_yaml" > "$target_yaml"
+                pretty_print "Restored $target_yaml from GSM" "INFO"
+            fi
+        fi
+    fi
 
     pretty_print "Context hydrated successfully." "INFO"
     
@@ -448,6 +493,9 @@ function ingest_context() {
             yq e -i ".nodes += [{\"name\": \"${n_name}\", \"ip\": \"${n_ip}\"}]" "$yaml_out"
         done
     fi
+
+    # Push YAML to GSM
+    gsm_put "gdc-${cl_name}-config-yaml" "$(cat "$yaml_out")" "$cl_name" "$p_id" "$reg"
 
     # 4. Secure the folder
     dehydrate_context "$target_dir"
@@ -842,6 +890,9 @@ function generate_context() {
         gsm_put "gdc-${cl_name}-ssh-key-pub" "$(cat "$target/consumer-edge-machine.pub")" "${cl_name}" "${p_id}" "$reg"
     fi
     
+    # Push YAML to GSM
+    gsm_put "gdc-${cl_name}-config-yaml" "$(cat "$yaml_file")" "${cl_name}" "${p_id}" "$reg"
+
     dehydrate_context "$target"
 
     # 4. Summary
