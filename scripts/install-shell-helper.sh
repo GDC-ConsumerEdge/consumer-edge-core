@@ -45,8 +45,11 @@ function pretty_print() {
         "DEBUG")
             printf "${DEBUG_COLOR}${MSG}${ENDCOLOR}\n"
             ;;
+        "SUCCESS")
+            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n"
+            ;;
         *)
-            echo "NO MATCH"
+            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n"
             ;;
     esac
 }
