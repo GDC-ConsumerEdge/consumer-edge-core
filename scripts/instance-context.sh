@@ -278,11 +278,11 @@ function hydrate_context() {
     # Summary
     pretty_print "Summary" "INFO"
     pretty_print "======================================="
-    pretty_print "GCP Project ID:   $p_id"
-    pretty_print "SCM User Secret:  ${scm_user:-NOT SET}"
-    pretty_print "SCM Token Secret: $(mask_secret "$scm_token")"
-    pretty_print "Provisioning GSA: $(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id")"
-    pretty_print "Node GSA:         $(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id")"
+    pretty_print "GCP Project ID:\t\t$p_id"
+    pretty_print "SCM User Secret:\t${scm_user:-NOT SET}"
+    pretty_print "SCM Token Secret:\t$(mask_secret "$scm_token")"
+    pretty_print "Provisioning GSA:\t$(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id")"
+    pretty_print "Node GSA:\t\t$(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id")"
     echo ""
     pretty_print "Context $cl_name State: [opened]" "INFO"
     pretty_print "======================================="
@@ -347,11 +347,11 @@ function ingest_context() {
     # Summary
     pretty_print "Summary" "INFO"
     pretty_print "======================================="
-    pretty_print "GCP Project ID:   $p_id"
-    pretty_print "SCM User Secret:  ${scm_user:-NOT SET}"
-    pretty_print "SCM Token Secret: $(mask_secret "$scm_token")"
-    pretty_print "Provisioning GSA: $(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id")"
-    pretty_print "Node GSA:         $(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id")"
+    pretty_print "GCP Project ID:\t\t$p_id"
+    pretty_print "SCM User Secret:\t${scm_user:-NOT SET}"
+    pretty_print "SCM Token Secret:\t$(mask_secret "$scm_token")"
+    pretty_print "Provisioning GSA:\t$(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id")"
+    pretty_print "Node GSA:\t\t$(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id")"
     echo ""
     pretty_print "Context $name State: [closed]" "INFO"
     pretty_print "======================================="
@@ -466,18 +466,18 @@ function generate_context() {
     # 1. Validating Secrets
     pretty_print "1. Validating Secrets" "INFO"
     pretty_print "======================================="
-    pretty_print "Google Project ID: [$p_id]"
-    pretty_print "YAML Config File: [$yaml_file]"
+    pretty_print "Google Project ID:\t[$p_id]"
+    pretty_print "YAML Config File:\t[$yaml_file]"
     
     local scm_user_status=$(validate_gsm_secret "gdc-${cl_name}-scm-user" "$p_id")
     local scm_token_status=$(validate_gsm_secret "gdc-${cl_name}-scm-token" "$p_id")
     local prov_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-prov-gsa" "$p_id")
     local node_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-node-gsa" "$p_id")
     
-    pretty_print "SCM User Secret:  [$scm_user_status]"
-    pretty_print "SCM Token Secret: [$scm_token_status]"
-    pretty_print "Prov GSA Secret:  [$prov_gsa_status]"
-    pretty_print "Node GSA Secret:  [$node_gsa_status]"
+    pretty_print "SCM User Secret:\t[$scm_user_status]"
+    pretty_print "SCM Token Secret:\t[$scm_token_status]"
+    pretty_print "Prov GSA Secret:\t[$prov_gsa_status]"
+    pretty_print "Node GSA Secret:\t[$node_gsa_status]"
     echo ""
 
     local missing=()
@@ -503,12 +503,12 @@ function generate_context() {
     local prov_gsa_email=$(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id")
     local node_gsa_email=$(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id")
     
-    pretty_print "SCM User Secret:  ${scm_user_val:-NOT SET}"
-    pretty_print "SCM Token Secret: $(mask_secret "$scm_token_val")"
-    pretty_print "Provisioning GSA: $prov_gsa_email"
-    pretty_print "Node GSA:         $node_gsa_email"
-    pretty_print "Cluster:   $cl_name"
-    pretty_print "Region/Zone: $reg / $zn"
+    pretty_print "SCM User Secret:\t${scm_user_val:-NOT SET}"
+    pretty_print "SCM Token Secret:\t$(mask_secret "$scm_token_val")"
+    pretty_print "Provisioning GSA:\t$prov_gsa_email"
+    pretty_print "Node GSA:\t\t$node_gsa_email"
+    pretty_print "Cluster Name:\t\t$cl_name"
+    pretty_print "Region/Zone:\t\t$reg / $zn"
     echo ""
 
     # 3. Ready to [create | update] context?
@@ -630,11 +630,11 @@ function generate_context() {
     # 4. Summary
     pretty_print "4. Summary" "INFO"
     pretty_print "======================================="
-    pretty_print "GCP Project ID:   $p_id"
-    pretty_print "SCM User Secret:  ${scm_user_val:-NOT SET}"
-    pretty_print "SCM Token Secret: $(mask_secret "$scm_token_val")"
-    pretty_print "Provisioning GSA: $prov_gsa_email"
-    pretty_print "Node GSA:         $node_gsa_email"
+    pretty_print "GCP Project ID:\t\t$p_id"
+    pretty_print "SCM User Secret:\t${scm_user_val:-NOT SET}"
+    pretty_print "SCM Token Secret:\t$(mask_secret "$scm_token_val")"
+    pretty_print "Provisioning GSA:\t$prov_gsa_email"
+    pretty_print "Node GSA:\t\t$node_gsa_email"
     echo ""
 
     # 5. Context State & Next Steps
