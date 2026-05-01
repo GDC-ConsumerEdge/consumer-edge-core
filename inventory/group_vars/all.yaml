@@ -19,7 +19,7 @@
 ###
 ###
 # Location where all of the local instance run variables and state exists
-instance_run_state_folder: "build-artifacts/"
+instance_run_state_folder: "build-artifacts"
 
 # Ansible will use the key below
 ansible_ssh_private_key_file: "{{ instance_run_state_folder }}/consumer-edge-machine"
