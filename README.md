@@ -28,6 +28,10 @@ direnv allow .
 ./install.sh
 ```
 
+#### Build Run/Install Container
+
+Keeping the docker container used in `./install.sh` can be achieved by running `gcloud builds submit --config ./docker-build/cloudbuild.yaml ./ --async --quiet --verbosity=critical --no-user-output-enabled`
+
 ## Features & Capabilities
 
 * **Automated Infrastructure Provisioning**: Deploy Anthos Bare Metal consistently across Google Cloud VMs and physical bare-metal hardware.
