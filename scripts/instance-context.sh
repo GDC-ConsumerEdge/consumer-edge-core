@@ -278,6 +278,8 @@ function hydrate_context() {
     pretty_print "Node GSA:         $(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id")"
     echo ""
     pretty_print "Context $cl_name State: [opened]" "INFO"
+    pretty_print "======================================="
+    pretty_print "This context is now hydrated and ready for use."
 }
 
 function ingest_context() {
@@ -345,6 +347,9 @@ function ingest_context() {
     pretty_print "Node GSA:         $(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id")"
     echo ""
     pretty_print "Context $name State: [closed]" "INFO"
+    pretty_print "======================================="
+    pretty_print "To activate and open this context for use:"
+    pretty_print "  ./scripts/instance-context.sh -o $name"
 }
 
 function mask_secret() {
@@ -613,14 +618,18 @@ function generate_context() {
     pretty_print "Node GSA:         $node_gsa_email"
     echo ""
 
-    # 5. Context State
+    # 5. Context State & Next Steps
     local state="closed"
     if [[ -f "$target/consumer-edge-machine" && -f "$target/provisioning-gsa.json" ]]; then
         state="opened"
     fi
-    # If it was just dehydrated, it should be closed.
     
     pretty_print "5. Context $ctx_name State: [$state]" "INFO"
+    pretty_print "======================================="
+    pretty_print "To activate this context:"
+    pretty_print "  ./scripts/instance-context.sh $ctx_name"
+    pretty_print "To open (hydrate) this context:"
+    pretty_print "  ./scripts/instance-context.sh -o $ctx_name"
     echo ""
     pretty_print "Happy clustering!" "SUCCESS"
     exit 0
