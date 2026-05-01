@@ -461,6 +461,8 @@ function generate_context() {
     local root_repo_url=$(yq e '.root_repo_url // "https://gitlab.com/gcp-solutions-public/retail-edge/primary-root-repo-template.git"' "$yaml_file")
     local root_repo_branch=$(yq e '.root_repo_branch // "main"' "$yaml_file")
     local storage_provider=$(yq e '.storage_provider // ""' "$yaml_file")
+    local abm_version=$(yq e '.abm_version // ""' "$yaml_file")
+    local acm_version=$(yq e '.acm_version // ""' "$yaml_file")
 
     if [[ -z "$ctx_name" || "$ctx_name" == "null" ]]; then
         pretty_print "Error: 'context_name' required in YAML." "ERROR"
@@ -659,6 +661,22 @@ function generate_context() {
                     yq e -i ".robin_disk_paths += [\"${disk_path}\"]" "$target/instance-run-vars.yaml"
                 done
             fi
+        fi
+    fi
+
+    if [[ -n "$abm_version" && "$abm_version" != "null" ]]; then
+        if grep -q "abm_version:" "$target/instance-run-vars.yaml"; then
+            sed -i "s|.*abm_version:.*|abm_version: \"${abm_version}\"|" "$target/instance-run-vars.yaml"
+        else
+            echo "abm_version: \"${abm_version}\"" >> "$target/instance-run-vars.yaml"
+        fi
+    fi
+
+    if [[ -n "$acm_version" && "$acm_version" != "null" ]]; then
+        if grep -q "acm_version:" "$target/instance-run-vars.yaml"; then
+            sed -i "s|.*acm_version:.*|acm_version: \"${acm_version}\"|" "$target/instance-run-vars.yaml"
+        else
+            echo "acm_version: \"${acm_version}\"" >> "$target/instance-run-vars.yaml"
         fi
     fi
 
