@@ -56,11 +56,11 @@ function get_downloadable_key_name {
         if [[ "${sel_key_num}" -le SECRET_COUNT ]]; then
 
     		pretty_print "\nINFO: Downloading key for ${SECRET_LIST[$index]#}" "INFO"
-            gcloud secrets versions access latest --secret="${SECRET_LIST[$index]}" >> ./build-artifacts/consumer-edge-machine --project="${PROJECT_ID}"
+            gcloud secrets versions access latest --secret="${SECRET_LIST[$index]}" > ./build-artifacts/consumer-edge-machine --project="${PROJECT_ID}"
             trim_key_file "./build-artifacts/consumer-edge-machine"
 			chmod 600 ./build-artifacts/consumer-edge-machine
             pretty_print "INFO: Generate the public key locally ./build-artifacts/consumer-edge-machine.pub" "INFO"
-            ssh-keygen -f ./build-artifacts/consumer-edge-machine -y >> ./build-artifacts/consumer-edge-machine.pub
+            ssh-keygen -f ./build-artifacts/consumer-edge-machine -y > ./build-artifacts/consumer-edge-machine.pub
             trim_key_file "./build-artifacts/consumer-edge-machine.pub"
         else
             echo -e "\nINFO: Creating a new SSH key-pair and pushing to Google Secret Manager for Cluster '${DEFAULT_CLUSTER_NAME}'"

@@ -1,7 +1,7 @@
 # How-To: Managing GDC Instance Contexts
 
 ## Overview
-An **Instance Context** is a dedicated workspace containing the configuration, networking, and security keys for a specific GDC (Google Distributed Cloud) cluster. 
+An **Instance Context** is a dedicated workspace containing the configuration, networking, and security keys for a specific GDC (Google Distributed Cloud) cluster.
 
 To keep our workstations secure, we use a **"Hydration" (Open/Close)** model:
 *   **Closed (Dehydrated)**: Only public configuration is on disk. All passwords, tokens, and SSH keys are deleted.
@@ -11,11 +11,23 @@ All management is done via the helper script: `./scripts/instance-context.sh`
 
 ---
 
+## 🚦 Context Lifecycle & States
+
+An instance context transitions through several states during its lifecycle. Understanding these states is critical for secure operations.
+
+| State | Description | Security Posture | Action to Transition |
+| :--- | :--- | :--- | :--- |
+| **Not Created** | The folder (`build-artifacts-<name>`) does not exist on disk, and no secrets exist in GSM. | N/A | `./scripts/instance-context.sh -g <yaml>` |
+| **Created / Closed** <br>*(Dehydrated)* | The folder exists with basic configuration (`inventory.yaml`, etc.), but **all secrets are removed**. `envrc` secrets are scrubbed. | **Secure**. Safe to leave unattended. | `./scripts/instance-context.sh -o` |
+| **Opened** <br>*(Hydrated)* | The folder is active. Sensitive secrets (SSH keys, GSA JSONs, SCM Tokens) have been downloaded from GSM to the local disk. | **Vulnerable**. Do not leave workstation unattended. | `./scripts/instance-context.sh -x` |
+
+---
+
 ## 🚀 Quick Start: Create a New Context
 Use this process when you need to set up a brand new cluster from scratch.
 
 ### 1. Prepare your Configuration
-Create a file named `my-cluster.yaml` (you can copy the template from `templates/context-config-template.yaml`). 
+Create a file named `my-cluster.yaml` (you can copy the template from `templates/context-config-template.yaml`).
 
 ```yaml
 context_name: "denver-office"      # Name of the local folder
@@ -23,14 +35,33 @@ cluster_name: "gdc-denver-01"     # Human name of the cluster
 project_id: "my-gcp-project-id"   # The GCP Project where secrets live
 region: "us-central1"
 zone: "us-central1-a"
-control_plane_vip: "192.168.1.100"
-ingress_vip: "192.168.1.101"
-load_balancer_pool_cidr: "192.168.1.102-192.168.1.110"
+
+# Optional Versions (if not specified, project defaults are used)
+abm_version: "1.34.300-gke.59"
+acm_version: "1.34.300-gke-59"
+
+# Networking
+control_plane_vip: "192.168.1.99"
+ingress_vip: "192.168.1.100"
+load_balancer_pool_cidr: "192.168.1.100-192.168.1.110"
+
+# SCM / Git Configuration
+root_repo_url: "https://gitlab.com/your-org/root-repo.git"
+root_repo_branch: "main"
+
+# Storage (Optional)
+storage_provider: "robin" # or "none"
+robin_disk_paths:
+  - "/dev/nvme0n1p1"
+robin_install_bundle_file: "robin-5.3.16.tar.gz"
+
 nodes:
   - name: "node-1"
-    ip: "192.168.1.10"
-  - name: "node-2"
     ip: "192.168.1.11"
+  - name: "node-2"
+    ip: "192.168.1.12"
+  - name: "node-3"
+    ip: "192.168.1.13"
 ```
 
 ### 2. Generate the Context
@@ -38,16 +69,29 @@ Run the generate command:
 ```bash
 ./scripts/instance-context.sh -g my-cluster.yaml
 ```
-**What this does:** 
+**What this does:**
 - Creates the folder `build-artifacts-denver-office`.
-- Generates a new SSH key pair.
+- Generates a new SSH key pair (if one doesn't already exist in GSM).
 - **Automatically uploads** the SSH keys to GSM in your GCP project.
+- Scans for required secrets (Git tokens, GSA keys) and prompts you to create/upload them if missing.
 - Leaves the folder in a **Closed** state (secrets wiped) for safety.
 
-### 3. Add Manual Secrets to GSM
-The script cannot create your Service Account keys or Git tokens. You must manually add these to GSM in your GCP project following this naming convention:
-*   `gdc-denver-01-prov-gsa` (Upload your `provisioning-gsa.json` file)
-*   `gdc-denver-01-scm-token` (The Git Personal Access Token string)
+---
+
+## 🔍 Inspecting Contexts
+
+### List Available Contexts
+To see all local context folders:
+```bash
+./scripts/instance-context.sh -l
+```
+The active context will be marked with a `*`.
+
+### View Current Context Details
+To see the active project, region, and cluster configuration:
+```bash
+./scripts/instance-context.sh -c
+```
 
 ---
 
@@ -64,7 +108,7 @@ When you are ready to provision or update a cluster, you must "Open" the context
 ```
 
 ### Close a Context (Dehydrate)
-**Always do this when you finish your work or leave your desk.** This wipes the private keys and tokens from your hard drive.
+**Always do this when you finish your work or leave your desk.** This wipes the private keys and tokens from your hard drive and scrubs the `envrc` file.
 ```bash
 # Close the active context
 ./scripts/instance-context.sh -x
@@ -82,7 +126,7 @@ This wipes the secrets from your current cluster before moving to the next one.
 ```
 
 **Standard Switch:**
-Just changes the pointer without wiping secrets.
+Changes the pointer without wiping secrets (use with caution).
 ```bash
 ./scripts/instance-context.sh denver-office
 ```
@@ -90,13 +134,13 @@ Just changes the pointer without wiping secrets.
 ---
 
 ## 📥 Import: Converting Old Folders
-If you have an old `build-artifacts-xyz` folder that wasn't created with this new system, you can "Ingest" it. 
+If you have an old `build-artifacts-xyz` folder that wasn't created with this new system, you can "Ingest" it.
 
 ```bash
 ./scripts/instance-context.sh -i folder-name
 ```
 **What this does:**
-1. Reads the `envrc` inside that folder to find the Project ID.
+1. Reads the `envrc` inside that folder to find the Project ID and Cluster Name.
 2. Scans for existing SSH keys and Service Account JSONs.
 3. **Uploads everything found** to GSM.
 4. **Dehydrates** the folder (secures it).
@@ -119,11 +163,11 @@ To completely remove a context:
    rm -rf build-artifacts-denver-office
    ```
 2. **Delete the GSM Secrets**:
-   Go to the GCP Console -> Secret Manager and delete the secrets starting with `gdc-denver-01-*`. *Note: The script does not delete GSM secrets to prevent accidental data loss.*
+   Go to the GCP Console -> Secret Manager and delete the secrets starting with `gdc-{cluster_name}-*`. *Note: The script does not delete GSM secrets to prevent accidental data loss.*
 
 ---
 
 ## 🛠️ Troubleshooting
 *   **"Permission Denied"**: Run `gcloud auth application-default login` to ensure you are authenticated to GCP.
 *   **"yq not found"**: This script requires the `yq` tool. Install it via `sudo apt install yq` or your package manager.
-*   **"Secret not found"**: Double-check that your GSM secret name matches the `gdc-{cluster_name}-{type}` convention exactly.
+*   **"Secret not found"**: Double-check that your GSM secret name matches the `gdc-{cluster_name}-{type}` convention exactly. The script will provide `gcloud` command examples for any missing secrets.
