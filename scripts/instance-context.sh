@@ -267,6 +267,17 @@ function hydrate_context() {
     if [[ -n "$oidc_secret" ]]; then sed -i "s/.*OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$oidc_secret\"/" "$target_dir/envrc"; fi
 
     pretty_print "Context hydrated successfully." "INFO"
+    
+    # Summary
+    pretty_print "Summary" "INFO"
+    pretty_print "======================================="
+    pretty_print "GCP Project ID:   $p_id"
+    pretty_print "SCM User Secret:  ${scm_user:-NOT SET}"
+    pretty_print "SCM Token Secret: $(mask_secret "$scm_token")"
+    pretty_print "Provisioning GSA: $(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id")"
+    pretty_print "Node GSA:         $(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id")"
+    echo ""
+    pretty_print "Context $cl_name State: [opened]" "INFO"
 }
 
 function ingest_context() {
@@ -323,6 +334,51 @@ function ingest_context() {
     dehydrate_context "$target_dir"
     
     pretty_print "Ingestion complete for $name." "INFO"
+
+    # Summary
+    pretty_print "Summary" "INFO"
+    pretty_print "======================================="
+    pretty_print "GCP Project ID:   $p_id"
+    pretty_print "SCM User Secret:  ${scm_user:-NOT SET}"
+    pretty_print "SCM Token Secret: $(mask_secret "$scm_token")"
+    pretty_print "Provisioning GSA: $(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id")"
+    pretty_print "Node GSA:         $(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id")"
+    echo ""
+    pretty_print "Context $name State: [closed]" "INFO"
+}
+
+function mask_secret() {
+    local val="$1"
+    if [[ -z "$val" || "$val" == "null" ]]; then echo "MISSING"; return; fi
+    if [[ "$val" == "****closed*******" ]]; then echo "$val"; return; fi
+    if [[ ${#val} -le 6 ]]; then echo "******"; return; fi
+    echo "${val:0:3}-***********-${val: -3}"
+}
+
+function get_gsa_email_from_secret() {
+    local secret_name="$1"
+    local p_id="$2"
+    local content=$(gsm_get "$secret_name" "$p_id")
+    if [[ -n "$content" ]]; then
+        local email=$(echo "$content" | jq -r '.client_email' 2>/dev/null)
+        if [[ -n "$email" && "$email" != "null" ]]; then
+            echo "$email"
+        else
+            echo "[GSM: $secret_name]"
+        fi
+    else
+        echo "[MISSING]"
+    fi
+}
+
+function validate_gsm_secret() {
+    local secret_name="$1"
+    local p_id="$2"
+    if gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
+        echo "OK"
+    else
+        echo "MISSING"
+    fi
 }
 
 function generate_context() {
@@ -352,13 +408,61 @@ function generate_context() {
     fi
 
     local target="build-artifacts-${ctx_name}"
+    local action="create"
     if [[ -d "$target" ]]; then
-        pretty_print "Error: Directory '$target' already exists." "ERROR"
-        exit 1
+        action="update"
+    fi
+
+    # 1. Validating Secrets
+    pretty_print "1. Validating Secrets" "INFO"
+    pretty_print "======================================="
+    pretty_print "Google Project ID: [$p_id]"
+    pretty_print "YAML Config File: [$yaml_file]"
+    
+    local scm_user_status=$(validate_gsm_secret "gdc-${cl_name}-scm-user" "$p_id")
+    local scm_token_status=$(validate_gsm_secret "gdc-${cl_name}-scm-token" "$p_id")
+    local prov_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-prov-gsa" "$p_id")
+    local node_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-node-gsa" "$p_id")
+    
+    pretty_print "SCM User Secret:  [$scm_user_status]"
+    pretty_print "SCM Token Secret: [$scm_token_status]"
+    pretty_print "Prov GSA Secret:  [$prov_gsa_status]"
+    pretty_print "Node GSA Secret:  [$node_gsa_status]"
+    echo ""
+
+    # 2. Display Settings
+    pretty_print "2. Display Settings" "INFO"
+    pretty_print "======================================="
+    
+    local scm_user_val=$(gsm_get "gdc-${cl_name}-scm-user" "$p_id")
+    local scm_token_val=$(gsm_get "gdc-${cl_name}-scm-token" "$p_id")
+    local prov_gsa_email=$(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id")
+    local node_gsa_email=$(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id")
+    
+    pretty_print "SCM User Secret:  ${scm_user_val:-NOT SET}"
+    pretty_print "SCM Token Secret: $(mask_secret "$scm_token_val")"
+    pretty_print "Provisioning GSA: $prov_gsa_email"
+    pretty_print "Node GSA:         $node_gsa_email"
+    pretty_print "Cluster:   $cl_name"
+    pretty_print "Region/Zone: $reg / $zn"
+    echo ""
+
+    # 3. Ready to [create | update] context?
+    pretty_print "3. Ready to $action context '$ctx_name'? (y/N)"
+    read answer
+    if [[ "$answer" != "y" ]]; then
+        pretty_print "Aborted." "WARN"
+        exit 0
     fi
 
     pretty_print "Generating $target in project $p_id..." "INFO"
-    cp -r build-artifacts-example "$target"
+    
+    if [[ "$action" == "create" ]]; then
+        cp -r build-artifacts-example "$target"
+    fi
+
+    # ... rest of generation logic (envrc, inventory, etc) ...
+    # (I will keep the existing implementation but wrap it in this UX)
 
     # 1. Update envrc
     mv "$target/envrc-example" "$target/envrc" 2>/dev/null || true
@@ -447,10 +551,26 @@ function generate_context() {
     
     dehydrate_context "$target"
 
-    pretty_print "Context $ctx_name generated and secrets synced to GSM." "INFO"
-    pretty_print "ACTION REQUIRED:" "INFO"
-    pretty_print "1. Add SCM tokens to GSM (gdc-${cl_name}-scm-user, gdc-${cl_name}-scm-token)" "INFO"
-    pretty_print "2. Run './scripts/instance-context.sh -o $ctx_name' to hydrate for use." "INFO"
+    # 4. Summary
+    pretty_print "4. Summary" "INFO"
+    pretty_print "======================================="
+    pretty_print "GCP Project ID:   $p_id"
+    pretty_print "SCM User Secret:  ${scm_user_val:-NOT SET}"
+    pretty_print "SCM Token Secret: $(mask_secret "$scm_token_val")"
+    pretty_print "Provisioning GSA: $prov_gsa_email"
+    pretty_print "Node GSA:         $node_gsa_email"
+    echo ""
+
+    # 5. Context State
+    local state="closed"
+    if [[ -f "$target/consumer-edge-machine" && -f "$target/provisioning-gsa.json" ]]; then
+        state="opened"
+    fi
+    # If it was just dehydrated, it should be closed.
+    
+    pretty_print "5. Context $ctx_name State: [$state]" "INFO"
+    echo ""
+    pretty_print "Happy clustering!" "SUCCESS"
     exit 0
 }
 
