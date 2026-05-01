@@ -371,6 +371,44 @@ function get_gsa_email_from_secret() {
     fi
 }
 
+function print_gsm_examples() {
+    local cl_name="$1"
+    local p_id="$2"
+    shift 2
+    local missing=("$@")
+
+    pretty_print "\nHow to fix missing secrets:" "INFO"
+    pretty_print "======================================="
+    
+    for item in "${missing[@]}"; do
+        case "$item" in
+            "scm-user")
+                echo "# Create Git Username Secret"
+                echo "gcloud secrets create gdc-${cl_name}-scm-user --project=\"$p_id\" --labels=\"cluster=$cl_name\" --replication-policy=\"automatic\""
+                echo "echo -n \"YOUR_GIT_USERNAME\" | gcloud secrets versions add gdc-${cl_name}-scm-user --project=\"$p_id\" --data-file=-"
+                ;;
+            "scm-token")
+                echo "# Create Git Token Secret"
+                echo "gcloud secrets create gdc-${cl_name}-scm-token --project=\"$p_id\" --labels=\"cluster=$cl_name\" --replication-policy=\"automatic\""
+                echo "echo -n \"YOUR_GIT_TOKEN\" | gcloud secrets versions add gdc-${cl_name}-scm-token --project=\"$p_id\" --data-file=-"
+                ;;
+            "prov-gsa")
+                echo "# Create Provisioning GSA Key Secret (Upload your JSON key file)"
+                echo "gcloud secrets create gdc-${cl_name}-prov-gsa --project=\"$p_id\" --labels=\"cluster=$cl_name\" --replication-policy=\"automatic\""
+                echo "gcloud secrets versions add gdc-${cl_name}-prov-gsa --project=\"$p_id\" --data-file=path/to/provisioning-gsa.json"
+                ;;
+            "node-gsa")
+                echo "# Create Node GSA Key Secret (Upload your JSON key file)"
+                echo "gcloud secrets create gdc-${cl_name}-node-gsa --project=\"$p_id\" --labels=\"cluster=$cl_name\" --replication-policy=\"automatic\""
+                echo "gcloud secrets versions add gdc-${cl_name}-node-gsa --project=\"$p_id\" --data-file=path/to/node-gsa.json"
+                ;;
+        esac
+        echo ""
+    done
+    
+    pretty_print "Once secrets are created in GSM, re-run this command." "INFO"
+}
+
 function validate_gsm_secret() {
     local secret_name="$1"
     local p_id="$2"
@@ -429,6 +467,20 @@ function generate_context() {
     pretty_print "Prov GSA Secret:  [$prov_gsa_status]"
     pretty_print "Node GSA Secret:  [$node_gsa_status]"
     echo ""
+
+    local missing=()
+    if [[ "$scm_user_status" == "MISSING" ]]; then missing+=("scm-user"); fi
+    if [[ "$scm_token_status" == "MISSING" ]]; then missing+=("scm-token"); fi
+    
+    # Only stop for GSAs if they also don't exist locally
+    if [[ "$prov_gsa_status" == "MISSING" && ! -f "$target/provisioning-gsa.json" ]]; then missing+=("prov-gsa"); fi
+    if [[ "$node_gsa_status" == "MISSING" && ! -f "$target/node-gsa.json" ]]; then missing+=("node-gsa"); fi
+
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        pretty_print "STOP: Missing required secrets in GSM." "ERROR"
+        print_gsm_examples "$cl_name" "$p_id" "${missing[@]}"
+        exit 1
+    fi
 
     # 2. Display Settings
     pretty_print "2. Display Settings" "INFO"
