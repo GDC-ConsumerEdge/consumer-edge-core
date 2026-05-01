@@ -460,6 +460,7 @@ function generate_context() {
     local lb_pool=$(yq e '.load_balancer_pool_cidr' "$yaml_file")
     local root_repo_url=$(yq e '.root_repo_url // "https://gitlab.com/gcp-solutions-public/retail-edge/primary-root-repo-template.git"' "$yaml_file")
     local root_repo_branch=$(yq e '.root_repo_branch // "main"' "$yaml_file")
+    local storage_provider=$(yq e '.storage_provider // ""' "$yaml_file")
 
     if [[ -z "$ctx_name" || "$ctx_name" == "null" ]]; then
         pretty_print "Error: 'context_name' required in YAML." "ERROR"
@@ -628,12 +629,38 @@ function generate_context() {
         echo "$n_ip    $n_name" >> "$target/add-hosts"
     done
 
-    # 3. Rename instance-run-vars
+    # 3. Update instance-run-vars.yaml
     mv "$target/instance-run-vars-example.yaml" "$target/instance-run-vars.yaml" 2>/dev/null || true
     if [[ ! -f "$target/instance-run-vars.yaml" ]]; then
         cp templates/instance-run-vars-template.yaml "$target/instance-run-vars.yaml"
     fi
     sed -i "1i # Variables specific to this provisioning run (e.g. storage provider)" "$target/instance-run-vars.yaml"
+
+    if [[ -n "$storage_provider" && "$storage_provider" != "null" ]]; then
+        # Check if the key exists (commented or not). Yq doesn't easily uncomment, so we append/replace using sed for the simple string
+        if grep -q "storage_provider:" "$target/instance-run-vars.yaml"; then
+            sed -i "s|.*storage_provider:.*|storage_provider: \"${storage_provider}\"|" "$target/instance-run-vars.yaml"
+        else
+            echo "storage_provider: \"${storage_provider}\"" >> "$target/instance-run-vars.yaml"
+        fi
+        
+        if [[ "$storage_provider" == "robin" ]]; then
+            local num_disks=$(yq e '.robin_disk_paths | length' "$yaml_file")
+            if [[ "$num_disks" -gt 0 && "$num_disks" != "null" ]]; then
+                # Remove any existing commented or uncommented robin_disk_paths block to avoid yq parsing errors on comments
+                sed -i '/robin_disk_paths:/d' "$target/instance-run-vars.yaml"
+                sed -i '/"\/dev\/nvme0n1p4"/d' "$target/instance-run-vars.yaml"
+                sed -i '/\]/d' "$target/instance-run-vars.yaml"
+                
+                # Use yq to safely inject the array
+                yq e -i '.robin_disk_paths = []' "$target/instance-run-vars.yaml"
+                for (( i=0; i<$num_disks; i++ )); do
+                    local disk_path=$(yq e ".robin_disk_paths[$i]" "$yaml_file")
+                    yq e -i ".robin_disk_paths += [\"${disk_path}\"]" "$target/instance-run-vars.yaml"
+                done
+            fi
+        fi
+    fi
 
     # 4. Handle SSH Keys
     local existing_ssh=$(gsm_get "gdc-${cl_name}-ssh-key" "$p_id")

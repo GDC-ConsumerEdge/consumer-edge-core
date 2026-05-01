@@ -51,3 +51,13 @@ root_repo_url: "https://gitlab.com/gcp-solutions-public/retail-edge/primary-root
 # The branch to sync from the root repo. Defaults to "main" if not provided.
 # Used in: envrc (ROOT_REPO_BRANCH)
 root_repo_branch: "main"
+
+# Storage provider configuration (e.g., "robin", "longhorn", or none)
+# Used in: instance-run-vars.yaml
+storage_provider: "robin"
+
+# Disk paths used by the Robin storage provider. 
+# Provide as a list of strings.
+# Used in: instance-run-vars.yaml
+robin_disk_paths:
+  - "/dev/nvme0n1p1"
