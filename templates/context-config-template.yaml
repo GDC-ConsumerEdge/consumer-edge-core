@@ -56,11 +56,16 @@ root_repo_branch: "main"
 # Used in: instance-run-vars.yaml
 storage_provider: "robin"
 
-# Disk paths used by the Robin storage provider. 
+# Disk paths used by the Robin storage provider.
 # Provide as a list of strings.
 # Used in: instance-run-vars.yaml
 robin_disk_paths:
   - "/dev/nvme0n1p1"
+
+# The path to the Robin installation tarball (Required if storage_provider is "robin")
+# Example: "build-artifacts/robin-install-5.4.8-313.tar"
+# Used in: instance-run-vars.yaml
+# robin_install_bundle_file: ""
 
 # Version Overrides
 # Anthos Bare Metal Version
@@ -68,7 +73,3 @@ abm_version: "1.34.300-gke.59"
 # Anthos Config Management Version
 acm_version: "1.34.300-gke.59"
 
-# The path to the Robin installation tarball (Required if storage_provider is "robin")
-# Example: "build-artifacts/robin-install-5.4.8-313.tar"
-# Used in: instance-run-vars.yaml
-# robin_install_bundle_file: ""
