@@ -716,11 +716,15 @@ function generate_context() {
     if [[ -n "$existing_ssh" ]]; then
         pretty_print "Existing SSH key found in GSM, using it." "INFO"
         echo "$existing_ssh" > "$target/consumer-edge-machine"
+        trim_key_file "$target/consumer-edge-machine"
         chmod 600 "$target/consumer-edge-machine"
         gsm_get "gdc-${cl_name}-ssh-key-pub" "$p_id" > "$target/consumer-edge-machine.pub"
+        trim_key_file "$target/consumer-edge-machine.pub"
     else
         pretty_print "No SSH key found in GSM, generating new pair..." "INFO"
         ssh-keygen -t rsa -b 4096 -f "$target/consumer-edge-machine" -N "" -q
+        trim_key_file "$target/consumer-edge-machine"
+        trim_key_file "$target/consumer-edge-machine.pub"
         # Push new keys to GSM later in step 6
     fi
     
