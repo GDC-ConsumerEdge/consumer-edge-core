@@ -45,8 +45,11 @@ function pretty_print() {
         "DEBUG")
             printf "${DEBUG_COLOR}${MSG}${ENDCOLOR}\n"
             ;;
+        "SUCCESS")
+            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n"
+            ;;
         *)
-            echo "NO MATCH"
+            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n"
             ;;
     esac
 }
@@ -65,3 +68,10 @@ function display_help() {
 }
 
 alias "help-me"="display_help"
+function trim_key_file() {
+    local target_file="$1"
+    if [[ -f "$target_file" ]]; then
+        sed -i 's/[[:space:]]*$//' "$target_file"
+        echo "" >> "$target_file"
+    fi
+}

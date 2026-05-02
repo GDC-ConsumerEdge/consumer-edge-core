@@ -1,0 +1,75 @@
+# Instance Context Configuration Template
+# Use this file with './scripts/instance-context.sh -g <file>' to generate a new context.
+
+# Name of the context directory (will be created as build-artifacts-<context_name>)
+# Used in: Directory naming
+context_name: "my-cluster-context"
+
+# The human-readable name of the cluster.
+# Used in: envrc (CLUSTER_ACM_NAME), inventory.yaml (root key and cluster_name var)
+cluster_name: "edge-cluster-1"
+
+# The GCP Project ID where the cluster and associated resources reside.
+# Used in: envrc (PROJECT_ID)
+project_id: "your-gcp-project-id"
+
+# The GCP Region for the provisioning run.
+# Used in: envrc (REGION)
+region: "us-central1"
+
+# The GCP Zone for the provisioning run.
+# Used in: envrc (ZONE)
+zone: "us-central1-a"
+
+# The Virtual IP (VIP) address for the Kubernetes API (Control Plane).
+# Used in: inventory.yaml (control_plane_vip)
+control_plane_vip: "192.168.1.100"
+
+# The Virtual IP (VIP) address for the Ingress controller.
+# Used in: inventory.yaml (ingress_vip)
+ingress_vip: "192.168.1.101"
+
+# The CIDR range for the Load Balancer IP pool.
+# Used in: inventory.yaml (load_balancer_pool_cidr)
+load_balancer_pool_cidr: "192.168.1.102-192.168.1.110"
+
+# List of nodes to be provisioned in the cluster.
+# The first node in this list will be designated as the 'primary' node.
+# Used in: inventory.yaml (hosts), add-hosts
+nodes:
+  - name: "node-1"
+    ip: "192.168.1.10"
+  - name: "node-2"
+    ip: "192.168.1.11"
+  - name: "node-3"
+    ip: "192.168.1.12"
+
+# The URL to the SCM repository used for Anthos Config Management (ACM) Root Sync.
+# Used in: envrc (ROOT_REPO_URL)
+root_repo_url: "https://gitlab.com/gcp-solutions-public/retail-edge/primary-root-repo-template.git"
+
+# The branch to sync from the root repo. Defaults to "main" if not provided.
+# Used in: envrc (ROOT_REPO_BRANCH)
+root_repo_branch: "main"
+
+# Storage provider configuration (e.g., "robin", "longhorn", or none)
+# Used in: instance-run-vars.yaml
+storage_provider: "robin"
+
+# Disk paths used by the Robin storage provider.
+# Provide as a list of strings.
+# Used in: instance-run-vars.yaml
+robin_disk_paths:
+  - "/dev/nvme0n1p1"
+
+# The path to the Robin installation tarball (Required if storage_provider is "robin")
+# Example: "build-artifacts/robin-install-5.4.8-313.tar"
+# Used in: instance-run-vars.yaml
+# robin_install_bundle_file: ""
+
+# Version Overrides
+# Anthos Bare Metal Version
+abm_version: "1.34.300-gke.59"
+# Anthos Config Management Version
+acm_version: "1.34.300-gke.59"
+

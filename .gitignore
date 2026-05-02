@@ -20,6 +20,7 @@ bundle.zip
 # any additional cluster groups
 build-artifacts
 build-artifacts-*/
+configs/
 !build-artifacts-example/
 build-artifacts-example/*
 !build-artifacts-example/README.md
