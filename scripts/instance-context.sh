@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright 2023 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ function gsm_get() {
     local secret_name="$1"
     local p_id="$2"
     local reg="$3"
-    
+
     # Try global first
     local val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null)
     if [[ -z "$val" && -n "$reg" ]]; then
@@ -149,7 +149,7 @@ function gsm_put() {
     local cl_name="$3"
     local p_id="$4"
     local reg="$5"
-    
+
     local labels=""
     if [[ -n "$cl_name" ]]; then
         # GSM labels must be lowercase, alphanumeric, hyphens or underscores
@@ -158,7 +158,7 @@ function gsm_put() {
     fi
 
     local is_regional=false
-    
+
     if ! gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
         # Try describing regionally if global fails, to see if it exists regionally
         if [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --locations="${reg}" &>/dev/null; then
@@ -180,7 +180,7 @@ function gsm_put() {
     if [[ "$current_val" == "$secret_value" ]]; then
         return 0
     fi
-    
+
     if [[ "$is_regional" == true ]]; then
         echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}" --locations="${reg}"
     else
@@ -190,23 +190,23 @@ function gsm_put() {
 
 function dehydrate_context() {
     local target_dir="$1"
-    if [[ -z "$target_dir" || "$target_dir" == "." ]]; then 
+    if [[ -z "$target_dir" || "$target_dir" == "." ]]; then
         target_dir="build-artifacts"
     fi
-    
+
     if [[ ! -L "$target_dir" && ! -d "$target_dir" ]]; then
         pretty_print "Target $target_dir not found" "ERROR"
         return
     fi
 
     pretty_print "Closing context in $target_dir..." "INFO"
-    
+
     # 1. Wipe sensitive files
     rm -f "$target_dir/consumer-edge-machine"
     rm -f "$target_dir/consumer-edge-machine.pub"
     rm -f "$target_dir/provisioning-gsa.json"
     rm -f "$target_dir/node-gsa.json"
-    
+
     # 2. Scrub envrc
     if [[ -f "$target_dir/envrc" ]]; then
         local closed="****closed*******"
@@ -237,7 +237,7 @@ function ensure_gsa_key() {
 
     # Try to fetch from GSM first
     local key_content=$(gsm_get "$secret_name" "$p_id" "$reg")
-    
+
     if [[ -n "$key_content" ]]; then
         echo "$key_content" > "$target_file"
         return 0
@@ -261,7 +261,7 @@ function ensure_gsa_key() {
             gcloud iam service-accounts keys create "$target_file" \
                 --iam-account="$sa_email" \
                 --project="$p_id"
-            
+
             if [[ $? -eq 0 ]]; then
                 gsm_put "$secret_name" "$(cat "$target_file")" "$cl_name" "$p_id" "$reg"
                 pretty_print "Successfully created and uploaded $sa_description." "INFO"
@@ -274,7 +274,7 @@ function ensure_gsa_key() {
 
 function hydrate_context() {
     local target_dir="$1"
-    if [[ -z "$target_dir" || "$target_dir" == "." ]]; then 
+    if [[ -z "$target_dir" || "$target_dir" == "." ]]; then
         target_dir="build-artifacts"
     fi
 
@@ -287,7 +287,7 @@ function hydrate_context() {
     local cl_name=$(grep "export CLUSTER_ACM_NAME=" "$target_dir/envrc" | cut -d'"' -f2)
     local p_id=$(grep "export PROJECT_ID=" "$target_dir/envrc" | cut -d'"' -f2)
     local reg=$(grep "export REGION=" "$target_dir/envrc" | cut -d'"' -f2)
-    
+
     if [[ -z "$cl_name" ]]; then
         pretty_print "Error: Could not find CLUSTER_ACM_NAME in $target_dir/envrc" "ERROR"
         return
@@ -308,7 +308,7 @@ function hydrate_context() {
     gsm_get "gdc-${cl_name}-ssh-key-pub" "$p_id" "$reg" > "$target_dir/consumer-edge-machine.pub"
     trim_key_file "$target_dir/consumer-edge-machine.pub"
     chmod 644 "$target_dir/consumer-edge-machine.pub"
-    
+
     ensure_gsa_key "$target_dir/provisioning-gsa.json" "gdc-${cl_name}-prov-gsa" "$cl_name" "$p_id" "Provisioning GSA" "$reg"
     ensure_gsa_key "$target_dir/node-gsa.json" "gdc-${cl_name}-node-gsa" "$cl_name" "$p_id" "Node GSA" "$reg"
 
@@ -358,7 +358,7 @@ function hydrate_context() {
     fi
 
     pretty_print "Context hydrated successfully." "INFO"
-    
+
     # Summary
     pretty_print "Summary" "INFO"
     pretty_print "======================================="
@@ -376,7 +376,7 @@ function hydrate_context() {
 function ingest_context() {
     local name="$1"
     local target_dir="build-artifacts-${name}"
-    
+
     if [[ ! -d "$target_dir" ]]; then
         pretty_print "Error: Directory '$target_dir' not found." "ERROR"
         exit 1
@@ -428,41 +428,42 @@ function ingest_context() {
     pretty_print "Generating YAML backup in configs/${name}-config.yaml..." "INFO"
     mkdir -p configs
     local yaml_out="configs/${name}-config.yaml"
-    
+
     # Start with the template
     cp templates/context-config-template.yaml "$yaml_out"
 
-    local zn=$(grep "export ZONE=" "$target_dir/envrc" | cut -d'"' -f2)
-    local repo_url=$(grep "export ROOT_REPO_URL=" "$target_dir/envrc" | cut -d'"' -f2)
-    local repo_branch=$(grep "export ROOT_REPO_BRANCH=" "$target_dir/envrc" | cut -d'"' -f2)
+    local zn=$(grep "^export ZONE=" "$target_dir/envrc" | cut -d'"' -f2)
+    local repo_url=$(grep "^export ROOT_REPO_URL=" "$target_dir/envrc" | cut -d'"' -f2)
+    local repo_branch=$(grep "^export ROOT_REPO_BRANCH=" "$target_dir/envrc" | cut -d'"' -f2)
 
-    local cp_vip=$(yq e ".[\"${cl_name}_cluster\"].vars.control_plane_vip" "$target_dir/inventory.yaml" 2>/dev/null)
-    local in_vip=$(yq e ".[\"${cl_name}_cluster\"].vars.ingress_vip" "$target_dir/inventory.yaml" 2>/dev/null)
-    local lb_pool=$(yq e ".[\"${cl_name}_cluster\"].vars.load_balancer_pool_cidr[0]" "$target_dir/inventory.yaml" 2>/dev/null)
-    
+    local inv_cl_name=$(echo "$cl_name" | tr '-' '_')
+    local cp_vip=$(yq e ".[\"${inv_cl_name}_cluster\"].vars.control_plane_vip" "$target_dir/inventory.yaml" 2>/dev/null)
+    local in_vip=$(yq e ".[\"${inv_cl_name}_cluster\"].vars.ingress_vip" "$target_dir/inventory.yaml" 2>/dev/null)
+    local lb_pool=$(yq e ".[\"${inv_cl_name}_cluster\"].vars.load_balancer_pool_cidr[0]" "$target_dir/inventory.yaml" 2>/dev/null)
+
     local abm_ver=$(yq e '.abm_version' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
     local acm_ver=$(yq e '.acm_version' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
     local storage=$(yq e '.storage_provider' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
-    
+
     # Update core values using sed to preserve comments in the template
-    sed -i "s|^context_name:.*|context_name: \"${name}\"|" "$yaml_out"
-    sed -i "s|^cluster_name:.*|cluster_name: \"${cl_name}\"|" "$yaml_out"
-    sed -i "s|^project_id:.*|project_id: \"${p_id}\"|" "$yaml_out"
-    
-    if [[ -n "$reg" ]]; then sed -i "s|^region:.*|region: \"${reg}\"|" "$yaml_out"; fi
-    if [[ -n "$zn" ]]; then sed -i "s|^zone:.*|zone: \"${zn}\"|" "$yaml_out"; fi
-    
-    if [[ -n "$cp_vip" && "$cp_vip" != "null" ]]; then sed -i "s|^control_plane_vip:.*|control_plane_vip: \"${cp_vip}\"|" "$yaml_out"; fi
-    if [[ -n "$in_vip" && "$in_vip" != "null" ]]; then sed -i "s|^ingress_vip:.*|ingress_vip: \"${in_vip}\"|" "$yaml_out"; fi
-    if [[ -n "$lb_pool" && "$lb_pool" != "null" ]]; then sed -i "s|^load_balancer_pool_cidr:.*|load_balancer_pool_cidr: \"${lb_pool}\"|" "$yaml_out"; fi
-    
-    if [[ -n "$repo_url" && "$repo_url" != "null" ]]; then sed -i "s|^root_repo_url:.*|root_repo_url: \"${repo_url}\"|" "$yaml_out"; fi
-    if [[ -n "$repo_branch" && "$repo_branch" != "null" ]]; then sed -i "s|^root_repo_branch:.*|root_repo_branch: \"${repo_branch}\"|" "$yaml_out"; fi
-    
-    if [[ -n "$storage" && "$storage" != "null" ]]; then sed -i "s|^storage_provider:.*|storage_provider: \"${storage}\"|" "$yaml_out"; fi
-    if [[ -n "$abm_ver" && "$abm_ver" != "null" ]]; then sed -i "s|^abm_version:.*|abm_version: \"${abm_ver}\"|" "$yaml_out"; fi
-    if [[ -n "$acm_ver" && "$acm_ver" != "null" ]]; then sed -i "s|^acm_version:.*|acm_version: \"${acm_ver}\"|" "$yaml_out"; fi
-    
+    sed -i "s@^context_name:.*@context_name: \"${name}\"@" "$yaml_out"
+    sed -i "s@^cluster_name:.*@cluster_name: \"${cl_name}\"@" "$yaml_out"
+    sed -i "s@^project_id:.*@project_id: \"${p_id}\"@" "$yaml_out"
+
+    if [[ -n "$reg" ]]; then sed -i "s@^region:.*@region: \"${reg}\"@" "$yaml_out"; fi
+    if [[ -n "$zn" ]]; then sed -i "s@^zone:.*@zone: \"${zn}\"@" "$yaml_out"; fi
+
+    if [[ -n "$cp_vip" && "$cp_vip" != "null" ]]; then sed -i "s@^control_plane_vip:.*@control_plane_vip: \"${cp_vip}\"@" "$yaml_out"; fi
+    if [[ -n "$in_vip" && "$in_vip" != "null" ]]; then sed -i "s@^ingress_vip:.*@ingress_vip: \"${in_vip}\"@" "$yaml_out"; fi
+    if [[ -n "$lb_pool" && "$lb_pool" != "null" ]]; then sed -i "s@^load_balancer_pool_cidr:.*@load_balancer_pool_cidr: \"${lb_pool}\"@" "$yaml_out"; fi
+
+    if [[ -n "$repo_url" && "$repo_url" != "null" ]]; then sed -i "s@^root_repo_url:.*@root_repo_url: \"${repo_url}\"@" "$yaml_out"; fi
+    if [[ -n "$repo_branch" && "$repo_branch" != "null" ]]; then sed -i "s@^root_repo_branch:.*@root_repo_branch: \"${repo_branch}\"@" "$yaml_out"; fi
+
+    if [[ -n "$storage" && "$storage" != "null" ]]; then sed -i "s@^storage_provider:.*@storage_provider: \"${storage}\"@" "$yaml_out"; fi
+    if [[ -n "$abm_ver" && "$abm_ver" != "null" ]]; then sed -i "s@^abm_version:.*@abm_version: \"${abm_ver}\"@" "$yaml_out"; fi
+    if [[ -n "$acm_ver" && "$acm_ver" != "null" ]]; then sed -i "s@^acm_version:.*@acm_version: \"${acm_ver}\"@" "$yaml_out"; fi
+
     # Handle Robin disk paths (if Robin is the storage provider)
     if [[ "$storage" == "robin" ]]; then
         local num_disks=$(yq e '.robin_disk_paths | length' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
@@ -474,21 +475,21 @@ function ingest_context() {
                 yq e -i ".robin_disk_paths += [\"${disk_path}\"]" "$yaml_out"
             done
         fi
-        
+
         local robin_bundle=$(yq e '.robin_install_bundle_file' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
         if [[ -n "$robin_bundle" && "$robin_bundle" != "null" ]]; then
-             sed -i "s|^# robin_install_bundle_file:.*|robin_install_bundle_file: \"${robin_bundle}\"|" "$yaml_out"
+             sed -i "s@^# robin_install_bundle_file:.*@robin_install_bundle_file: \"${robin_bundle}\"@" "$yaml_out"
         fi
     fi
 
     # Handle Nodes Array
-    local num_nodes=$(yq e ".[\"${cl_name}_cluster\"].hosts | length" "$target_dir/inventory.yaml" 2>/dev/null)
+    local num_nodes=$(yq e ".[\"${inv_cl_name}_cluster\"].hosts | length" "$target_dir/inventory.yaml" 2>/dev/null)
     if [[ "$num_nodes" -gt 0 && "$num_nodes" != "null" ]]; then
         # Clear the dummy nodes from the template safely using yq
         yq e -i '.nodes = []' "$yaml_out"
-        local node_names=$(yq e ".[\"${cl_name}_cluster\"].hosts | keys | .[]" "$target_dir/inventory.yaml" 2>/dev/null)
+        local node_names=$(yq e ".[\"${inv_cl_name}_cluster\"].hosts | keys | .[]" "$target_dir/inventory.yaml" 2>/dev/null)
         for n_name in $node_names; do
-            local n_ip=$(yq e ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".node_ip" "$target_dir/inventory.yaml" 2>/dev/null)
+            local n_ip=$(yq e ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip" "$target_dir/inventory.yaml" 2>/dev/null)
             # Append object to nodes array
             yq e -i ".nodes += [{\"name\": \"${n_name}\", \"ip\": \"${n_ip}\"}]" "$yaml_out"
         done
@@ -499,7 +500,7 @@ function ingest_context() {
 
     # 4. Secure the folder
     dehydrate_context "$target_dir"
-    
+
     pretty_print "Ingestion complete for $name." "INFO"
 
     # Summary
@@ -550,7 +551,7 @@ function print_gsm_examples() {
 
     pretty_print "\nHow to fix missing secrets:" "INFO"
     pretty_print "======================================="
-    
+
     for item in "${missing[@]}"; do
         case "$item" in
             "scm-user")
@@ -576,7 +577,7 @@ function print_gsm_examples() {
         esac
         echo ""
     done
-    
+
     pretty_print "Once secrets are created in GSM, re-run this command." "INFO"
 }
 
@@ -596,7 +597,7 @@ function validate_gsm_secret() {
 
 function generate_context() {
     local yaml_file="$1"
-    
+
     if ! command -v yq &> /dev/null; then
         pretty_print "Error: 'yq' is required. Please install it." "ERROR"
         exit 1
@@ -650,10 +651,10 @@ function generate_context() {
     pretty_print "======================================="
     pretty_print "Google Project ID:\t[$p_id]"
     pretty_print "YAML Config File:\t[$yaml_file]"
-    
+
     local scm_user_status=$(validate_gsm_secret "gdc-${cl_name}-scm-user" "$p_id" "MISSING" "$reg")
     local scm_token_status=$(validate_gsm_secret "gdc-${cl_name}-scm-token" "$p_id" "MISSING" "$reg")
-    
+
     local prov_missing_action="WILL_PROMPT"
     local node_missing_action="WILL_PROMPT"
     if [[ -f "$target/provisioning-gsa.json" ]]; then prov_missing_action="WILL_UPLOAD_LOCAL"; fi
@@ -661,13 +662,13 @@ function generate_context() {
 
     local prov_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-prov-gsa" "$p_id" "$prov_missing_action" "$reg")
     local node_gsa_status=$(validate_gsm_secret "gdc-${cl_name}-node-gsa" "$p_id" "$node_missing_action" "$reg")
-    
+
     local ssh_key_status=$(validate_gsm_secret "gdc-${cl_name}-ssh-key" "$p_id" "WILL_GENERATE" "$reg")
     local ssh_pub_status=$(validate_gsm_secret "gdc-${cl_name}-ssh-key-pub" "$p_id" "WILL_GENERATE" "$reg")
-    
+
     local oidc_id_status=$(validate_gsm_secret "gdc-${cl_name}-oidc-id" "$p_id" "OPTIONAL" "$reg")
     local oidc_sec_status=$(validate_gsm_secret "gdc-${cl_name}-oidc-secret" "$p_id" "OPTIONAL" "$reg")
-    
+
     pretty_print "SCM User Secret:\t[$scm_user_status]"
     pretty_print "SCM Token Secret:\t[$scm_token_status]"
     pretty_print "Prov GSA Secret:\t[$prov_gsa_status]"
@@ -681,7 +682,7 @@ function generate_context() {
     local missing=()
     if [[ "$scm_user_status" == "MISSING" ]]; then missing+=("scm-user"); fi
     if [[ "$scm_token_status" == "MISSING" ]]; then missing+=("scm-token"); fi
-    
+
     if [[ ${#missing[@]} -gt 0 ]]; then
         pretty_print "STOP: Missing required secrets in GSM." "ERROR"
         print_gsm_examples "$cl_name" "$p_id" "${missing[@]}"
@@ -691,14 +692,14 @@ function generate_context() {
     # 2. Display Settings
     pretty_print "2. Display Settings" "INFO"
     pretty_print "======================================="
-    
+
     local scm_user_val=$(gsm_get "gdc-${cl_name}-scm-user" "$p_id" "$reg")
     local scm_token_val=$(gsm_get "gdc-${cl_name}-scm-token" "$p_id" "$reg")
     local prov_gsa_email=$(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id" "$reg")
     local node_gsa_email=$(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id" "$reg")
     local oidc_id_val=$(gsm_get "gdc-${cl_name}-oidc-id" "$p_id" "$reg")
     local oidc_sec_val=$(gsm_get "gdc-${cl_name}-oidc-secret" "$p_id" "$reg")
-    
+
     pretty_print "SCM User Secret:\t${scm_user_val:-NOT SET}"
     pretty_print "SCM Token Secret:\t$(mask_secret "$scm_token_val")"
     pretty_print "Provisioning GSA:\t$prov_gsa_email"
@@ -718,7 +719,7 @@ function generate_context() {
     fi
 
     pretty_print "Generating $target in project $p_id..." "INFO"
-    
+
     if [[ "$action" == "create" ]]; then
         cp -r build-artifacts-example "$target"
     fi
@@ -731,14 +732,14 @@ function generate_context() {
     if [[ ! -f "$target/envrc" ]]; then
         cp templates/envrc-template.sh "$target/envrc"
     fi
-    
+
     sed -i "1i # This file sets environment variables for the cluster provisioning run." "$target/envrc"
     sed -i "s|export PROJECT_ID=.*|export PROJECT_ID=\"${p_id}\" # GCP Project ID (from YAML project_id)|" "$target/envrc"
     sed -i "s|export REGION=.*|export REGION=\"${reg}\" # GCP Region (from YAML region)|" "$target/envrc"
     sed -i "s|export ZONE=.*|export ZONE=\"${zn}\" # GCP Zone (from YAML zone)|" "$target/envrc"
     sed -i "s|export CLUSTER_ACM_NAME=.*|export CLUSTER_ACM_NAME=\"${cl_name}\" # Cluster name used by ACM (from YAML cluster_name)|" "$target/envrc"
     sed -i "s|export ROOT_REPO_URL=.*|export ROOT_REPO_URL=\"${root_repo_url}\" # Root SCM Repo|" "$target/envrc"
-    
+
     # ROOT_REPO_BRANCH might not exist in the template, so safely append or replace
     if grep -q "export ROOT_REPO_BRANCH=" "$target/envrc"; then
         sed -i "s|export ROOT_REPO_BRANCH=.*|export ROOT_REPO_BRANCH=\"${root_repo_branch}\"|" "$target/envrc"
@@ -772,7 +773,7 @@ function generate_context() {
 
     # Parse nodes for inventory hosts
     local num_nodes=$(yq e '.nodes | length' "$yaml_file")
-    
+
     # Overwrite add-hosts completely
     rm -f "$target/add-hosts-example"
     echo "# Edge Servers for ${ctx_name} (Auto-generated from YAML nodes)" > "$target/add-hosts"
@@ -781,12 +782,12 @@ function generate_context() {
     for (( i=0; i<$num_nodes; i++ )); do
         local n_name=$(yq e ".nodes[$i].name" "$yaml_file")
         local n_ip=$(yq e ".nodes[$i].ip" "$yaml_file")
-        
+
         # Add to inventory hosts
         yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".node_ip = \"${n_ip}\"" "$target/inventory.yaml"
         yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".machine_label = \"{{ inventory_hostname }}\"" "$target/inventory.yaml"
         yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".ansible_host = \"{{ node_ip }}\"" "$target/inventory.yaml"
-        
+
         # Identify first node as primary
         if [ $i -eq 0 ]; then
             yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".primary_cluster_machine = true" "$target/inventory.yaml"
@@ -794,7 +795,7 @@ function generate_context() {
 
         # Add to peer_node_ips list
         yq e -i ".[\"${cl_name}_cluster\"].vars.peer_node_ips += [\"${n_ip}\"]" "$target/inventory.yaml"
-        
+
         # Add to add-hosts
         echo "$n_ip    $n_name" >> "$target/add-hosts"
     done
@@ -813,7 +814,7 @@ function generate_context() {
         else
             echo "storage_provider: \"${storage_provider}\"" >> "$target/instance-run-vars.yaml"
         fi
-        
+
         if [[ "$storage_provider" == "robin" ]]; then
             local num_disks=$(yq e '.robin_disk_paths | length' "$yaml_file")
             if [[ "$num_disks" -gt 0 && "$num_disks" != "null" ]]; then
@@ -821,7 +822,7 @@ function generate_context() {
                 sed -i '/robin_disk_paths:/d' "$target/instance-run-vars.yaml"
                 sed -i '/"\/dev\/nvme0n1p4"/d' "$target/instance-run-vars.yaml"
                 sed -i '/\]/d' "$target/instance-run-vars.yaml"
-                
+
                 # Use yq to safely inject the array
                 yq e -i '.robin_disk_paths = []' "$target/instance-run-vars.yaml"
                 for (( i=0; i<$num_disks; i++ )); do
@@ -854,7 +855,7 @@ function generate_context() {
         else
             echo "robin_install_bundle_file: \"${robin_bundle}\"" >> "$target/instance-run-vars.yaml"
         fi
-        
+
         # Copy the file into the context if it's outside
         if [[ ! -f "$target/${robin_bundle##*/}" && -f "$robin_bundle" ]]; then
             cp "$robin_bundle" "$target/"
@@ -879,7 +880,7 @@ function generate_context() {
         trim_key_file "$target/consumer-edge-machine.pub"
         # Push new keys to GSM later in step 6
     fi
-    
+
     # 5. Ensure GSA keys are handled (prompt if missing)
     ensure_gsa_key "$target/provisioning-gsa.json" "gdc-${cl_name}-prov-gsa" "$cl_name" "$p_id" "Provisioning GSA" "$reg"
     ensure_gsa_key "$target/node-gsa.json" "gdc-${cl_name}-node-gsa" "$cl_name" "$p_id" "Node GSA" "$reg"
@@ -889,7 +890,7 @@ function generate_context() {
         gsm_put "gdc-${cl_name}-ssh-key" "$(cat "$target/consumer-edge-machine")" "${cl_name}" "${p_id}" "$reg"
         gsm_put "gdc-${cl_name}-ssh-key-pub" "$(cat "$target/consumer-edge-machine.pub")" "${cl_name}" "${p_id}" "$reg"
     fi
-    
+
     # Push YAML to GSM
     gsm_put "gdc-${cl_name}-config-yaml" "$(cat "$yaml_file")" "${cl_name}" "${p_id}" "$reg"
 
@@ -912,7 +913,7 @@ function generate_context() {
     if [[ -f "$target/consumer-edge-machine" && -f "$target/provisioning-gsa.json" ]]; then
         state="opened"
     fi
-    
+
     pretty_print "5. Context $ctx_name State: [$state]" "INFO"
     pretty_print "======================================="
     pretty_print "To activate this context:"
