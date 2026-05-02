@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Test if the script exists and runs help
+if ! ./scripts/instance-context.sh -h | grep -q "Usage:"; then
+  echo "FAIL: instance-context.sh -h did not output Usage"
+  exit 1
+fi
+echo "PASS: Script renamed and executable"
+
+# Test missing yq/yaml logic
+if ./scripts/instance-context.sh -g non_existent.yaml 2>&1 | grep -q "not found"; then
+  echo "PASS: Handled missing YAML"
+else
+  echo "FAIL: Did not handle missing YAML"
+  exit 1
+fi
+
+# Test full generation
+./scripts/instance-context.sh -g tests/sample-cluster.yaml
+if [[ -d "build-artifacts-test-cluster" ]]; then
+  if grep -q "test-gcp-project" build-artifacts-test-cluster/envrc; then
+    echo "PASS: Context generated successfully"
+    rm -rf build-artifacts-test-cluster
+  else
+    echo "FAIL: envrc not templated correctly"
+    exit 1
+  fi
+else
+  echo "FAIL: Context directory not created"
+  exit 1
+fi
+
+# Test trim_key_file function
+echo "Testing trim_key_file..."
+source scripts/install-shell-helper.sh
+
+# Case 1: Trailing spaces and multiple newlines
+cat << 'INNER_EOF' > test_key.txt
+test-key  
+line 2   
+
+
+INNER_EOF
+trim_key_file test_key.txt
+cat -e test_key.txt > test_key_out.txt
+if ! grep -q "line 2$" test_key_out.txt; then
+    echo "FAIL: trim_key_file failed to trim trailing spaces and newlines"
+    cat test_key_out.txt
+    exit 1
+fi
+rm test_key.txt test_key_out.txt
+echo "PASS: trim_key_file works as expected"

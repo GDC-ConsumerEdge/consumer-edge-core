@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-bundle_file_name: "pre-cache-bundle.tar.gz"
-
-local_cache_folder: /tmp/pre-cache
-bucket_cache_url: gs://a-bucket-that-is-not-found
+- name: Setup proxy for docker (if needed)
+  ansible.builtin.file:
+    path: "{{ docker_service_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when:
+  - proxy_has_http_proxy is true or proxy_has_https_proxy is true
+  tags:
+  - http-proxy
+  - docker-proxy

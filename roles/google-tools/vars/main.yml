@@ -25,4 +25,4 @@ kubectx_version: "0.9.5"
 k9s_version: "v0.50.18"
 
 # Kubestr Version (https://github.com/kastenhq/kubestr/releases/)
-kubestr_version: v0.4.49"
+kubestr_version: "0.4.49"

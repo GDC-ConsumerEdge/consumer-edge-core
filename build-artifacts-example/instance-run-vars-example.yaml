@@ -16,6 +16,9 @@
 ### This file is used to override any variables for a specific Instance Run (one session of provisioning one or more hosts into a clustered state)
 ###
 
+abm_version: 1.34.300-gke.59
+acm_version: 1.34.300-gke.59
+
 ###
 ### Required overriden variables
 ###
@@ -24,13 +27,14 @@
 ### Storage provider set to Robin
 # storage_provider: "robin"
 
+# Robin bundle file location
+# robin_install_bundle_file: "build-artifacts/robin-install-5.4.8-313.tar"
+
 ###
 ### Disk paths to use for LVM creation (Comma delimited strings) NOTE: This is a cluster-run wide, if provisioning more than 1 cluster at a time, this variable should be moved to the inventory cluster-level
 ###
-# robin_disk_paths: [
-#   # "/dev/nvme0n1p1" # edge-1 servers. NOTE: DO NOT set this for Cloud/GCE based provisioning runs
-# ]
-
+# robin_disk_paths:
+#   -"/dev/nvme0n1p1" # edge-1 servers. NOTE: DO NOT set this for Cloud/GCE based provisioning runs
 
 ###
 ### Common optional variables

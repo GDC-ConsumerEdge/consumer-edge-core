@@ -56,15 +56,19 @@ function get_downloadable_key_name {
         if [[ "${sel_key_num}" -le SECRET_COUNT ]]; then
 
     		pretty_print "\nINFO: Downloading key for ${SECRET_LIST[$index]#}" "INFO"
-            gcloud secrets versions access latest --secret="${SECRET_LIST[$index]}" >> ./build-artifacts/consumer-edge-machine --project="${PROJECT_ID}"
+            gcloud secrets versions access latest --secret="${SECRET_LIST[$index]}" > ./build-artifacts/consumer-edge-machine --project="${PROJECT_ID}"
+            trim_key_file "./build-artifacts/consumer-edge-machine"
 			chmod 600 ./build-artifacts/consumer-edge-machine
             pretty_print "INFO: Generate the public key locally ./build-artifacts/consumer-edge-machine.pub" "INFO"
-            ssh-keygen -f ./build-artifacts/consumer-edge-machine -y >> ./build-artifacts/consumer-edge-machine.pub
+            ssh-keygen -f ./build-artifacts/consumer-edge-machine -y > ./build-artifacts/consumer-edge-machine.pub
+            trim_key_file "./build-artifacts/consumer-edge-machine.pub"
         else
-            echo "\nINFO: Creating a new SSH key-pair and pushing to Google Secret Manager for Cluster '${DEFAULT_CLUSTER_NAME}'"
+            echo -e "\nINFO: Creating a new SSH key-pair and pushing to Google Secret Manager for Cluster '${DEFAULT_CLUSTER_NAME}'"
             echo "INFO: The new primary key stored at ./build-artifacts/consumer-edge-machine.pub"
 
             ssh-keygen -o -a 100 -t ed25519 -f ./build-artifacts/consumer-edge-machine -N ''
+            trim_key_file "./build-artifacts/consumer-edge-machine"
+            trim_key_file "./build-artifacts/consumer-edge-machine.pub"
             gcloud secrets create ssh-priv-key-${DEFAULT_CLUSTER_NAME} --replication-policy="automatic" > /dev/null 2>&1 # Ignore all issues with this
             gcloud secrets versions add ssh-priv-key-${DEFAULT_CLUSTER_NAME} --data-file="build-artifacts/consumer-edge-machine" > /dev/null 2>&1
         fi

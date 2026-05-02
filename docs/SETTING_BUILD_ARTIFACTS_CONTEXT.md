@@ -1,5 +1,8 @@
 # Overview
 
+> [!IMPORTANT]
+> **This manual process is deprecated.** Please refer to the new automated guide: [INSTANCE-CONTEXT-HOW-TO.md](INSTANCE-CONTEXT-HOW-TO.md) for the modern workflow using `./scripts/instance-context.sh`.
+
 This page describes what **Build Context** is, why it's needed, and how to manage the lifecycle of them.
 
 ## What is Build Contexts?
