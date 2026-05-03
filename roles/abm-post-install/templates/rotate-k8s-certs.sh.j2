@@ -90,6 +90,7 @@ if ! acquire_lock; then
 fi
 
 # Ensure lock is released on exit (whether success or failure)
+# IMPORTANT: We only set this trap AFTER we have successfully acquired the lock.
 release_lock() {
     echo "Releasing lock at ${LOCK_URI}..."
     {% if DRY_RUN is defined and DRY_RUN %}
