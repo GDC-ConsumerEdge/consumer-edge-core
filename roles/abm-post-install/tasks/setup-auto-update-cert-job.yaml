@@ -22,7 +22,7 @@
   tags:
   - abm-post-install
   - cert-rotation
-  - debug-cert # Remove
+  - distributed-lock
 
 - name: "Create cron job to rotate certs"
   template:
@@ -34,4 +34,4 @@
   tags:
   - abm-post-install
   - cert-rotation
-  - debug-cert # Remove
+  - distributed-lock

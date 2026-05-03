@@ -35,7 +35,7 @@
   tags:
   - abm-post-install
   - cert-rotation
-  - debug-cert # Remove
+  - distributed-lock
 
 ### Setup CDI cpumanager flag for nodes
 - name: "Add CDI required cpumanager label for nodes"
