@@ -87,8 +87,8 @@ fi
 echo ""
 echo "Checking GCS for lingering lock files..."
 # We run the check from edge-1 since it has gcloud configured and authenticated.
-# We dynamically pull the LOCK_URI from the deployed script itself.
-LOCK_URI=$(ssh -F "$SSH_CONFIG" "${NODES[0]}" "grep '^LOCK_URI=' $SCRIPT_PATH | cut -d'\"' -f2")
+# We dynamically evaluate the LOCK_URI from the deployed script itself by sourcing the variables.
+LOCK_URI=$(ssh -F "$SSH_CONFIG" "${NODES[0]}" "bash -c 'source <(grep -E \"^(LOCK_BUCKET|LOCK_FILE|LOCK_URI)=\" $SCRIPT_PATH); echo \$LOCK_URI'")
 
 if [ -z "$LOCK_URI" ]; then
     echo "⚠️ WARNING: Could not determine LOCK_URI from $SCRIPT_PATH on ${NODES[0]}."
