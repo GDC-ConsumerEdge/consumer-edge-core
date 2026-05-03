@@ -96,7 +96,7 @@ echo "Lock acquired successfully. Proceeding with certificate rotation..."
 
 ### Script Start
 # Check to see if certs are out-of-date
-CERT_CONDITION=$(grep 'client-certificate-data' /var/abm-install/kubeconfig/kubeconfig | awk '{print $2}' | base64 -d | openssl x509 -text | grep Validity -A2)
+CERT_CONDITION_AFTER=$(sudo grep 'client-certificate-data' "$TARGET_KUBECONFIG" 2>/dev/null | awk '{print $2}' | base64 -d | openssl x509 -text | grep Validity -A2)
 if [[ $? > 0 ]]; then
     >&2 echo "Certificates are already out of date and cannot be automated for replacement."
     exit 1
@@ -167,11 +167,13 @@ echo "Validation Successful! Syncing to $TARGET_KUBECONFIG"
 if sudo kubectl get nodes --kubeconfig "$ADMIN_CONF" > /dev/null 2>&1; then
     echo "Validation Successful! Syncing to $TARGET_KUBECONFIG"
 
-    # Copy and set permissions (666)
+    # Copy and set correct ownership/permissions
+    sudo mkdir -p "$(dirname "$TARGET_KUBECONFIG")"
     sudo cp "$ADMIN_CONF" "$TARGET_KUBECONFIG"
-    sudo chmod 666 "$TARGET_KUBECONFIG"
+    sudo chown abm-admin:abm-admin "$TARGET_KUBECONFIG"
+    sudo chmod 600 "$TARGET_KUBECONFIG"
 
-    echo "Permissions set to 666 for $TARGET_KUBECONFIG"
+    echo "Permissions set to 600 for $TARGET_KUBECONFIG"
 else
     echo "Error: kubectl test failed with the new admin.conf!"
     rollback

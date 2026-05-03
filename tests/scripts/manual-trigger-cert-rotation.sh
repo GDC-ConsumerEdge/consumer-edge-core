@@ -20,7 +20,7 @@
 SSH_CONFIG="build-artifacts/ssh-config"
 NODES=("edge-1" "edge-2" "edge-3")
 SCRIPT_PATH="/var/abm-install/scripts/rotate-k8s-certs.sh"
-STAGGER_SECONDS=30
+STAGGER_SECONDS=10
 
 echo "================================================================="
 echo "   Manually Triggering Certificate Rotation (Staggered)          "
