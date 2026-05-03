@@ -49,10 +49,22 @@ acquire_lock() {
     echo "Owner: ${NODE_NAME}, Time: $(date -u)" > /tmp/cert-rotation-lock-info
 
     # Atomic creation: fails if exists
-    if {% if DRY_RUN is defined and DRY_RUN %}echo "[DRY RUN] Would run: "{% endif %}gcloud storage cp /tmp/cert-rotation-lock-info "${LOCK_URI}" --header="x-goog-if-generation-match: 0" &>/dev/null; then
+    ERR_LOG=$(mktemp)
+    if {% if DRY_RUN is defined and DRY_RUN %}echo "[DRY RUN] Would run: "{% endif %}gcloud storage cp /tmp/cert-rotation-lock-info "${LOCK_URI}" --header="x-goog-if-generation-match: 0" 2>"$ERR_LOG"; then
+        rm -f "$ERR_LOG"
         return 0
     fi
-    return 1
+    
+    # If the error contains "Precondition" or "already exists", it's a lock. Otherwise, it's a system error.
+    if grep -qEi "Precondition|already exists|412" "$ERR_LOG"; then
+        rm -f "$ERR_LOG"
+        return 1
+    else
+        echo "GCS ERROR: Failed to interact with GCS bucket."
+        cat "$ERR_LOG"
+        rm -f "$ERR_LOG"
+        exit 1
+    fi
 }
 
 check_stale_lock() {

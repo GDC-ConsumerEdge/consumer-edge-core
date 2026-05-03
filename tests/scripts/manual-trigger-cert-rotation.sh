@@ -35,6 +35,15 @@ if [ ! -f "$SSH_CONFIG" ]; then
     exit 1
 fi
 
+# Pre-test cleanup: ensure no lingering lock exists
+echo "Performing pre-test cleanup of GCS lock..."
+LOCK_URI=$(ssh -F "$SSH_CONFIG" "${NODES[0]}" "bash -c 'source <(grep -E \"^(LOCK_BUCKET|LOCK_FILE|LOCK_URI)=\" $SCRIPT_PATH); echo \$LOCK_URI'")
+if [ -n "$LOCK_URI" ]; then
+    echo "Ensuring $LOCK_URI is deleted..."
+    ssh -F "$SSH_CONFIG" "${NODES[0]}" "gcloud storage rm '$LOCK_URI' > /dev/null 2>&1 || true"
+    sleep 5 # Wait for GCS consistency
+fi
+
 for i in "${!NODES[@]}"; do
     NODE="${NODES[$i]}"
     
