@@ -90,7 +90,15 @@ if ! acquire_lock; then
 fi
 
 # Ensure lock is released on exit (whether success or failure)
-trap '{% if DRY_RUN is defined and DRY_RUN %}echo "[DRY RUN] Would release lock: "{% endif %}gcloud storage rm "${LOCK_URI}"' EXIT
+release_lock() {
+    echo "Releasing lock at ${LOCK_URI}..."
+    {% if DRY_RUN is defined and DRY_RUN %}
+    echo "[DRY RUN] Would run: gcloud storage rm ${LOCK_URI}"
+    {% else %}
+    gcloud storage rm "${LOCK_URI}"
+    {% endif %}
+}
+trap release_lock EXIT
 
 echo "Lock acquired successfully. Proceeding with certificate rotation..."
 

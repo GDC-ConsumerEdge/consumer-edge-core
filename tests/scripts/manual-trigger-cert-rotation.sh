@@ -67,19 +67,24 @@ for NODE in "${NODES[@]}"; do
     if grep -q "Lock acquired successfully" "$LOG_FILE"; then
         echo "[${NODE}] SUCCESS: Acquired lock and performed rotation."
         ACQUIRED_COUNT=$((ACQUIRED_COUNT + 1))
+        WINNING_NODE="$NODE"
     elif grep -q "ABORT: Lock held by another node" "$LOG_FILE"; then
         echo "[${NODE}] ABORTED: Correctly identified lock was already held."
         ABORTED_COUNT=$((ABORTED_COUNT + 1))
     else
         echo "[${NODE}] UNKNOWN STATE. See log for details: $LOG_FILE"
         # Print a snippet of the log for debugging
-        tail -n 5 "$LOG_FILE" | sed 's/^/    > /'
+        tail -n 10 "$LOG_FILE" | sed 's/^/    > /'
     fi
 done
 
 echo ""
 if [ "$ACQUIRED_COUNT" -eq 1 ] && [ "$ABORTED_COUNT" -eq 2 ]; then
     echo "✅ PASS: Exactly one node acquired the lock, and two nodes aborted."
+    echo ""
+    echo "--- Full log from winning node (${WINNING_NODE}) ---"
+    cat "${TMP_DIR}/${WINNING_NODE}.log"
+    echo "------------------------------------------------"
 else
     echo "❌ FAIL: Expected 1 lock acquisition and 2 aborts. Got $ACQUIRED_COUNT acquisitions and $ABORTED_COUNT aborts."
 fi
