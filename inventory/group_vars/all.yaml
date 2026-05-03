@@ -242,6 +242,14 @@ vmruntime_config_path: "{{ abm_install_folder }}/vmruntime-configs"
 snapshot_gcs_bucket_base: "{{ lookup('env', 'SNAPSHOT_GCS') | default( [ google_project_id, '-', cluster_name, '-snapshot' ] | join, True) }}" # leave empty to generate local-only snapshots
 # snapshot_gcs_bucket_base: ""
 
+# Distributed lock TTL for cluster-wide operations (e.g. cert rotation)
+cert_rotation_lock_ttl_hours: 2
+
+# Certificate Rotation Cron Schedule
+# Default runs every 3 months at 2 AM
+cert_rotation_cron_months: "*/3"
+cert_rotation_cron_hour: "2"
+
 ###
 ### Storage Provider
 ###
