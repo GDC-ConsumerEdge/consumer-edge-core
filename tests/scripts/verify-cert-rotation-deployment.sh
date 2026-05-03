@@ -40,8 +40,8 @@ for NODE in "${NODES[@]}"; do
     # Run a block of commands over SSH
     ssh -F "$SSH_CONFIG" "$NODE" "bash -s" <<EOF
         echo "1. Crontab Settings ($CRON_FILE):"
-        if [ -f "$CRON_FILE" ]; then
-            cat "$CRON_FILE" | grep -v "^#"
+        if sudo test -f "$CRON_FILE"; then
+            sudo cat "$CRON_FILE" | grep -v "^#"
         else
             echo "   [ERROR] Cron file not found!"
         fi
