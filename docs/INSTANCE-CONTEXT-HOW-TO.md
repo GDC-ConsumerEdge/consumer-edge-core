@@ -23,6 +23,35 @@ An instance context transitions through several states during its lifecycle. Und
 
 ---
 
+## 📥 Downloading or Restoring an Existing Context
+If a context already exists in Google Secret Manager (GSM) but is not on your local machine (or is present but "closed"), follow these steps.
+
+### Scenario A: I have the folder locally, but it's "Closed"
+If you already have the `build-artifacts-<name>` folder but the secrets (SSH keys, GSA keys, tokens) are missing or wiped, run:
+```bash
+./scripts/instance-context.sh -o <context-name>
+```
+*   **What this does:** Reads the metadata from the folder's `envrc`, fetches all secrets from GSM, and restores the `configs/<name>-config.yaml` file.
+
+### Scenario B: I do NOT have the folder locally
+If you are on a new machine and need to "download" an existing context from scratch:
+
+1.  **Download the Configuration YAML from GSM**:
+    ```bash
+    # Replace <cluster-name> and <project-id> with your values
+    gcloud secrets versions access latest \
+      --secret="gdc-<cluster-name>-config-yaml" \
+      --project="<project-id>" > my-config.yaml
+    ```
+
+2.  **Recreate the Local Context**:
+    ```bash
+    ./scripts/instance-context.sh -g my-config.yaml
+    ```
+    *   **What this does:** Recreates the folder structure, inventory, and environment files, and automatically hydrates (opens) it with all secrets from GSM.
+
+---
+
 ## 🚀 Quick Start: Create a New Context
 Use this process when you need to set up a brand new cluster from scratch.
 
