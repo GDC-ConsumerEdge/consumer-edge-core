@@ -139,17 +139,7 @@ function gsm_get() {
     local p_id="$2"
     local reg="$3"
 
-    if [[ -n "$FORCED_REGION" ]]; then
-        gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --location="${FORCED_REGION}" 2>/dev/null
-        return
-    fi
-
-    # Try global first
     local val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null)
-    if [[ -z "$val" && -n "$reg" ]]; then
-        # Try regional fallback
-        val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --location="${reg}" 2>/dev/null)
-    fi
     echo "$val"
 }
 
@@ -163,44 +153,27 @@ function gsm_put() {
     local labels=""
     if [[ -n "$cl_name" ]]; then
         # GSM labels must be lowercase, alphanumeric, hyphens or underscores
-        local label_val=$(echo "$cl_name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]/_/g')
+        local label_val=$(echo "$cl_name" | tr '[:upper:]' '[:lower:]' | awk '{gsub(/[^a-z0-9_-]/, "_"); print}')
         labels="--labels=cluster=$label_val"
     fi
 
-    local is_regional=false
-
-    if [[ -n "$FORCED_REGION" ]]; then
-        is_regional=true
-        if ! gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${FORCED_REGION}" &>/dev/null; then
-             if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --location="${FORCED_REGION}" ${labels} --project="${p_id}" &>/dev/null; then
+    if ! gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
+        if [[ -n "$FORCED_REGION" ]]; then
+             if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${FORCED_REGION}" ${labels} --project="${p_id}" &>/dev/null; then
                  pretty_print "Failed to create regional secret '${secret_name}' in ${FORCED_REGION}." "ERROR"
                  return 1
              fi
-        fi
-    else
-        # Check if it exists globally
-        if ! gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
-            # Doesn't exist globally. Try describing regionally.
-            if [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
-                is_regional=true
-            else
-                # Doesn't exist anywhere. Try creating globally first.
-                if ! gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" &>/dev/null; then
-                    # Global creation failed. Try regional creation if region is provided.
-                    if [[ -n "$reg" ]]; then
-                        if gcloud secrets create "${secret_name}" --replication-policy="user-managed" --location="${reg}" ${labels} --project="${p_id}" &>/dev/null; then
-                            is_regional=true
-                        else
-                            # Both global and regional creation failed
-                            pretty_print "Failed to create secret '${secret_name}' globally and regionally. Check permissions." "ERROR"
-                            return 1
-                        fi
-                    else
-                        # Global creation failed and no region provided
-                        pretty_print "Failed to create secret '${secret_name}' globally and no region provided. Check permissions." "ERROR"
-                        return 1
-                    fi
-                fi
+        else
+            if ! gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" &>/dev/null; then
+                 if [[ -n "$reg" ]]; then
+                     if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${reg}" ${labels} --project="${p_id}" &>/dev/null; then
+                         pretty_print "Failed to create secret '${secret_name}' globally and regionally. Check permissions." "ERROR"
+                         return 1
+                     fi
+                 else
+                     pretty_print "Failed to create secret '${secret_name}' globally and no region provided. Check permissions." "ERROR"
+                     return 1
+                 fi
             fi
         fi
     fi
@@ -211,11 +184,7 @@ function gsm_put() {
         return 0
     fi
 
-    if [[ "$is_regional" == true ]]; then
-        echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}" --location="${FORCED_REGION:-$reg}"
-    else
-        echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}"
-    fi
+    echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}"
 }
 function dehydrate_context() {
     local target_dir="$1"
@@ -632,18 +601,7 @@ function validate_gsm_secret() {
     local missing_action="${3:-MISSING}"
     local reg="$4"
 
-    if [[ -n "$FORCED_REGION" ]]; then
-        if gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${FORCED_REGION}" &>/dev/null; then
-            echo "OK"
-        else
-            echo "$missing_action"
-        fi
-        return
-    fi
-
     if gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
-        echo "OK"
-    elif [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
         echo "OK"
     else
         echo "$missing_action"
