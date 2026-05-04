@@ -591,7 +591,7 @@ function print_gsm_examples() {
 
     if [[ -n "$FORCED_REGION" ]]; then
         rep_policy="--replication-policy=\"user-managed\""
-        loc_flag=" --location=\"$FORCED_REGION\""
+        loc_flag=" --locations=\"$FORCED_REGION\""
     fi
 
     pretty_print "\nHow to fix missing secrets:" "INFO"
@@ -602,22 +602,22 @@ function print_gsm_examples() {
             "scm-user")
                 echo "# Create Git Username Secret"
                 echo "gcloud secrets create gdc-${cl_name}-scm-user --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
-                echo "echo -n \"YOUR_GIT_USERNAME\" | gcloud secrets versions add gdc-${cl_name}-scm-user --project=\"$p_id\"${loc_flag} --data-file=-"
+                echo "echo -n \"YOUR_GIT_USERNAME\" | gcloud secrets versions add gdc-${cl_name}-scm-user --project=\"$p_id\" --data-file=-"
                 ;;
             "scm-token")
                 echo "# Create Git Token Secret"
                 echo "gcloud secrets create gdc-${cl_name}-scm-token --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
-                echo "echo -n \"YOUR_GIT_TOKEN\" | gcloud secrets versions add gdc-${cl_name}-scm-token --project=\"$p_id\"${loc_flag} --data-file=-"
+                echo "echo -n \"YOUR_GIT_TOKEN\" | gcloud secrets versions add gdc-${cl_name}-scm-token --project=\"$p_id\" --data-file=-"
                 ;;
             "prov-gsa")
                 echo "# Create Provisioning GSA Key Secret (Upload your JSON key file)"
                 echo "gcloud secrets create gdc-${cl_name}-prov-gsa --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
-                echo "gcloud secrets versions add gdc-${cl_name}-prov-gsa --project=\"$p_id\"${loc_flag} --data-file=path/to/provisioning-gsa.json"
+                echo "gcloud secrets versions add gdc-${cl_name}-prov-gsa --project=\"$p_id\" --data-file=path/to/provisioning-gsa.json"
                 ;;
             "node-gsa")
                 echo "# Create Node GSA Key Secret (Upload your JSON key file)"
                 echo "gcloud secrets create gdc-${cl_name}-node-gsa --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
-                echo "gcloud secrets versions add gdc-${cl_name}-node-gsa --project=\"$p_id\"${loc_flag} --data-file=path/to/node-gsa.json"
+                echo "gcloud secrets versions add gdc-${cl_name}-node-gsa --project=\"$p_id\" --data-file=path/to/node-gsa.json"
                 ;;
         esac
         echo ""
