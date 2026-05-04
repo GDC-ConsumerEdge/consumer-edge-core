@@ -31,4 +31,4 @@
     - always
   roles:
   - validate
-  vars: []
+  vars: {}

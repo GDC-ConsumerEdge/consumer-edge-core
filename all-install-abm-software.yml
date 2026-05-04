@@ -38,6 +38,6 @@
   - abm-login-token
   - coral-tpu-install
   - nvidia-drivers-install
-  vars: []
+  vars: {}
   tags:
   - software

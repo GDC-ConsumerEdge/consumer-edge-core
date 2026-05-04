@@ -36,6 +36,6 @@
     - always
   roles:
   - abm-remove
-  vars: []
+  vars: {}
   tags:
   - hardware

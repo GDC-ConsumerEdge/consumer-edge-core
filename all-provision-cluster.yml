@@ -32,6 +32,6 @@
     - always
   roles:
   - abm-install
-  vars: []
+  vars: {}
   tags:
   - hardware
