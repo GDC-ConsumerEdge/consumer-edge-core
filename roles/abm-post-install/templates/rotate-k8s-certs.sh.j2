@@ -44,6 +44,17 @@ NODE_NAME=$(hostname)
 
 ### GCS Distributed Lock Logic
 
+verify_bucket() {
+    echo "Verifying GCS lock bucket exists: ${LOCK_BUCKET}"
+    if ! gcloud storage ls "${LOCK_BUCKET}" &>/dev/null; then
+        >&2 echo "CRITICAL ERROR: The bucket ${LOCK_BUCKET} does not exist or is not accessible."
+        >&2 echo "Cannot acquire distributed lock. Exiting to prevent concurrent executions."
+        exit 1
+    fi
+}
+
+verify_bucket
+
 acquire_lock() {
     echo "Node ${NODE_NAME} attempting to acquire cluster-wide lock at ${LOCK_URI}..."
     echo "Owner: ${NODE_NAME}, Time: $(date -u)" > /tmp/cert-rotation-lock-info
