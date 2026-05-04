@@ -28,10 +28,20 @@ If a context already exists in Google Secret Manager (GSM) but is not on your lo
 
 ### Scenario A: I have the folder locally, but it's "Closed"
 If you already have the `build-artifacts-<name>` folder but the secrets (SSH keys, GSA keys, tokens) are missing or wiped, run:
-```bash
-./scripts/instance-context.sh -o <context-name>
-```
-*   **What this does:** Reads the metadata from the folder's `envrc`, fetches all secrets from GSM, and restores the `configs/<name>-config.yaml` file.
+
+1. **Open the context**
+    ```bash
+    ./scripts/instance-context.sh -o <context-name>
+    ```
+  * **What this does:** Opens the context and downloads all secrets from GSM to the local disk.
+
+2. **Do work**
+
+3. **Close the context**
+    ```bash
+    ./scripts/instance-context.sh -x <context-name>
+    ```
+    * **What this does:** Closes the context and removes all secrets from the local disk.
 
 ### Scenario B: I do NOT have the folder locally
 If you are on a new machine and need to "download" an existing context from scratch:
@@ -41,14 +51,28 @@ If you are on a new machine and need to "download" an existing context from scra
     # Replace <cluster-name> and <project-id> with your values
     gcloud secrets versions access latest \
       --secret="gdc-<cluster-name>-config-yaml" \
-      --project="<project-id>" > my-config.yaml
+      --project="<project-id>" > configs/my-config.yaml
     ```
 
 2.  **Recreate the Local Context**:
     ```bash
-    ./scripts/instance-context.sh -g my-config.yaml
+    ./scripts/instance-context.sh -g configs/my-config.yaml
     ```
     *   **What this does:** Recreates the folder structure, inventory, and environment files, and automatically hydrates (opens) it with all secrets from GSM.
+
+3. **Open the context**
+    ```bash
+    ./scripts/instance-context.sh -o <context-name>
+    ```
+  * **What this does:** Opens the context and downloads all secrets from GSM to the local disk.
+
+4. **Do work**
+
+5. **Close the context**
+    ```bash
+    ./scripts/instance-context.sh -x <context-name>
+    ```
+    * **What this does:** Closes the context and removes all secrets from the local disk.
 
 ---
 
