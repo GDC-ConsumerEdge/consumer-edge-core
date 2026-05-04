@@ -139,17 +139,7 @@ function gsm_get() {
     local p_id="$2"
     local reg="$3"
 
-    if [[ -n "$FORCED_REGION" ]]; then
-        gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --location="${FORCED_REGION}" 2>/dev/null
-        return
-    fi
-
-    # Try global first
     local val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null)
-    if [[ -z "$val" && -n "$reg" ]]; then
-        # Try regional fallback
-        val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --location="${reg}" 2>/dev/null)
-    fi
     echo "$val"
 }
 
@@ -163,44 +153,27 @@ function gsm_put() {
     local labels=""
     if [[ -n "$cl_name" ]]; then
         # GSM labels must be lowercase, alphanumeric, hyphens or underscores
-        local label_val=$(echo "$cl_name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]/_/g')
+        local label_val=$(echo "$cl_name" | tr '[:upper:]' '[:lower:]' | awk '{gsub(/[^a-z0-9_-]/, "_"); print}')
         labels="--labels=cluster=$label_val"
     fi
 
-    local is_regional=false
-
-    if [[ -n "$FORCED_REGION" ]]; then
-        is_regional=true
-        if ! gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${FORCED_REGION}" &>/dev/null; then
-             if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --location="${FORCED_REGION}" ${labels} --project="${p_id}" &>/dev/null; then
+    if ! gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
+        if [[ -n "$FORCED_REGION" ]]; then
+             if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${FORCED_REGION}" ${labels} --project="${p_id}" &>/dev/null; then
                  pretty_print "Failed to create regional secret '${secret_name}' in ${FORCED_REGION}." "ERROR"
                  return 1
              fi
-        fi
-    else
-        # Check if it exists globally
-        if ! gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
-            # Doesn't exist globally. Try describing regionally.
-            if [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
-                is_regional=true
-            else
-                # Doesn't exist anywhere. Try creating globally first.
-                if ! gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" &>/dev/null; then
-                    # Global creation failed. Try regional creation if region is provided.
-                    if [[ -n "$reg" ]]; then
-                        if gcloud secrets create "${secret_name}" --replication-policy="user-managed" --location="${reg}" ${labels} --project="${p_id}" &>/dev/null; then
-                            is_regional=true
-                        else
-                            # Both global and regional creation failed
-                            pretty_print "Failed to create secret '${secret_name}' globally and regionally. Check permissions." "ERROR"
-                            return 1
-                        fi
-                    else
-                        # Global creation failed and no region provided
-                        pretty_print "Failed to create secret '${secret_name}' globally and no region provided. Check permissions." "ERROR"
-                        return 1
-                    fi
-                fi
+        else
+            if ! gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" &>/dev/null; then
+                 if [[ -n "$reg" ]]; then
+                     if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${reg}" ${labels} --project="${p_id}" &>/dev/null; then
+                         pretty_print "Failed to create secret '${secret_name}' globally and regionally. Check permissions." "ERROR"
+                         return 1
+                     fi
+                 else
+                     pretty_print "Failed to create secret '${secret_name}' globally and no region provided. Check permissions." "ERROR"
+                     return 1
+                 fi
             fi
         fi
     fi
@@ -211,11 +184,7 @@ function gsm_put() {
         return 0
     fi
 
-    if [[ "$is_regional" == true ]]; then
-        echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}" --location="${FORCED_REGION:-$reg}"
-    else
-        echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}"
-    fi
+    echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}"
 }
 function dehydrate_context() {
     local target_dir="$1"
@@ -239,10 +208,13 @@ function dehydrate_context() {
     # 2. Scrub envrc
     if [[ -f "$target_dir/envrc" ]]; then
         local closed="****closed*******"
-        sed -i "s/.*SCM_TOKEN_USER=.*/export SCM_TOKEN_USER=\"$closed\"/" "$target_dir/envrc"
-        sed -i "s/.*SCM_TOKEN_TOKEN=.*/export SCM_TOKEN_TOKEN=\"$closed\"/" "$target_dir/envrc"
-        sed -i "s/.*OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$closed\"/" "$target_dir/envrc"
-        sed -i "s/.*OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$closed\"/" "$target_dir/envrc"
+        awk -v closed="$closed" '{
+            gsub(/.*SCM_TOKEN_USER=.*/, "export SCM_TOKEN_USER=\""closed"\"");
+            gsub(/.*SCM_TOKEN_TOKEN=.*/, "export SCM_TOKEN_TOKEN=\""closed"\"");
+            gsub(/.*OIDC_CLIENT_ID=.*/, "export OIDC_CLIENT_ID=\""closed"\"");
+            gsub(/.*OIDC_CLIENT_SECRET=.*/, "export OIDC_CLIENT_SECRET=\""closed"\"");
+            print
+        }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
     fi
 
     # 3. Wipe configs yaml
@@ -348,10 +320,15 @@ function hydrate_context() {
     local oidc_secret=$(gsm_get "gdc-${cl_name}-oidc-secret" "$p_id" "$reg")
 
     # Inject into envrc
-    if [[ -n "$scm_user" ]]; then sed -i "s/.*SCM_TOKEN_USER=.*/export SCM_TOKEN_USER=\"$scm_user\"/" "$target_dir/envrc"; fi
-    if [[ -n "$scm_token" ]]; then sed -i "s/.*SCM_TOKEN_TOKEN=.*/export SCM_TOKEN_TOKEN=\"$scm_token\"/" "$target_dir/envrc"; fi
-    if [[ -n "$oidc_id" ]]; then sed -i "s/.*OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$oidc_id\"/" "$target_dir/envrc"; fi
-    if [[ -n "$oidc_secret" ]]; then sed -i "s/.*OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$oidc_secret\"/" "$target_dir/envrc"; fi
+    if [[ -n "$scm_user" || -n "$scm_token" || -n "$oidc_id" || -n "$oidc_secret" ]]; then
+        awk -v scm_u="$scm_user" -v scm_t="$scm_token" -v oidc_i="$oidc_id" -v oidc_s="$oidc_secret" '{
+            if (scm_u != "") sub(/.*SCM_TOKEN_USER=.*/, "export SCM_TOKEN_USER=\""scm_u"\"");
+            if (scm_t != "") sub(/.*SCM_TOKEN_TOKEN=.*/, "export SCM_TOKEN_TOKEN=\""scm_t"\"");
+            if (oidc_i != "") sub(/.*OIDC_CLIENT_ID=.*/, "export OIDC_CLIENT_ID=\""oidc_i"\"");
+            if (oidc_s != "") sub(/.*OIDC_CLIENT_SECRET=.*/, "export OIDC_CLIENT_SECRET=\""oidc_s"\"");
+            print
+        }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
+    fi
 
     local link_target="$target_dir"
     if [[ -L "$target_dir" ]]; then
@@ -474,24 +451,24 @@ function ingest_context() {
     local acm_ver=$(yq e '.acm_version' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
     local storage=$(yq e '.storage_provider' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
 
-    # Update core values using sed to preserve comments in the template
-    sed -i "s@^context_name:.*@context_name: \"${name}\"@" "$yaml_out"
-    sed -i "s@^cluster_name:.*@cluster_name: \"${cl_name}\"@" "$yaml_out"
-    sed -i "s@^project_id:.*@project_id: \"${p_id}\"@" "$yaml_out"
+    # Update core values using yq safely
+    name="$name" yq e -i '.context_name = env(name)' "$yaml_out"
+    cl_name="$cl_name" yq e -i '.cluster_name = env(cl_name)' "$yaml_out"
+    p_id="$p_id" yq e -i '.project_id = env(p_id)' "$yaml_out"
 
-    if [[ -n "$reg" ]]; then sed -i "s@^region:.*@region: \"${reg}\"@" "$yaml_out"; fi
-    if [[ -n "$zn" ]]; then sed -i "s@^zone:.*@zone: \"${zn}\"@" "$yaml_out"; fi
+    if [[ -n "$reg" ]]; then reg="$reg" yq e -i '.region = env(reg)' "$yaml_out"; fi
+    if [[ -n "$zn" ]]; then zn="$zn" yq e -i '.zone = env(zn)' "$yaml_out"; fi
 
-    if [[ -n "$cp_vip" && "$cp_vip" != "null" ]]; then sed -i "s@^control_plane_vip:.*@control_plane_vip: \"${cp_vip}\"@" "$yaml_out"; fi
-    if [[ -n "$in_vip" && "$in_vip" != "null" ]]; then sed -i "s@^ingress_vip:.*@ingress_vip: \"${in_vip}\"@" "$yaml_out"; fi
-    if [[ -n "$lb_pool" && "$lb_pool" != "null" ]]; then sed -i "s@^load_balancer_pool_cidr:.*@load_balancer_pool_cidr: \"${lb_pool}\"@" "$yaml_out"; fi
+    if [[ -n "$cp_vip" && "$cp_vip" != "null" ]]; then cp_vip="$cp_vip" yq e -i '.control_plane_vip = env(cp_vip)' "$yaml_out"; fi
+    if [[ -n "$in_vip" && "$in_vip" != "null" ]]; then in_vip="$in_vip" yq e -i '.ingress_vip = env(in_vip)' "$yaml_out"; fi
+    if [[ -n "$lb_pool" && "$lb_pool" != "null" ]]; then lb_pool="$lb_pool" yq e -i '.load_balancer_pool_cidr = env(lb_pool)' "$yaml_out"; fi
 
-    if [[ -n "$repo_url" && "$repo_url" != "null" ]]; then sed -i "s@^root_repo_url:.*@root_repo_url: \"${repo_url}\"@" "$yaml_out"; fi
-    if [[ -n "$repo_branch" && "$repo_branch" != "null" ]]; then sed -i "s@^root_repo_branch:.*@root_repo_branch: \"${repo_branch}\"@" "$yaml_out"; fi
+    if [[ -n "$repo_url" && "$repo_url" != "null" ]]; then repo_url="$repo_url" yq e -i '.root_repo_url = env(repo_url)' "$yaml_out"; fi
+    if [[ -n "$repo_branch" && "$repo_branch" != "null" ]]; then repo_branch="$repo_branch" yq e -i '.root_repo_branch = env(repo_branch)' "$yaml_out"; fi
 
-    if [[ -n "$storage" && "$storage" != "null" ]]; then sed -i "s@^storage_provider:.*@storage_provider: \"${storage}\"@" "$yaml_out"; fi
-    if [[ -n "$abm_ver" && "$abm_ver" != "null" ]]; then sed -i "s@^abm_version:.*@abm_version: \"${abm_ver}\"@" "$yaml_out"; fi
-    if [[ -n "$acm_ver" && "$acm_ver" != "null" ]]; then sed -i "s@^acm_version:.*@acm_version: \"${acm_ver}\"@" "$yaml_out"; fi
+    if [[ -n "$storage" && "$storage" != "null" ]]; then storage="$storage" yq e -i '.storage_provider = env(storage)' "$yaml_out"; fi
+    if [[ -n "$abm_ver" && "$abm_ver" != "null" ]]; then abm_ver="$abm_ver" yq e -i '.abm_version = env(abm_ver)' "$yaml_out"; fi
+    if [[ -n "$acm_ver" && "$acm_ver" != "null" ]]; then acm_ver="$acm_ver" yq e -i '.acm_version = env(acm_ver)' "$yaml_out"; fi
 
     # Handle Robin disk paths (if Robin is the storage provider)
     if [[ "$storage" == "robin" ]]; then
@@ -507,7 +484,7 @@ function ingest_context() {
 
         local robin_bundle=$(yq e '.robin_install_bundle_file' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
         if [[ -n "$robin_bundle" && "$robin_bundle" != "null" ]]; then
-             sed -i "s@^# robin_install_bundle_file:.*@robin_install_bundle_file: \"${robin_bundle}\"@" "$yaml_out"
+             robin_bundle="$robin_bundle" yq e -i '.robin_install_bundle_file = env(robin_bundle)' "$yaml_out"
         fi
     fi
 
@@ -578,6 +555,14 @@ function print_gsm_examples() {
     shift 2
     local missing=("$@")
 
+    local rep_policy="--replication-policy=\"automatic\""
+    local loc_flag=""
+
+    if [[ -n "$FORCED_REGION" ]]; then
+        rep_policy="--replication-policy=\"user-managed\""
+        loc_flag=" --locations=\"$FORCED_REGION\""
+    fi
+
     pretty_print "\nHow to fix missing secrets:" "INFO"
     pretty_print "======================================="
 
@@ -585,22 +570,22 @@ function print_gsm_examples() {
         case "$item" in
             "scm-user")
                 echo "# Create Git Username Secret"
-                echo "gcloud secrets create gdc-${cl_name}-scm-user --project=\"$p_id\" --labels=\"cluster=$cl_name\" --replication-policy=\"automatic\""
+                echo "gcloud secrets create gdc-${cl_name}-scm-user --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
                 echo "echo -n \"YOUR_GIT_USERNAME\" | gcloud secrets versions add gdc-${cl_name}-scm-user --project=\"$p_id\" --data-file=-"
                 ;;
             "scm-token")
                 echo "# Create Git Token Secret"
-                echo "gcloud secrets create gdc-${cl_name}-scm-token --project=\"$p_id\" --labels=\"cluster=$cl_name\" --replication-policy=\"automatic\""
+                echo "gcloud secrets create gdc-${cl_name}-scm-token --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
                 echo "echo -n \"YOUR_GIT_TOKEN\" | gcloud secrets versions add gdc-${cl_name}-scm-token --project=\"$p_id\" --data-file=-"
                 ;;
             "prov-gsa")
                 echo "# Create Provisioning GSA Key Secret (Upload your JSON key file)"
-                echo "gcloud secrets create gdc-${cl_name}-prov-gsa --project=\"$p_id\" --labels=\"cluster=$cl_name\" --replication-policy=\"automatic\""
+                echo "gcloud secrets create gdc-${cl_name}-prov-gsa --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
                 echo "gcloud secrets versions add gdc-${cl_name}-prov-gsa --project=\"$p_id\" --data-file=path/to/provisioning-gsa.json"
                 ;;
             "node-gsa")
                 echo "# Create Node GSA Key Secret (Upload your JSON key file)"
-                echo "gcloud secrets create gdc-${cl_name}-node-gsa --project=\"$p_id\" --labels=\"cluster=$cl_name\" --replication-policy=\"automatic\""
+                echo "gcloud secrets create gdc-${cl_name}-node-gsa --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
                 echo "gcloud secrets versions add gdc-${cl_name}-node-gsa --project=\"$p_id\" --data-file=path/to/node-gsa.json"
                 ;;
         esac
@@ -616,18 +601,7 @@ function validate_gsm_secret() {
     local missing_action="${3:-MISSING}"
     local reg="$4"
 
-    if [[ -n "$FORCED_REGION" ]]; then
-        if gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${FORCED_REGION}" &>/dev/null; then
-            echo "OK"
-        else
-            echo "$missing_action"
-        fi
-        return
-    fi
-
     if gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
-        echo "OK"
-    elif [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
         echo "OK"
     else
         echo "$missing_action"
@@ -781,19 +755,34 @@ function generate_context() {
         cp templates/envrc-template.sh "$target/envrc"
     fi
 
-    sed -i "1i # This file sets environment variables for the cluster provisioning run." "$target/envrc"
-    sed -i "s|export PROJECT_ID=.*|export PROJECT_ID=\"${p_id}\" # GCP Project ID (from YAML project_id)|" "$target/envrc"
-    sed -i "s|export REGION=.*|export REGION=\"${reg}\" # GCP Region (from YAML region)|" "$target/envrc"
-    sed -i "s|export ZONE=.*|export ZONE=\"${zn}\" # GCP Zone (from YAML zone)|" "$target/envrc"
-    sed -i "s|export CLUSTER_ACM_NAME=.*|export CLUSTER_ACM_NAME=\"${cl_name}\" # Cluster name used by ACM (from YAML cluster_name)|" "$target/envrc"
-    sed -i "s|export ROOT_REPO_URL=.*|export ROOT_REPO_URL=\"${root_repo_url}\" # Root SCM Repo|" "$target/envrc"
-
-    # ROOT_REPO_BRANCH might not exist in the template, so safely append or replace
-    if grep -q "export ROOT_REPO_BRANCH=" "$target/envrc"; then
-        sed -i "s|export ROOT_REPO_BRANCH=.*|export ROOT_REPO_BRANCH=\"${root_repo_branch}\"|" "$target/envrc"
-    else
-        sed -i "/export ROOT_REPO_URL=/a export ROOT_REPO_BRANCH=\"${root_repo_branch}\"" "$target/envrc"
-    fi
+    awk -v p_id="$p_id" -v reg="$reg" -v zn="$zn" -v cl_name="$cl_name" -v r_url="$root_repo_url" -v r_branch="$root_repo_branch" '
+    BEGIN { print "# This file sets environment variables for the cluster provisioning run." }
+    {
+        gsub(/export PROJECT_ID=.*/, "export PROJECT_ID=\""p_id"\" # GCP Project ID (from YAML project_id)")
+        gsub(/export REGION=.*/, "export REGION=\""reg"\" # GCP Region (from YAML region)")
+        gsub(/export ZONE=.*/, "export ZONE=\""zn"\" # GCP Zone (from YAML zone)")
+        gsub(/export CLUSTER_ACM_NAME=.*/, "export CLUSTER_ACM_NAME=\""cl_name"\" # Cluster name used by ACM (from YAML cluster_name)")
+        
+        if ($0 ~ /export ROOT_REPO_URL=/) {
+            print "export ROOT_REPO_URL=\""r_url"\" # Root SCM Repo"
+            if (!branch_added) {
+                print "export ROOT_REPO_BRANCH=\""r_branch"\""
+                branch_added = 1
+            }
+            next
+        }
+        
+        if ($0 ~ /export ROOT_REPO_BRANCH=/) {
+            if (!branch_added) {
+                print "export ROOT_REPO_BRANCH=\""r_branch"\""
+                branch_added = 1
+            }
+            next
+        }
+        
+        print
+    }
+    ' "$target/envrc" > "$target/envrc.tmp" && mv "$target/envrc.tmp" "$target/envrc"
 
     # 2. Update inventory.yaml
     mv "$target/inventory-example.yaml" "$target/inventory.yaml" 2>/dev/null || true
@@ -814,10 +803,10 @@ function generate_context() {
     yq e -i "del(.[\"${cl_name}_cluster\"].vars.peer_node_ips)" "$target/inventory.yaml"
     yq e -i ".[\"${cl_name}_cluster\"].vars.peer_node_ips = []" "$target/inventory.yaml"
 
-    # Add comments to inventory.yaml fields using yq head comments if possible, but simpler to use sed for blocks
-    sed -i "/cluster_name: \"${cl_name}\"/s/$/ # Name of the cluster (from YAML cluster_name)/" "$target/inventory.yaml"
-    sed -i "/control_plane_vip: \"${cp_vip}\"/s/$/ # K8s API endpoint (from YAML control_plane_vip)/" "$target/inventory.yaml"
-    sed -i "/ingress_vip: \"${in_vip}\"/s/$/ # Entry point for services (from YAML ingress_vip)/" "$target/inventory.yaml"
+    # Add comments to inventory.yaml fields using yq line_comment
+    cl_name="$cl_name" yq e -i '.[env(cl_name) + "_cluster"].vars.cluster_name line_comment="Name of the cluster (from YAML cluster_name)"' "$target/inventory.yaml"
+    cl_name="$cl_name" yq e -i '.[env(cl_name) + "_cluster"].vars.control_plane_vip line_comment="K8s API endpoint (from YAML control_plane_vip)"' "$target/inventory.yaml"
+    cl_name="$cl_name" yq e -i '.[env(cl_name) + "_cluster"].vars.ingress_vip line_comment="Entry point for services (from YAML ingress_vip)"' "$target/inventory.yaml"
 
     # Parse nodes for inventory hosts
     local num_nodes=$(yq e '.nodes | length' "$yaml_file")
@@ -853,56 +842,37 @@ function generate_context() {
     if [[ ! -f "$target/instance-run-vars.yaml" ]]; then
         cp templates/instance-run-vars-template.yaml "$target/instance-run-vars.yaml"
     fi
-    sed -i "1i # Variables specific to this provisioning run (e.g. storage provider)" "$target/instance-run-vars.yaml"
+    
+    # Insert header
+    awk "BEGIN{print \"# Variables specific to this provisioning run (e.g. storage provider)\"}1" "$target/instance-run-vars.yaml" > "$target/instance-run-vars.tmp" && mv "$target/instance-run-vars.tmp" "$target/instance-run-vars.yaml"
 
     if [[ -n "$storage_provider" && "$storage_provider" != "null" ]]; then
-        # Check if the key exists (commented or not). Yq doesn't easily uncomment, so we append/replace using sed for the simple string
-        if grep -q "storage_provider:" "$target/instance-run-vars.yaml"; then
-            sed -i "s|.*storage_provider:.*|storage_provider: \"${storage_provider}\"|" "$target/instance-run-vars.yaml"
-        else
-            echo "storage_provider: \"${storage_provider}\"" >> "$target/instance-run-vars.yaml"
-        fi
+        storage_provider="$storage_provider" yq e -i '.storage_provider = env(storage_provider)' "$target/instance-run-vars.yaml"
 
         if [[ "$storage_provider" == "robin" ]]; then
             local num_disks=$(yq e '.robin_disk_paths | length' "$yaml_file")
             if [[ "$num_disks" -gt 0 && "$num_disks" != "null" ]]; then
-                # Remove any existing commented or uncommented robin_disk_paths block to avoid yq parsing errors on comments
-                sed -i '/robin_disk_paths:/d' "$target/instance-run-vars.yaml"
-                sed -i '/"\/dev\/nvme0n1p4"/d' "$target/instance-run-vars.yaml"
-                sed -i '/\]/d' "$target/instance-run-vars.yaml"
-
-                # Use yq to safely inject the array
+                # Ensure the key exists and is empty
                 yq e -i '.robin_disk_paths = []' "$target/instance-run-vars.yaml"
                 for (( i=0; i<$num_disks; i++ )); do
                     local disk_path=$(yq e ".robin_disk_paths[$i]" "$yaml_file")
-                    yq e -i ".robin_disk_paths += [\"${disk_path}\"]" "$target/instance-run-vars.yaml"
+                    # Safe injection
+                    disk_path="$disk_path" yq e -i '.robin_disk_paths += [env(disk_path)]' "$target/instance-run-vars.yaml"
                 done
             fi
         fi
     fi
 
     if [[ -n "$abm_version" && "$abm_version" != "null" ]]; then
-        if grep -q "abm_version:" "$target/instance-run-vars.yaml"; then
-            sed -i "s|.*abm_version:.*|abm_version: \"${abm_version}\"|" "$target/instance-run-vars.yaml"
-        else
-            echo "abm_version: \"${abm_version}\"" >> "$target/instance-run-vars.yaml"
-        fi
+        abm_version="$abm_version" yq e -i '.abm_version = env(abm_version)' "$target/instance-run-vars.yaml"
     fi
 
     if [[ -n "$acm_version" && "$acm_version" != "null" ]]; then
-        if grep -q "acm_version:" "$target/instance-run-vars.yaml"; then
-            sed -i "s|.*acm_version:.*|acm_version: \"${acm_version}\"|" "$target/instance-run-vars.yaml"
-        else
-            echo "acm_version: \"${acm_version}\"" >> "$target/instance-run-vars.yaml"
-        fi
+        acm_version="$acm_version" yq e -i '.acm_version = env(acm_version)' "$target/instance-run-vars.yaml"
     fi
 
     if [[ "$storage_provider" == "robin" && -n "$robin_bundle" && "$robin_bundle" != "null" ]]; then
-        if grep -q "robin_install_bundle_file:" "$target/instance-run-vars.yaml"; then
-            sed -i "s|.*robin_install_bundle_file:.*|robin_install_bundle_file: \"${robin_bundle}\"|" "$target/instance-run-vars.yaml"
-        else
-            echo "robin_install_bundle_file: \"${robin_bundle}\"" >> "$target/instance-run-vars.yaml"
-        fi
+        robin_bundle="$robin_bundle" yq e -i '.robin_install_bundle_file = env(robin_bundle)' "$target/instance-run-vars.yaml"
 
         # Copy the file into the context if it's outside
         if [[ ! -f "$target/${robin_bundle##*/}" && -f "$robin_bundle" ]]; then
@@ -916,13 +886,16 @@ function generate_context() {
     local existing_ssh=$(gsm_get "gdc-${cl_name}-ssh-key" "$p_id" "$reg")
     if [[ -n "$existing_ssh" ]]; then
         pretty_print "Existing SSH key found in GSM, using it." "INFO"
+        rm -f "$target/consumer-edge-machine"
         echo "$existing_ssh" > "$target/consumer-edge-machine"
         trim_key_file "$target/consumer-edge-machine"
         chmod 600 "$target/consumer-edge-machine"
+        rm -f "$target/consumer-edge-machine.pub"
         gsm_get "gdc-${cl_name}-ssh-key-pub" "$p_id" "$reg" > "$target/consumer-edge-machine.pub"
         trim_key_file "$target/consumer-edge-machine.pub"
     else
         pretty_print "No SSH key found in GSM, generating new pair..." "INFO"
+        rm -f "$target/consumer-edge-machine" "$target/consumer-edge-machine.pub"
         ssh-keygen -t rsa -b 4096 -f "$target/consumer-edge-machine" -N "" -q
         trim_key_file "$target/consumer-edge-machine"
         trim_key_file "$target/consumer-edge-machine.pub"
