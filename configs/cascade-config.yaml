@@ -1,0 +1,11 @@
+context_name: "cascade"
+cluster_name: "cascade"
+project_id: "test-gcp-project"
+region: "us-west1"
+zone: "us-west1-a"
+control_plane_vip: "10.0.0.1"
+ingress_vip: "10.0.0.2"
+load_balancer_pool_cidr: "10.0.0.0/24"
+nodes:
+  - name: "cascade-cp-1"
+    ip: "10.0.0.3"
