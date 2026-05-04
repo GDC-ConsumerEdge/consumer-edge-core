@@ -351,10 +351,15 @@ function hydrate_context() {
     local oidc_secret=$(gsm_get "gdc-${cl_name}-oidc-secret" "$p_id" "$reg")
 
     # Inject into envrc
-    if [[ -n "$scm_user" ]]; then sed -i "s/.*SCM_TOKEN_USER=.*/export SCM_TOKEN_USER=\"$scm_user\"/" "$target_dir/envrc"; fi
-    if [[ -n "$scm_token" ]]; then sed -i "s/.*SCM_TOKEN_TOKEN=.*/export SCM_TOKEN_TOKEN=\"$scm_token\"/" "$target_dir/envrc"; fi
-    if [[ -n "$oidc_id" ]]; then sed -i "s/.*OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$oidc_id\"/" "$target_dir/envrc"; fi
-    if [[ -n "$oidc_secret" ]]; then sed -i "s/.*OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$oidc_secret\"/" "$target_dir/envrc"; fi
+    if [[ -n "$scm_user" || -n "$scm_token" || -n "$oidc_id" || -n "$oidc_secret" ]]; then
+        awk -v scm_u="$scm_user" -v scm_t="$scm_token" -v oidc_i="$oidc_id" -v oidc_s="$oidc_secret" '{
+            if (scm_u != "") sub(/.*SCM_TOKEN_USER=.*/, "export SCM_TOKEN_USER=\""scm_u"\"");
+            if (scm_t != "") sub(/.*SCM_TOKEN_TOKEN=.*/, "export SCM_TOKEN_TOKEN=\""scm_t"\"");
+            if (oidc_i != "") sub(/.*OIDC_CLIENT_ID=.*/, "export OIDC_CLIENT_ID=\""oidc_i"\"");
+            if (oidc_s != "") sub(/.*OIDC_CLIENT_SECRET=.*/, "export OIDC_CLIENT_SECRET=\""oidc_s"\"");
+            print
+        }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
+    fi
 
     local link_target="$target_dir"
     if [[ -L "$target_dir" ]]; then
