@@ -159,17 +159,27 @@ function gsm_put() {
 
     local is_regional=false
 
+    # Check if it exists globally
     if ! gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
-        # Try describing regionally if global fails, to see if it exists regionally
+        # Doesn't exist globally. Try describing regionally.
         if [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
             is_regional=true
         else
-            # Doesn't exist globally or regionally. Try creating globally first.
+            # Doesn't exist anywhere. Try creating globally first.
             if ! gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" &>/dev/null; then
-                # If global creation fails, try regional creation
+                # Global creation failed. Try regional creation if region is provided.
                 if [[ -n "$reg" ]]; then
-                    gcloud secrets create "${secret_name}" --replication-policy="user-managed" --location="${reg}" ${labels} --project="${p_id}" &>/dev/null
-                    is_regional=true
+                    if gcloud secrets create "${secret_name}" --replication-policy="user-managed" --location="${reg}" ${labels} --project="${p_id}" &>/dev/null; then
+                        is_regional=true
+                    else
+                        # Both global and regional creation failed
+                        pretty_print "Failed to create secret '${secret_name}' globally and regionally. Check permissions." "ERROR"
+                        return 1
+                    fi
+                else
+                    # Global creation failed and no region provided
+                    pretty_print "Failed to create secret '${secret_name}' globally and no region provided. Check permissions." "ERROR"
+                    return 1
                 fi
             fi
         fi
