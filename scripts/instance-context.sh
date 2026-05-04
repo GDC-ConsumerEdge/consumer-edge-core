@@ -482,24 +482,24 @@ function ingest_context() {
     local acm_ver=$(yq e '.acm_version' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
     local storage=$(yq e '.storage_provider' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
 
-    # Update core values using sed to preserve comments in the template
-    sed -i "s@^context_name:.*@context_name: \"${name}\"@" "$yaml_out"
-    sed -i "s@^cluster_name:.*@cluster_name: \"${cl_name}\"@" "$yaml_out"
-    sed -i "s@^project_id:.*@project_id: \"${p_id}\"@" "$yaml_out"
+    # Update core values using yq safely
+    name="$name" yq e -i '.context_name = env(name)' "$yaml_out"
+    cl_name="$cl_name" yq e -i '.cluster_name = env(cl_name)' "$yaml_out"
+    p_id="$p_id" yq e -i '.project_id = env(p_id)' "$yaml_out"
 
-    if [[ -n "$reg" ]]; then sed -i "s@^region:.*@region: \"${reg}\"@" "$yaml_out"; fi
-    if [[ -n "$zn" ]]; then sed -i "s@^zone:.*@zone: \"${zn}\"@" "$yaml_out"; fi
+    if [[ -n "$reg" ]]; then reg="$reg" yq e -i '.region = env(reg)' "$yaml_out"; fi
+    if [[ -n "$zn" ]]; then zn="$zn" yq e -i '.zone = env(zn)' "$yaml_out"; fi
 
-    if [[ -n "$cp_vip" && "$cp_vip" != "null" ]]; then sed -i "s@^control_plane_vip:.*@control_plane_vip: \"${cp_vip}\"@" "$yaml_out"; fi
-    if [[ -n "$in_vip" && "$in_vip" != "null" ]]; then sed -i "s@^ingress_vip:.*@ingress_vip: \"${in_vip}\"@" "$yaml_out"; fi
-    if [[ -n "$lb_pool" && "$lb_pool" != "null" ]]; then sed -i "s@^load_balancer_pool_cidr:.*@load_balancer_pool_cidr: \"${lb_pool}\"@" "$yaml_out"; fi
+    if [[ -n "$cp_vip" && "$cp_vip" != "null" ]]; then cp_vip="$cp_vip" yq e -i '.control_plane_vip = env(cp_vip)' "$yaml_out"; fi
+    if [[ -n "$in_vip" && "$in_vip" != "null" ]]; then in_vip="$in_vip" yq e -i '.ingress_vip = env(in_vip)' "$yaml_out"; fi
+    if [[ -n "$lb_pool" && "$lb_pool" != "null" ]]; then lb_pool="$lb_pool" yq e -i '.load_balancer_pool_cidr = env(lb_pool)' "$yaml_out"; fi
 
-    if [[ -n "$repo_url" && "$repo_url" != "null" ]]; then sed -i "s@^root_repo_url:.*@root_repo_url: \"${repo_url}\"@" "$yaml_out"; fi
-    if [[ -n "$repo_branch" && "$repo_branch" != "null" ]]; then sed -i "s@^root_repo_branch:.*@root_repo_branch: \"${repo_branch}\"@" "$yaml_out"; fi
+    if [[ -n "$repo_url" && "$repo_url" != "null" ]]; then repo_url="$repo_url" yq e -i '.root_repo_url = env(repo_url)' "$yaml_out"; fi
+    if [[ -n "$repo_branch" && "$repo_branch" != "null" ]]; then repo_branch="$repo_branch" yq e -i '.root_repo_branch = env(repo_branch)' "$yaml_out"; fi
 
-    if [[ -n "$storage" && "$storage" != "null" ]]; then sed -i "s@^storage_provider:.*@storage_provider: \"${storage}\"@" "$yaml_out"; fi
-    if [[ -n "$abm_ver" && "$abm_ver" != "null" ]]; then sed -i "s@^abm_version:.*@abm_version: \"${abm_ver}\"@" "$yaml_out"; fi
-    if [[ -n "$acm_ver" && "$acm_ver" != "null" ]]; then sed -i "s@^acm_version:.*@acm_version: \"${acm_ver}\"@" "$yaml_out"; fi
+    if [[ -n "$storage" && "$storage" != "null" ]]; then storage="$storage" yq e -i '.storage_provider = env(storage)' "$yaml_out"; fi
+    if [[ -n "$abm_ver" && "$abm_ver" != "null" ]]; then abm_ver="$abm_ver" yq e -i '.abm_version = env(abm_ver)' "$yaml_out"; fi
+    if [[ -n "$acm_ver" && "$acm_ver" != "null" ]]; then acm_ver="$acm_ver" yq e -i '.acm_version = env(acm_ver)' "$yaml_out"; fi
 
     # Handle Robin disk paths (if Robin is the storage provider)
     if [[ "$storage" == "robin" ]]; then
@@ -515,7 +515,7 @@ function ingest_context() {
 
         local robin_bundle=$(yq e '.robin_install_bundle_file' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
         if [[ -n "$robin_bundle" && "$robin_bundle" != "null" ]]; then
-             sed -i "s@^# robin_install_bundle_file:.*@robin_install_bundle_file: \"${robin_bundle}\"@" "$yaml_out"
+             robin_bundle="$robin_bundle" yq e -i '.robin_install_bundle_file = env(robin_bundle)' "$yaml_out"
         fi
     fi
 
