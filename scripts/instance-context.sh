@@ -602,6 +602,15 @@ function generate_context() {
         pretty_print "Error: 'yq' is required. Please install it." "ERROR"
         exit 1
     fi
+    
+    local yq_version=$(yq --version 2>&1)
+    if echo "$yq_version" | grep -qv "mikefarah"; then
+        pretty_print "Error: This script requires mikefarah/yq (v4+). Detected a different 'yq' (likely kislyuk/yq)." "ERROR"
+        pretty_print "Please install the Go-based yq:" "INFO"
+        pretty_print "  sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq" "INFO"
+        pretty_print "  sudo chmod +x /usr/bin/yq" "INFO"
+        exit 1
+    fi
     if [[ ! -f "$yaml_file" ]]; then
         pretty_print "Error: YAML file '$yaml_file' not found." "ERROR"
         exit 1
