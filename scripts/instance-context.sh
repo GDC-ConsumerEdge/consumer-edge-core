@@ -29,7 +29,7 @@ want_close=false
 ingest_folder=""
 
 function usage() {
-    pretty_print "Usage: instance-context.sh [-c] [-l] [-g <yaml_file>] [-i <folder>] [-o] [-x] [folder-name]"
+    pretty_print "Usage: instance-context.sh [-c] [-l] [-g <yaml_file>] [-i <folder>] [-o] [-x] [-r <region>] [folder-name]"
     pretty_print "  Change, generate, or ingest a build-artifacts folder to use during an instance run.\n"
     pretty_print "  folder-name\tThe name of the build-artifacts folder to use (Optional)"
     pretty_print "\n  Options/Flags:"
@@ -40,29 +40,34 @@ function usage() {
     pretty_print "  -i folder\tIngest an existing folder into GSM (one-time migration)"
     pretty_print "  -o\t\tOpen (Hydrate) the current context from GSM"
     pretty_print "  -x\t\tClose (Dehydrate) the context (wipes secrets from disk)"
+    pretty_print "  -r region\tStrictly force all Secret Manager operations to a specific region (also --force-regional)"
 }
+
+FORCED_REGION=""
 
 function check_options() {
     has_option=false
-    while getopts "chlg:i:ox" flag; do
-        case "${flag}" in
-        c) print_context; list_folders=false; has_option=true ;;
-        l) list_folders=true; has_option=true ;;
-        g) generate_yaml="${OPTARG}"; list_folders=false; has_option=true ;;
-        i) ingest_folder="${OPTARG}"; list_folders=false; has_option=true ;;
-        o) want_open=true; list_folders=false; has_option=true ;;
-        x) want_close=true; list_folders=false; has_option=true ;;
-        h) usage; exit 0 ;;
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -c) print_context; list_folders=false; has_option=true; shift ;;
+            -l) list_folders=true; has_option=true; shift ;;
+            -g) generate_yaml="$2"; list_folders=false; has_option=true; shift 2 ;;
+            -i) ingest_folder="$2"; list_folders=false; has_option=true; shift 2 ;;
+            -o) want_open=true; list_folders=false; has_option=true; shift ;;
+            -x) want_close=true; list_folders=false; has_option=true; shift ;;
+            -r|--force-regional) FORCED_REGION="$2"; list_folders=false; has_option=true; shift 2 ;;
+            -h|--help) usage; exit 0 ;;
+            -*) pretty_print "Unknown option: $1" "ERROR"; usage; exit 1 ;;
+            *) 
+                # Positional argument (folder name)
+                if [[ $has_option == false || -n "$generate_yaml" || -n "$ingest_folder" || $want_open == true || $want_close == true || -n "$FORCED_REGION" ]]; then
+                    desired_folder="$1"
+                    want_new_folder=true
+                fi
+                shift
+                ;;
         esac
     done
-
-    shift "$((OPTIND-1))"
-    if [[ ! -z "$1" ]]; then
-        if [[ $has_option == false || -n "$generate_yaml" || -n "$ingest_folder" || $want_open == true || $want_close == true ]]; then
-            desired_folder=$1
-            want_new_folder=true
-        fi
-    fi
 }
 
 function get_list_of_folders() {
@@ -134,6 +139,11 @@ function gsm_get() {
     local p_id="$2"
     local reg="$3"
 
+    if [[ -n "$FORCED_REGION" ]]; then
+        gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --location="${FORCED_REGION}" 2>/dev/null
+        return
+    fi
+
     # Try global first
     local val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null)
     if [[ -z "$val" && -n "$reg" ]]; then
@@ -159,17 +169,37 @@ function gsm_put() {
 
     local is_regional=false
 
-    if ! gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
-        # Try describing regionally if global fails, to see if it exists regionally
-        if [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
-            is_regional=true
-        else
-            # Doesn't exist globally or regionally. Try creating globally first.
-            if ! gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" &>/dev/null; then
-                # If global creation fails, try regional creation
-                if [[ -n "$reg" ]]; then
-                    gcloud secrets create "${secret_name}" --replication-policy="user-managed" --location="${reg}" ${labels} --project="${p_id}" &>/dev/null
-                    is_regional=true
+    if [[ -n "$FORCED_REGION" ]]; then
+        is_regional=true
+        if ! gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${FORCED_REGION}" &>/dev/null; then
+             if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --location="${FORCED_REGION}" ${labels} --project="${p_id}" &>/dev/null; then
+                 pretty_print "Failed to create regional secret '${secret_name}' in ${FORCED_REGION}." "ERROR"
+                 return 1
+             fi
+        fi
+    else
+        # Check if it exists globally
+        if ! gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
+            # Doesn't exist globally. Try describing regionally.
+            if [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
+                is_regional=true
+            else
+                # Doesn't exist anywhere. Try creating globally first.
+                if ! gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" &>/dev/null; then
+                    # Global creation failed. Try regional creation if region is provided.
+                    if [[ -n "$reg" ]]; then
+                        if gcloud secrets create "${secret_name}" --replication-policy="user-managed" --location="${reg}" ${labels} --project="${p_id}" &>/dev/null; then
+                            is_regional=true
+                        else
+                            # Both global and regional creation failed
+                            pretty_print "Failed to create secret '${secret_name}' globally and regionally. Check permissions." "ERROR"
+                            return 1
+                        fi
+                    else
+                        # Global creation failed and no region provided
+                        pretty_print "Failed to create secret '${secret_name}' globally and no region provided. Check permissions." "ERROR"
+                        return 1
+                    fi
                 fi
             fi
         fi
@@ -182,12 +212,11 @@ function gsm_put() {
     fi
 
     if [[ "$is_regional" == true ]]; then
-        echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}" --location="${reg}"
+        echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}" --location="${FORCED_REGION:-$reg}"
     else
         echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}"
     fi
 }
-
 function dehydrate_context() {
     local target_dir="$1"
     if [[ -z "$target_dir" || "$target_dir" == "." ]]; then
@@ -586,6 +615,16 @@ function validate_gsm_secret() {
     local p_id="$2"
     local missing_action="${3:-MISSING}"
     local reg="$4"
+
+    if [[ -n "$FORCED_REGION" ]]; then
+        if gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${FORCED_REGION}" &>/dev/null; then
+            echo "OK"
+        else
+            echo "$missing_action"
+        fi
+        return
+    fi
+
     if gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
         echo "OK"
     elif [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
