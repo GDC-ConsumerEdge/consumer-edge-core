@@ -13,6 +13,5 @@
   # See the License for the specific language governing permissions and
   # limitations under the License.
 #}
-SHELL=/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-0 0 */180 * * runuser -l '{{ ansible_user  }}' -c '{{ abm_install_folder }}/scripts/rotate-k8s-certs.sh' >> '{{ abm_install_folder }}/scripts/rotate-certs.log 2>&1'
+{% set node_index = play_hosts.index(inventory_hostname) | default(0) %}
+{{ node_index % 60 }} {{ cert_rotation_cron_hour }} * {{ cert_rotation_cron_months }} * runuser -l '{{ ansible_user  }}' -c '{{ abm_install_folder }}/scripts/rotate-k8s-certs.sh' >> '{{ abm_install_folder }}/scripts/rotate-certs.log 2>&1'

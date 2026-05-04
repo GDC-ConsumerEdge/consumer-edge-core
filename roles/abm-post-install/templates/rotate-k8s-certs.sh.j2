@@ -15,34 +15,122 @@
 #}
 #!/bin/bash
 
-# 1. grep 'client-certificate-data' /var/abm-install/kubeconfig/kubeconfig | awk '{print $2}' | base64 -d | openssl x509 -text | grep Validity -A2
-# 2. sudo tar -zcvf /home/abm-admin/gdc-etc-kube.tar.gz /etc/kubernetes
-# 3. sudo kubeadm certs renew all
-# 4. sudo kubeadm certs check-expiration
-# 5. Stop containers (or just reboot)
-
 ### Preconditions for script running
 # Check if the script is run by root (UID 0)
 if [[ "$UID" -eq 0 ]]; then
   >&2 echo "This script should not be run as root."
-  exit 1  # Exit with a non-zero exit code indicating an error
+  exit 1
 fi
 
 # Make sure sudo is possible
 if ! sudo -v; then
   echo "User running this script cannot sudo. Please check your sudo configuration."
-  exit 1 # Exit with an error code
+  exit 1
 fi
 
 ### Variables
 TEMPD=$(mktemp -d -t "kube-backup-XXXXXX")
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+BACKUP_FILE="${TEMPD}/gdc-etc-kube-${TIMESTAMP}.tar.gz"
+ADMIN_CONF="/etc/kubernetes/admin.conf"
+TARGET_KUBECONFIG="/var/abm-install/kubeconfig/kubeconfig"
+
+# Distributed Lock Variables
+LOCK_BUCKET="gs://{{ snapshot_gcs_bucket_base }}"
+LOCK_FILE="{{ cluster_name }}-cert-rotation.lock"
+LOCK_URI="${LOCK_BUCKET}/${LOCK_FILE}"
+TTL_SECONDS=$(( {{ cert_rotation_lock_ttl_hours }} * 3600 ))
+NODE_NAME=$(hostname)
+
+### GCS Distributed Lock Logic
+
+verify_bucket() {
+    echo "Verifying GCS lock bucket exists: ${LOCK_BUCKET}"
+    if ! gcloud storage ls "${LOCK_BUCKET}" &>/dev/null; then
+        >&2 echo "CRITICAL ERROR: The bucket ${LOCK_BUCKET} does not exist or is not accessible."
+        >&2 echo "Cannot acquire distributed lock. Exiting to prevent concurrent executions."
+        exit 1
+    fi
+}
+
+verify_bucket
+
+acquire_lock() {
+    echo "Node ${NODE_NAME} attempting to acquire cluster-wide lock at ${LOCK_URI}..."
+    echo "Owner: ${NODE_NAME}, Time: $(date -u)" > /tmp/cert-rotation-lock-info
+
+    # Atomic creation: fails if exists
+    ERR_LOG=$(mktemp)
+    if {% if DRY_RUN is defined and DRY_RUN %}echo "[DRY RUN] Would run: "{% endif %}gcloud storage cp --if-generation-match=0 /tmp/cert-rotation-lock-info "${LOCK_URI}" 2>"$ERR_LOG"; then
+        rm -f "$ERR_LOG"
+        return 0
+    fi
+    
+    # If the error contains "Precondition" or "already exists", it's a lock. Otherwise, it's a system error.
+    if grep -qEi "Precondition|already exists|412" "$ERR_LOG"; then
+        rm -f "$ERR_LOG"
+        return 1
+    else
+        echo "GCS ERROR: Failed to interact with GCS bucket."
+        cat "$ERR_LOG"
+        rm -f "$ERR_LOG"
+        exit 1
+    fi
+}
+
+check_stale_lock() {
+    echo "Checking if existing lock is stale..."
+    UPDATED_STR=$(gcloud storage objects describe "${LOCK_URI}" --format="value(updated)" 2>/dev/null)
+    if [ -z "$UPDATED_STR" ]; then
+        # File might have been deleted just now, or there's an error reading it
+        return 1
+    fi
+
+    UPDATED_EPOCH=$(date -d "$UPDATED_STR" +%s)
+    CURRENT_EPOCH=$(date +%s)
+    AGE=$((CURRENT_EPOCH - UPDATED_EPOCH))
+
+    if [ $AGE -gt $TTL_SECONDS ]; then
+        echo "Stale lock detected (Age: ${AGE}s > TTL: ${TTL_SECONDS}s). Clearing stale lock..."
+        {% if DRY_RUN is defined and DRY_RUN %}echo "[DRY RUN] Would run: "{% endif %}gcloud storage rm "${LOCK_URI}"
+        return 0 # Lock was stale and cleared
+    fi
+    return 1 # Lock is still valid
+}
+
+### Lock Acquisition Loop
+if ! acquire_lock; then
+    if check_stale_lock; then
+        # Stale lock was cleared, try acquiring again
+        if ! acquire_lock; then
+            echo "ABORT: Failed to acquire lock after clearing stale lock. Exiting."
+            exit 0
+        fi
+    else
+        echo "ABORT: Lock held by another node (or unable to determine lock age). Exiting."
+        exit 0
+    fi
+fi
+
+# Ensure lock is released on exit (whether success or failure)
+# IMPORTANT: We only set this trap AFTER we have successfully acquired the lock.
+release_lock() {
+    echo "Releasing lock at ${LOCK_URI}..."
+    {% if DRY_RUN is defined and DRY_RUN %}
+    echo "[DRY RUN] Would run: gcloud storage rm ${LOCK_URI}"
+    {% else %}
+    gcloud storage rm "${LOCK_URI}"
+    {% endif %}
+}
+trap release_lock EXIT
+
+echo "Lock acquired successfully. Proceeding with certificate rotation..."
 
 ### Script Start
 # Check to see if certs are out-of-date
-CERT_CONDITION=$(grep 'client-certificate-data' /var/abm-install/kubeconfig/kubeconfig | awk '{print $2}' | base64 -d | openssl x509 -text | grep Validity -A2)
+CERT_CONDITION_AFTER=$(sudo grep 'client-certificate-data' "$TARGET_KUBECONFIG" 2>/dev/null | awk '{print $2}' | base64 -d | openssl x509 -text | grep Validity -A2)
 if [[ $? > 0 ]]; then
-    >&2 echo "Certificates are already out of date and cannot be automated for replacmenet"
+    >&2 echo "Certificates are already out of date and cannot be automated for replacement."
     exit 1
 fi
 
@@ -52,36 +140,91 @@ if [ ! -e "$TEMPD" ]; then
     exit 1
 fi
 
-# Backup Kube folder
-sudo tar -zcvf "/${TMPD}/gdc-etc-kube-${TIMESTAMP}.tar.gz" /etc/kubernetes
+### Rollback Function
+rollback() {
+    echo "CRITICAL: An error occurred. Restoring /etc/kubernetes..."
+    if [ -f "$BACKUP_FILE" ]; then
+        {% if DRY_RUN is defined and DRY_RUN %}
+        echo "[DRY RUN] Would run: sudo rm -rf /etc/kubernetes/*"
+        echo "[DRY RUN] Would run: sudo tar -xzf $BACKUP_FILE -C /"
+        {% else %}
+        sudo rm -rf /etc/kubernetes/*
+        sudo tar -xzf "$BACKUP_FILE" -C /
+        {% endif %}
+        echo "Restore complete."
+    else
+        echo "Error: Backup file not found!"
+    fi
+}
 
-if [[ $? -gt 0 ]]; then
-    >&2 echo "Error backing up Kubernetes folder, existing"
+### 1. Pre-Check & Backup
+echo "Backing up /etc/kubernetes to ${BACKUP_FILE}..."
+{% if DRY_RUN is defined and DRY_RUN %}
+echo "[DRY RUN] Would run: sudo tar -zcvf $BACKUP_FILE /etc/kubernetes"
+{% else %}
+sudo tar -zcvf "$BACKUP_FILE" /etc/kubernetes || { echo "Backup failed."; exit 1; }
+{% endif %}
+
+### 2. Renew Certificates
+echo "Renewing certificates..."
+{% if DRY_RUN is defined and DRY_RUN %}
+echo "[DRY RUN] Would run: sudo kubeadm certs renew all"
+{% else %}
+if ! sudo kubeadm certs renew all; then
+    rollback
     exit 1
 fi
+{% endif %}
 
-sudo kubeadm certs renew all
+### 3. Restart Control Plane
+echo "Restarting containers..."
+{% if DRY_RUN is defined and DRY_RUN %}
+echo "[DRY RUN] Would run: sudo crictl ps | grep -E 'kube-scheduler|kube-controller-manager|kube-apiserver' | awk '{print $1}'"
+echo "[DRY RUN] Would run: sudo crictl stop \$IDS"
+{% else %}
+IDS=$(sudo crictl ps | grep -E 'kube-scheduler|kube-controller-manager|kube-apiserver' | awk '{print $1}')
+[ -n "$IDS" ] && sudo crictl stop $IDS
+{% endif %}
 
-if [[ $? -gt 0 ]]; then
-    >&2 echo "Error generating new certs, existing"
-    # TODO Un-tar the backup
+# Brief sleep to let Kubelet start the API server back up
+echo "Waiting 10 seconds for API server to stabilize..."
+sleep 10
+
+### 4. Validate admin.conf
+echo "Testing connectivity with renewed admin.conf..."
+{% if DRY_RUN is defined and DRY_RUN %}
+echo "[DRY RUN] Would run: sudo kubectl get nodes --kubeconfig $ADMIN_CONF"
+echo "Validation Successful! Syncing to $TARGET_KUBECONFIG"
+{% else %}
+if sudo kubectl get nodes --kubeconfig "$ADMIN_CONF" > /dev/null 2>&1; then
+    echo "Validation Successful! Syncing to $TARGET_KUBECONFIG"
+
+    # Copy and set correct ownership/permissions
+    sudo mkdir -p "$(dirname "$TARGET_KUBECONFIG")"
+    sudo cp "$ADMIN_CONF" "$TARGET_KUBECONFIG"
+    sudo chown abm-admin:abm-admin "$TARGET_KUBECONFIG"
+    sudo chmod 600 "$TARGET_KUBECONFIG"
+
+    echo "Permissions set to 600 for $TARGET_KUBECONFIG"
+else
+    echo "Error: kubectl test failed with the new admin.conf!"
+    rollback
     exit 1
 fi
+{% endif %}
 
+### 5. Final Expiration Check
+echo "================================================================="
+echo "Final Expiration Check (Validating Rotation)"
+echo "================================================================="
+{% if DRY_RUN is defined and DRY_RUN %}
+echo "[DRY RUN] Would run: sudo kubeadm certs check-expiration"
+{% else %}
 sudo kubeadm certs check-expiration
+{% endif %}
+echo "================================================================="
+echo "Process complete!"
 
-if [[ $? -gt 0 ]]; then
-    >&2 echo "Unable to check expiration, existing"
-    # TODO Un-tar the backup
-    exit 1
-fi
-
-CERT_CONDITION_AFTER=$(grep 'client-certificate-data' /var/abm-install/kubeconfig/kubeconfig | awk '{print $2}' | base64 -d | openssl x509 -text | grep Validity -A2)
-if [[ $? > 0 ]]; then
-    >&2 echo "Certificates are already out of date and cannot be automated for replacmenet"
-    exit 1
-fi
-
-# Copy over the new config with the new certs. For now, the kubeadmin is going to work.
-cp /var/abm-install/kubeconfig/kubeconfig /var/abm-install/kubeconfig/kubeconfig.bak
-cp /etc/kubernetes/admin.conf /var/abm-install/kubeconfig/kubeconfig
+# Prevent subsequent staggered cron jobs from picking up a prematurely released lock
+echo "Rotation complete. Sleeping 5 minutes to bridge the stagger window before releasing lock..."
+sleep 300

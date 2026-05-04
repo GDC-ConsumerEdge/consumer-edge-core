@@ -56,25 +56,15 @@
   - gcloud-mutate
   - skip-gcp-create
 
-###
-### Create (if needed) GCS bucket for uploading bmctl/cluster snapshots to
-###
-- name: Check the bmctl snapshot backup bucket
-  command:
-    cmd: gcloud storage ls --project={{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}
-  ignore_errors: true
-  register: bucket_exists
-  tags:
-  - gcloud-command
-  - skip-gcp-create
-
 - name: Create the bmctl snapshot backup GCS bucket
-  ignore_errors: true
+  ignore_errors: true       # If bucket already exists, just ignore errors
   command:
     cmd: gcloud storage buckets create --project={{ google_project_id }} gs://{{ snapshot_gcs_bucket_base }}
   when:
-  - bucket_exists.rc > 0
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
   tags:
+  - cert-rotation
   - gcloud-mutate
   - skip-gcp-create
 

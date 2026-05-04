@@ -16,7 +16,7 @@
 - name: Prepare
   hosts: all
   gather_facts: false
-  vars: []
+  vars: {}
 
   tasks:
   - name: Uninstall packages

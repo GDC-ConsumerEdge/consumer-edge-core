@@ -74,8 +74,7 @@
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
 
-
-- name: Upload snapshot to GCS
+- name: Upload cluster config snapshot to GCS
   command:
     cmd: gcloud storage cp {{ snapshot_output_file }} gs://{{ snapshot_gcs_bucket_base }}/{{ snapshot_output_file_name }}
   register: success_upload

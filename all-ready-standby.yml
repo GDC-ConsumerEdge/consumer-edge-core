@@ -37,4 +37,4 @@
   - google-tools
   - ready-linux
   - setup-kvm
-  vars: []
+  vars: {}

@@ -28,6 +28,6 @@
     - always
   roles:
   - gdce-provision
-  vars: []
+  vars: {}
   tags:
   - gdce-setup
