@@ -114,6 +114,7 @@
   - update-dependencies
   - ubuntu-setup
   - inotify
+  - update-fswatch
   when:
   - target_os == "ubuntu"
 
@@ -124,6 +125,16 @@
   - update-dependencies
   - ubuntu-setup
   - inotify
+  - update-fswatch
+  when:
+  - target_os == "ubuntu"
+
+## Update file descriptor limits
+- name: "Include tasks to set file limits"
+  import_tasks: set-file-limits.yml
+  tags:
+  - fd-limits
+  - update-fswatch
   when:
   - target_os == "ubuntu"
 

@@ -1,0 +1,55 @@
+#!/bin/bash
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+LOG_FILE="/var/log/fd_remediation.log"
+LIMIT_VAL={{ fd_limit_val | default(1048576) }}
+SYSCTL_VAL={{ fd_sysctl_val | default(2097152) }}
+
+echo "--- STARTING FD OPTIMIZATION ---" | tee -a $LOG_FILE
+
+# --- CAPTURE BEFORE ---
+echo "[BEFORE] Current ulimit -n: $(ulimit -n)" | tee -a $LOG_FILE
+echo "[BEFORE] Kernel file-max: $(sysctl -n fs.file-max)" | tee -a $LOG_FILE
+echo "[BEFORE] Systemd DefaultLimitNOFILE: $(grep -i "DefaultLimitNOFILE" /etc/systemd/system.conf || echo "Not Set")" | tee -a $LOG_FILE
+
+# --- 1. SYSTEM LIMITS ---
+cat <<EOF > /etc/security/limits.d/99-fd-limits.conf
+* soft nofile $LIMIT_VAL
+* hard nofile $LIMIT_VAL
+root soft nofile $LIMIT_VAL
+root hard nofile $LIMIT_VAL
+EOF
+
+# --- 2. KERNEL SYSCTL ---
+echo "fs.file-max = $SYSCTL_VAL" > /etc/sysctl.d/99-fd-kernel.conf
+sysctl -p /etc/sysctl.d/99-fd-kernel.conf
+
+# --- 3. SYSTEMD CONFIG ---
+# Update both system and user configs
+sed -i "s/^#\?DefaultLimitNOFILE=.*/DefaultLimitNOFILE=$LIMIT_VAL/" /etc/systemd/system.conf
+sed -i "s/^#\?DefaultLimitNOFILE=.*/DefaultLimitNOFILE=$LIMIT_VAL/" /etc/systemd/user.conf
+systemctl daemon-reexec
+
+# --- 4. PAM SESSION (Ensure limits load)
+if ! grep -q "pam_limits.so" /etc/pam.d/common-session; then
+    echo "session required pam_limits.so" >> /etc/pam.d/common-session
+fi
+
+# --- CAPTURE AFTER ---
+echo "[AFTER] Kernel file-max: $(sysctl -n fs.file-max)" | tee -a $LOG_FILE
+echo "[AFTER] Systemd Config: $(grep "DefaultLimitNOFILE" /etc/systemd/system.conf)" | tee -a $LOG_FILE
+echo "Note: Shell 'ulimit -n' updates require a fresh login session or 'exec bash'." | tee -a $LOG_FILE
+
+echo "--- OPTIMIZATION COMPLETE ---" | tee -a $LOG_FILE

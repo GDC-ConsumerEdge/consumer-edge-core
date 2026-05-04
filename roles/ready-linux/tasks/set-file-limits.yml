@@ -12,15 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Setup proxy for docker (if needed)
-  ansible.builtin.file:
-    path: "{{ docker_service_path }}"
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-  when:
-  - proxy_has_http_proxy is true or proxy_has_https_proxy is true
+---
+## Update file descriptor limits
+- name: "Copy script to optimize FD limits"
+  template:
+    src: optimize-fd-limits.sh.j2
+    dest: "{{ abm_install_folder }}/optimize-fd-limits.sh"
+    group: "{{ ansible_user }}"
+    owner: "{{ ansible_user }}"
+    mode: "0744"
   tags:
-  - http-proxy
-  - docker-proxy
+  - update-dependencies
+  - ubuntu-setup
+  - fd-limits
+  - update-fswatch
+
+- name: "Run script to optimize FD limits"
+  command: "{{ abm_install_folder }}/optimize-fd-limits.sh"
+  register: fd_optimization
+  tags:
+  - update-dependencies
+  - ubuntu-setup
+  - fd-limits
+  - update-fswatch
