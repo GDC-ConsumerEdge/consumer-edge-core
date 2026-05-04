@@ -789,19 +789,34 @@ function generate_context() {
         cp templates/envrc-template.sh "$target/envrc"
     fi
 
-    sed -i "1i # This file sets environment variables for the cluster provisioning run." "$target/envrc"
-    sed -i "s|export PROJECT_ID=.*|export PROJECT_ID=\"${p_id}\" # GCP Project ID (from YAML project_id)|" "$target/envrc"
-    sed -i "s|export REGION=.*|export REGION=\"${reg}\" # GCP Region (from YAML region)|" "$target/envrc"
-    sed -i "s|export ZONE=.*|export ZONE=\"${zn}\" # GCP Zone (from YAML zone)|" "$target/envrc"
-    sed -i "s|export CLUSTER_ACM_NAME=.*|export CLUSTER_ACM_NAME=\"${cl_name}\" # Cluster name used by ACM (from YAML cluster_name)|" "$target/envrc"
-    sed -i "s|export ROOT_REPO_URL=.*|export ROOT_REPO_URL=\"${root_repo_url}\" # Root SCM Repo|" "$target/envrc"
-
-    # ROOT_REPO_BRANCH might not exist in the template, so safely append or replace
-    if grep -q "export ROOT_REPO_BRANCH=" "$target/envrc"; then
-        sed -i "s|export ROOT_REPO_BRANCH=.*|export ROOT_REPO_BRANCH=\"${root_repo_branch}\"|" "$target/envrc"
-    else
-        sed -i "/export ROOT_REPO_URL=/a export ROOT_REPO_BRANCH=\"${root_repo_branch}\"" "$target/envrc"
-    fi
+    awk -v p_id="$p_id" -v reg="$reg" -v zn="$zn" -v cl_name="$cl_name" -v r_url="$root_repo_url" -v r_branch="$root_repo_branch" '
+    BEGIN { print "# This file sets environment variables for the cluster provisioning run." }
+    {
+        gsub(/export PROJECT_ID=.*/, "export PROJECT_ID=\""p_id"\" # GCP Project ID (from YAML project_id)")
+        gsub(/export REGION=.*/, "export REGION=\""reg"\" # GCP Region (from YAML region)")
+        gsub(/export ZONE=.*/, "export ZONE=\""zn"\" # GCP Zone (from YAML zone)")
+        gsub(/export CLUSTER_ACM_NAME=.*/, "export CLUSTER_ACM_NAME=\""cl_name"\" # Cluster name used by ACM (from YAML cluster_name)")
+        
+        if ($0 ~ /export ROOT_REPO_URL=/) {
+            print "export ROOT_REPO_URL=\""r_url"\" # Root SCM Repo"
+            if (!branch_added) {
+                print "export ROOT_REPO_BRANCH=\""r_branch"\""
+                branch_added = 1
+            }
+            next
+        }
+        
+        if ($0 ~ /export ROOT_REPO_BRANCH=/) {
+            if (!branch_added) {
+                print "export ROOT_REPO_BRANCH=\""r_branch"\""
+                branch_added = 1
+            }
+            next
+        }
+        
+        print
+    }
+    ' "$target/envrc" > "$target/envrc.tmp" && mv "$target/envrc.tmp" "$target/envrc"
 
     # 2. Update inventory.yaml
     mv "$target/inventory-example.yaml" "$target/inventory.yaml" 2>/dev/null || true
@@ -822,10 +837,10 @@ function generate_context() {
     yq e -i "del(.[\"${cl_name}_cluster\"].vars.peer_node_ips)" "$target/inventory.yaml"
     yq e -i ".[\"${cl_name}_cluster\"].vars.peer_node_ips = []" "$target/inventory.yaml"
 
-    # Add comments to inventory.yaml fields using yq head comments if possible, but simpler to use sed for blocks
-    sed -i "/cluster_name: \"${cl_name}\"/s/$/ # Name of the cluster (from YAML cluster_name)/" "$target/inventory.yaml"
-    sed -i "/control_plane_vip: \"${cp_vip}\"/s/$/ # K8s API endpoint (from YAML control_plane_vip)/" "$target/inventory.yaml"
-    sed -i "/ingress_vip: \"${in_vip}\"/s/$/ # Entry point for services (from YAML ingress_vip)/" "$target/inventory.yaml"
+    # Add comments to inventory.yaml fields using yq line_comment
+    cl_name="$cl_name" yq e -i '.[env(cl_name) + "_cluster"].vars.cluster_name line_comment="Name of the cluster (from YAML cluster_name)"' "$target/inventory.yaml"
+    cl_name="$cl_name" yq e -i '.[env(cl_name) + "_cluster"].vars.control_plane_vip line_comment="K8s API endpoint (from YAML control_plane_vip)"' "$target/inventory.yaml"
+    cl_name="$cl_name" yq e -i '.[env(cl_name) + "_cluster"].vars.ingress_vip line_comment="Entry point for services (from YAML ingress_vip)"' "$target/inventory.yaml"
 
     # Parse nodes for inventory hosts
     local num_nodes=$(yq e '.nodes | length' "$yaml_file")
@@ -861,56 +876,37 @@ function generate_context() {
     if [[ ! -f "$target/instance-run-vars.yaml" ]]; then
         cp templates/instance-run-vars-template.yaml "$target/instance-run-vars.yaml"
     fi
-    sed -i "1i # Variables specific to this provisioning run (e.g. storage provider)" "$target/instance-run-vars.yaml"
+    
+    # Insert header
+    awk "BEGIN{print \"# Variables specific to this provisioning run (e.g. storage provider)\"}1" "$target/instance-run-vars.yaml" > "$target/instance-run-vars.tmp" && mv "$target/instance-run-vars.tmp" "$target/instance-run-vars.yaml"
 
     if [[ -n "$storage_provider" && "$storage_provider" != "null" ]]; then
-        # Check if the key exists (commented or not). Yq doesn't easily uncomment, so we append/replace using sed for the simple string
-        if grep -q "storage_provider:" "$target/instance-run-vars.yaml"; then
-            sed -i "s|.*storage_provider:.*|storage_provider: \"${storage_provider}\"|" "$target/instance-run-vars.yaml"
-        else
-            echo "storage_provider: \"${storage_provider}\"" >> "$target/instance-run-vars.yaml"
-        fi
+        storage_provider="$storage_provider" yq e -i '.storage_provider = env(storage_provider)' "$target/instance-run-vars.yaml"
 
         if [[ "$storage_provider" == "robin" ]]; then
             local num_disks=$(yq e '.robin_disk_paths | length' "$yaml_file")
             if [[ "$num_disks" -gt 0 && "$num_disks" != "null" ]]; then
-                # Remove any existing commented or uncommented robin_disk_paths block to avoid yq parsing errors on comments
-                sed -i '/robin_disk_paths:/d' "$target/instance-run-vars.yaml"
-                sed -i '/"\/dev\/nvme0n1p4"/d' "$target/instance-run-vars.yaml"
-                sed -i '/\]/d' "$target/instance-run-vars.yaml"
-
-                # Use yq to safely inject the array
+                # Ensure the key exists and is empty
                 yq e -i '.robin_disk_paths = []' "$target/instance-run-vars.yaml"
                 for (( i=0; i<$num_disks; i++ )); do
                     local disk_path=$(yq e ".robin_disk_paths[$i]" "$yaml_file")
-                    yq e -i ".robin_disk_paths += [\"${disk_path}\"]" "$target/instance-run-vars.yaml"
+                    # Safe injection
+                    disk_path="$disk_path" yq e -i '.robin_disk_paths += [env(disk_path)]' "$target/instance-run-vars.yaml"
                 done
             fi
         fi
     fi
 
     if [[ -n "$abm_version" && "$abm_version" != "null" ]]; then
-        if grep -q "abm_version:" "$target/instance-run-vars.yaml"; then
-            sed -i "s|.*abm_version:.*|abm_version: \"${abm_version}\"|" "$target/instance-run-vars.yaml"
-        else
-            echo "abm_version: \"${abm_version}\"" >> "$target/instance-run-vars.yaml"
-        fi
+        abm_version="$abm_version" yq e -i '.abm_version = env(abm_version)' "$target/instance-run-vars.yaml"
     fi
 
     if [[ -n "$acm_version" && "$acm_version" != "null" ]]; then
-        if grep -q "acm_version:" "$target/instance-run-vars.yaml"; then
-            sed -i "s|.*acm_version:.*|acm_version: \"${acm_version}\"|" "$target/instance-run-vars.yaml"
-        else
-            echo "acm_version: \"${acm_version}\"" >> "$target/instance-run-vars.yaml"
-        fi
+        acm_version="$acm_version" yq e -i '.acm_version = env(acm_version)' "$target/instance-run-vars.yaml"
     fi
 
     if [[ "$storage_provider" == "robin" && -n "$robin_bundle" && "$robin_bundle" != "null" ]]; then
-        if grep -q "robin_install_bundle_file:" "$target/instance-run-vars.yaml"; then
-            sed -i "s|.*robin_install_bundle_file:.*|robin_install_bundle_file: \"${robin_bundle}\"|" "$target/instance-run-vars.yaml"
-        else
-            echo "robin_install_bundle_file: \"${robin_bundle}\"" >> "$target/instance-run-vars.yaml"
-        fi
+        robin_bundle="$robin_bundle" yq e -i '.robin_install_bundle_file = env(robin_bundle)' "$target/instance-run-vars.yaml"
 
         # Copy the file into the context if it's outside
         if [[ ! -f "$target/${robin_bundle##*/}" && -f "$robin_bundle" ]]; then
