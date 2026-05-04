@@ -214,11 +214,15 @@ fi
 {% endif %}
 
 ### 5. Final Expiration Check
+echo "================================================================="
+echo "Final Expiration Check (Validating Rotation)"
+echo "================================================================="
 {% if DRY_RUN is defined and DRY_RUN %}
 echo "[DRY RUN] Would run: sudo kubeadm certs check-expiration"
 {% else %}
 sudo kubeadm certs check-expiration
 {% endif %}
+echo "================================================================="
 echo "Process complete!"
 
 # Prevent subsequent staggered cron jobs from picking up a prematurely released lock
