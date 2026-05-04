@@ -50,7 +50,7 @@ acquire_lock() {
 
     # Atomic creation: fails if exists
     ERR_LOG=$(mktemp)
-    if {% if DRY_RUN is defined and DRY_RUN %}echo "[DRY RUN] Would run: "{% endif %}gcloud storage cp /tmp/cert-rotation-lock-info "${LOCK_URI}" --header="x-goog-if-generation-match: 0" 2>"$ERR_LOG"; then
+    if {% if DRY_RUN is defined and DRY_RUN %}echo "[DRY RUN] Would run: "{% endif %}gcloud storage cp --if-generation-match=0 /tmp/cert-rotation-lock-info "${LOCK_URI}" 2>"$ERR_LOG"; then
         rm -f "$ERR_LOG"
         return 0
     fi
