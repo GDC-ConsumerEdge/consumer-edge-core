@@ -138,7 +138,7 @@ function gsm_get() {
     local val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null)
     if [[ -z "$val" && -n "$reg" ]]; then
         # Try regional fallback
-        val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --locations="${reg}" 2>/dev/null)
+        val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --location="${reg}" 2>/dev/null)
     fi
     echo "$val"
 }
@@ -161,14 +161,14 @@ function gsm_put() {
 
     if ! gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
         # Try describing regionally if global fails, to see if it exists regionally
-        if [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --locations="${reg}" &>/dev/null; then
+        if [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
             is_regional=true
         else
             # Doesn't exist globally or regionally. Try creating globally first.
             if ! gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" &>/dev/null; then
                 # If global creation fails, try regional creation
                 if [[ -n "$reg" ]]; then
-                    gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${reg}" ${labels} --project="${p_id}" &>/dev/null
+                    gcloud secrets create "${secret_name}" --replication-policy="user-managed" --location="${reg}" ${labels} --project="${p_id}" &>/dev/null
                     is_regional=true
                 fi
             fi
@@ -182,7 +182,7 @@ function gsm_put() {
     fi
 
     if [[ "$is_regional" == true ]]; then
-        echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}" --locations="${reg}"
+        echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}" --location="${reg}"
     else
         echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}"
     fi
@@ -588,7 +588,7 @@ function validate_gsm_secret() {
     local reg="$4"
     if gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
         echo "OK"
-    elif [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --locations="${reg}" &>/dev/null; then
+    elif [[ -n "$reg" ]] && gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
         echo "OK"
     else
         echo "$missing_action"
