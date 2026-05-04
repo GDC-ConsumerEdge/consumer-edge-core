@@ -239,10 +239,13 @@ function dehydrate_context() {
     # 2. Scrub envrc
     if [[ -f "$target_dir/envrc" ]]; then
         local closed="****closed*******"
-        sed -i "s/.*SCM_TOKEN_USER=.*/export SCM_TOKEN_USER=\"$closed\"/" "$target_dir/envrc"
-        sed -i "s/.*SCM_TOKEN_TOKEN=.*/export SCM_TOKEN_TOKEN=\"$closed\"/" "$target_dir/envrc"
-        sed -i "s/.*OIDC_CLIENT_ID=.*/export OIDC_CLIENT_ID=\"$closed\"/" "$target_dir/envrc"
-        sed -i "s/.*OIDC_CLIENT_SECRET=.*/export OIDC_CLIENT_SECRET=\"$closed\"/" "$target_dir/envrc"
+        awk -v closed="$closed" '{
+            gsub(/.*SCM_TOKEN_USER=.*/, "export SCM_TOKEN_USER=\""closed"\"");
+            gsub(/.*SCM_TOKEN_TOKEN=.*/, "export SCM_TOKEN_TOKEN=\""closed"\"");
+            gsub(/.*OIDC_CLIENT_ID=.*/, "export OIDC_CLIENT_ID=\""closed"\"");
+            gsub(/.*OIDC_CLIENT_SECRET=.*/, "export OIDC_CLIENT_SECRET=\""closed"\"");
+            print
+        }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
     fi
 
     # 3. Wipe configs yaml
