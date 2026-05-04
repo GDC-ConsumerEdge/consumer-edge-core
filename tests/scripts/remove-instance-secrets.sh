@@ -41,7 +41,7 @@ if [[ "$answer" != "y" ]]; then
 fi
 
 # Find all secrets matching the pattern
-secrets=$(gcloud secrets list --project="$PROJECT_ID" --filter="name:gdc-${INSTANCE_NAME}-*" --format="value(name)")
+secrets=$(gcloud secrets list --project="$PROJECT_ID" --filter="name ~ gdc-${INSTANCE_NAME}-.*" --format="value(name)")
 
 if [[ -z "$secrets" ]]; then
     echo "No secrets found matching 'gdc-${INSTANCE_NAME}-*' in project '$PROJECT_ID'."
