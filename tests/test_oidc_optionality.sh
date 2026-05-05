@@ -47,4 +47,23 @@ EOF
 # hydrate_context "$test_dir" (using mocks)
 # For now, we expect this test to fail until Task 2 is complete
 # Since hydrate_context isn't updated yet, we just check if the test environment is ready
-echo "Test environment ready. Implementation needed for hydration test."
+echo "Verifying hydration logic..."
+# Reset mocks for specific test case
+function gsm_get() {
+    case "$1" in
+        *oidc-id) echo ""; ;;
+        *oidc-secret) echo ""; ;;
+        *) echo "some-value"; ;;
+    esac
+}
+export -f gsm_get
+
+hydrate_context "$test_dir"
+
+if grep -q "^# export OIDC_CLIENT_ID=\"\"" "$test_dir/envrc" && grep -q "export OIDC_ENABLED=\"false\"" "$test_dir/envrc"; then
+    echo "PASS: OIDC commented out and disabled when missing from GSM"
+else
+    echo "FAIL: OIDC hydration toggle failed"
+    grep "OIDC" "$test_dir/envrc"
+    exit 1
+fi

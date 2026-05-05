@@ -318,17 +318,36 @@ function hydrate_context() {
     local scm_token=$(gsm_get "gdc-${cl_name}-scm-token" "$p_id" "$reg")
     local oidc_id=$(gsm_get "gdc-${cl_name}-oidc-id" "$p_id" "$reg")
     local oidc_secret=$(gsm_get "gdc-${cl_name}-oidc-secret" "$p_id" "$reg")
+    local oidc_user=$(gsm_get "gdc-${cl_name}-oidc-user" "$p_id" "$reg")
 
-    # Inject into envrc
-    if [[ -n "$scm_user" || -n "$scm_token" || -n "$oidc_id" || -n "$oidc_secret" ]]; then
-        awk -v scm_u="$scm_user" -v scm_t="$scm_token" -v oidc_i="$oidc_id" -v oidc_s="$oidc_secret" '{
-            if (scm_u != "") sub(/.*SCM_TOKEN_USER=.*/, "export SCM_TOKEN_USER=\""scm_u"\"");
-            if (scm_t != "") sub(/.*SCM_TOKEN_TOKEN=.*/, "export SCM_TOKEN_TOKEN=\""scm_t"\"");
-            if (oidc_i != "") sub(/.*OIDC_CLIENT_ID=.*/, "export OIDC_CLIENT_ID=\""oidc_i"\"");
-            if (oidc_s != "") sub(/.*OIDC_CLIENT_SECRET=.*/, "export OIDC_CLIENT_SECRET=\""oidc_s"\"");
-            print
-        }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
-    fi
+    # Inject into envrc (always run awk now to handle commenting out)
+    awk -v scm_u="$scm_user" -v scm_t="$scm_token" -v oidc_i="$oidc_id" -v oidc_s="$oidc_secret" -v oidc_u="$oidc_user" '{
+        if ($0 ~ /SCM_TOKEN_USER=/) {
+            if (scm_u != "") $0 = "export SCM_TOKEN_USER=\""scm_u"\""
+            else if ($0 ~ /^export/) $0 = "export SCM_TOKEN_USER=\"\""
+        }
+        if ($0 ~ /SCM_TOKEN_TOKEN=/) {
+            if (scm_t != "") $0 = "export SCM_TOKEN_TOKEN=\""scm_t"\""
+            else if ($0 ~ /^export/) $0 = "export SCM_TOKEN_TOKEN=\"\""
+        }
+        if ($0 ~ /OIDC_CLIENT_ID=/) {
+            if (oidc_i != "") $0 = "export OIDC_CLIENT_ID=\""oidc_i"\""
+            else $0 = "# export OIDC_CLIENT_ID=\"\""
+        }
+        if ($0 ~ /OIDC_CLIENT_SECRET=/) {
+            if (oidc_s != "") $0 = "export OIDC_CLIENT_SECRET=\""oidc_s"\""
+            else $0 = "# export OIDC_CLIENT_SECRET=\"\""
+        }
+        if ($0 ~ /OIDC_USER=/) {
+            if (oidc_u != "") $0 = "export OIDC_USER=\""oidc_u"\""
+            else $0 = "# export OIDC_USER=\"\""
+        }
+        if ($0 ~ /OIDC_ENABLED=/) {
+            if (oidc_i != "" && oidc_s != "") $0 = "export OIDC_ENABLED=\"true\""
+            else $0 = "export OIDC_ENABLED=\"false\""
+        }
+        print
+    }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
 
     local link_target="$target_dir"
     if [[ -L "$target_dir" ]]; then
