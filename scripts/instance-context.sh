@@ -420,15 +420,17 @@ function ingest_context() {
     fi
 
     # 2. Ingest Vars
-    local scm_user=$(grep "export SCM_TOKEN_USER=" "$target_dir/envrc" | cut -d'"' -f2)
-    local scm_token=$(grep "export SCM_TOKEN_TOKEN=" "$target_dir/envrc" | cut -d'"' -f2)
-    local oidc_id=$(grep "export OIDC_CLIENT_ID=" "$target_dir/envrc" | cut -d'"' -f2)
-    local oidc_secret=$(grep "export OIDC_CLIENT_SECRET=" "$target_dir/envrc" | cut -d'"' -f2)
+    local scm_user=$(grep "^export SCM_TOKEN_USER=" "$target_dir/envrc" | cut -d'"' -f2)
+    local scm_token=$(grep "^export SCM_TOKEN_TOKEN=" "$target_dir/envrc" | cut -d'"' -f2)
+    local oidc_id=$(grep "^export OIDC_CLIENT_ID=" "$target_dir/envrc" | cut -d'"' -f2)
+    local oidc_secret=$(grep "^export OIDC_CLIENT_SECRET=" "$target_dir/envrc" | cut -d'"' -f2)
+    local oidc_user=$(grep "^export OIDC_USER=" "$target_dir/envrc" | cut -d'"' -f2)
 
     if [[ -n "$scm_user" && "$scm_user" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-scm-user" "$scm_user" "$cl_name" "$p_id" "$reg"; fi
     if [[ -n "$scm_token" && "$scm_token" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-scm-token" "$scm_token" "$cl_name" "$p_id" "$reg"; fi
     if [[ -n "$oidc_id" && "$oidc_id" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-oidc-id" "$oidc_id" "$cl_name" "$p_id" "$reg"; fi
     if [[ -n "$oidc_secret" && "$oidc_secret" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-oidc-secret" "$oidc_secret" "$cl_name" "$p_id" "$reg"; fi
+    if [[ -n "$oidc_user" && "$oidc_user" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-oidc-user" "$oidc_user" "$cl_name" "$p_id" "$reg"; fi
 
     # 3. Generate YAML Backup from Template
     pretty_print "Generating YAML backup in configs/${name}-config.yaml..." "INFO"
