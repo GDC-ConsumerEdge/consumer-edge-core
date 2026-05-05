@@ -139,7 +139,7 @@ function gsm_get() {
     local p_id="$2"
     local reg="$3"
 
-    local val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null)
+    local val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null || gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --location="${reg}" 2>/dev/null)
     echo "$val"
 }
 
@@ -157,7 +157,7 @@ function gsm_put() {
         labels="--labels=cluster=$label_val"
     fi
 
-    if ! gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
+    if ! { gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null || gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; }; then
         if [[ -n "$FORCED_REGION" ]]; then
              if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${FORCED_REGION}" ${labels} --project="${p_id}" &>/dev/null; then
                  pretty_print "Failed to create regional secret '${secret_name}' in ${FORCED_REGION}." "ERROR"
@@ -184,7 +184,9 @@ function gsm_put() {
         return 0
     fi
 
-    echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}"
+    if ! echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}" 2>/dev/null; then
+        echo -n "${secret_value}" | gcloud secrets versions add "${secret_name}" --data-file=- --project="${p_id}" --location="${reg}" >/dev/null
+    fi
 }
 function dehydrate_context() {
     local target_dir="$1"
@@ -638,7 +640,7 @@ function validate_gsm_secret() {
     local missing_action="${3:-MISSING}"
     local reg="$4"
 
-    if gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null; then
+    if gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null || gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
         echo "OK"
     else
         echo "$missing_action"

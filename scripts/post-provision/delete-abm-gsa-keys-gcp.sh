@@ -47,9 +47,9 @@ do
     # # Remove the Secret Manager version (disable it)
     GSA_SECRET_KEY_NAME="${GSA%%@*}"
 
-    SECRET_VERSIONS=( $(gcloud secrets versions list ${GSA_SECRET_KEY_NAME} --format="value(name)" --filter=state=enabled) )
+    SECRET_VERSIONS=( $(gcloud secrets versions list ${GSA_SECRET_KEY_NAME} --format="value(name)" --filter=state=enabled 2>/dev/null || gcloud secrets versions list ${GSA_SECRET_KEY_NAME} --format="value(name)" --filter=state=enabled --location="${REGION}" 2>/dev/null) )
     for SECRET_VERSION in "${SECRET_VERSIONS[@]}"
     do
-        gcloud secrets versions disable "${SECRET_VERSION}" --secret="${GSA_SECRET_KEY_NAME}"
+        gcloud secrets versions disable "${SECRET_VERSION}" --secret="${GSA_SECRET_KEY_NAME}" --quiet 2>/dev/null || gcloud secrets versions disable "${SECRET_VERSION}" --secret="${GSA_SECRET_KEY_NAME}" --location="${REGION}" --quiet 2>/dev/null
     done
 done
