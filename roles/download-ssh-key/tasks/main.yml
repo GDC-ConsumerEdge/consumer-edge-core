@@ -15,11 +15,10 @@
 - name: Check if {{ ansible_ssh_private_key_file }} is in Secret Manager with secret {{ ansible_ssh_priv_key_secret }}
   become: false
   ignore_errors: true
-  shell: |
-    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ ansible_ssh_priv_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
-    if [ -z "$HAS_SECRET" ]; then
-      exit 1
-    fi
+  shell: >
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ ansible_ssh_priv_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}" ||
+    gcloud secrets list --filter="name~{{ ansible_ssh_priv_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}" --location="{{ google_region }}") &&
+    if [ -z "$HAS_SECRET" ]; then exit 1; fi
   when:
   - primary_cluster_machine is defined
   - primary_cluster_machine == True
@@ -31,8 +30,9 @@
 - name: Download SSH private key files from secret manager locally
   become: false
   delegate_to: localhost
-  shell: |
-    gcloud secrets versions access latest --secret="{{ ansible_ssh_priv_key_secret }}" >> {{ ansible_ssh_private_key_file }} --project="{{ google_secret_project_id }}"
+  shell: >
+    gcloud secrets versions access latest --secret="{{ ansible_ssh_priv_key_secret }}" --project="{{ google_secret_project_id }}" >> {{ ansible_ssh_private_key_file }} ||
+    gcloud secrets versions access latest --secret="{{ ansible_ssh_priv_key_secret }}" --project="{{ google_secret_project_id }}" --location="{{ google_region }}" >> {{ ansible_ssh_private_key_file }}
   args:
     executable: /bin/bash
     creates: "{{ ansible_ssh_private_key_file }}"

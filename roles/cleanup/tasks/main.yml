@@ -24,11 +24,10 @@
 - name: Check if {{ ansible_ssh_private_key_file }} is in Secret Manager with secret {{ ansible_ssh_priv_key_secret }}
   become: false
   delegate_to: localhost
-  shell: |
-    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ ansible_ssh_priv_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
-    if [ -z "$HAS_SECRET" ]; then
-      exit 1
-    fi
+  shell: >
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ ansible_ssh_priv_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}" ||
+    gcloud secrets list --filter="name~{{ ansible_ssh_priv_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}" --location="{{ google_region }}") &&
+    if [ -z "$HAS_SECRET" ]; then exit 1; fi
   when:
   - primary_cluster_machine is defined
   - primary_cluster_machine == True
@@ -41,11 +40,10 @@
 
 - name: Check if {{ provisioning_gsa_key }} is in Secret Manager with secret {{ provisioning_gsa_key_secret }}
   delegate_to: localhost
-  shell: |
-    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ provisioning_gsa_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
-    if [ -z "$HAS_SECRET" ]; then
-      exit 1
-    fi
+  shell: >
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ provisioning_gsa_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}" ||
+    gcloud secrets list --filter="name~{{ provisioning_gsa_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}" --location="{{ google_region }}") &&
+    if [ -z "$HAS_SECRET" ]; then exit 1; fi
   when:
   - primary_cluster_machine is defined
   - primary_cluster_machine == True
@@ -58,11 +56,10 @@
 
 - name: Check if {{ node_gsa_key }} is in Secret Manager with secret {{ node_gsa_key_secret }}
   delegate_to: localhost
-  shell: |
-    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ node_gsa_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
-    if [ -z "$HAS_SECRET" ]; then
-      exit 1
-    fi
+  shell: >
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ node_gsa_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}" ||
+    gcloud secrets list --filter="name~{{ node_gsa_key_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}" --location="{{ google_region }}") &&
+    if [ -z "$HAS_SECRET" ]; then exit 1; fi
   when:
   - primary_cluster_machine is defined
   - primary_cluster_machine == True
