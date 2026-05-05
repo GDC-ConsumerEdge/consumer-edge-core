@@ -34,9 +34,9 @@
 - name: "Add new version to SDS git-creds to Google Secrets Manager if none exist or none active"
   run_once: true # confirmed, this is fleet-level so run-once is OK
   shell: |
-    EXISTS=$(gcloud secrets versions list {{ storage_provider_auth_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
+    EXISTS=$(gcloud secrets versions list {{ storage_provider_auth_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}" || gcloud secrets versions list {{ storage_provider_auth_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}" --location="{{ google_region }}")
     if [ -z "${EXISTS}" ]; then
-      echo -n "{\"token\"{{':'}} \"{{ scm_token_token }}\", \"username\"{{':'}} \"{{ scm_token_user }}\"}" | gcloud secrets versions add {{ storage_provider_auth_secret }} --project="{{ google_project_id }}" --data-file=-
+      echo -n "{\"token\"{{':'}} \"{{ scm_token_token }}\", \"username\"{{':'}} \"{{ scm_token_user }}\"}" | gcloud secrets versions add {{ storage_provider_auth_secret }} --project="{{ google_project_id }}" --data-file=- || echo -n "{\"token\"{{':'}} \"{{ scm_token_token }}\", \"username\"{{':'}} \"{{ scm_token_user }}\"}" | gcloud secrets versions add {{ storage_provider_auth_secret }} --project="{{ google_project_id }}" --data-file=- --location="{{ google_region }}"
       echo "ADDED"
     fi
   register: sds_secret_version  # used only for the changed_when

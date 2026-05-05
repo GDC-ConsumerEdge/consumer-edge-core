@@ -72,8 +72,8 @@
 
 ### If Secret in secret manager does not exist, then create one
 - name: Check if GSA key has active Google Secret Manager version
-  command:
-    cmd: gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" --no-user-output-enabled
+  shell:
+    cmd: gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" --no-user-output-enabled || gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" --no-user-output-enabled --location="{{ google_region }}"
   register: has_valid_secret
   changed_when: has_valid_secret is not succeeded
   ignore_errors: true
@@ -92,14 +92,14 @@
     Create GSM Secret and GSA Keys]
     DESC [Create GSA keys and add to secret as latest version
   shell: |
-    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.item.name }}" --format="value(name)" --project="{{ google_secret_project_id }}" 2> /dev/null)
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ item.item.name }}" --format="value(name)" --project="{{ google_secret_project_id }}" 2> /dev/null || gcloud secrets list --filter="name~{{ item.item.name }}" --format="value(name)" --project="{{ google_secret_project_id }}" --location="{{ google_region }}" 2> /dev/null)
     if [ -z "$HAS_SECRET" ]; then
-      gcloud secrets create {{ item.item.name }} --replication-policy="automatic" --project={{ google_secret_project_id }} --no-user-output-enabled
+      gcloud secrets create {{ item.item.name }} --replication-policy="automatic" --project={{ google_secret_project_id }} --no-user-output-enabled || gcloud secrets create {{ item.item.name }} --replication-policy="user-managed" --locations="{{ google_region }}" --project={{ google_secret_project_id }} --no-user-output-enabled
     fi
     # In all cases, a key will need to be generated
     gcloud iam service-accounts keys create /tmp/{{ item.item.keyfile }} --iam-account={{ item.item.name }}@{{ google_project_id }}.iam.gserviceaccount.com --project={{ google_project_id }} --no-user-output-enabled
     # create a secret version
-    gcloud secrets versions add {{ item.item.name }} --data-file="/tmp/{{ item.item.keyfile }}" --no-user-output-enabled
+    gcloud secrets versions add {{ item.item.name }} --data-file="/tmp/{{ item.item.keyfile }}" --no-user-output-enabled || gcloud secrets versions add {{ item.item.name }} --data-file="/tmp/{{ item.item.keyfile }}" --no-user-output-enabled --location="{{ google_region }}"
     # Remove temp file
     rm -rf /tmp/{{ item.item.keyfile }}
   loop: "{{ has_valid_secret.results }}"
@@ -117,7 +117,7 @@
 ###
 - name: Download key files from secret manager locally
   shell: |
-    gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" >> {{ remote_keys_folder }}/{{ item.keyfile }}
+    gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" >> {{ remote_keys_folder }}/{{ item.keyfile }} || gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" --location="{{ google_region }}" >> {{ remote_keys_folder }}/{{ item.keyfile }}
     chmod 444 {{ remote_keys_folder }}/{{ item.keyfile }} # read-only
   args:
     executable: /bin/bash

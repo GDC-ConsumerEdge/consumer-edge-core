@@ -17,11 +17,11 @@
   run_once: true  # fleet-wide (not cluster-level) so run_once is valid
   ignore_errors: true
   shell: |
-    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ storage_provider_hmac_gcm_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}")
+    export HAS_SECRET=$(gcloud secrets list --filter="name~{{ storage_provider_hmac_gcm_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}" || gcloud secrets list --filter="name~{{ storage_provider_hmac_gcm_secret }}" --format="value(name)" --project="{{ google_secret_project_id }}" --location="{{ google_region }}")
     if [ -z "$HAS_SECRET" ]; then
       exit 1
     else
-      VERSION_EXISTS=$(gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_secret_project_id }}")
+      VERSION_EXISTS=$(gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_secret_project_id }}" || gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_secret_project_id }}" --location="{{ google_region }}")
       if [ -z "${VERSION_EXISTS}" ]; then
         # no valid versions found, need to create a new one
         exit 1
@@ -46,7 +46,7 @@
     if [ ${EXISTING_NUM_OF_HMAC_KEYS} -gt 4 ]
     then
       # Max HMAC keys limit reached
-      VERSION_EXISTS=$(gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}")
+      VERSION_EXISTS=$(gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}" || gcloud secrets versions list {{ storage_provider_hmac_gcm_secret }} --filter="state=enabled" --format="value(name)"  --project="{{ google_project_id }}" --location="{{ google_region }}")
       if [ -z "${VERSION_EXISTS}" ]; then
         # Max HMAC keys limit is reached and existing key in secret manager not found so we must fail here
         exit 1
@@ -60,8 +60,8 @@
     access_key=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $1}'`
     access_secret=`cat  /tmp/hmackey.txt  | awk  -F: '{print $2}' | xargs | awk '{print $2}'`
     echo "{\"access_key\": \"${access_key}\",  \"access_secret\": \"${access_secret}\" , \"endpoint\" : \"https://storage.googleapis.com\" }" > /tmp/hmacsecret.json
-    gcloud secrets create {{ storage_provider_hmac_gcm_secret }} --replication-policy="automatic" --project="{{ google_project_id }}"
-    gcloud secrets versions add {{ storage_provider_hmac_gcm_secret }} --data-file="/tmp/hmacsecret.json"
+    gcloud secrets create {{ storage_provider_hmac_gcm_secret }} --replication-policy="automatic" --project="{{ google_project_id }}" || gcloud secrets create {{ storage_provider_hmac_gcm_secret }} --replication-policy="user-managed" --locations="{{ google_region }}" --project="{{ google_project_id }}"
+    gcloud secrets versions add {{ storage_provider_hmac_gcm_secret }} --data-file="/tmp/hmacsecret.json" --project="{{ google_project_id }}" || gcloud secrets versions add {{ storage_provider_hmac_gcm_secret }} --data-file="/tmp/hmacsecret.json" --project="{{ google_project_id }}" --location="{{ google_region }}"
     rm -rf /tmp/hmacsecret.json /tmp/hmackey.txt # delete temp file
     exit $?
   args:
