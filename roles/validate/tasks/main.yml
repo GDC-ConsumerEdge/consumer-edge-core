@@ -88,8 +88,10 @@
   run_once: true
   ignore_errors: true
   delegate_to: localhost
-  command:
-    cmd: gcloud secrets versions list {{ robin_gcp_secret_name }} --filter="state=enabled" --format="value(name)"  --project="{{ google_secret_project_id }}"
+  shell:
+    cmd: >
+      gcloud secrets versions list {{ robin_gcp_secret_name }} --filter="state=enabled" --format="value(name)" --project="{{ google_secret_project_id }}" ||
+      gcloud secrets versions list {{ robin_gcp_secret_name }} --filter="state=enabled" --format="value(name)" --project="{{ google_secret_project_id }}" --location="{{ google_region }}"
   when:
   - storage_provider == "robin"
   - storage_cluster_trait_repo_install is true
