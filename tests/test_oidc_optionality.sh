@@ -67,3 +67,28 @@ else
     grep "OIDC" "$test_dir/envrc"
     exit 1
 fi
+
+echo "Verifying dehydration logic..."
+# Ensure it is currently commented out (from previous PASS)
+dehydrate_context "$test_dir"
+
+if grep -q "^# export OIDC_CLIENT_ID=\"\*\*\*\*closed\*\*\*\*\*\*\*\"" "$test_dir/envrc"; then
+    echo "PASS: Dehydration preserved comment prefix"
+else
+    echo "FAIL: Dehydration lost comment prefix"
+    grep "OIDC" "$test_dir/envrc"
+    exit 1
+fi
+
+echo "Final test: dehydrating an UNCOMMENTED var..."
+# Setup: uncomment it
+sed -i 's/^# export OIDC_CLIENT_ID/export OIDC_CLIENT_ID/' "$test_dir/envrc"
+dehydrate_context "$test_dir"
+
+if grep -q "^export OIDC_CLIENT_ID=\"\*\*\*\*closed\*\*\*\*\*\*\*\"" "$test_dir/envrc"; then
+    echo "PASS: Dehydration preserved uncommented state"
+else
+    echo "FAIL: Dehydration incorrectly commented an active export"
+    grep "OIDC" "$test_dir/envrc"
+    exit 1
+fi

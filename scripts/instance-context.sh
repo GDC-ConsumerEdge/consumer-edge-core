@@ -209,10 +209,26 @@ function dehydrate_context() {
     if [[ -f "$target_dir/envrc" ]]; then
         local closed="****closed*******"
         awk -v closed="$closed" '{
-            gsub(/.*SCM_TOKEN_USER=.*/, "export SCM_TOKEN_USER=\""closed"\"");
-            gsub(/.*SCM_TOKEN_TOKEN=.*/, "export SCM_TOKEN_TOKEN=\""closed"\"");
-            gsub(/.*OIDC_CLIENT_ID=.*/, "export OIDC_CLIENT_ID=\""closed"\"");
-            gsub(/.*OIDC_CLIENT_SECRET=.*/, "export OIDC_CLIENT_SECRET=\""closed"\"");
+            if ($0 ~ /SCM_TOKEN_USER=/) {
+                prefix = ($0 ~ /^#/) ? "# " : ""
+                $0 = prefix "export SCM_TOKEN_USER=\"" closed "\""
+            }
+            if ($0 ~ /SCM_TOKEN_TOKEN=/) {
+                prefix = ($0 ~ /^#/) ? "# " : ""
+                $0 = prefix "export SCM_TOKEN_TOKEN=\"" closed "\""
+            }
+            if ($0 ~ /OIDC_CLIENT_ID=/) {
+                prefix = ($0 ~ /^#/) ? "# " : ""
+                $0 = prefix "export OIDC_CLIENT_ID=\"" closed "\""
+            }
+            if ($0 ~ /OIDC_CLIENT_SECRET=/) {
+                prefix = ($0 ~ /^#/) ? "# " : ""
+                $0 = prefix "export OIDC_CLIENT_SECRET=\"" closed "\""
+            }
+            if ($0 ~ /OIDC_USER=/) {
+                prefix = ($0 ~ /^#/) ? "# " : ""
+                $0 = prefix "export OIDC_USER=\"" closed "\""
+            }
             print
         }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
     fi
