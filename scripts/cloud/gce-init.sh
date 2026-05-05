@@ -44,8 +44,12 @@ useradd -m -c "ABM Admin user" -s /bin/bash -g users ${ANSIBLE_USER}
 usermod -aG abm-admin abm-admin
 echo "${ANSIBLE_USER}  ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/${ANSIBLE_USER}
 
+# Get region for potential regional secrets fallback
+REGION=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/zone | awk -F/ '{print $NF}' | sed 's/-[^-]*$//')
+
 # 2. Copy/place/setup a authorized_keys from a GCP Secret under that user and under root
-gcloud secrets versions access latest --secret=${SSH_KEY_SECRET_KEY} > /tmp/install-pub-key.pub
+gcloud secrets versions access latest --secret=${SSH_KEY_SECRET_KEY} > /tmp/install-pub-key.pub || \
+gcloud secrets versions access latest --secret=${SSH_KEY_SECRET_KEY} --location=${REGION} > /tmp/install-pub-key.pub
 
 # 3. Setup a common password for root (or setup user to be sudoer)
 mkdir -p /home/${ANSIBLE_USER}/.ssh

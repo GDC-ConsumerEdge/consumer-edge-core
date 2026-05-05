@@ -6,6 +6,7 @@ tmp/
 .fleet/
 .screenrc
 
+.superpowers/
 
 pre-cache-*.tar.gz
 
