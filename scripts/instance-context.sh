@@ -209,10 +209,26 @@ function dehydrate_context() {
     if [[ -f "$target_dir/envrc" ]]; then
         local closed="****closed*******"
         awk -v closed="$closed" '{
-            gsub(/.*SCM_TOKEN_USER=.*/, "export SCM_TOKEN_USER=\""closed"\"");
-            gsub(/.*SCM_TOKEN_TOKEN=.*/, "export SCM_TOKEN_TOKEN=\""closed"\"");
-            gsub(/.*OIDC_CLIENT_ID=.*/, "export OIDC_CLIENT_ID=\""closed"\"");
-            gsub(/.*OIDC_CLIENT_SECRET=.*/, "export OIDC_CLIENT_SECRET=\""closed"\"");
+            if ($0 ~ /SCM_TOKEN_USER=/) {
+                prefix = ($0 ~ /^#/) ? "# " : ""
+                $0 = prefix "export SCM_TOKEN_USER=\"" closed "\""
+            }
+            if ($0 ~ /SCM_TOKEN_TOKEN=/) {
+                prefix = ($0 ~ /^#/) ? "# " : ""
+                $0 = prefix "export SCM_TOKEN_TOKEN=\"" closed "\""
+            }
+            if ($0 ~ /OIDC_CLIENT_ID=/) {
+                prefix = ($0 ~ /^#/) ? "# " : ""
+                $0 = prefix "export OIDC_CLIENT_ID=\"" closed "\""
+            }
+            if ($0 ~ /OIDC_CLIENT_SECRET=/) {
+                prefix = ($0 ~ /^#/) ? "# " : ""
+                $0 = prefix "export OIDC_CLIENT_SECRET=\"" closed "\""
+            }
+            if ($0 ~ /OIDC_USER=/) {
+                prefix = ($0 ~ /^#/) ? "# " : ""
+                $0 = prefix "export OIDC_USER=\"" closed "\""
+            }
             print
         }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
     fi
@@ -318,17 +334,36 @@ function hydrate_context() {
     local scm_token=$(gsm_get "gdc-${cl_name}-scm-token" "$p_id" "$reg")
     local oidc_id=$(gsm_get "gdc-${cl_name}-oidc-id" "$p_id" "$reg")
     local oidc_secret=$(gsm_get "gdc-${cl_name}-oidc-secret" "$p_id" "$reg")
+    local oidc_user=$(gsm_get "gdc-${cl_name}-oidc-user" "$p_id" "$reg")
 
-    # Inject into envrc
-    if [[ -n "$scm_user" || -n "$scm_token" || -n "$oidc_id" || -n "$oidc_secret" ]]; then
-        awk -v scm_u="$scm_user" -v scm_t="$scm_token" -v oidc_i="$oidc_id" -v oidc_s="$oidc_secret" '{
-            if (scm_u != "") sub(/.*SCM_TOKEN_USER=.*/, "export SCM_TOKEN_USER=\""scm_u"\"");
-            if (scm_t != "") sub(/.*SCM_TOKEN_TOKEN=.*/, "export SCM_TOKEN_TOKEN=\""scm_t"\"");
-            if (oidc_i != "") sub(/.*OIDC_CLIENT_ID=.*/, "export OIDC_CLIENT_ID=\""oidc_i"\"");
-            if (oidc_s != "") sub(/.*OIDC_CLIENT_SECRET=.*/, "export OIDC_CLIENT_SECRET=\""oidc_s"\"");
-            print
-        }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
-    fi
+    # Inject into envrc (always run awk now to handle commenting out)
+    awk -v scm_u="$scm_user" -v scm_t="$scm_token" -v oidc_i="$oidc_id" -v oidc_s="$oidc_secret" -v oidc_u="$oidc_user" '{
+        if ($0 ~ /SCM_TOKEN_USER=/) {
+            if (scm_u != "") $0 = "export SCM_TOKEN_USER=\""scm_u"\""
+            else if ($0 ~ /^export/) $0 = "export SCM_TOKEN_USER=\"\""
+        }
+        if ($0 ~ /SCM_TOKEN_TOKEN=/) {
+            if (scm_t != "") $0 = "export SCM_TOKEN_TOKEN=\""scm_t"\""
+            else if ($0 ~ /^export/) $0 = "export SCM_TOKEN_TOKEN=\"\""
+        }
+        if ($0 ~ /OIDC_CLIENT_ID=/) {
+            if (oidc_i != "") $0 = "export OIDC_CLIENT_ID=\""oidc_i"\""
+            else $0 = "# export OIDC_CLIENT_ID=\"\""
+        }
+        if ($0 ~ /OIDC_CLIENT_SECRET=/) {
+            if (oidc_s != "") $0 = "export OIDC_CLIENT_SECRET=\""oidc_s"\""
+            else $0 = "# export OIDC_CLIENT_SECRET=\"\""
+        }
+        if ($0 ~ /OIDC_USER=/) {
+            if (oidc_u != "") $0 = "export OIDC_USER=\""oidc_u"\""
+            else $0 = "# export OIDC_USER=\"\""
+        }
+        if ($0 ~ /OIDC_ENABLED=/) {
+            if (oidc_i != "" && oidc_s != "") $0 = "export OIDC_ENABLED=\"true\""
+            else $0 = "export OIDC_ENABLED=\"false\""
+        }
+        print
+    }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
 
     local link_target="$target_dir"
     if [[ -L "$target_dir" ]]; then
@@ -420,15 +455,17 @@ function ingest_context() {
     fi
 
     # 2. Ingest Vars
-    local scm_user=$(grep "export SCM_TOKEN_USER=" "$target_dir/envrc" | cut -d'"' -f2)
-    local scm_token=$(grep "export SCM_TOKEN_TOKEN=" "$target_dir/envrc" | cut -d'"' -f2)
-    local oidc_id=$(grep "export OIDC_CLIENT_ID=" "$target_dir/envrc" | cut -d'"' -f2)
-    local oidc_secret=$(grep "export OIDC_CLIENT_SECRET=" "$target_dir/envrc" | cut -d'"' -f2)
+    local scm_user=$(grep "^export SCM_TOKEN_USER=" "$target_dir/envrc" | cut -d'"' -f2)
+    local scm_token=$(grep "^export SCM_TOKEN_TOKEN=" "$target_dir/envrc" | cut -d'"' -f2)
+    local oidc_id=$(grep "^export OIDC_CLIENT_ID=" "$target_dir/envrc" | cut -d'"' -f2)
+    local oidc_secret=$(grep "^export OIDC_CLIENT_SECRET=" "$target_dir/envrc" | cut -d'"' -f2)
+    local oidc_user=$(grep "^export OIDC_USER=" "$target_dir/envrc" | cut -d'"' -f2)
 
     if [[ -n "$scm_user" && "$scm_user" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-scm-user" "$scm_user" "$cl_name" "$p_id" "$reg"; fi
     if [[ -n "$scm_token" && "$scm_token" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-scm-token" "$scm_token" "$cl_name" "$p_id" "$reg"; fi
     if [[ -n "$oidc_id" && "$oidc_id" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-oidc-id" "$oidc_id" "$cl_name" "$p_id" "$reg"; fi
     if [[ -n "$oidc_secret" && "$oidc_secret" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-oidc-secret" "$oidc_secret" "$cl_name" "$p_id" "$reg"; fi
+    if [[ -n "$oidc_user" && "$oidc_user" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-oidc-user" "$oidc_user" "$cl_name" "$p_id" "$reg"; fi
 
     # 3. Generate YAML Backup from Template
     pretty_print "Generating YAML backup in configs/${name}-config.yaml..." "INFO"
