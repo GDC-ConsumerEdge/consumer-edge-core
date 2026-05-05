@@ -26,7 +26,7 @@ cmd: gcloud secrets versions list {{ secret_name }} --filter="state=enabled" --f
 # After
 cmd: >
   gcloud secrets versions list {{ secret_name }} --filter="state=enabled" --format="value(name)" --project="{{ google_secret_project_id }}" ||
-  gcloud secrets versions list {{ secret_name }} --filter="state=enabled" --format="value(name)" --project="{{ google_secret_project_id }}" --location="{{ google_region }}"
+  gcloud secrets versions list {{ secret_name }} --filter="state=enabled" --format="value(name)" --project="{{ google_secret_project_id }}" --locations="{{ google_region }}"
 ```
 
 ### Bash Scripts Implementation
@@ -39,7 +39,7 @@ The fallback region variable is usually `$reg` or `$REGION` depending on the scr
 local val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null)
 
 # After
-local val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null || gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --location="${reg}" 2>/dev/null)
+local val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null || gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --locations="${reg}" 2>/dev/null)
 ```
 
 ## Affected Areas
