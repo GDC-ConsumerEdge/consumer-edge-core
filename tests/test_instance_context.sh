@@ -16,7 +16,10 @@ else
 fi
 
 # Test full generation
-./scripts/instance-context.sh -g tests/sample-cluster.yaml
+GSM_SKIP_VALIDATION="true" ./scripts/instance-context.sh -g tests/sample-cluster.yaml << 'EOF'
+y
+EOF
+
 if [[ -d "build-artifacts-test-cluster" ]]; then
   if grep -q "test-gcp-project" build-artifacts-test-cluster/envrc; then
     echo "PASS: Context generated successfully"

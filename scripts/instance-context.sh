@@ -730,8 +730,12 @@ function generate_context() {
     echo ""
 
     if [[ "$scm_user_status" == "MISSING" || "$scm_token_status" == "MISSING" ]]; then
-        pretty_print "STOP: Required SCM secrets missing in GSM. Please create them first." "ERROR"
-        exit 1
+        if [[ "$GSM_SKIP_VALIDATION" == "true" ]]; then
+            pretty_print "WARN: Required SCM secrets missing in GSM, but GSM_SKIP_VALIDATION is true. Bypassing check." "WARN"
+        else
+            pretty_print "STOP: Required SCM secrets missing in GSM. Please create them first." "ERROR"
+            exit 1
+        fi
     fi
 
     # 2. Display Settings
