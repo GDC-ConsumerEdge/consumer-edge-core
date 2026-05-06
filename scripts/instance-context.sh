@@ -277,7 +277,7 @@ function dehydrate_context() {
     fi
     local name="${link_target#"build-artifacts-"}"
     if [[ -n "$name" && "$name" != "$link_target" ]]; then
-        rm -f "configs/${name}-config.yaml"
+        rm -f "configs/${name}-context.yaml"
     fi
 }
 
@@ -421,7 +421,7 @@ function hydrate_context() {
     local config_yaml=$(get_secret "config_yaml" "gdc-${cl_name}-config-yaml" "false" "$p_id" "$reg" "$ctx_name")
     if [[ -n "$config_yaml" ]]; then
         mkdir -p configs
-        local target_yaml="configs/${ctx_name}-config.yaml"
+        local target_yaml="configs/${ctx_name}-context.yaml"
         if [[ -f "$target_yaml" ]]; then
             # Check if contents differ
             local current_yaml=$(cat "$target_yaml")
@@ -514,9 +514,9 @@ function ingest_context() {
     if [[ -n "$oidc_user" && "$oidc_user" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-oidc-user" "$oidc_user" "$cl_name" "$p_id" "$reg"; fi
 
     # 3. Generate YAML Backup from Template
-    pretty_print "Generating YAML backup in configs/${name}-config.yaml..." "INFO"
+    pretty_print "Generating YAML backup in configs/${name}-context.yaml..." "INFO"
     mkdir -p configs
-    local yaml_out="configs/${name}-config.yaml"
+    local yaml_out="configs/${name}-context.yaml"
 
     # Start with the template
     cp templates/context-config-template.yaml "$yaml_out"
