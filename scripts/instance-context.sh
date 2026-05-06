@@ -1102,16 +1102,24 @@ function download_context() {
     local secret_name="context-${name}"
     pretty_print "Downloading context configuration '${name}' from project '${project_id}'..." "INFO"
 
-    local content=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${project_id}" 2>/dev/null)
+    # Capture output and exit code
+    local content
+    content=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${project_id}" 2>&1)
+    local status=$?
 
-    if [[ -z "$content" ]]; then
+    if [[ $status -ne 0 ]]; then
         pretty_print "Context configuration not found in Google Secret Manager with ${name} and ${project_id}" "ERROR"
+        pretty_print "Underlying error: ${content}" "DEBUG"
         exit 1
     fi
 
-    mkdir -p configs
+    mkdir -p configs || { pretty_print "Error: Failed to create configs directory." "ERROR"; exit 1; }
     local target_yaml="configs/${name}-context.yaml"
-    echo "$content" > "$target_yaml"
+    
+    if ! echo "$content" > "$target_yaml"; then
+        pretty_print "Error: Failed to write context configuration to ${target_yaml}." "ERROR"
+        exit 1
+    fi
 
     pretty_print "Successfully downloaded context configuration to ${target_yaml}" "SUCCESS"
 }
