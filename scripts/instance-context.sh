@@ -25,13 +25,15 @@ CONTEXT_NAME=""
 YAML_FILE=""
 INGEST_DIR=""
 FORCED_REGION=""
+VERBOSE="false"
 
 function usage() {
-    pretty_print "Usage: instance-context.sh [-c name] [-d name] [-g file] [-l] [-o] [-x] [-i name] [-r region] [context-name]"
+    pretty_print "Usage: instance-context.sh [-c name] [-d name] [-g file] [-l] [-o] [-x] [-i name] [-r region] [-v] [context-name]"
     pretty_print "  Manage build-artifacts contexts for instance runs.\n"
     pretty_print "  context-name\tThe name of the context to switch to (Optional)"
     pretty_print "\n  Options/Flags:"
     pretty_print "  -h, --help\tPrint this help message"
+    pretty_print "  -v, --verbose\tEnable verbose output for errors"
     pretty_print "  -c name\tCreate a new context with the given name"
     pretty_print "  -d name\tDownload a context configuration from GSM"
     pretty_print "  -g file\tGenerate a new context from a local YAML configuration"
@@ -52,6 +54,7 @@ while [[ $# -gt 0 ]]; do
         -i) ACTION="INGEST"; shift; INGEST_DIR="$1"; shift ;;
         -l) ACTION="LIST"; shift ;;
         -r|--force-regional) FORCED_REGION="$2"; shift 2 ;;
+        -v|--verbose) VERBOSE="true"; shift ;;
         -h|--help) usage; exit 0 ;;
         -*) echo "Unknown option: $1"; usage; exit 1 ;;
         *) CONTEXT_NAME="$1"; shift ;;
@@ -233,19 +236,32 @@ function gsm_put() {
 
     if ! { gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null || gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; }; then
         if [[ -n "$FORCED_REGION" ]]; then
-             if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${FORCED_REGION}" ${labels} --project="${p_id}" &>/dev/null; then
+             local create_out
+             if ! create_out=$(gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${FORCED_REGION}" ${labels} --project="${p_id}" 2>&1); then
                  pretty_print "Failed to create regional secret '${secret_name}' in ${FORCED_REGION}." "ERROR"
+                 if [[ "$VERBOSE" == "true" ]]; then
+                     pretty_print "Error details: ${create_out}" "ERROR"
+                 fi
                  return 1
              fi
         else
-            if ! gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" &>/dev/null; then
+            local create_global_out
+            if ! create_global_out=$(gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" 2>&1); then
                  if [[ -n "$reg" ]]; then
-                     if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${reg}" ${labels} --project="${p_id}" &>/dev/null; then
+                     local create_reg_out
+                     if ! create_reg_out=$(gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${reg}" ${labels} --project="${p_id}" 2>&1); then
                          pretty_print "Failed to create secret '${secret_name}' globally and regionally. Check permissions." "ERROR"
+                         if [[ "$VERBOSE" == "true" ]]; then
+                             pretty_print "Global attempt error: ${create_global_out}" "ERROR"
+                             pretty_print "Regional attempt error: ${create_reg_out}" "ERROR"
+                         fi
                          return 1
                      fi
                  else
                      pretty_print "Failed to create secret '${secret_name}' globally and no region provided. Check permissions." "ERROR"
+                     if [[ "$VERBOSE" == "true" ]]; then
+                         pretty_print "Error details: ${create_global_out}" "ERROR"
+                     fi
                      return 1
                  fi
             fi
