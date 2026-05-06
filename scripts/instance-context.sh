@@ -20,55 +20,41 @@ source ${PREFIX_DIR}/install-shell-helper.sh
 
 MARKER="*"
 
-want_new_folder=false
-desired_folder="build-artifacts-example" # Default desired_folder
-list_folders=true
-generate_yaml=""
-want_open=false
-want_close=false
-ingest_folder=""
-
-function usage() {
-    pretty_print "Usage: instance-context.sh [-c] [-l] [-g <yaml_file>] [-i <folder>] [-o] [-x] [-r <region>] [folder-name]"
-    pretty_print "  Change, generate, or ingest a build-artifacts folder to use during an instance run.\n"
-    pretty_print "  folder-name\tThe name of the build-artifacts folder to use (Optional)"
-    pretty_print "\n  Options/Flags:"
-    pretty_print "  -h\t\tPrint this help message (optional)"
-    pretty_print "  -c\t\tPrint the current context (optional)"
-    pretty_print "  -l\t\tList available contexts (optional)"
-    pretty_print "  -g file\tGenerate a new context from the provided YAML file"
-    pretty_print "  -i folder\tIngest an existing folder into GSM (one-time migration)"
-    pretty_print "  -o\t\tOpen (Hydrate) the current context from GSM"
-    pretty_print "  -x\t\tClose (Dehydrate) the context (wipes secrets from disk)"
-    pretty_print "  -r region\tStrictly force all Secret Manager operations to a specific region (also --force-regional)"
-}
-
+ACTION="SWITCH" # Default
+CONTEXT_NAME=""
+YAML_FILE=""
+INGEST_DIR=""
 FORCED_REGION=""
 
-function check_options() {
-    has_option=false
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            -c) print_context; list_folders=false; has_option=true; shift ;;
-            -l) list_folders=true; has_option=true; shift ;;
-            -g) generate_yaml="$2"; list_folders=false; has_option=true; shift 2 ;;
-            -i) ingest_folder="$2"; list_folders=false; has_option=true; shift 2 ;;
-            -o) want_open=true; list_folders=false; has_option=true; shift ;;
-            -x) want_close=true; list_folders=false; has_option=true; shift ;;
-            -r|--force-regional) FORCED_REGION="$2"; list_folders=false; has_option=true; shift 2 ;;
-            -h|--help) usage; exit 0 ;;
-            -*) pretty_print "Unknown option: $1" "ERROR"; usage; exit 1 ;;
-            *) 
-                # Positional argument (folder name)
-                if [[ $has_option == false || -n "$generate_yaml" || -n "$ingest_folder" || $want_open == true || $want_close == true || -n "$FORCED_REGION" ]]; then
-                    desired_folder="$1"
-                    want_new_folder=true
-                fi
-                shift
-                ;;
-        esac
-    done
+function usage() {
+    pretty_print "Usage: instance-context.sh [-c name] [-d name] [-l] [-o] [-x] [-i dir] [-r region] [context-name]"
+    pretty_print "  Manage build-artifacts contexts for instance runs.\n"
+    pretty_print "  context-name\tThe name of the context to switch to (Optional)"
+    pretty_print "\n  Options/Flags:"
+    pretty_print "  -h\t\tPrint this help message"
+    pretty_print "  -c name\tCreate a new context with the given name"
+    pretty_print "  -d name\tDownload a context from GSM"
+    pretty_print "  -l\t\tList available contexts"
+    pretty_print "  -o\t\tOpen (Hydrate) the current context from GSM"
+    pretty_print "  -x\t\tClose (Dehydrate) the context (wipes secrets)"
+    pretty_print "  -i dir\tIngest an existing directory into GSM"
+    pretty_print "  -r region\tForce regional operations (also --force-regional)"
 }
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -c) ACTION="CREATE"; shift; CONTEXT_NAME="$1"; shift ;;
+        -d) ACTION="DOWNLOAD"; shift; CONTEXT_NAME="$1"; shift ;;
+        -o) ACTION="OPEN"; shift ;;
+        -x) ACTION="CLOSE"; shift ;;
+        -i) ACTION="INGEST"; shift; INGEST_DIR="$1"; shift ;;
+        -l) ACTION="LIST"; shift ;;
+        -r|--force-regional) FORCED_REGION="$2"; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        -*) echo "Unknown option: $1"; usage; exit 1 ;;
+        *) CONTEXT_NAME="$1"; shift ;;
+    esac
+done
 
 function get_list_of_folders() {
     local folders=$(ls -d ./build-artifacts-*)
@@ -984,87 +970,77 @@ function generate_context() {
     pretty_print "Happy clustering!" "SUCCESS"
 }
 
-#### Main Execution
+function create_context() {
+    local name="$1"
+    if [[ -z "$name" ]]; then
+        pretty_print "Error: Context name required for create." "ERROR"
+        exit 1
+    fi
+    pretty_print "Creating new context ${name}"
+    cp -r build-artifacts-example "build-artifacts-${name}"
+    rm -rf build-artifacts
+    ln -s "build-artifacts-${name}" build-artifacts
+    pretty_print "Please modify the files for the context before using it in a provisioning run" "INFO"
+}
 
-check_options "$@"
+function download_context() {
+    local name="$1"
+    pretty_print "Download context '${name}' not yet implemented." "WARN"
+}
 
-if [[ -n "$generate_yaml" ]]; then
-    generate_context "$generate_yaml"
-fi
-
-if [[ -n "$ingest_folder" ]]; then
-    ingest_context "$ingest_folder"
-fi
-
-if [[ $want_close == true && $want_new_folder == true ]]; then
-    # Wipe secrets from current context before switching
-    dehydrate_context "build-artifacts"
-fi
-
-# Change the active folder if -l used
-if [[ ${want_new_folder} == true ]]; then
-    # check if the desired folder is the same as the current
-    active=$(get_active_folder)
-    if [[ $desired_folder == $active ]]; then
-        pretty_print "Current context is already ${active}, no action will be taken" "DEBUG"
-        print_context
-    else
-        # check to see if the desired folder is in the list of folders, if not, offer to create a new context
-
-        available_folders=$(get_list_of_folders)
-
-        found=false
-        for f in $available_folders; do
-            if [[ $f == $desired_folder ]]; then
-                found=true
-                break
-            fi
-        done
-
-        # Case: if the desired folder is not found, ask to create it
-        if [[ "$found" == false ]]; then
-            pretty_print "The desired context '${desired_folder}' does not exist, would you like to create it? (y/n)"
-            read answer
-            if [[ "$answer" == "y" ]]; then
-                pretty_print "Creating new context ${desired_folder}"
-                # create new folder from example
-                cp -r build-artifacts-example "build-artifacts-${desired_folder}"
-                # remove old build-artifacts link
-                rm -rf build-artifacts
-                # Create new build-artifacts link
-                ln -s "build-artifacts-${desired_folder}" build-artifacts
-                pretty_print "Please modify the files for the context before using it in a provisioning run" "INFO"
-            else
-                pretty_print "No action taken" "ERROR"
-                exit 0
-            fi
-        else # Case: if the desired folder is found, change the context
-            pretty_print "Setting Context to '${desired_folder}'" "INFO"
-            rm -rf build-artifacts
-            ln -s "build-artifacts-${desired_folder}" build-artifacts
-            if [[ -x "$(command -v direnv)" ]]; then
-                direnv allow .
-            else
-                pretty_print "direnv not installed, perhaps you should 'source .envrc'"
-            fi
-
-            pretty_print "Don't forget to check your gcloud current config"
-        fi
+function switch_context() {
+    local name="$1"
+    if [[ -z "$name" ]]; then
+        display_folders $(get_active_folder)
+        return
     fi
 
-fi
+    local active=$(get_active_folder)
+    if [[ "$name" == "$active" ]]; then
+        pretty_print "Current context is already ${active}, no action will be taken" "DEBUG"
+        print_context
+        return
+    fi
 
-if [[ $want_open == true ]]; then
-    hydrate_context "build-artifacts"
-fi
+    local available_folders=$(get_list_of_folders)
+    local found=false
+    for f in $available_folders; do
+        if [[ "$f" == "$name" ]]; then
+            found=true
+            break
+        fi
+    done
 
-if [[ $want_close == true && $want_new_folder == false ]]; then
-    dehydrate_context "build-artifacts"
-fi
+    if [[ "$found" == false ]]; then
+        pretty_print "The desired context '${name}' does not exist, would you like to create it? (y/n)"
+        read answer
+        if [[ "$answer" == "y" ]]; then
+            create_context "$name"
+        else
+            pretty_print "No action taken" "ERROR"
+            exit 0
+        fi
+    else
+        pretty_print "Setting Context to '${name}'" "INFO"
+        rm -rf build-artifacts
+        ln -s "build-artifacts-${name}" build-artifacts
+        if [[ -x "$(command -v direnv)" ]]; then
+            direnv allow .
+        else
+            pretty_print "direnv not installed, perhaps you should 'source .envrc'"
+        fi
+        pretty_print "Don't forget to check your gcloud current config"
+    fi
+}
 
-if [[ $list_folders == true ]]; then
+#### Main Execution
 
-    active_folder=$(get_active_folder)
-
-    display_folders ${active_folder}
-fi
+case "$ACTION" in
+    CREATE) create_context "$CONTEXT_NAME" ;;
+    DOWNLOAD) download_context "$CONTEXT_NAME" ;;
+    OPEN) hydrate_context "build-artifacts" ;;
+    CLOSE) dehydrate_context "build-artifacts" ;;
+    INGEST) ingest_context "$INGEST_DIR" ;;
+    LIST) display_folders $(get_active_folder) ;;
+    SWITCH) switch_context "$CONTEXT_NAME" ;;
+esac
