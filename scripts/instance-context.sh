@@ -1088,7 +1088,32 @@ function create_context() {
 
 function download_context() {
     local name="$1"
-    pretty_print "Download context '${name}' not yet implemented." "WARN"
+    if [[ -z "$name" ]]; then
+        pretty_print "Error: Context name required for download." "ERROR"
+        exit 1
+    fi
+
+    local project_id=$(gcloud config get-value project 2>/dev/null)
+    if [[ -z "$project_id" ]]; then
+        pretty_print "Error: Could not retrieve GCP project ID. Ensure gcloud is configured." "ERROR"
+        exit 1
+    fi
+
+    local secret_name="context-${name}"
+    pretty_print "Downloading context configuration '${name}' from project '${project_id}'..." "INFO"
+
+    local content=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${project_id}" 2>/dev/null)
+
+    if [[ -z "$content" ]]; then
+        pretty_print "Context configuration not found in Google Secret Manager with ${name} and ${project_id}" "ERROR"
+        exit 1
+    fi
+
+    mkdir -p configs
+    local target_yaml="configs/${name}-context.yaml"
+    echo "$content" > "$target_yaml"
+
+    pretty_print "Successfully downloaded context configuration to ${target_yaml}" "SUCCESS"
 }
 
 function switch_context() {
