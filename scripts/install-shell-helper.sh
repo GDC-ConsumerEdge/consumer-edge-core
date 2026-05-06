@@ -71,7 +71,8 @@ alias "help-me"="display_help"
 function trim_key_file() {
     local target_file="$1"
     if [[ -f "$target_file" ]]; then
-        sed -i 's/[[:space:]]*$//' "$target_file"
-        echo "" >> "$target_file"
+        sed -i "s/[[:space:]]*$//" "$target_file"
+        local content=$(cat "$target_file")
+        echo -n "$content" > "$target_file"
     fi
 }
