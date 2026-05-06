@@ -961,11 +961,13 @@ function generate_context() {
     fi
 
     # Push YAML to GSM (as context name backup)
-    gsm_put "gdc-${cl_name}-config-yaml" "$(cat "$yaml_file")" "${cl_name}" "${p_id}" "$reg"
+    gsm_put "context-${ctx_name}" "$(cat "$yaml_file")" "${cl_name}" "${p_id}" "$reg"
 
     # Save a copy in configs/ if it's not already there
     mkdir -p configs
-    cp "$yaml_file" "configs/${ctx_name}-context.yaml"
+    if [[ ! "$yaml_file" -ef "configs/${ctx_name}-context.yaml" ]]; then
+        cp "$yaml_file" "configs/${ctx_name}-context.yaml"
+    fi
 
     dehydrate_context "$target"
 
