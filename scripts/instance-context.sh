@@ -325,15 +325,9 @@ function dehydrate_context() {
         }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
     fi
 
-    # 3. Wipe configs yaml
-    local link_target="$target_dir"
-    if [[ -L "$target_dir" ]]; then
-        link_target=$(readlink "$target_dir")
-    fi
-    local name="${link_target#"build-artifacts-"}"
-    if [[ -n "$name" && "$name" != "$link_target" ]]; then
-        rm -f "configs/${name}-context.yaml"
-    fi
+    # Note: We NO LONGER delete configs/${name}-context.yaml here.
+    # The configuration YAML should persist locally so the user can 
+    # view or edit non-sensitive values (like node IPs) while the context is dehydrated.
 }
 
 function ensure_gsa_key() {
@@ -645,7 +639,7 @@ function ingest_context() {
     fi
 
     # Push YAML to GSM
-    gsm_put "gdc-${cl_name}-config-yaml" "$(cat "$yaml_out")" "$cl_name" "$p_id" "$reg"
+    gsm_put "context-${name}" "$(cat "$yaml_out")" "$cl_name" "$p_id" "$reg"
 
     # 4. Secure the folder
     dehydrate_context "$target_dir"
