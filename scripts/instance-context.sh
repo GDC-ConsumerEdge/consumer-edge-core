@@ -20,55 +20,46 @@ source ${PREFIX_DIR}/install-shell-helper.sh
 
 MARKER="*"
 
-want_new_folder=false
-desired_folder="build-artifacts-example" # Default desired_folder
-list_folders=true
-generate_yaml=""
-want_open=false
-want_close=false
-ingest_folder=""
+ACTION="SWITCH" # Default
+CONTEXT_NAME=""
+YAML_FILE=""
+INGEST_DIR=""
+FORCED_REGION=""
+VERBOSE="false"
 
 function usage() {
-    pretty_print "Usage: instance-context.sh [-c] [-l] [-g <yaml_file>] [-i <folder>] [-o] [-x] [-r <region>] [folder-name]"
-    pretty_print "  Change, generate, or ingest a build-artifacts folder to use during an instance run.\n"
-    pretty_print "  folder-name\tThe name of the build-artifacts folder to use (Optional)"
+    pretty_print "Usage: instance-context.sh [-c name] [-d name] [-g file] [-l] [-o] [-x] [-i name] [-r region] [-v] [context-name]"
+    pretty_print "  Manage build-artifacts contexts for instance runs.\n"
+    pretty_print "  context-name\tThe name of the context to switch to (Optional)"
     pretty_print "\n  Options/Flags:"
-    pretty_print "  -h\t\tPrint this help message (optional)"
-    pretty_print "  -c\t\tPrint the current context (optional)"
-    pretty_print "  -l\t\tList available contexts (optional)"
-    pretty_print "  -g file\tGenerate a new context from the provided YAML file"
-    pretty_print "  -i folder\tIngest an existing folder into GSM (one-time migration)"
+    pretty_print "  -h, --help\tPrint this help message"
+    pretty_print "  -v, --verbose\tEnable verbose output for errors"
+    pretty_print "  -c name\tCreate a new context with the given name"
+    pretty_print "  -d name\tDownload a context configuration from GSM"
+    pretty_print "  -g file\tGenerate a new context from a local YAML configuration"
+    pretty_print "  -l\t\tList available contexts"
     pretty_print "  -o\t\tOpen (Hydrate) the current context from GSM"
-    pretty_print "  -x\t\tClose (Dehydrate) the context (wipes secrets from disk)"
-    pretty_print "  -r region\tStrictly force all Secret Manager operations to a specific region (also --force-regional)"
+    pretty_print "  -x\t\tClose (Dehydrate) the context (wipes secrets)"
+    pretty_print "  -i name\tIngest an existing directory (build-artifacts-<name>) into GSM"
+    pretty_print "  -r region\tForce regional operations (also --force-regional)"
 }
 
-FORCED_REGION=""
-
-function check_options() {
-    has_option=false
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            -c) print_context; list_folders=false; has_option=true; shift ;;
-            -l) list_folders=true; has_option=true; shift ;;
-            -g) generate_yaml="$2"; list_folders=false; has_option=true; shift 2 ;;
-            -i) ingest_folder="$2"; list_folders=false; has_option=true; shift 2 ;;
-            -o) want_open=true; list_folders=false; has_option=true; shift ;;
-            -x) want_close=true; list_folders=false; has_option=true; shift ;;
-            -r|--force-regional) FORCED_REGION="$2"; list_folders=false; has_option=true; shift 2 ;;
-            -h|--help) usage; exit 0 ;;
-            -*) pretty_print "Unknown option: $1" "ERROR"; usage; exit 1 ;;
-            *) 
-                # Positional argument (folder name)
-                if [[ $has_option == false || -n "$generate_yaml" || -n "$ingest_folder" || $want_open == true || $want_close == true || -n "$FORCED_REGION" ]]; then
-                    desired_folder="$1"
-                    want_new_folder=true
-                fi
-                shift
-                ;;
-        esac
-    done
-}
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -c) ACTION="CREATE"; shift; CONTEXT_NAME="$1"; shift ;;
+        -d) ACTION="DOWNLOAD"; shift; CONTEXT_NAME="$1"; shift ;;
+        -g) ACTION="GENERATE"; shift; YAML_FILE="$1"; shift ;;
+        -o) ACTION="OPEN"; shift ;;
+        -x) ACTION="CLOSE"; shift ;;
+        -i) ACTION="INGEST"; shift; INGEST_DIR="$1"; shift ;;
+        -l) ACTION="LIST"; shift ;;
+        -r|--force-regional) FORCED_REGION="$2"; shift 2 ;;
+        -v|--verbose) VERBOSE="true"; shift ;;
+        -h|--help) usage; exit 0 ;;
+        -*) echo "Unknown option: $1"; usage; exit 1 ;;
+        *) CONTEXT_NAME="$1"; shift ;;
+    esac
+done
 
 function get_list_of_folders() {
     local folders=$(ls -d ./build-artifacts-*)
@@ -77,7 +68,7 @@ function get_list_of_folders() {
     for folder in $folders; do
         # Remove the "build-artifacts-" prefix
         fld="${folder#"./build-artifacts-"}"
-        output+=( "$fld" )
+        if [[ "$fld" != "example" ]]; then output+=( "$fld" ); fi
     done
 
     echo "${output[@]}" # "${users[@]}"
@@ -94,17 +85,49 @@ function display_folders() {
 
     folders=$(get_list_of_folders)
 
+    local max_len=0
     for folder in $folders; do
-        # Add a marker to the active folder
+        local len=${#folder}
         if [[ $folder == $active ]]; then
-            line="${folder}${MARKER}"
-            pretty_print "${line}" "INFO"
-        else
-            pretty_print $folder
+            ((len+=1))
+        fi
+        if [[ $len -gt $max_len ]]; then
+            max_len=$len
+        fi
+    done
+    ((max_len+=4))
+
+    for folder in $folders; do
+        local state="[CLOSED]"
+        local color="DEFAULT"
+        local target_dir="build-artifacts-${folder}"
+
+        if ls "$target_dir"/*-example 1> /dev/null 2>&1; then
+            state="[INCOMPLETE]"
+            color="ERROR"
+        elif [[ -f "$target_dir/consumer-edge-machine" ]]; then
+            state="[OPENED]"
         fi
 
-    done
+        local display_name="$folder"
+        if [[ $folder == $active ]]; then
+            display_name="${folder}${MARKER}"
+            if [[ "$state" == "[OPENED]" ]]; then
+                color="SUCCESS"
+            elif [[ "$state" == "[CLOSED]" ]]; then
+                color="WARN"
+            fi
+        fi
 
+        printf -v padded_name "%-*s" $max_len "$display_name"
+        if [[ $folder == $active ]]; then
+            printf "${BOLD}"
+            pretty_print "${padded_name}${state}" "$color"
+            printf "${ENDCOLOR}"
+        else
+            pretty_print "${padded_name}${state}" "$color"
+        fi
+    done
 }
 
 function get_active_folder() {
@@ -134,12 +157,68 @@ function print_context() {
     echo "" # blank line
 }
 
+function get_secret() {
+    local secret_key="$1"    # e.g., "scm_user"
+    local gsm_name="$2"      # e.g., "gdc-my-cluster-scm-user"
+    local is_required="$3"   # "true" or "false"
+    local p_id="$4"
+    local reg="$5"
+    local ctx_name="$6"
+
+    # 1. Check Local Override File
+    local override_file="configs/context-${ctx_name}-secrets.yaml"
+    if [[ -f "$override_file" ]]; then
+        local val=$(yq e ".${secret_key}" "$override_file")
+        if [[ "$val" != "null" ]]; then
+            # Found in override! Push to GSM if missing or different
+            gsm_put "$gsm_name" "$val" "" "$p_id" "$reg"
+            echo "$val"
+            return 0
+        fi
+    fi
+
+    # 2. Check GSM
+    local gsm_val=$(gsm_get "$gsm_name" "$p_id" "$reg")
+    if [[ -n "$gsm_val" ]]; then
+        echo "$gsm_val"
+        return 0
+    fi
+
+    # 3. Interactive Prompt (only if required)
+    if [[ "$is_required" == "true" ]]; then
+        local value1=""
+        local value2=""
+        while true; do
+            pretty_print "Enter value for ${secret_key}: " "INPUT" >&2
+            read -s value1
+            echo >&2
+            pretty_print "Confirm value for ${secret_key}: " "INPUT" >&2
+            read -s value2
+            echo >&2
+            if [[ "$value1" == "$value2" && -n "$value1" ]]; then
+                gsm_put "$gsm_name" "$value1" "" "$p_id" "$reg"
+                echo "$value1"
+                return 0
+            else
+                pretty_print "Values do not match or are empty. Try again." "ERROR" >&2
+            fi
+        done
+    fi
+
+    echo ""
+}
+
 function gsm_get() {
     local secret_name="$1"
     local p_id="$2"
     local reg="$3"
 
-    local val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null || gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --location="${reg}" 2>/dev/null)
+    local val=""
+    if [[ -n "$FORCED_REGION" ]]; then
+        val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --location="${FORCED_REGION}" 2>/dev/null)
+    else
+        val=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" 2>/dev/null || gcloud secrets versions access latest --secret="${secret_name}" --project="${p_id}" --location="${reg}" 2>/dev/null)
+    fi
     echo "$val"
 }
 
@@ -159,19 +238,32 @@ function gsm_put() {
 
     if ! { gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null || gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; }; then
         if [[ -n "$FORCED_REGION" ]]; then
-             if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${FORCED_REGION}" ${labels} --project="${p_id}" &>/dev/null; then
+             local create_out
+             if ! create_out=$(gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${FORCED_REGION}" ${labels} --project="${p_id}" 2>&1); then
                  pretty_print "Failed to create regional secret '${secret_name}' in ${FORCED_REGION}." "ERROR"
+                 if [[ "$VERBOSE" == "true" ]]; then
+                     pretty_print "Error details: ${create_out}" "ERROR"
+                 fi
                  return 1
              fi
         else
-            if ! gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" &>/dev/null; then
+            local create_global_out
+            if ! create_global_out=$(gcloud secrets create "${secret_name}" --replication-policy="automatic" ${labels} --project="${p_id}" 2>&1); then
                  if [[ -n "$reg" ]]; then
-                     if ! gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${reg}" ${labels} --project="${p_id}" &>/dev/null; then
+                     local create_reg_out
+                     if ! create_reg_out=$(gcloud secrets create "${secret_name}" --replication-policy="user-managed" --locations="${reg}" ${labels} --project="${p_id}" 2>&1); then
                          pretty_print "Failed to create secret '${secret_name}' globally and regionally. Check permissions." "ERROR"
+                         if [[ "$VERBOSE" == "true" ]]; then
+                             pretty_print "Global attempt error: ${create_global_out}" "ERROR"
+                             pretty_print "Regional attempt error: ${create_reg_out}" "ERROR"
+                         fi
                          return 1
                      fi
                  else
                      pretty_print "Failed to create secret '${secret_name}' globally and no region provided. Check permissions." "ERROR"
+                     if [[ "$VERBOSE" == "true" ]]; then
+                         pretty_print "Error details: ${create_global_out}" "ERROR"
+                     fi
                      return 1
                  fi
             fi
@@ -235,15 +327,9 @@ function dehydrate_context() {
         }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
     fi
 
-    # 3. Wipe configs yaml
-    local link_target="$target_dir"
-    if [[ -L "$target_dir" ]]; then
-        link_target=$(readlink "$target_dir")
-    fi
-    local name="${link_target#"build-artifacts-"}"
-    if [[ -n "$name" && "$name" != "$link_target" ]]; then
-        rm -f "configs/${name}-config.yaml"
-    fi
+    # Note: We NO LONGER delete configs/${name}-context.yaml here.
+    # The configuration YAML should persist locally so the user can 
+    # view or edit non-sensitive values (like node IPs) while the context is dehydrated.
 }
 
 function ensure_gsa_key() {
@@ -316,27 +402,42 @@ function hydrate_context() {
         return
     fi
 
+    local ctx_name=$(get_active_folder)
+
     pretty_print "Opening context for cluster $cl_name in project $p_id..." "INFO"
 
-    # Fetch/Ensure Files
-    rm -f "$target_dir/consumer-edge-machine"
-    gsm_get "gdc-${cl_name}-ssh-key" "$p_id" "$reg" > "$target_dir/consumer-edge-machine"
-    trim_key_file "$target_dir/consumer-edge-machine"
-    chmod 400 "$target_dir/consumer-edge-machine"
-    rm -f "$target_dir/consumer-edge-machine.pub"
-    gsm_get "gdc-${cl_name}-ssh-key-pub" "$p_id" "$reg" > "$target_dir/consumer-edge-machine.pub"
-    trim_key_file "$target_dir/consumer-edge-machine.pub"
-    chmod 644 "$target_dir/consumer-edge-machine.pub"
+    # 1. SSH Keys
+    local ssh_key=$(get_secret "ssh_key" "gdc-${cl_name}-ssh-key" "true" "$p_id" "$reg" "$ctx_name")
+    if [[ -n "$ssh_key" ]]; then
+        echo "$ssh_key" > "$target_dir/consumer-edge-machine"
+        trim_key_file "$target_dir/consumer-edge-machine"
+        chmod 400 "$target_dir/consumer-edge-machine"
+    fi
 
-    ensure_gsa_key "$target_dir/provisioning-gsa.json" "gdc-${cl_name}-prov-gsa" "$cl_name" "$p_id" "Provisioning GSA" "$reg"
-    ensure_gsa_key "$target_dir/node-gsa.json" "gdc-${cl_name}-node-gsa" "$cl_name" "$p_id" "Node GSA" "$reg"
+    local ssh_pub_key=$(get_secret "ssh_pub_key" "gdc-${cl_name}-ssh-key-pub" "true" "$p_id" "$reg" "$ctx_name")
+    if [[ -n "$ssh_pub_key" ]]; then
+        echo "$ssh_pub_key" > "$target_dir/consumer-edge-machine.pub"
+        trim_key_file "$target_dir/consumer-edge-machine.pub"
+        chmod 644 "$target_dir/consumer-edge-machine.pub"
+    fi
 
-    # Fetch envrc vars
-    local scm_user=$(gsm_get "gdc-${cl_name}-scm-user" "$p_id" "$reg")
-    local scm_token=$(gsm_get "gdc-${cl_name}-scm-token" "$p_id" "$reg")
-    local oidc_id=$(gsm_get "gdc-${cl_name}-oidc-id" "$p_id" "$reg")
-    local oidc_secret=$(gsm_get "gdc-${cl_name}-oidc-secret" "$p_id" "$reg")
-    local oidc_user=$(gsm_get "gdc-${cl_name}-oidc-user" "$p_id" "$reg")
+    # 2. GSA Keys
+    local prov_gsa=$(get_secret "prov_gsa" "gdc-${cl_name}-prov-gsa" "true" "$p_id" "$reg" "$ctx_name")
+    if [[ -n "$prov_gsa" ]]; then
+        echo "$prov_gsa" > "$target_dir/provisioning-gsa.json"
+    fi
+
+    local node_gsa=$(get_secret "node_gsa" "gdc-${cl_name}-node-gsa" "true" "$p_id" "$reg" "$ctx_name")
+    if [[ -n "$node_gsa" ]]; then
+        echo "$node_gsa" > "$target_dir/node-gsa.json"
+    fi
+
+    # 3. SCM & OIDC Secrets
+    local scm_user=$(get_secret "scm_user" "gdc-${cl_name}-scm-user" "true" "$p_id" "$reg" "$ctx_name")
+    local scm_token=$(get_secret "scm_token" "gdc-${cl_name}-scm-token" "true" "$p_id" "$reg" "$ctx_name")
+    local oidc_id=$(get_secret "oidc_id" "gdc-${cl_name}-oidc-id" "false" "$p_id" "$reg" "$ctx_name")
+    local oidc_secret=$(get_secret "oidc_secret" "gdc-${cl_name}-oidc-secret" "false" "$p_id" "$reg" "$ctx_name")
+    local oidc_user=$(get_secret "oidc_user" "gdc-${cl_name}-oidc-user" "false" "$p_id" "$reg" "$ctx_name")
 
     # Inject into envrc (always run awk now to handle commenting out)
     awk -v scm_u="$scm_user" -v scm_t="$scm_token" -v oidc_i="$oidc_id" -v oidc_s="$oidc_secret" -v oidc_u="$oidc_user" '{
@@ -367,36 +468,30 @@ function hydrate_context() {
         print
     }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
 
-    local link_target="$target_dir"
-    if [[ -L "$target_dir" ]]; then
-        link_target=$(readlink "$target_dir")
-    fi
-    local name="${link_target#"build-artifacts-"}"
-    if [[ -n "$name" && "$name" != "$link_target" ]]; then
-        local config_yaml=$(gsm_get "gdc-${cl_name}-config-yaml" "$p_id" "$reg")
-        if [[ -n "$config_yaml" ]]; then
-            mkdir -p configs
-            local target_yaml="configs/${name}-config.yaml"
-            if [[ -f "$target_yaml" ]]; then
-                # Check if contents differ
-                local current_yaml=$(cat "$target_yaml")
-                if [[ "$current_yaml" != "$config_yaml" ]]; then
-                    pretty_print "Warning: $target_yaml already exists and differs from GSM." "WARN"
-                    echo -n "Would you like to overwrite it with the version from GSM? (y/n): "
-                    read answer
-                    if [[ "$answer" == "y" ]]; then
-                        echo "$config_yaml" > "$target_yaml"
-                        pretty_print "Overwrote $target_yaml with GSM version" "INFO"
-                    else
-                        pretty_print "Skipped restoring $target_yaml (kept local version)" "INFO"
-                    fi
+    # 4. Config Restoration
+    local config_yaml=$(get_secret "config_yaml" "gdc-${cl_name}-config-yaml" "false" "$p_id" "$reg" "$ctx_name")
+    if [[ -n "$config_yaml" ]]; then
+        mkdir -p configs
+        local target_yaml="configs/${ctx_name}-context.yaml"
+        if [[ -f "$target_yaml" ]]; then
+            # Check if contents differ
+            local current_yaml=$(cat "$target_yaml")
+            if [[ "$current_yaml" != "$config_yaml" ]]; then
+                pretty_print "Warning: $target_yaml already exists and differs from GSM." "WARN"
+                echo -n "Would you like to overwrite it with the version from GSM? (y/n): "
+                read answer
+                if [[ "$answer" == "y" ]]; then
+                    echo "$config_yaml" > "$target_yaml"
+                    pretty_print "Overwrote $target_yaml with GSM version" "INFO"
                 else
-                    pretty_print "Verified $target_yaml matches GSM version" "INFO"
+                    pretty_print "Skipped restoring $target_yaml (kept local version)" "INFO"
                 fi
             else
-                echo "$config_yaml" > "$target_yaml"
-                pretty_print "Restored $target_yaml from GSM" "INFO"
+                pretty_print "Verified $target_yaml matches GSM version" "INFO"
             fi
+        else
+            echo "$config_yaml" > "$target_yaml"
+            pretty_print "Restored $target_yaml from GSM" "INFO"
         fi
     fi
 
@@ -408,8 +503,8 @@ function hydrate_context() {
     pretty_print "GCP Project ID:\t\t$p_id"
     pretty_print "SCM User Secret:\t${scm_user:-NOT SET}"
     pretty_print "SCM Token Secret:\t$(mask_secret "$scm_token")"
-    pretty_print "Provisioning GSA:\t$(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id" "$reg")"
-    pretty_print "Node GSA:\t\t$(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id" "$reg")"
+    pretty_print "Provisioning GSA:\t$(echo "$prov_gsa" | jq -r '.client_email' 2>/dev/null || echo "NOT SET")"
+    pretty_print "Node GSA:\t\t$(echo "$node_gsa" | jq -r '.client_email' 2>/dev/null || echo "NOT SET")"
     echo ""
     pretty_print "Context $cl_name State: [opened]" "INFO"
     pretty_print "======================================="
@@ -437,6 +532,11 @@ function ingest_context() {
 
     if [[ -z "$cl_name" || -z "$p_id" ]]; then
         pretty_print "Error: CLUSTER_ACM_NAME and PROJECT_ID must be set in envrc for ingestion." "ERROR"
+        exit 1
+    fi
+
+    if gcloud secrets describe "context-${name}" --project="${p_id}" &>/dev/null; then
+        pretty_print "There is an existing cloud-based config, run with -d to download the context." "ERROR"
         exit 1
     fi
 
@@ -470,9 +570,9 @@ function ingest_context() {
     if [[ -n "$oidc_user" && "$oidc_user" != "****closed*******" ]]; then gsm_put "gdc-${cl_name}-oidc-user" "$oidc_user" "$cl_name" "$p_id" "$reg"; fi
 
     # 3. Generate YAML Backup from Template
-    pretty_print "Generating YAML backup in configs/${name}-config.yaml..." "INFO"
+    pretty_print "Generating YAML backup in configs/${name}-context.yaml..." "INFO"
     mkdir -p configs
-    local yaml_out="configs/${name}-config.yaml"
+    local yaml_out="configs/${name}-context.yaml"
 
     # Start with the template
     cp templates/context-config-template.yaml "$yaml_out"
@@ -541,7 +641,7 @@ function ingest_context() {
     fi
 
     # Push YAML to GSM
-    gsm_put "gdc-${cl_name}-config-yaml" "$(cat "$yaml_out")" "$cl_name" "$p_id" "$reg"
+    gsm_put "context-${name}" "$(cat "$yaml_out")" "$cl_name" "$p_id" "$reg"
 
     # 4. Secure the folder
     dehydrate_context "$target_dir"
@@ -588,59 +688,13 @@ function get_gsa_email_from_secret() {
     fi
 }
 
-function print_gsm_examples() {
-    local cl_name="$1"
-    local p_id="$2"
-    shift 2
-    local missing=("$@")
-
-    local rep_policy="--replication-policy=\"automatic\""
-    local loc_flag=""
-
-    if [[ -n "$FORCED_REGION" ]]; then
-        rep_policy="--replication-policy=\"user-managed\""
-        loc_flag=" --locations=\"$FORCED_REGION\""
-    fi
-
-    pretty_print "\nHow to fix missing secrets:" "INFO"
-    pretty_print "======================================="
-
-    for item in "${missing[@]}"; do
-        case "$item" in
-            "scm-user")
-                echo "# Create Git Username Secret"
-                echo "gcloud secrets create gdc-${cl_name}-scm-user --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
-                echo "echo -n \"YOUR_GIT_USERNAME\" | gcloud secrets versions add gdc-${cl_name}-scm-user --project=\"$p_id\" --data-file=-"
-                ;;
-            "scm-token")
-                echo "# Create Git Token Secret"
-                echo "gcloud secrets create gdc-${cl_name}-scm-token --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
-                echo "echo -n \"YOUR_GIT_TOKEN\" | gcloud secrets versions add gdc-${cl_name}-scm-token --project=\"$p_id\" --data-file=-"
-                ;;
-            "prov-gsa")
-                echo "# Create Provisioning GSA Key Secret (Upload your JSON key file)"
-                echo "gcloud secrets create gdc-${cl_name}-prov-gsa --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
-                echo "gcloud secrets versions add gdc-${cl_name}-prov-gsa --project=\"$p_id\" --data-file=path/to/provisioning-gsa.json"
-                ;;
-            "node-gsa")
-                echo "# Create Node GSA Key Secret (Upload your JSON key file)"
-                echo "gcloud secrets create gdc-${cl_name}-node-gsa --project=\"$p_id\" --labels=\"cluster=$cl_name\" ${rep_policy}${loc_flag}"
-                echo "gcloud secrets versions add gdc-${cl_name}-node-gsa --project=\"$p_id\" --data-file=path/to/node-gsa.json"
-                ;;
-        esac
-        echo ""
-    done
-
-    pretty_print "Once secrets are created in GSM, re-run this command." "INFO"
-}
-
 function validate_gsm_secret() {
     local secret_name="$1"
     local p_id="$2"
     local missing_action="${3:-MISSING}"
     local reg="$4"
 
-    if gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null || gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; then
+    if { gcloud secrets describe "${secret_name}" --project="${p_id}" &>/dev/null || gcloud secrets describe "${secret_name}" --project="${p_id}" --location="${reg}" &>/dev/null; }; then
         echo "OK"
     else
         echo "$missing_action"
@@ -658,9 +712,6 @@ function generate_context() {
     local yq_version=$(yq --version 2>&1)
     if echo "$yq_version" | grep -qv "mikefarah"; then
         pretty_print "Error: This script requires mikefarah/yq (v4+). Detected a different 'yq' (likely kislyuk/yq)." "ERROR"
-        pretty_print "Please install the Go-based yq:" "INFO"
-        pretty_print "  sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq" "INFO"
-        pretty_print "  sudo chmod +x /usr/bin/yq" "INFO"
         exit 1
     fi
     if [[ ! -f "$yaml_file" ]]; then
@@ -686,19 +737,6 @@ function generate_context() {
     if [[ -z "$ctx_name" || "$ctx_name" == "null" ]]; then
         pretty_print "Error: 'context_name' required in YAML." "ERROR"
         exit 1
-    fi
-
-    # Validate Robin bundle file exists if specified
-    if [[ "$storage_provider" == "robin" && -n "$robin_bundle" && "$robin_bundle" != "null" ]]; then
-        # Check if it exists either absolutely or relative to execution dir
-        if [[ ! -f "$robin_bundle" ]]; then
-            # Sometimes it might be defined relative to the target folder, check that too
-            local target_relative="build-artifacts-${ctx_name}/${robin_bundle##*/}"
-            if [[ ! -f "$target_relative" && ! -f "build-artifacts-example/${robin_bundle##*/}" ]]; then
-                pretty_print "⚠️  Warning: Storage provider is 'robin' but bundle file '$robin_bundle' does not exist." "WARN"
-                pretty_print "Please ensure the TAR file is present in the context folder before running the install." "WARN"
-            fi
-        fi
     fi
 
     local target="build-artifacts-${ctx_name}"
@@ -740,14 +778,13 @@ function generate_context() {
     pretty_print "OIDC Secret (Opt):\t[$oidc_sec_status]"
     echo ""
 
-    local missing=()
-    if [[ "$scm_user_status" == "MISSING" ]]; then missing+=("scm-user"); fi
-    if [[ "$scm_token_status" == "MISSING" ]]; then missing+=("scm-token"); fi
-
-    if [[ ${#missing[@]} -gt 0 ]]; then
-        pretty_print "STOP: Missing required secrets in GSM." "ERROR"
-        print_gsm_examples "$cl_name" "$p_id" "${missing[@]}"
-        exit 1
+    if [[ "$scm_user_status" == "MISSING" || "$scm_token_status" == "MISSING" ]]; then
+        if [[ "$GSM_SKIP_VALIDATION" == "true" ]]; then
+            pretty_print "WARN: Required SCM secrets missing in GSM, but GSM_SKIP_VALIDATION is true. Bypassing check." "WARN"
+        else
+            pretty_print "STOP: Required SCM secrets missing in GSM. Please create them first." "ERROR"
+            exit 1
+        fi
     fi
 
     # 2. Display Settings
@@ -782,14 +819,12 @@ function generate_context() {
     pretty_print "Generating $target in project $p_id..." "INFO"
 
     if [[ "$action" == "create" ]]; then
-        cp -r build-artifacts-example "$target"
+        mkdir -p "$target"
+        cp "build-artifacts-example/add-hosts-example" "$target/add-hosts" 2>/dev/null || touch "$target/add-hosts"
+        cp "build-artifacts-example/ssh-config" "$target/ssh-config" 2>/dev/null || touch "$target/ssh-config"
     fi
 
-    # ... rest of generation logic (envrc, inventory, etc) ...
-    # (I will keep the existing implementation but wrap it in this UX)
-
     # 1. Update envrc
-    mv "$target/envrc-example" "$target/envrc" 2>/dev/null || true
     if [[ ! -f "$target/envrc" ]]; then
         cp templates/envrc-template.sh "$target/envrc"
     fi
@@ -824,7 +859,6 @@ function generate_context() {
     ' "$target/envrc" > "$target/envrc.tmp" && mv "$target/envrc.tmp" "$target/envrc"
 
     # 2. Update inventory.yaml
-    mv "$target/inventory-example.yaml" "$target/inventory.yaml" 2>/dev/null || true
     if [[ ! -f "$target/inventory.yaml" ]]; then
         cp templates/inventory-physical-example.yaml "$target/inventory.yaml"
     fi
@@ -842,16 +876,9 @@ function generate_context() {
     yq e -i "del(.[\"${cl_name}_cluster\"].vars.peer_node_ips)" "$target/inventory.yaml"
     yq e -i ".[\"${cl_name}_cluster\"].vars.peer_node_ips = []" "$target/inventory.yaml"
 
-    # Add comments to inventory.yaml fields using yq line_comment
-    cl_name="$cl_name" yq e -i '.[env(cl_name) + "_cluster"].vars.cluster_name line_comment="Name of the cluster (from YAML cluster_name)"' "$target/inventory.yaml"
-    cl_name="$cl_name" yq e -i '.[env(cl_name) + "_cluster"].vars.control_plane_vip line_comment="K8s API endpoint (from YAML control_plane_vip)"' "$target/inventory.yaml"
-    cl_name="$cl_name" yq e -i '.[env(cl_name) + "_cluster"].vars.ingress_vip line_comment="Entry point for services (from YAML ingress_vip)"' "$target/inventory.yaml"
-
     # Parse nodes for inventory hosts
     local num_nodes=$(yq e '.nodes | length' "$yaml_file")
 
-    # Overwrite add-hosts completely
-    rm -f "$target/add-hosts-example"
     echo "# Edge Servers for ${ctx_name} (Auto-generated from YAML nodes)" > "$target/add-hosts"
     echo "# Used for local DNS resolution to cluster nodes." >> "$target/add-hosts"
 
@@ -864,7 +891,6 @@ function generate_context() {
         yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".machine_label = \"{{ inventory_hostname }}\"" "$target/inventory.yaml"
         yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".ansible_host = \"{{ node_ip }}\"" "$target/inventory.yaml"
 
-        # Identify first node as primary
         if [ $i -eq 0 ]; then
             yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".primary_cluster_machine = true" "$target/inventory.yaml"
         fi
@@ -877,25 +903,19 @@ function generate_context() {
     done
 
     # 3. Update instance-run-vars.yaml
-    mv "$target/instance-run-vars-example.yaml" "$target/instance-run-vars.yaml" 2>/dev/null || true
     if [[ ! -f "$target/instance-run-vars.yaml" ]]; then
         cp templates/instance-run-vars-template.yaml "$target/instance-run-vars.yaml"
     fi
     
-    # Insert header
-    awk "BEGIN{print \"# Variables specific to this provisioning run (e.g. storage provider)\"}1" "$target/instance-run-vars.yaml" > "$target/instance-run-vars.tmp" && mv "$target/instance-run-vars.tmp" "$target/instance-run-vars.yaml"
-
     if [[ -n "$storage_provider" && "$storage_provider" != "null" ]]; then
         storage_provider="$storage_provider" yq e -i '.storage_provider = env(storage_provider)' "$target/instance-run-vars.yaml"
 
         if [[ "$storage_provider" == "robin" ]]; then
             local num_disks=$(yq e '.robin_disk_paths | length' "$yaml_file")
             if [[ "$num_disks" -gt 0 && "$num_disks" != "null" ]]; then
-                # Ensure the key exists and is empty
                 yq e -i '.robin_disk_paths = []' "$target/instance-run-vars.yaml"
                 for (( i=0; i<$num_disks; i++ )); do
                     local disk_path=$(yq e ".robin_disk_paths[$i]" "$yaml_file")
-                    # Safe injection
                     disk_path="$disk_path" yq e -i '.robin_disk_paths += [env(disk_path)]' "$target/instance-run-vars.yaml"
                 done
             fi
@@ -912,159 +932,240 @@ function generate_context() {
 
     if [[ "$storage_provider" == "robin" && -n "$robin_bundle" && "$robin_bundle" != "null" ]]; then
         robin_bundle="$robin_bundle" yq e -i '.robin_install_bundle_file = env(robin_bundle)' "$target/instance-run-vars.yaml"
-
-        # Copy the file into the context if it's outside
-        if [[ ! -f "$target/${robin_bundle##*/}" && -f "$robin_bundle" ]]; then
-            cp "$robin_bundle" "$target/"
-        elif [[ ! -f "$target/${robin_bundle##*/}" && -f "build-artifacts-example/${robin_bundle##*/}" ]]; then
-            cp "build-artifacts-example/${robin_bundle##*/}" "$target/"
-        fi
     fi
 
     # 4. Handle SSH Keys
     local existing_ssh=$(gsm_get "gdc-${cl_name}-ssh-key" "$p_id" "$reg")
     if [[ -n "$existing_ssh" ]]; then
         pretty_print "Existing SSH key found in GSM, using it." "INFO"
-        rm -f "$target/consumer-edge-machine"
         echo "$existing_ssh" > "$target/consumer-edge-machine"
         trim_key_file "$target/consumer-edge-machine"
-        chmod 600 "$target/consumer-edge-machine"
-        rm -f "$target/consumer-edge-machine.pub"
+        chmod 400 "$target/consumer-edge-machine"
         gsm_get "gdc-${cl_name}-ssh-key-pub" "$p_id" "$reg" > "$target/consumer-edge-machine.pub"
         trim_key_file "$target/consumer-edge-machine.pub"
+        chmod 644 "$target/consumer-edge-machine.pub"
     else
         pretty_print "No SSH key found in GSM, generating new pair..." "INFO"
         rm -f "$target/consumer-edge-machine" "$target/consumer-edge-machine.pub"
         ssh-keygen -t rsa -b 4096 -f "$target/consumer-edge-machine" -N "" -q
         trim_key_file "$target/consumer-edge-machine"
         trim_key_file "$target/consumer-edge-machine.pub"
-        # Push new keys to GSM later in step 6
     fi
 
     # 5. Ensure GSA keys are handled (prompt if missing)
     ensure_gsa_key "$target/provisioning-gsa.json" "gdc-${cl_name}-prov-gsa" "$cl_name" "$p_id" "Provisioning GSA" "$reg"
     ensure_gsa_key "$target/node-gsa.json" "gdc-${cl_name}-node-gsa" "$cl_name" "$p_id" "Node GSA" "$reg"
 
-    # 6. Push SSH to GSM (if new) and start CLOSED
+    # 6. Push to GSM
     if [[ -z "$existing_ssh" ]]; then
         gsm_put "gdc-${cl_name}-ssh-key" "$(cat "$target/consumer-edge-machine")" "${cl_name}" "${p_id}" "$reg"
         gsm_put "gdc-${cl_name}-ssh-key-pub" "$(cat "$target/consumer-edge-machine.pub")" "${cl_name}" "${p_id}" "$reg"
     fi
 
-    # Push YAML to GSM
-    gsm_put "gdc-${cl_name}-config-yaml" "$(cat "$yaml_file")" "${cl_name}" "${p_id}" "$reg"
+    # Push YAML to GSM (as context name backup)
+    gsm_put "context-${ctx_name}" "$(cat "$yaml_file")" "${cl_name}" "${p_id}" "$reg"
+
+    # Save a copy in configs/ if it's not already there
+    mkdir -p configs
+    if [[ ! "$yaml_file" -ef "configs/${ctx_name}-context.yaml" ]]; then
+        cp "$yaml_file" "configs/${ctx_name}-context.yaml"
+    fi
 
     dehydrate_context "$target"
 
-    # 4. Summary
-    pretty_print "4. Summary" "INFO"
-    pretty_print "======================================="
-    pretty_print "GCP Project ID:\t\t$p_id"
-    pretty_print "SCM User Secret:\t${scm_user_val:-NOT SET}"
-    pretty_print "SCM Token Secret:\t$(mask_secret "$scm_token_val")"
-    pretty_print "Provisioning GSA:\t$prov_gsa_email"
-    pretty_print "Node GSA:\t\t$node_gsa_email"
-    pretty_print "OIDC Client ID (Opt):\t${oidc_id_val:-NOT SET}"
-    pretty_print "OIDC Secret (Opt):\t$(mask_secret "$oidc_sec_val")"
-    echo ""
+    pretty_print "Context $ctx_name generated successfully and closed (dehydrated)." "SUCCESS"
+}
 
-    # 5. Context State & Next Steps
-    local state="closed"
-    if [[ -f "$target/consumer-edge-machine" && -f "$target/provisioning-gsa.json" ]]; then
-        state="opened"
+function create_context() {
+    local name="$1"
+    if [[ -z "$name" ]]; then
+        pretty_print "Error: Context name required for create." "ERROR"
+        exit 1
     fi
 
-    pretty_print "5. Context $ctx_name State: [$state]" "INFO"
-    pretty_print "======================================="
-    pretty_print "To activate this context:"
-    pretty_print "  ./scripts/instance-context.sh $ctx_name"
-    pretty_print "To open (hydrate) this context:"
-    pretty_print "  ./scripts/instance-context.sh -o $ctx_name"
-    echo ""
-    pretty_print "Happy clustering!" "SUCCESS"
+    local target="build-artifacts-${name}"
+    local config_yaml="configs/${name}-context.yaml"
+
+    local project_id=$(gcloud config get-value project 2>/dev/null)
+    if [[ -n "$project_id" ]]; then
+        if gcloud secrets describe "context-${name}" --project="${project_id}" &>/dev/null; then
+            pretty_print "There is an existing cloud-based config, run with -d to download the context." "ERROR"
+            exit 1
+        fi
+    fi
+
+    # 1. Validation
+    if [[ -d "$target" ]]; then
+        pretty_print "Error: Context '${name}' already exists at ${target}." "ERROR"
+        exit 1
+    fi
+
+    pretty_print "Creating new context: ${name}" "INFO"
+
+    # 2. Scaffolding
+    mkdir -p "$target"
+    mkdir -p configs
+
+    # Copy template files
+    cp "build-artifacts-example/add-hosts-example" "$target/add-hosts"
+    cp "build-artifacts-example/ssh-config" "$target/ssh-config"
+    cp "templates/envrc-template.sh" "$target/envrc"
+    cp "templates/instance-run-vars-template.yaml" "$target/instance-run-vars.yaml"
+    cp "templates/inventory-physical-example.yaml" "$target/inventory.yaml"
+    cp "templates/context-config-template.yaml" "$config_yaml"
+
+    # 3. YAML Update
+    if command -v yq &> /dev/null; then
+        name="$name" yq e -i '.context_name = env(name)' "$config_yaml"
+    else
+        pretty_print "Warning: 'yq' not found. Skipping auto-update of context_name in ${config_yaml}." "WARN"
+    fi
+
+    # 4. GSM Sync
+    echo -n "Would you like to sync this config to GSM? (y/n): "
+    read answer
+    if [[ "$answer" == "y" ]]; then
+        # Use gsm_put if available, but we need project_id.
+        # Since it's a new context, we might not have project_id yet.
+        # We can try to extract it from the template or prompt.
+        local p_id=$(yq e '.project_id' "$config_yaml" 2>/dev/null)
+        if [[ "$p_id" == "null" || -z "$p_id" ]]; then
+             pretty_print "Enter the GCP Project ID for GSM sync: " "INPUT"
+             read p_id
+        fi
+
+        if [[ -n "$p_id" ]]; then
+            gsm_put "context-${name}" "$(cat "$config_yaml")" "" "$p_id" ""
+            pretty_print "Config synced to GSM as 'context-${name}'" "SUCCESS"
+        else
+            pretty_print "Skipping GSM sync: No Project ID provided." "WARN"
+        fi
+    fi
+
+    # 5. Final UX: Link as active
+    rm -f build-artifacts
+    ln -s "$target" build-artifacts
+    pretty_print "Context '${name}' created and linked as active." "SUCCESS"
+    pretty_print "Location: ${target}"
+    pretty_print "Config: ${config_yaml}"
+    pretty_print "\nPlease edit ${config_yaml} or the files in ${target} to match your environment." "INFO"
+}
+
+function download_context() {
+    local name="$1"
+    if [[ -z "$name" ]]; then
+        pretty_print "Error: Context name required for download." "ERROR"
+        exit 1
+    fi
+
+    local project_id=$(gcloud config get-value project 2>/dev/null)
+    if [[ -z "$project_id" ]]; then
+        pretty_print "Error: Could not retrieve GCP project ID. Ensure gcloud is configured." "ERROR"
+        exit 1
+    fi
+
+    local secret_name="context-${name}"
+    local legacy_secret_name="gdc-${name}-config-yaml"
+    pretty_print "Downloading context configuration '${name}' from project '${project_id}'..." "INFO"
+
+    # Capture output and exit code
+    local content
+    content=$(gcloud secrets versions access latest --secret="${secret_name}" --project="${project_id}" 2>&1)
+    local status=$?
+
+    if [[ $status -ne 0 ]]; then
+        # Fallback to legacy secret name format
+        local legacy_content
+        legacy_content=$(gcloud secrets versions access latest --secret="${legacy_secret_name}" --project="${project_id}" 2>&1)
+        local legacy_status=$?
+
+        if [[ $legacy_status -eq 0 ]]; then
+            pretty_print "Found legacy context configuration format: ${legacy_secret_name}" "INFO"
+            content="$legacy_content"
+        else
+            pretty_print "Context configuration not found in Google Secret Manager with ${name} and ${project_id}" "ERROR"
+            pretty_print "Attempted: ${secret_name} and ${legacy_secret_name}" "DEBUG"
+            pretty_print "Underlying error: ${content}" "DEBUG"
+            exit 1
+        fi
+    fi
+
+    mkdir -p configs || { pretty_print "Error: Failed to create configs directory." "ERROR"; exit 1; }
+    local target_yaml="configs/${name}-context.yaml"
+    
+    if ! echo "$content" > "$target_yaml"; then
+        pretty_print "Error: Failed to write context configuration to ${target_yaml}." "ERROR"
+        exit 1
+    fi
+
+    pretty_print "Successfully downloaded context configuration to ${target_yaml}" "SUCCESS"
+}
+
+function switch_context() {
+    local name="$1"
+    if [[ -z "$name" ]]; then
+        display_folders $(get_active_folder)
+        return
+    fi
+
+    local active=$(get_active_folder)
+    if [[ "$name" == "$active" ]]; then
+        pretty_print "Current context is already ${active}, no action will be taken" "DEBUG"
+        print_context
+        return
+    fi
+
+    local available_folders=$(get_list_of_folders)
+    local found=false
+    for f in $available_folders; do
+        if [[ "$f" == "$name" ]]; then
+            found=true
+            break
+        fi
+    done
+
+    if [[ "$found" == false ]]; then
+        pretty_print "The desired context '${name}' does not exist, would you like to create it? (y/n)"
+        read answer
+        if [[ "$answer" == "y" ]]; then
+            create_context "$name"
+        else
+            pretty_print "No action taken" "ERROR"
+            exit 0
+        fi
+    else
+        pretty_print "Setting Context to '${name}'" "INFO"
+        rm -rf build-artifacts
+        ln -s "build-artifacts-${name}" build-artifacts
+        if [[ -x "$(command -v direnv)" ]]; then
+            direnv allow .
+        else
+            pretty_print "direnv not installed, perhaps you should 'source .envrc'"
+        fi
+        pretty_print "Don't forget to check your gcloud current config"
+    fi
 }
 
 #### Main Execution
 
-check_options "$@"
-
-if [[ -n "$generate_yaml" ]]; then
-    generate_context "$generate_yaml"
-fi
-
-if [[ -n "$ingest_folder" ]]; then
-    ingest_context "$ingest_folder"
-fi
-
-if [[ $want_close == true && $want_new_folder == true ]]; then
-    # Wipe secrets from current context before switching
-    dehydrate_context "build-artifacts"
-fi
-
-# Change the active folder if -l used
-if [[ ${want_new_folder} == true ]]; then
-    # check if the desired folder is the same as the current
-    active=$(get_active_folder)
-    if [[ $desired_folder == $active ]]; then
-        pretty_print "Current context is already ${active}, no action will be taken" "DEBUG"
-        print_context
-    else
-        # check to see if the desired folder is in the list of folders, if not, offer to create a new context
-
-        available_folders=$(get_list_of_folders)
-
-        found=false
-        for f in $available_folders; do
-            if [[ $f == $desired_folder ]]; then
-                found=true
-                break
-            fi
-        done
-
-        # Case: if the desired folder is not found, ask to create it
-        if [[ "$found" == false ]]; then
-            pretty_print "The desired context '${desired_folder}' does not exist, would you like to create it? (y/n)"
-            read answer
-            if [[ "$answer" == "y" ]]; then
-                pretty_print "Creating new context ${desired_folder}"
-                # create new folder from example
-                cp -r build-artifacts-example "build-artifacts-${desired_folder}"
-                # remove old build-artifacts link
-                rm -rf build-artifacts
-                # Create new build-artifacts link
-                ln -s "build-artifacts-${desired_folder}" build-artifacts
-                pretty_print "Please modify the files for the context before using it in a provisioning run" "INFO"
-            else
-                pretty_print "No action taken" "ERROR"
-                exit 0
-            fi
-        else # Case: if the desired folder is found, change the context
-            pretty_print "Setting Context to '${desired_folder}'" "INFO"
-            rm -rf build-artifacts
-            ln -s "build-artifacts-${desired_folder}" build-artifacts
-            if [[ -x "$(command -v direnv)" ]]; then
-                direnv allow .
-            else
-                pretty_print "direnv not installed, perhaps you should 'source .envrc'"
-            fi
-
-            pretty_print "Don't forget to check your gcloud current config"
+case "$ACTION" in
+    CREATE) create_context "$CONTEXT_NAME" ;;
+    DOWNLOAD) download_context "$CONTEXT_NAME" ;;
+    GENERATE) generate_context "$YAML_FILE" ;;
+    OPEN) 
+        if [[ -n "$CONTEXT_NAME" ]]; then
+            switch_context "$CONTEXT_NAME"
         fi
-    fi
-
-fi
-
-if [[ $want_open == true ]]; then
-    hydrate_context "build-artifacts"
-fi
-
-if [[ $want_close == true && $want_new_folder == false ]]; then
-    dehydrate_context "build-artifacts"
-fi
-
-if [[ $list_folders == true ]]; then
-
-    active_folder=$(get_active_folder)
-
-    display_folders ${active_folder}
-fi
+        hydrate_context "build-artifacts" 
+        ;;
+    CLOSE) 
+        if [[ -n "$CONTEXT_NAME" ]]; then
+            dehydrate_context "build-artifacts-${CONTEXT_NAME}"
+        else
+            dehydrate_context "build-artifacts"
+        fi
+        ;;
+    INGEST) ingest_context "$INGEST_DIR" ;;
+    LIST) display_folders $(get_active_folder) ;;
+    SWITCH) switch_context "$CONTEXT_NAME" ;;
+esac
