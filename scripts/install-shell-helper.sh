@@ -31,25 +31,25 @@ function pretty_print() {
 
     case "$LEVEL" in
         "DEFAULT")
-            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n"
+            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n" >&2
             ;;
         "ERROR")
-            printf "${ERROR_COLOR}${MSG}${ENDCOLOR}\n"
+            printf "${ERROR_COLOR}${MSG}${ENDCOLOR}\n" >&2
             ;;
         "WARN")
-            printf "${WARN_COLOR}${MSG}${ENDCOLOR}\n"
+            printf "${WARN_COLOR}${MSG}${ENDCOLOR}\n" >&2
             ;;
         "INFO")
-            printf "${INFO_COLOR}${MSG}${ENDCOLOR}\n"
+            printf "${INFO_COLOR}${MSG}${ENDCOLOR}\n" >&2
             ;;
         "DEBUG")
-            printf "${DEBUG_COLOR}${MSG}${ENDCOLOR}\n"
+            printf "${DEBUG_COLOR}${MSG}${ENDCOLOR}\n" >&2
             ;;
         "SUCCESS")
-            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n"
+            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n" >&2
             ;;
         *)
-            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n"
+            printf "${DEFAULT_COLOR}${MSG}${ENDCOLOR}\n" >&2
             ;;
     esac
 }
