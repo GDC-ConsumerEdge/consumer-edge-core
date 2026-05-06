@@ -9,7 +9,7 @@ Consumer Edge Core is a comprehensive automation framework designed to provision
 * `docker`, `git`, `jq`, `screen`, `direnv`
 * Python 3.10+
 
-### Setup
+### Setup One-time
 ```bash
 # 1. Clone the repository
 git clone <repository-url>
@@ -24,6 +24,11 @@ pip install -r requirements.txt
 # 4. Load environment variables
 direnv allow .
 
+# 5. Setup Cluster Configuration
+./scripts/instance-context.sh <name>
+# Answer 'yes'
+./scripts/instance-context.sh -
+
 # 5. Execute the installation playbook
 ./install.sh
 ```
@@ -31,6 +36,19 @@ direnv allow .
 #### Build Run/Install Container
 
 Keeping the docker container used in `./install.sh` can be achieved by running `gcloud builds submit --config ./docker-build/cloudbuild.yaml ./ --async --quiet --verbosity=critical --no-user-output-enabled`
+
+> :warning: NOTE: Some org policies prevent `gcloud builds` from using non-specific buckets to hold code. Use the following in this case
+
+```
+# Create a regional bucket
+gsutil mb -l ${REGION} gs://${PROJECT_ID}-cloudbuild-staging
+
+# Kickoff the build
+gcloud builds submit \
+    --region=[REGION] \
+    --gcs-source-staging-dir=gs://${PROJECT_ID}-cloudbuild-staging/source \
+    --config ./docker-build/cloudbuild.yaml .
+```
 
 ## Features & Capabilities
 
