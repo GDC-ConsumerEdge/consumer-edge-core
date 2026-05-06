@@ -120,6 +120,55 @@ function print_context() {
     echo "" # blank line
 }
 
+function get_secret() {
+    local secret_key="$1"    # e.g., "scm_user"
+    local gsm_name="$2"      # e.g., "gdc-my-cluster-scm-user"
+    local is_required="$3"   # "true" or "false"
+    local p_id="$4"
+    local reg="$5"
+    local ctx_name="$6"
+
+    # 1. Check Local Override File
+    local override_file="configs/context-${ctx_name}-secrets.yaml"
+    if [[ -f "$override_file" ]]; then
+        local val=$(yq e ".${secret_key}" "$override_file")
+        if [[ "$val" != "null" ]]; then
+            # Found in override! Push to GSM if missing or different
+            gsm_put "$gsm_name" "$val" "" "$p_id" "$reg"
+            echo "$val"
+            return 0
+        fi
+    fi
+
+    # 2. Check GSM
+    local gsm_val=$(gsm_get "$gsm_name" "$p_id" "$reg")
+    if [[ -n "$gsm_val" ]]; then
+        echo "$gsm_val"
+        return 0
+    fi
+
+    # 3. Interactive Prompt (only if required)
+    if [[ "$is_required" == "true" ]]; then
+        local value1=""
+        local value2=""
+        while true; do
+            pretty_print "Enter value for ${secret_key}: " "INPUT"
+            read -s value1
+            pretty_print "Confirm value for ${secret_key}: " "INPUT"
+            read -s value2
+            if [[ "$value1" == "$value2" && -n "$value1" ]]; then
+                gsm_put "$gsm_name" "$value1" "" "$p_id" "$reg"
+                echo "$value1"
+                return 0
+            else
+                pretty_print "Values do not match or are empty. Try again." "ERROR"
+            fi
+        done
+    fi
+
+    echo ""
+}
+
 function gsm_get() {
     local secret_name="$1"
     local p_id="$2"
