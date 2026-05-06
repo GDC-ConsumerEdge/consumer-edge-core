@@ -539,6 +539,11 @@ function ingest_context() {
         exit 1
     fi
 
+    if gcloud secrets describe "context-${name}" --project="${p_id}" &>/dev/null; then
+        pretty_print "There is an existing cloud-based config, run with -d to download the context." "ERROR"
+        exit 1
+    fi
+
     pretty_print "Ingesting $name into project $p_id (cluster: $cl_name)..." "INFO"
 
     # 1. Ingest Files
@@ -982,6 +987,14 @@ function create_context() {
 
     local target="build-artifacts-${name}"
     local config_yaml="configs/${name}-context.yaml"
+
+    local project_id=$(gcloud config get-value project 2>/dev/null)
+    if [[ -n "$project_id" ]]; then
+        if gcloud secrets describe "context-${name}" --project="${project_id}" &>/dev/null; then
+            pretty_print "There is an existing cloud-based config, run with -d to download the context." "ERROR"
+            exit 1
+        fi
+    fi
 
     # 1. Validation
     if [[ -d "$target" ]]; then
