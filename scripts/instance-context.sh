@@ -65,7 +65,7 @@ function get_list_of_folders() {
     for folder in $folders; do
         # Remove the "build-artifacts-" prefix
         fld="${folder#"./build-artifacts-"}"
-        output+=( "$fld" )
+        if [[ "$fld" != "example" ]]; then output+=( "$fld" ); fi
     done
 
     echo "${output[@]}" # "${users[@]}"
@@ -117,7 +117,13 @@ function display_folders() {
         fi
 
         printf -v padded_name "%-*s" $max_len "$display_name"
-        pretty_print "${padded_name}${state}" "$color"
+        if [[ $folder == $active ]]; then
+            printf "${BOLD}"
+            pretty_print "${padded_name}${state}" "$color"
+            printf "${ENDCOLOR}"
+        else
+            pretty_print "${padded_name}${state}" "$color"
+        fi
     done
 }
 
