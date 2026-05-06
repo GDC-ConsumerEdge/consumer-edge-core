@@ -1138,8 +1138,19 @@ case "$ACTION" in
     CREATE) create_context "$CONTEXT_NAME" ;;
     DOWNLOAD) download_context "$CONTEXT_NAME" ;;
     GENERATE) generate_context "$YAML_FILE" ;;
-    OPEN) hydrate_context "build-artifacts" ;;
-    CLOSE) dehydrate_context "build-artifacts" ;;
+    OPEN) 
+        if [[ -n "$CONTEXT_NAME" ]]; then
+            switch_context "$CONTEXT_NAME"
+        fi
+        hydrate_context "build-artifacts" 
+        ;;
+    CLOSE) 
+        if [[ -n "$CONTEXT_NAME" ]]; then
+            dehydrate_context "build-artifacts-${CONTEXT_NAME}"
+        else
+            dehydrate_context "build-artifacts"
+        fi
+        ;;
     INGEST) ingest_context "$INGEST_DIR" ;;
     LIST) display_folders $(get_active_folder) ;;
     SWITCH) switch_context "$CONTEXT_NAME" ;;
