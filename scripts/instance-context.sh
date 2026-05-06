@@ -393,12 +393,16 @@ function hydrate_context() {
     local p_id=$(grep "export PROJECT_ID=" "$target_dir/envrc" | cut -d'"' -f2)
     local reg=$(grep "export REGION=" "$target_dir/envrc" | cut -d'"' -f2)
 
+    if [[ "$p_id" == "your-gcp-project-id" || "$p_id" == "null" || -z "$p_id" ]]; then
+        p_id=$(gcloud config get-value project 2>/dev/null)
+    fi
+
     if [[ -z "$cl_name" ]]; then
         pretty_print "Error: Could not find CLUSTER_ACM_NAME in $target_dir/envrc" "ERROR"
         return
     fi
-    if [[ -z "$p_id" ]]; then
-        pretty_print "Error: Could not find PROJECT_ID in $target_dir/envrc" "ERROR"
+    if [[ -z "$p_id" || "$p_id" == "(unset)" ]]; then
+        pretty_print "Error: Could not find PROJECT_ID in $target_dir/envrc and no active gcloud project set." "ERROR"
         return
     fi
 
@@ -530,8 +534,12 @@ function ingest_context() {
     local p_id=$(grep "export PROJECT_ID=" "$target_dir/envrc" | cut -d'"' -f2)
     local reg=$(grep "export REGION=" "$target_dir/envrc" | cut -d'"' -f2)
 
-    if [[ -z "$cl_name" || -z "$p_id" ]]; then
-        pretty_print "Error: CLUSTER_ACM_NAME and PROJECT_ID must be set in envrc for ingestion." "ERROR"
+    if [[ "$p_id" == "your-gcp-project-id" || "$p_id" == "null" || -z "$p_id" ]]; then
+        p_id=$(gcloud config get-value project 2>/dev/null)
+    fi
+
+    if [[ -z "$cl_name" || -z "$p_id" || "$p_id" == "(unset)" ]]; then
+        pretty_print "Error: CLUSTER_ACM_NAME and PROJECT_ID must be set in envrc (or active gcloud project) for ingestion." "ERROR"
         exit 1
     fi
 
@@ -722,6 +730,15 @@ function generate_context() {
     local ctx_name=$(yq e '.context_name' "$yaml_file")
     local cl_name=$(yq e '.cluster_name' "$yaml_file")
     local p_id=$(yq e '.project_id' "$yaml_file")
+
+    if [[ "$p_id" == "null" || -z "$p_id" || "$p_id" == "your-gcp-project-id" ]]; then
+        p_id=$(gcloud config get-value project 2>/dev/null)
+        if [[ -z "$p_id" || "$p_id" == "(unset)" || "$p_id" == "null" ]]; then
+             pretty_print "Error: 'project_id' required in YAML or active gcloud project." "ERROR"
+             exit 1
+        fi
+        pretty_print "Using active gcloud project: ${p_id}" "INFO"
+    fi
     local reg=$(yq e '.region // "us-central1"' "$yaml_file")
     local zn=$(yq e '.zone // "us-central1-a"' "$yaml_file")
     local cp_vip=$(yq e '.control_plane_vip' "$yaml_file")
@@ -782,8 +799,32 @@ function generate_context() {
         if [[ "$GSM_SKIP_VALIDATION" == "true" ]]; then
             pretty_print "WARN: Required SCM secrets missing in GSM, but GSM_SKIP_VALIDATION is true. Bypassing check." "WARN"
         else
-            pretty_print "STOP: Required SCM secrets missing in GSM. Please create them first." "ERROR"
-            exit 1
+            pretty_print "Required SCM secrets are missing in GSM." "WARN"
+            
+            if [[ "$scm_user_status" == "MISSING" ]]; then
+                echo -n "Enter the SCM User: "
+                read scm_user_input
+                if [[ -n "$scm_user_input" ]]; then
+                    gsm_put "gdc-${cl_name}-scm-user" "$scm_user_input" "$cl_name" "$p_id" "$reg"
+                    scm_user_status="CREATED"
+                else
+                    pretty_print "STOP: SCM User is required." "ERROR"
+                    exit 1
+                fi
+            fi
+
+            if [[ "$scm_token_status" == "MISSING" ]]; then
+                echo -n "Enter the SCM Token: "
+                read -s scm_token_input
+                echo ""
+                if [[ -n "$scm_token_input" ]]; then
+                    gsm_put "gdc-${cl_name}-scm-token" "$scm_token_input" "$cl_name" "$p_id" "$reg"
+                    scm_token_status="CREATED"
+                else
+                    pretty_print "STOP: SCM Token is required." "ERROR"
+                    exit 1
+                fi
+            fi
         fi
     fi
 
@@ -1017,6 +1058,9 @@ function create_context() {
     # 3. YAML Update
     if command -v yq &> /dev/null; then
         name="$name" yq e -i '.context_name = env(name)' "$config_yaml"
+        if [[ -n "$project_id" && "$project_id" != "(unset)" && "$project_id" != "null" ]]; then
+            p_id="$project_id" yq e -i '.project_id = env(p_id)' "$config_yaml"
+        fi
     else
         pretty_print "Warning: 'yq' not found. Skipping auto-update of context_name in ${config_yaml}." "WARN"
     fi
@@ -1029,16 +1073,26 @@ function create_context() {
         # Since it's a new context, we might not have project_id yet.
         # We can try to extract it from the template or prompt.
         local p_id=$(yq e '.project_id' "$config_yaml" 2>/dev/null)
-        if [[ "$p_id" == "null" || -z "$p_id" ]]; then
-             pretty_print "Enter the GCP Project ID for GSM sync: " "INPUT"
-             read p_id
+        if [[ "$p_id" == "null" || -z "$p_id" || "$p_id" == "your-gcp-project-id" ]]; then
+             # Try to use the active gcloud project (already in project_id variable)
+             p_id="$project_id"
+
+             if [[ -z "$p_id" || "$p_id" == "(unset)" ]]; then
+                 pretty_print "Enter the GCP Project ID for GSM sync: " "INPUT"
+                 read p_id
+             fi
+
+             # Also update the YAML file with the detected project ID
+             if [[ -n "$p_id" && "$p_id" != "null" && "$p_id" != "(unset)" && "$p_id" != "your-gcp-project-id" ]]; then
+                 p_id="$p_id" yq e -i '.project_id = env(p_id)' "$config_yaml"
+             fi
         fi
 
-        if [[ -n "$p_id" ]]; then
+        if [[ -n "$p_id" && "$p_id" != "your-gcp-project-id" ]]; then
             gsm_put "context-${name}" "$(cat "$config_yaml")" "" "$p_id" ""
             pretty_print "Config synced to GSM as 'context-${name}'" "SUCCESS"
         else
-            pretty_print "Skipping GSM sync: No Project ID provided." "WARN"
+            pretty_print "Skipping GSM sync: No valid Project ID provided." "WARN"
         fi
     fi
 
