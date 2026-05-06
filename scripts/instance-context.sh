@@ -1025,11 +1025,65 @@ function create_context() {
         pretty_print "Error: Context name required for create." "ERROR"
         exit 1
     fi
-    pretty_print "Creating new context ${name}"
-    cp -r build-artifacts-example "build-artifacts-${name}"
-    rm -rf build-artifacts
-    ln -s "build-artifacts-${name}" build-artifacts
-    pretty_print "Please modify the files for the context before using it in a provisioning run" "INFO"
+
+    local target="build-artifacts-${name}"
+    local config_yaml="configs/${name}-context.yaml"
+
+    # 1. Validation
+    if [[ -d "$target" ]]; then
+        pretty_print "Error: Context '${name}' already exists at ${target}." "ERROR"
+        exit 1
+    fi
+
+    pretty_print "Creating new context: ${name}" "INFO"
+
+    # 2. Scaffolding
+    mkdir -p "$target"
+    mkdir -p configs
+
+    # Copy template files
+    cp "build-artifacts-example/add-hosts-example" "$target/add-hosts"
+    cp "build-artifacts-example/ssh-config" "$target/ssh-config"
+    cp "templates/envrc-template.sh" "$target/envrc"
+    cp "templates/instance-run-vars-template.yaml" "$target/instance-run-vars.yaml"
+    cp "templates/inventory-physical-example.yaml" "$target/inventory.yaml"
+    cp "templates/context-config-template.yaml" "$config_yaml"
+
+    # 3. YAML Update
+    if command -v yq &> /dev/null; then
+        name="$name" yq e -i '.context_name = env(name)' "$config_yaml"
+    else
+        pretty_print "Warning: 'yq' not found. Skipping auto-update of context_name in ${config_yaml}." "WARN"
+    fi
+
+    # 4. GSM Sync
+    echo -n "Would you like to sync this config to GSM? (y/n): "
+    read answer
+    if [[ "$answer" == "y" ]]; then
+        # Use gsm_put if available, but we need project_id.
+        # Since it's a new context, we might not have project_id yet.
+        # We can try to extract it from the template or prompt.
+        local p_id=$(yq e '.project_id' "$config_yaml" 2>/dev/null)
+        if [[ "$p_id" == "null" || -z "$p_id" ]]; then
+             pretty_print "Enter the GCP Project ID for GSM sync: " "INPUT"
+             read p_id
+        fi
+
+        if [[ -n "$p_id" ]]; then
+            gsm_put "context-${name}" "$(cat "$config_yaml")" "" "$p_id" ""
+            pretty_print "Config synced to GSM as 'context-${name}'" "SUCCESS"
+        else
+            pretty_print "Skipping GSM sync: No Project ID provided." "WARN"
+        fi
+    fi
+
+    # 5. Final UX: Link as active
+    rm -f build-artifacts
+    ln -s "$target" build-artifacts
+    pretty_print "Context '${name}' created and linked as active." "SUCCESS"
+    pretty_print "Location: ${target}"
+    pretty_print "Config: ${config_yaml}"
+    pretty_print "\nPlease edit ${config_yaml} or the files in ${target} to match your environment." "INFO"
 }
 
 function download_context() {
