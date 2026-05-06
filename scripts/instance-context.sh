@@ -189,16 +189,18 @@ function get_secret() {
         local value1=""
         local value2=""
         while true; do
-            pretty_print "Enter value for ${secret_key}: " "INPUT"
+            pretty_print "Enter value for ${secret_key}: " "INPUT" >&2
             read -s value1
-            pretty_print "Confirm value for ${secret_key}: " "INPUT"
+            echo >&2
+            pretty_print "Confirm value for ${secret_key}: " "INPUT" >&2
             read -s value2
+            echo >&2
             if [[ "$value1" == "$value2" && -n "$value1" ]]; then
                 gsm_put "$gsm_name" "$value1" "" "$p_id" "$reg"
                 echo "$value1"
                 return 0
             else
-                pretty_print "Values do not match or are empty. Try again." "ERROR"
+                pretty_print "Values do not match or are empty. Try again." "ERROR" >&2
             fi
         done
     fi
