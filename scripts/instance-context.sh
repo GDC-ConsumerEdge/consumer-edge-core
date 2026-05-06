@@ -351,27 +351,42 @@ function hydrate_context() {
         return
     fi
 
+    local ctx_name=$(get_active_folder)
+
     pretty_print "Opening context for cluster $cl_name in project $p_id..." "INFO"
 
-    # Fetch/Ensure Files
-    rm -f "$target_dir/consumer-edge-machine"
-    gsm_get "gdc-${cl_name}-ssh-key" "$p_id" "$reg" > "$target_dir/consumer-edge-machine"
-    trim_key_file "$target_dir/consumer-edge-machine"
-    chmod 400 "$target_dir/consumer-edge-machine"
-    rm -f "$target_dir/consumer-edge-machine.pub"
-    gsm_get "gdc-${cl_name}-ssh-key-pub" "$p_id" "$reg" > "$target_dir/consumer-edge-machine.pub"
-    trim_key_file "$target_dir/consumer-edge-machine.pub"
-    chmod 644 "$target_dir/consumer-edge-machine.pub"
+    # 1. SSH Keys
+    local ssh_key=$(get_secret "ssh_key" "gdc-${cl_name}-ssh-key" "true" "$p_id" "$reg" "$ctx_name")
+    if [[ -n "$ssh_key" ]]; then
+        echo "$ssh_key" > "$target_dir/consumer-edge-machine"
+        trim_key_file "$target_dir/consumer-edge-machine"
+        chmod 400 "$target_dir/consumer-edge-machine"
+    fi
 
-    ensure_gsa_key "$target_dir/provisioning-gsa.json" "gdc-${cl_name}-prov-gsa" "$cl_name" "$p_id" "Provisioning GSA" "$reg"
-    ensure_gsa_key "$target_dir/node-gsa.json" "gdc-${cl_name}-node-gsa" "$cl_name" "$p_id" "Node GSA" "$reg"
+    local ssh_pub_key=$(get_secret "ssh_pub_key" "gdc-${cl_name}-ssh-key-pub" "true" "$p_id" "$reg" "$ctx_name")
+    if [[ -n "$ssh_pub_key" ]]; then
+        echo "$ssh_pub_key" > "$target_dir/consumer-edge-machine.pub"
+        trim_key_file "$target_dir/consumer-edge-machine.pub"
+        chmod 644 "$target_dir/consumer-edge-machine.pub"
+    fi
 
-    # Fetch envrc vars
-    local scm_user=$(gsm_get "gdc-${cl_name}-scm-user" "$p_id" "$reg")
-    local scm_token=$(gsm_get "gdc-${cl_name}-scm-token" "$p_id" "$reg")
-    local oidc_id=$(gsm_get "gdc-${cl_name}-oidc-id" "$p_id" "$reg")
-    local oidc_secret=$(gsm_get "gdc-${cl_name}-oidc-secret" "$p_id" "$reg")
-    local oidc_user=$(gsm_get "gdc-${cl_name}-oidc-user" "$p_id" "$reg")
+    # 2. GSA Keys
+    local prov_gsa=$(get_secret "prov_gsa" "gdc-${cl_name}-prov-gsa" "true" "$p_id" "$reg" "$ctx_name")
+    if [[ -n "$prov_gsa" ]]; then
+        echo "$prov_gsa" > "$target_dir/provisioning-gsa.json"
+    fi
+
+    local node_gsa=$(get_secret "node_gsa" "gdc-${cl_name}-node-gsa" "true" "$p_id" "$reg" "$ctx_name")
+    if [[ -n "$node_gsa" ]]; then
+        echo "$node_gsa" > "$target_dir/node-gsa.json"
+    fi
+
+    # 3. SCM & OIDC Secrets
+    local scm_user=$(get_secret "scm_user" "gdc-${cl_name}-scm-user" "true" "$p_id" "$reg" "$ctx_name")
+    local scm_token=$(get_secret "scm_token" "gdc-${cl_name}-scm-token" "true" "$p_id" "$reg" "$ctx_name")
+    local oidc_id=$(get_secret "oidc_id" "gdc-${cl_name}-oidc-id" "false" "$p_id" "$reg" "$ctx_name")
+    local oidc_secret=$(get_secret "oidc_secret" "gdc-${cl_name}-oidc-secret" "false" "$p_id" "$reg" "$ctx_name")
+    local oidc_user=$(get_secret "oidc_user" "gdc-${cl_name}-oidc-user" "false" "$p_id" "$reg" "$ctx_name")
 
     # Inject into envrc (always run awk now to handle commenting out)
     awk -v scm_u="$scm_user" -v scm_t="$scm_token" -v oidc_i="$oidc_id" -v oidc_s="$oidc_secret" -v oidc_u="$oidc_user" '{
@@ -402,36 +417,30 @@ function hydrate_context() {
         print
     }' "$target_dir/envrc" > "$target_dir/envrc.tmp" && mv "$target_dir/envrc.tmp" "$target_dir/envrc"
 
-    local link_target="$target_dir"
-    if [[ -L "$target_dir" ]]; then
-        link_target=$(readlink "$target_dir")
-    fi
-    local name="${link_target#"build-artifacts-"}"
-    if [[ -n "$name" && "$name" != "$link_target" ]]; then
-        local config_yaml=$(gsm_get "gdc-${cl_name}-config-yaml" "$p_id" "$reg")
-        if [[ -n "$config_yaml" ]]; then
-            mkdir -p configs
-            local target_yaml="configs/${name}-config.yaml"
-            if [[ -f "$target_yaml" ]]; then
-                # Check if contents differ
-                local current_yaml=$(cat "$target_yaml")
-                if [[ "$current_yaml" != "$config_yaml" ]]; then
-                    pretty_print "Warning: $target_yaml already exists and differs from GSM." "WARN"
-                    echo -n "Would you like to overwrite it with the version from GSM? (y/n): "
-                    read answer
-                    if [[ "$answer" == "y" ]]; then
-                        echo "$config_yaml" > "$target_yaml"
-                        pretty_print "Overwrote $target_yaml with GSM version" "INFO"
-                    else
-                        pretty_print "Skipped restoring $target_yaml (kept local version)" "INFO"
-                    fi
+    # 4. Config Restoration
+    local config_yaml=$(get_secret "config_yaml" "gdc-${cl_name}-config-yaml" "false" "$p_id" "$reg" "$ctx_name")
+    if [[ -n "$config_yaml" ]]; then
+        mkdir -p configs
+        local target_yaml="configs/${ctx_name}-config.yaml"
+        if [[ -f "$target_yaml" ]]; then
+            # Check if contents differ
+            local current_yaml=$(cat "$target_yaml")
+            if [[ "$current_yaml" != "$config_yaml" ]]; then
+                pretty_print "Warning: $target_yaml already exists and differs from GSM." "WARN"
+                echo -n "Would you like to overwrite it with the version from GSM? (y/n): "
+                read answer
+                if [[ "$answer" == "y" ]]; then
+                    echo "$config_yaml" > "$target_yaml"
+                    pretty_print "Overwrote $target_yaml with GSM version" "INFO"
                 else
-                    pretty_print "Verified $target_yaml matches GSM version" "INFO"
+                    pretty_print "Skipped restoring $target_yaml (kept local version)" "INFO"
                 fi
             else
-                echo "$config_yaml" > "$target_yaml"
-                pretty_print "Restored $target_yaml from GSM" "INFO"
+                pretty_print "Verified $target_yaml matches GSM version" "INFO"
             fi
+        else
+            echo "$config_yaml" > "$target_yaml"
+            pretty_print "Restored $target_yaml from GSM" "INFO"
         fi
     fi
 
@@ -443,8 +452,8 @@ function hydrate_context() {
     pretty_print "GCP Project ID:\t\t$p_id"
     pretty_print "SCM User Secret:\t${scm_user:-NOT SET}"
     pretty_print "SCM Token Secret:\t$(mask_secret "$scm_token")"
-    pretty_print "Provisioning GSA:\t$(get_gsa_email_from_secret "gdc-${cl_name}-prov-gsa" "$p_id" "$reg")"
-    pretty_print "Node GSA:\t\t$(get_gsa_email_from_secret "gdc-${cl_name}-node-gsa" "$p_id" "$reg")"
+    pretty_print "Provisioning GSA:\t$(echo "$prov_gsa" | jq -r '.client_email' 2>/dev/null || echo "NOT SET")"
+    pretty_print "Node GSA:\t\t$(echo "$node_gsa" | jq -r '.client_email' 2>/dev/null || echo "NOT SET")"
     echo ""
     pretty_print "Context $cl_name State: [opened]" "INFO"
     pretty_print "======================================="
