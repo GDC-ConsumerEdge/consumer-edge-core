@@ -1065,6 +1065,7 @@ function download_context() {
     fi
 
     local secret_name="context-${name}"
+    local legacy_secret_name="gdc-${name}-config-yaml"
     pretty_print "Downloading context configuration '${name}' from project '${project_id}'..." "INFO"
 
     # Capture output and exit code
@@ -1073,9 +1074,20 @@ function download_context() {
     local status=$?
 
     if [[ $status -ne 0 ]]; then
-        pretty_print "Context configuration not found in Google Secret Manager with ${name} and ${project_id}" "ERROR"
-        pretty_print "Underlying error: ${content}" "DEBUG"
-        exit 1
+        # Fallback to legacy secret name format
+        local legacy_content
+        legacy_content=$(gcloud secrets versions access latest --secret="${legacy_secret_name}" --project="${project_id}" 2>&1)
+        local legacy_status=$?
+
+        if [[ $legacy_status -eq 0 ]]; then
+            pretty_print "Found legacy context configuration format: ${legacy_secret_name}" "INFO"
+            content="$legacy_content"
+        else
+            pretty_print "Context configuration not found in Google Secret Manager with ${name} and ${project_id}" "ERROR"
+            pretty_print "Attempted: ${secret_name} and ${legacy_secret_name}" "DEBUG"
+            pretty_print "Underlying error: ${content}" "DEBUG"
+            exit 1
+        fi
     fi
 
     mkdir -p configs || { pretty_print "Error: Failed to create configs directory." "ERROR"; exit 1; }
