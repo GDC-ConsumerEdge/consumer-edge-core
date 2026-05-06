@@ -82,17 +82,43 @@ function display_folders() {
 
     folders=$(get_list_of_folders)
 
+    local max_len=0
     for folder in $folders; do
-        # Add a marker to the active folder
+        local len=${#folder}
         if [[ $folder == $active ]]; then
-            line="${folder}${MARKER}"
-            pretty_print "${line}" "INFO"
-        else
-            pretty_print $folder
+            ((len+=1))
+        fi
+        if [[ $len -gt $max_len ]]; then
+            max_len=$len
+        fi
+    done
+    ((max_len+=4))
+
+    for folder in $folders; do
+        local state="[CLOSED]"
+        local color="DEFAULT"
+        local target_dir="build-artifacts-${folder}"
+
+        if ls "$target_dir"/*-example 1> /dev/null 2>&1; then
+            state="[INCOMPLETE]"
+            color="ERROR"
+        elif [[ -f "$target_dir/consumer-edge-machine" ]]; then
+            state="[OPENED]"
         fi
 
-    done
+        local display_name="$folder"
+        if [[ $folder == $active ]]; then
+            display_name="${folder}${MARKER}"
+            if [[ "$state" == "[OPENED]" ]]; then
+                color="SUCCESS"
+            elif [[ "$state" == "[CLOSED]" ]]; then
+                color="WARN"
+            fi
+        fi
 
+        printf -v padded_name "%-*s" $max_len "$display_name"
+        pretty_print "${padded_name}${state}" "$color"
+    done
 }
 
 function get_active_folder() {
