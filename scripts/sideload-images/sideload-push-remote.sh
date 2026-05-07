@@ -21,6 +21,7 @@ HOLD_DIR="/tmp/sideload-images" # copied from sideload-pull-local.sh
 
 
 declare -a IMAGES=(
+	"oci.external-secrets.io__external-secrets__external-secrets---v0.20.2"
 )
 
 echo ""

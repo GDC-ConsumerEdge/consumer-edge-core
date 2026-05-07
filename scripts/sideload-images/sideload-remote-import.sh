@@ -3,20 +3,21 @@
 SIDELOAD_IMAGES="/home/abm-admin/sideload-images" # from "sideload-push-remote.sh"
 
 declare -a DOCKER_IMAGES=(
-  "docker.io__redis---6.0.9-alpine.tar"
+#   "docker.io__redis---6.0.9-alpine.tar"
+  "oci.external-secrets.io__external-secrets__external-secrets---v0.20.2.tar"
   # "docker.io__senthilrch__kubefledged-controller---v0.10.0.tar"
 )
 
 declare -a DOCKER_IMAGES=(
-  "registry.k8s.io__sig-storage__csi-attacher---v4.2.0.tar"
-  "registry.k8s.io__sig-storage__csi-node-driver-registrar---v2.6.3.tar"
-  "registry.k8s.io__sig-storage__csi-provisioner---v3.4.1.tar"
-  "registry.k8s.io__sig-storage__livenessprobe---v2.9.0.tar"
+#   "registry.k8s.io__sig-storage__csi-attacher---v4.2.0.tar"
+#   "registry.k8s.io__sig-storage__csi-node-driver-registrar---v2.6.3.tar"
+#   "registry.k8s.io__sig-storage__csi-provisioner---v3.4.1.tar"
+#   "registry.k8s.io__sig-storage__livenessprobe---v2.9.0.tar"
 )
 
 declare -a QUAY_IMAGES=(
-  "quay.io__samba.org__samba-server---latest"
-  "quay.io__samblade__virtvnc---v0.1"
+#   "quay.io__samba.org__samba-server---latest"
+#   "quay.io__samblade__virtvnc---v0.1"
 )
 
 echo ""
