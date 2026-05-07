@@ -172,19 +172,6 @@
     - initial-install
     - non-interactive-shell
 
-#### Setting up non-interactive PATH for gcloud
-  - name: Add gcloud to PATH on all shells (including non-interactive)
-    lineinfile:
-      path: /etc/environment
-      regexp: 'PATH="(\/usr\/local\/sbin:\/usr\/local\/bin:\/usr\/sbin:\/usr\/bin:\/sbin:\/bin:\/usr\/games:\/usr\/local\/games:\/snap\/bin)"$' #uugghhly...but works
-      line: 'PATH="{{ tools_base_path }}/google-cloud-sdk/bin:\1"' #prepend gcloud (snap auto installs gcloud on GCE instances)
-      backrefs: yes
-      state: present
-    tags:
-    - profile
-    - initial-install
-    - non-interactive-shell
-
 ## Set up auto-complete
   - name: Check for '/etc/profile.d/bash_completion.sh'
     stat:
