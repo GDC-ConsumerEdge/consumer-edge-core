@@ -17,7 +17,7 @@
 
 PREFIX_DIR=$(dirname -- "$0")
 source ${PREFIX_DIR}/scripts/cloud/gce-helper.vars
-source ${PREFIX_DIR}/scripts/install-shell-helper.sh
+source ${PREFIX_DIR}/scripts/shell-install-helper.sh
 
 # Results in none or one key for the current Instance Run to download. If empty, no key to down
 function get_downloadable_key_name {

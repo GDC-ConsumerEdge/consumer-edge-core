@@ -25,7 +25,7 @@ mkdir -p "${TMP_ROOT}/build-artifacts-example"
 
 # Copy necessary files for the script to run
 cp "${REPO_ROOT}/scripts/instance-context.sh" "${TMP_ROOT}/scripts/"
-cp "${REPO_ROOT}/scripts/install-shell-helper.sh" "${TMP_ROOT}/scripts/"
+cp "${REPO_ROOT}/scripts/shell-install-helper.sh" "${TMP_ROOT}/scripts/"
 cp -r "${REPO_ROOT}/templates/"* "${TMP_ROOT}/templates/"
 cp "${REPO_ROOT}/build-artifacts-example/ssh-config" "${TMP_ROOT}/build-artifacts-example/"
 cp "${REPO_ROOT}/build-artifacts-example/add-hosts-example" "${TMP_ROOT}/build-artifacts-example/"
