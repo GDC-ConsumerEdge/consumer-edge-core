@@ -1,0 +1,16 @@
+if [ -n "$PS1" ]; then
+    # Authenticate if needed
+    KEY_FILE="{{ remote_keys_folder }}/node-gsa.json"
+    if [ -f "$KEY_FILE" ]; then
+        EXPECTED_EMAIL=$(grep '"client_email"' "$KEY_FILE" | cut -d'"' -f4)
+        ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null)
+        if [ "$ACTIVE_ACCOUNT" != "$EXPECTED_EMAIL" ]; then
+            gcloud auth activate-service-account --key-file="$KEY_FILE" --project {{ google_project_id }} --quiet 2>/dev/null
+        fi
+    fi
+    
+    # Load completions
+    if [ -f '{{ tools_base_path }}/google-cloud-sdk/completion.bash.inc' ]; then 
+        source '{{ tools_base_path }}/google-cloud-sdk/completion.bash.inc'
+    fi
+fi

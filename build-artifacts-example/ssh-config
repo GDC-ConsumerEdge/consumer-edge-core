@@ -5,3 +5,4 @@ Host *
     Compression yes
     IdentityFile ./build-artifacts/consumer-edge-machine
     SetEnv TERM=xterm-256color
+    IdentitiesOnly yes

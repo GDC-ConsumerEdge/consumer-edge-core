@@ -15,4 +15,4 @@
 #}
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-{{ gcloud_update_cron_value }} runuser -l '{{ ansible_user  }}' -c '{{ abm_install_folder }}/scritps/gcloud-update-script.sh' >> '{{ gcloud_update_log }}''
+{{ gcloud_update_cron_value }} runuser '{{ ansible_user }}' -c '{{ abm_install_folder }}/scripts/gcloud-update-script.sh' >> '{{ gcloud_update_log }}'

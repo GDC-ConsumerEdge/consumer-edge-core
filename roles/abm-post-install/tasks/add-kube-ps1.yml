@@ -51,54 +51,82 @@
     - optional
     - kube-ps1
 
-  - name: Add source of kube-ps1 to bashrc
+  - name: Add source of kube-ps1 to bash.bashrc (Ubuntu)
     lineinfile:
-      path: "/home/{{ item }}/.bashrc"
+      path: "/etc/bash.bashrc"
       line: 'source "{{ tools_base_path}}/kube-ps1/kube-ps1-{{ kube_ps1_version }}/kube-ps1.sh"'
-    loop:
-      - "{{ ansible_user }}"
-      - "{{ abm_install_user }}"
     tags:
     - optional
     - kube-ps1
     when:
     - target_os == "ubuntu"
 
-  - name: Add kube_ps1 to PS1 line
+  - name: Add kube_ps1 to PS1 line (Ubuntu)
     lineinfile:
-      path: "/home/{{ item }}/.bashrc"
+      path: "/etc/bash.bashrc"
       line: PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\] $(kube_ps1):\[\033[01;34m\]\w\[\033[00m\]\$ '
-    loop:
-      - "{{ ansible_user }}"
-      - "{{ abm_install_user }}"
     tags:
     - optional
     - kube-ps1
     when:
     - target_os == "ubuntu"
 
-  - name: Add k alias for kubectl
+  - name: Add k alias for kubectl (Ubuntu)
     lineinfile:
-      path: "/home/{{ item }}/.bashrc"
+      path: "/etc/bash.bashrc"
       line: alias k=kubectl
-    loop:
-      - "{{ ansible_user }}"
-      - "{{ abm_install_user }}"
     tags:
     - optional
     - kube-ps1
     when:
     - target_os == "ubuntu"
 
-  - name: Add completion for alias
+  - name: Add completion for alias (Ubuntu)
     lineinfile:
-      path: "/home/{{ item }}/.bashrc"
+      path: "/etc/bash.bashrc"
       line: complete -F __start_kubectl k
-    loop:
-      - "{{ ansible_user }}"
-      - "{{ abm_install_user }}"
     tags:
     - optional
     - kube-ps1
     when:
     - target_os == "ubuntu"
+
+  - name: Add source of kube-ps1 to bashrc (RedHat)
+    lineinfile:
+      path: "/etc/bashrc"
+      line: 'source "{{ tools_base_path}}/kube-ps1/kube-ps1-{{ kube_ps1_version }}/kube-ps1.sh"'
+    tags:
+    - optional
+    - kube-ps1
+    when:
+    - target_os == "redhat"
+
+  - name: Add kube_ps1 to PS1 line (RedHat)
+    lineinfile:
+      path: "/etc/bashrc"
+      line: PS1='[\u@\h \W $(kube_ps1)]\$ '
+    tags:
+    - optional
+    - kube-ps1
+    when:
+    - target_os == "redhat"
+
+  - name: Add k alias for kubectl (RedHat)
+    lineinfile:
+      path: "/etc/bashrc"
+      line: alias k=kubectl
+    tags:
+    - optional
+    - kube-ps1
+    when:
+    - target_os == "redhat"
+
+  - name: Add completion for alias (RedHat)
+    lineinfile:
+      path: "/etc/bashrc"
+      line: complete -F __start_kubectl k
+    tags:
+    - optional
+    - kube-ps1
+    when:
+    - target_os == "redhat"
