@@ -1049,6 +1049,7 @@ function create_context() {
 
     local target="build-artifacts-${name}"
     local config_yaml="configs/${name}-context.yaml"
+    local secrets_yaml="configs/${name}-context-secrets.yaml"
 
     local project_id=$(gcloud config get-value project 2>/dev/null)
     if [[ -n "$project_id" ]]; then
@@ -1077,6 +1078,7 @@ function create_context() {
     cp "templates/instance-run-vars-template.yaml" "$target/instance-run-vars.yaml"
     cp "templates/inventory-physical-example.yaml" "$target/inventory.yaml"
     cp "templates/context-config-template.yaml" "$config_yaml"
+    cp "templates/context-config-secrets-template.yaml" "$secrets_yaml"
 
     # 3. YAML Update
     if command -v yq &> /dev/null; then
@@ -1125,8 +1127,9 @@ function create_context() {
     pretty_print "Context '${name}' created and linked as active." "SUCCESS"
     pretty_print "Location: ${target}"
     pretty_print "Config: ${config_yaml}"
+    pretty_print "Secrets: ${secrets_yaml}"
     pretty_print "\nNext Steps:" "INFO"
-    pretty_print "1. Edit ${config_yaml} to match your environment's IPs and nodes."
+    pretty_print "1. Edit ${config_yaml} and ${secrets_yaml} to match your environment."
     pretty_print "2. Run './scripts/instance-context.sh -g ${name}' to apply changes and upload to GSM."
 }
 
