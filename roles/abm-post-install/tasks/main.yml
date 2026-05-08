@@ -140,3 +140,41 @@
   tags:
   - cluster-validation-test
   - cluster-validation-test-run
+
+### Power State Lockdown
+- name: Create systemd logind configuration directory
+  ansible.builtin.file:
+    path: /etc/systemd/logind.conf.d
+    state: directory
+    mode: '0755'
+  tags:
+  - abm-post-install
+  - power-lockdown
+
+- name: Deploy logind lockdown configuration
+  ansible.builtin.template:
+    src: logind-lockdown.conf.j2
+    dest: /etc/systemd/logind.conf.d/lockdown.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+  - Restart systemd-logind
+  tags:
+  - abm-post-install
+  - power-lockdown
+
+- name: Mask unwanted systemd power state targets
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    masked: true
+  loop:
+  - poweroff.target
+  - halt.target
+  - sleep.target
+  - suspend.target
+  - hibernate.target
+  - hybrid-sleep.target
+  tags:
+  - abm-post-install
+  - power-lockdown
