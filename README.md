@@ -2,6 +2,9 @@
 
 Consumer Edge Core is a comprehensive automation framework designed to provision, configure, and scale Google Distributed Cloud Edge (Anthos Bare Metal) clusters. It eliminates the friction of managing distributed edge infrastructure by providing unified deployment workflows for both physical hardware and Google Cloud Compute Engine instances.
 
+## Recent Notifications
+* May 8, 2026 and later, code changes require a new Build Container to be built. See **[Build Run/Install Container]** below.
+
 ## Quick Start & Installation
 
 ### Prerequisites
@@ -37,7 +40,7 @@ direnv allow .
 
 Keeping the docker container used in `./install.sh` can be achieved by running `gcloud builds submit --config ./docker-build/cloudbuild.yaml ./ --async --quiet --verbosity=critical --no-user-output-enabled`
 
-> :warning: NOTE: Some org policies prevent `gcloud builds` from using non-specific buckets to hold code. Use the following in this case
+> :warning: NOTE: Some Org Policies prevent `gcloud builds` from using non-specific buckets to hold code. Use the following in this case
 
 ```
 # Create a regional bucket
