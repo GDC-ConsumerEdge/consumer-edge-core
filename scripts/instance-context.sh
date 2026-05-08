@@ -719,19 +719,13 @@ function process_secrets_file() {
 
     pretty_print "Pre-processing secrets from ${secrets_file}..." "INFO"
 
-    declare -A secret_map=(
-        ["scm_user"]="gdc-${cl_name}-scm-user"
-        ["scm_token"]="gdc-${cl_name}-scm-token"
-        ["prov_gsa"]="gdc-${cl_name}-prov-gsa"
-        ["node_gsa"]="gdc-${cl_name}-node-gsa"
-        ["ssh_key"]="gdc-${cl_name}-ssh-key"
-        ["ssh_pub_key"]="gdc-${cl_name}-ssh-key-pub"
-        ["oidc_id"]="gdc-${cl_name}-oidc-id"
-        ["oidc_secret"]="gdc-${cl_name}-oidc-secret"
-    )
+    # Mapping of secret keys to GSM suffixes (Bash 3.2 compatible)
+    local secret_pairs="scm_user:scm-user scm_token:scm-token prov_gsa:prov-gsa node_gsa:node-gsa ssh_key:ssh-key ssh_pub_key:ssh-key-pub oidc_id:oidc-id oidc_secret:oidc-secret"
 
-    for key in "${!secret_map[@]}"; do
-        local gsm_name="${secret_map[$key]}"
+    for pair in $secret_pairs; do
+        local key="${pair%%:*}"
+        local suffix="${pair##*:}"
+        local gsm_name="gdc-${cl_name}-${suffix}"
         local val=$(yq e ".${key}" "$secrets_file")
 
         if [[ -n "$val" && "$val" != "null" && "$val" != "" ]]; then
