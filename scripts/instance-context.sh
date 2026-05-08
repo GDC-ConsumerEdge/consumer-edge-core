@@ -36,7 +36,7 @@ function usage() {
     pretty_print "  -v, --verbose\tEnable verbose output for errors"
     pretty_print "  -c name\tCreate a new context with the given name"
     pretty_print "  -d name\tDownload a context configuration from GSM"
-    pretty_print "  -g file\tGenerate a new context from a local YAML configuration"
+    pretty_print "  -g name\tGenerate a new context from a local config in configs/"
     pretty_print "  -l\t\tList available contexts"
     pretty_print "  -o\t\tOpen (Hydrate) the current context from GSM"
     pretty_print "  -x\t\tClose (Dehydrate) the context (wipes secrets)"
@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -c) ACTION="CREATE"; shift; CONTEXT_NAME="$1"; shift ;;
         -d) ACTION="DOWNLOAD"; shift; CONTEXT_NAME="$1"; shift ;;
-        -g) ACTION="GENERATE"; shift; YAML_FILE="$1"; shift ;;
+        -g) ACTION="GENERATE"; shift; CONTEXT_NAME="$1"; shift ;;
         -o) ACTION="OPEN"; shift ;;
         -x) ACTION="CLOSE"; shift ;;
         -i) ACTION="INGEST"; shift; INGEST_DIR="$1"; shift ;;
@@ -294,6 +294,12 @@ function dehydrate_context() {
     pretty_print "Closing context in $target_dir..." "INFO"
 
     # 1. Wipe sensitive files
+    # Clear from SSH agent first if it exists
+    if [[ -f "$target_dir/consumer-edge-machine" ]]; then
+        # -d deletes the key from the agent
+        ssh-add -d "$target_dir/consumer-edge-machine" 2>/dev/null || true
+    fi
+
     rm -f "$target_dir/consumer-edge-machine"
     rm -f "$target_dir/consumer-edge-machine.pub"
     rm -f "$target_dir/provisioning-gsa.json"
@@ -328,7 +334,7 @@ function dehydrate_context() {
     fi
 
     # Note: We NO LONGER delete configs/${name}-context.yaml here.
-    # The configuration YAML should persist locally so the user can 
+    # The configuration YAML should persist locally so the user can
     # view or edit non-sensitive values (like node IPs) while the context is dehydrated.
 }
 
@@ -355,26 +361,9 @@ function ensure_gsa_key() {
         return 0
     fi
 
-    # Missing in both, prompt user
-    pretty_print "$sa_description key ('$target_file') not found in GSM or locally." "WARN"
-    echo -n "Would you like to create a new key for a Google Service Account? (y/n): "
-    read answer
-    if [[ "$answer" == "y" ]]; then
-        echo -n "Enter the Service Account email for $sa_description: "
-        read sa_email
-        if [[ -n "$sa_email" ]]; then
-            gcloud iam service-accounts keys create "$target_file" \
-                --iam-account="$sa_email" \
-                --project="$p_id"
-
-            if [[ $? -eq 0 ]]; then
-                gsm_put "$secret_name" "$(cat "$target_file")" "$cl_name" "$p_id" "$reg"
-                pretty_print "Successfully created and uploaded $sa_description." "INFO"
-            else
-                pretty_print "Failed to create Service Account key." "ERROR"
-            fi
-        fi
-    fi
+    # Missing in both, fail fast
+    pretty_print "STOP: $sa_description key ('$target_file') not found in GSM, locally, or in secrets file." "ERROR"
+    exit 1
 }
 
 function hydrate_context() {
@@ -413,6 +402,7 @@ function hydrate_context() {
     # 1. SSH Keys
     local ssh_key=$(get_secret "ssh_key" "gdc-${cl_name}-ssh-key" "true" "$p_id" "$reg" "$ctx_name")
     if [[ -n "$ssh_key" ]]; then
+        rm -f "$target_dir/consumer-edge-machine"
         echo "$ssh_key" > "$target_dir/consumer-edge-machine"
         trim_key_file "$target_dir/consumer-edge-machine"
         chmod 400 "$target_dir/consumer-edge-machine"
@@ -420,6 +410,7 @@ function hydrate_context() {
 
     local ssh_pub_key=$(get_secret "ssh_pub_key" "gdc-${cl_name}-ssh-key-pub" "true" "$p_id" "$reg" "$ctx_name")
     if [[ -n "$ssh_pub_key" ]]; then
+        rm -f "$target_dir/consumer-edge-machine.pub"
         echo "$ssh_pub_key" > "$target_dir/consumer-edge-machine.pub"
         trim_key_file "$target_dir/consumer-edge-machine.pub"
         chmod 644 "$target_dir/consumer-edge-machine.pub"
@@ -482,14 +473,25 @@ function hydrate_context() {
             local current_yaml=$(cat "$target_yaml")
             if [[ "$current_yaml" != "$config_yaml" ]]; then
                 pretty_print "Warning: $target_yaml already exists and differs from GSM." "WARN"
-                echo -n "Would you like to overwrite it with the version from GSM? (y/n): "
-                read answer
-                if [[ "$answer" == "y" ]]; then
-                    echo "$config_yaml" > "$target_yaml"
-                    pretty_print "Overwrote $target_yaml with GSM version" "INFO"
-                else
-                    pretty_print "Skipped restoring $target_yaml (kept local version)" "INFO"
-                fi
+                pretty_print "1) Overwrite local file with GSM version"
+                pretty_print "2) Upload local file to GSM (overwrites GSM)"
+                pretty_print "3) Keep both as-is (Skip sync)"
+                echo -n "Select an option (1, 2, or 3): "
+                read choice
+                case "$choice" in
+                    1)
+                        echo "$config_yaml" > "$target_yaml"
+                        pretty_print "Overwrote $target_yaml with GSM version" "INFO"
+                        ;;
+                    2)
+                        gsm_put "gdc-${cl_name}-config-yaml" "$current_yaml" "$cl_name" "$p_id" "$reg"
+                        gsm_put "context-${ctx_name}" "$current_yaml" "$cl_name" "$p_id" "$reg"
+                        pretty_print "Uploaded local $target_yaml to GSM" "INFO"
+                        ;;
+                    *)
+                        pretty_print "Skipped context configuration sync" "INFO"
+                        ;;
+                esac
             else
                 pretty_print "Verified $target_yaml matches GSM version" "INFO"
             fi
@@ -709,25 +711,65 @@ function validate_gsm_secret() {
     fi
 }
 
+function process_secrets_file() {
+    local secrets_file="$1"
+    local cl_name="$2"
+    local p_id="$3"
+    local reg="$4"
+
+    pretty_print "Pre-processing secrets from ${secrets_file}..." "INFO"
+
+    declare -A secret_map=(
+        ["scm_user"]="gdc-${cl_name}-scm-user"
+        ["scm_token"]="gdc-${cl_name}-scm-token"
+        ["prov_gsa"]="gdc-${cl_name}-prov-gsa"
+        ["node_gsa"]="gdc-${cl_name}-node-gsa"
+        ["ssh_key"]="gdc-${cl_name}-ssh-key"
+        ["ssh_pub_key"]="gdc-${cl_name}-ssh-key-pub"
+        ["oidc_id"]="gdc-${cl_name}-oidc-id"
+        ["oidc_secret"]="gdc-${cl_name}-oidc-secret"
+    )
+
+    for key in "${!secret_map[@]}"; do
+        local gsm_name="${secret_map[$key]}"
+        local val=$(yq e ".${key}" "$secrets_file")
+
+        if [[ -n "$val" && "$val" != "null" && "$val" != "" ]]; then
+            pretty_print "Pushing $key to GSM ($gsm_name)" "DEBUG"
+            gsm_put "$gsm_name" "$val" "$cl_name" "$p_id" "$reg"
+        fi
+    done
+}
+
 function generate_context() {
-    local yaml_file="$1"
+    local ctx_name="$1"
+    local yaml_file="configs/${ctx_name}-context.yaml"
+    local secrets_file="configs/${ctx_name}-context-secrets.yaml"
+
+    pretty_print "Starting context generation for '${ctx_name}'" "INFO"
+    pretty_print "Context File:\t[${yaml_file}]" "INFO"
+    
+    if [[ -f "$secrets_file" ]]; then
+        pretty_print "Secrets File:\t[FOUND] ${secrets_file} to pair with context." "INFO"
+    else
+        pretty_print "Secrets File:\t[NOT FOUND] Proceeding without companion secrets file." "INFO"
+    fi
 
     if ! command -v yq &> /dev/null; then
         pretty_print "Error: 'yq' is required. Please install it." "ERROR"
         exit 1
     fi
-    
+
     local yq_version=$(yq --version 2>&1)
     if echo "$yq_version" | grep -qv "mikefarah"; then
         pretty_print "Error: This script requires mikefarah/yq (v4+). Detected a different 'yq' (likely kislyuk/yq)." "ERROR"
         exit 1
     fi
     if [[ ! -f "$yaml_file" ]]; then
-        pretty_print "Error: YAML file '$yaml_file' not found." "ERROR"
+        pretty_print "Error: File path '$yaml_file' does not exist and cannot generate a new context folder." "ERROR"
         exit 1
     fi
 
-    local ctx_name=$(yq e '.context_name' "$yaml_file")
     local cl_name=$(yq e '.cluster_name' "$yaml_file")
     local p_id=$(yq e '.project_id' "$yaml_file")
 
@@ -760,6 +802,11 @@ function generate_context() {
     local action="create"
     if [[ -d "$target" ]]; then
         action="update"
+    fi
+
+    # 0. Pre-process secrets if companion file exists
+    if [[ -f "$secrets_file" ]]; then
+        process_secrets_file "$secrets_file" "$cl_name" "$p_id" "$reg"
     fi
 
     # 1. Validating Secrets
@@ -799,32 +846,13 @@ function generate_context() {
         if [[ "$GSM_SKIP_VALIDATION" == "true" ]]; then
             pretty_print "WARN: Required SCM secrets missing in GSM, but GSM_SKIP_VALIDATION is true. Bypassing check." "WARN"
         else
-            pretty_print "Required SCM secrets are missing in GSM." "WARN"
-            
             if [[ "$scm_user_status" == "MISSING" ]]; then
-                echo -n "Enter the SCM User: "
-                read scm_user_input
-                if [[ -n "$scm_user_input" ]]; then
-                    gsm_put "gdc-${cl_name}-scm-user" "$scm_user_input" "$cl_name" "$p_id" "$reg"
-                    scm_user_status="CREATED"
-                else
-                    pretty_print "STOP: SCM User is required." "ERROR"
-                    exit 1
-                fi
+                pretty_print "STOP: Required secret 'gdc-${cl_name}-scm-user' is missing in GSM." "ERROR"
             fi
-
             if [[ "$scm_token_status" == "MISSING" ]]; then
-                echo -n "Enter the SCM Token: "
-                read -s scm_token_input
-                echo ""
-                if [[ -n "$scm_token_input" ]]; then
-                    gsm_put "gdc-${cl_name}-scm-token" "$scm_token_input" "$cl_name" "$p_id" "$reg"
-                    scm_token_status="CREATED"
-                else
-                    pretty_print "STOP: SCM Token is required." "ERROR"
-                    exit 1
-                fi
+                pretty_print "STOP: Required secret 'gdc-${cl_name}-scm-token' is missing in GSM." "ERROR"
             fi
+            exit 1
         fi
     fi
 
@@ -849,21 +877,14 @@ function generate_context() {
     pretty_print "Region/Zone:\t\t$reg / $zn"
     echo ""
 
-    # 3. Ready to [create | update] context?
-    pretty_print "3. Ready to $action context '$ctx_name'? (y/N)"
-    read answer
-    if [[ "$answer" != "y" ]]; then
-        pretty_print "Aborted." "WARN"
-        exit 0
-    fi
+    # 3. Generating context
+    pretty_print "3. Generating context '$ctx_name'" "INFO"
 
     pretty_print "Generating $target in project $p_id..." "INFO"
 
-    if [[ "$action" == "create" ]]; then
-        mkdir -p "$target"
-        cp "build-artifacts-example/add-hosts-example" "$target/add-hosts" 2>/dev/null || touch "$target/add-hosts"
-        cp "build-artifacts-example/ssh-config" "$target/ssh-config" 2>/dev/null || touch "$target/ssh-config"
-    fi
+    mkdir -p "$target"
+    cp "build-artifacts-example/add-hosts-example" "$target/add-hosts" 2>/dev/null || touch "$target/add-hosts"
+    cp "build-artifacts-example/ssh-config" "$target/ssh-config" 2>/dev/null || touch "$target/ssh-config"
 
     # 1. Update envrc
     if [[ ! -f "$target/envrc" ]]; then
@@ -877,7 +898,7 @@ function generate_context() {
         gsub(/export REGION=.*/, "export REGION=\""reg"\" # GCP Region (from YAML region)")
         gsub(/export ZONE=.*/, "export ZONE=\""zn"\" # GCP Zone (from YAML zone)")
         gsub(/export CLUSTER_ACM_NAME=.*/, "export CLUSTER_ACM_NAME=\""cl_name"\" # Cluster name used by ACM (from YAML cluster_name)")
-        
+
         if ($0 ~ /export ROOT_REPO_URL=/) {
             print "export ROOT_REPO_URL=\""r_url"\" # Root SCM Repo"
             if (!branch_added) {
@@ -886,7 +907,7 @@ function generate_context() {
             }
             next
         }
-        
+
         if ($0 ~ /export ROOT_REPO_BRANCH=/) {
             if (!branch_added) {
                 print "export ROOT_REPO_BRANCH=\""r_branch"\""
@@ -894,7 +915,7 @@ function generate_context() {
             }
             next
         }
-        
+
         print
     }
     ' "$target/envrc" > "$target/envrc.tmp" && mv "$target/envrc.tmp" "$target/envrc"
@@ -905,17 +926,18 @@ function generate_context() {
     fi
 
     # Rename root key and update basic vars
-    yq e -i ".[\"${cl_name}_cluster\"] = .[\"[[ cluster-name]]_cluster\"]" "$target/inventory.yaml"
-    yq e -i "del(.[\"[[ cluster-name]]_cluster\"])" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.cluster_name = \"${cl_name}\"" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.acm_cluster_name = \"${cl_name}\"" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.control_plane_vip = \"${cp_vip}\"" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.ingress_vip = \"${in_vip}\"" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.load_balancer_pool_cidr = [\"${lb_pool}\"]" "$target/inventory.yaml"
-    yq e -i "del(.[\"${cl_name}_cluster\"].hosts)" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].hosts = {}" "$target/inventory.yaml"
-    yq e -i "del(.[\"${cl_name}_cluster\"].vars.peer_node_ips)" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.peer_node_ips = []" "$target/inventory.yaml"
+    local inv_cl_name=$(echo "$cl_name" | tr '-' '_')
+    yq e -i ".[\"${inv_cl_name}_cluster\"] = .edge_cluster" "$target/inventory.yaml"
+    yq e -i "del(.edge_cluster)" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.cluster_name = \"${cl_name}\"" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.acm_cluster_name = \"${cl_name}\"" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.control_plane_vip = \"${cp_vip}\"" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.ingress_vip = \"${in_vip}\"" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.load_balancer_pool_cidr = [\"${lb_pool}\"]" "$target/inventory.yaml"
+    yq e -i "del(.[\"${inv_cl_name}_cluster\"].hosts)" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].hosts = {}" "$target/inventory.yaml"
+    yq e -i "del(.[\"${inv_cl_name}_cluster\"].vars.peer_node_ips)" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.peer_node_ips = []" "$target/inventory.yaml"
 
     # Parse nodes for inventory hosts
     local num_nodes=$(yq e '.nodes | length' "$yaml_file")
@@ -928,16 +950,16 @@ function generate_context() {
         local n_ip=$(yq e ".nodes[$i].ip" "$yaml_file")
 
         # Add to inventory hosts
-        yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".node_ip = \"${n_ip}\"" "$target/inventory.yaml"
-        yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".machine_label = \"{{ inventory_hostname }}\"" "$target/inventory.yaml"
-        yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".ansible_host = \"{{ node_ip }}\"" "$target/inventory.yaml"
+        yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip = \"${n_ip}\"" "$target/inventory.yaml"
+        yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".machine_label = \"{{ inventory_hostname }}\"" "$target/inventory.yaml"
+        yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".ansible_host = \"{{ node_ip }}\"" "$target/inventory.yaml"
 
         if [ $i -eq 0 ]; then
-            yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".primary_cluster_machine = true" "$target/inventory.yaml"
+            yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".primary_cluster_machine = true" "$target/inventory.yaml"
         fi
 
         # Add to peer_node_ips list
-        yq e -i ".[\"${cl_name}_cluster\"].vars.peer_node_ips += [\"${n_ip}\"]" "$target/inventory.yaml"
+        yq e -i ".[\"${inv_cl_name}_cluster\"].vars.peer_node_ips += [\"${n_ip}\"]" "$target/inventory.yaml"
 
         # Add to add-hosts
         echo "$n_ip    $n_name" >> "$target/add-hosts"
@@ -947,7 +969,7 @@ function generate_context() {
     if [[ ! -f "$target/instance-run-vars.yaml" ]]; then
         cp templates/instance-run-vars-template.yaml "$target/instance-run-vars.yaml"
     fi
-    
+
     if [[ -n "$storage_provider" && "$storage_provider" != "null" ]]; then
         storage_provider="$storage_provider" yq e -i '.storage_provider = env(storage_provider)' "$target/instance-run-vars.yaml"
 
@@ -979,6 +1001,7 @@ function generate_context() {
     local existing_ssh=$(gsm_get "gdc-${cl_name}-ssh-key" "$p_id" "$reg")
     if [[ -n "$existing_ssh" ]]; then
         pretty_print "Existing SSH key found in GSM, using it." "INFO"
+        rm -f "$target/consumer-edge-machine" "$target/consumer-edge-machine.pub"
         echo "$existing_ssh" > "$target/consumer-edge-machine"
         trim_key_file "$target/consumer-edge-machine"
         chmod 400 "$target/consumer-edge-machine"
@@ -1066,7 +1089,7 @@ function create_context() {
     fi
 
     # 4. GSM Sync
-    echo -n "Would you like to sync this config to GSM? (y/n): "
+    echo -n "Would you like to sync this scaffolding config to Google Secrets Manager? (y/n): "
     read answer
     if [[ "$answer" == "y" ]]; then
         # Use gsm_put if available, but we need project_id.
@@ -1102,7 +1125,9 @@ function create_context() {
     pretty_print "Context '${name}' created and linked as active." "SUCCESS"
     pretty_print "Location: ${target}"
     pretty_print "Config: ${config_yaml}"
-    pretty_print "\nPlease edit ${config_yaml} or the files in ${target} to match your environment." "INFO"
+    pretty_print "\nNext Steps:" "INFO"
+    pretty_print "1. Edit ${config_yaml} to match your environment's IPs and nodes."
+    pretty_print "2. Run './scripts/instance-context.sh -g ${name}' to apply changes and upload to GSM."
 }
 
 function download_context() {
@@ -1146,7 +1171,7 @@ function download_context() {
 
     mkdir -p configs || { pretty_print "Error: Failed to create configs directory." "ERROR"; exit 1; }
     local target_yaml="configs/${name}-context.yaml"
-    
+
     if ! echo "$content" > "$target_yaml"; then
         pretty_print "Error: Failed to write context configuration to ${target_yaml}." "ERROR"
         exit 1
@@ -1205,14 +1230,14 @@ function switch_context() {
 case "$ACTION" in
     CREATE) create_context "$CONTEXT_NAME" ;;
     DOWNLOAD) download_context "$CONTEXT_NAME" ;;
-    GENERATE) generate_context "$YAML_FILE" ;;
-    OPEN) 
+    GENERATE) generate_context "$CONTEXT_NAME" ;;
+    OPEN)
         if [[ -n "$CONTEXT_NAME" ]]; then
             switch_context "$CONTEXT_NAME"
         fi
-        hydrate_context "build-artifacts" 
+        hydrate_context "build-artifacts"
         ;;
-    CLOSE) 
+    CLOSE)
         if [[ -n "$CONTEXT_NAME" ]]; then
             dehydrate_context "build-artifacts-${CONTEXT_NAME}"
         else
