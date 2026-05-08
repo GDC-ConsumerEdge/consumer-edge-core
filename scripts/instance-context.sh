@@ -465,14 +465,25 @@ function hydrate_context() {
             local current_yaml=$(cat "$target_yaml")
             if [[ "$current_yaml" != "$config_yaml" ]]; then
                 pretty_print "Warning: $target_yaml already exists and differs from GSM." "WARN"
-                echo -n "Would you like to overwrite it with the version from GSM? (y/n): "
-                read answer
-                if [[ "$answer" == "y" ]]; then
-                    echo "$config_yaml" > "$target_yaml"
-                    pretty_print "Overwrote $target_yaml with GSM version" "INFO"
-                else
-                    pretty_print "Skipped restoring $target_yaml (kept local version)" "INFO"
-                fi
+                pretty_print "1) Overwrite local file with GSM version"
+                pretty_print "2) Upload local file to GSM (overwrites GSM)"
+                pretty_print "3) Keep both as-is (Skip sync)"
+                echo -n "Select an option (1, 2, or 3): "
+                read choice
+                case "$choice" in
+                    1)
+                        echo "$config_yaml" > "$target_yaml"
+                        pretty_print "Overwrote $target_yaml with GSM version" "INFO"
+                        ;;
+                    2)
+                        gsm_put "gdc-${cl_name}-config-yaml" "$current_yaml" "$cl_name" "$p_id" "$reg"
+                        gsm_put "context-${ctx_name}" "$current_yaml" "$cl_name" "$p_id" "$reg"
+                        pretty_print "Uploaded local $target_yaml to GSM" "INFO"
+                        ;;
+                    *)
+                        pretty_print "Skipped context configuration sync" "INFO"
+                        ;;
+                esac
             else
                 pretty_print "Verified $target_yaml matches GSM version" "INFO"
             fi

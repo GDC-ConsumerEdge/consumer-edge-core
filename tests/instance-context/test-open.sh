@@ -50,26 +50,48 @@ export -f gcloud
 # It should pull the key from the mock and write it.
 ./scripts/instance-context.sh -o
 
-# ASSERT
+# ASSERT Key Formatting
 KEY_FILE="build-artifacts/consumer-edge-machine"
-
 if [[ ! -f "$KEY_FILE" ]]; then
     echo "FAIL: $KEY_FILE was not created during open"
     exit 1
 fi
 
-# Check for exactly one trailing newline.
-# `cat -e` appends a '$' at the end of every line.
-# The last line should be the end of the key followed by a newline,
-# meaning the last line of `cat -e` should be "-----END OPENSSH PRIVATE KEY-----$"
 LAST_LINE=$(cat -e "$KEY_FILE" | tail -n 1)
 if [[ "$LAST_LINE" != "-----END OPENSSH PRIVATE KEY-----\$" ]]; then
     echo "FAIL: Key file does not end with exactly one newline."
-    echo "Expected last line of cat -e to be: -----END OPENSSH PRIVATE KEY-----\$"
-    echo "Got: $LAST_LINE"
-    echo "File dump:"
-    cat -e "$KEY_FILE"
     exit 1
 fi
 
-echo "PASS: consumer-edge-machine has the correct trailing newline formatting."
+# TEST CASE: YAML Conflict - Option 2 (Upload local to GSM)
+echo "Testing YAML Conflict - Option 2 (Upload)..."
+mkdir -p configs
+LOCAL_YAML="configs/${CONTEXT_NAME}-context.yaml"
+echo "local-content-different-than-gsm" > "$LOCAL_YAML"
+
+# We need a new mock that tracks secret additions specifically for the YAML
+MOCK_LOG="${TMP_ROOT}/gsm_upload_test.log"
+rm -f "$MOCK_LOG"
+
+function gcloud() {
+    if [[ "$*" == *"secrets versions access latest"* ]]; then
+        echo "gsm-content"
+        return 0
+    fi
+    if [[ "$*" == *"secrets versions add"* ]]; then
+        echo "$*" >> "${TMP_ROOT}/gsm_upload_test.log"
+        return 0
+    fi
+    return 0
+}
+export -f gcloud
+
+# Run hydration and choose option 2
+echo "2" | ./scripts/instance-context.sh -o
+
+if ! grep -q "context-${CONTEXT_NAME}" "${TMP_ROOT}/gsm_upload_test.log"; then
+    echo "FAIL: Local YAML was not uploaded to GSM after choosing option 2"
+    exit 1
+fi
+
+echo "PASS: consumer-edge-machine formatting and YAML sync options verified."
