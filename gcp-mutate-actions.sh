@@ -70,18 +70,9 @@ else
 fi
 
 echo "--- 4. Managing Service Accounts and Keys ---"
-# List of GSAs and their roles
-declare -A GSAS=(
-    ["abm-gcr-${CLUSTER_NAME}"]="roles/storage.objectViewer"
-    ["abm-gke-con-${CLUSTER_NAME}"]="roles/gkehub.connect"
-    ["abm-gke-reg-${CLUSTER_NAME}"]="roles/gkehub.admin"
-    ["abm-ops-${CLUSTER_NAME}"]="roles/logging.logWriter roles/monitoring.metricWriter roles/stackdriver.resourceMetadata.writer roles/monitoring.dashboardEditor roles/opsconfigmonitoring.resourceMetadata.writer roles/kubernetesmetadata.publisher roles/compute.osLogin"
-    ["es-k8s-${CLUSTER_NAME}"]="roles/secretmanager.secretAccessor roles/secretmanager.viewer"
-    ["sds-backup-${CLUSTER_NAME}"]="roles/storage.admin"
-    ["cdi-import-${CLUSTER_NAME}"]="roles/storage.objectViewer"
-)
-
-for GSA in "${!GSAS[@]}"; do
+# List of GSAs and their roles (Pipe separated: GSA|ROLES)
+while IFS='|' read -r GSA ROLES; do
+    if [[ -z "$GSA" ]]; then continue; fi
     echo "Processing GSA: ${GSA}"
     
     # Create GSA if missing
@@ -90,7 +81,7 @@ for GSA in "${!GSAS[@]}"; do
     fi
 
     # Bind Roles
-    for ROLE in ${GSAS[$GSA]}; do
+    for ROLE in $ROLES; do
         echo "  Adding role: ${ROLE}"
         gcloud projects add-iam-policy-binding "${GOOGLE_PROJECT_ID}" \
             --member="serviceAccount:${GSA}@${GOOGLE_PROJECT_ID}.iam.gserviceaccount.com" \
@@ -110,7 +101,15 @@ for GSA in "${!GSAS[@]}"; do
         gcloud secrets versions add "${GSA}" --data-file="${KEY_FILE}" --project="${GOOGLE_SECRET_PROJECT_ID}"
         rm -f "${KEY_FILE}"
     fi
-done
+done <<EOF
+abm-gcr-${CLUSTER_NAME}|roles/storage.objectViewer
+abm-gke-con-${CLUSTER_NAME}|roles/gkehub.connect
+abm-gke-reg-${CLUSTER_NAME}|roles/gkehub.admin
+abm-ops-${CLUSTER_NAME}|roles/logging.logWriter roles/monitoring.metricWriter roles/stackdriver.resourceMetadata.writer roles/monitoring.dashboardEditor roles/opsconfigmonitoring.resourceMetadata.writer roles/kubernetesmetadata.publisher roles/compute.osLogin
+es-k8s-${CLUSTER_NAME}|roles/secretmanager.secretAccessor roles/secretmanager.viewer
+sds-backup-${CLUSTER_NAME}|roles/storage.admin
+cdi-import-${CLUSTER_NAME}|roles/storage.objectViewer
+EOF
 
 echo "--- 5. Storage Provider Specific Mutates ---"
 if [[ "${STORAGE_PROVIDER}" != "none" ]]; then
