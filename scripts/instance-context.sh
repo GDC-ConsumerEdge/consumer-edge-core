@@ -294,6 +294,12 @@ function dehydrate_context() {
     pretty_print "Closing context in $target_dir..." "INFO"
 
     # 1. Wipe sensitive files
+    # Clear from SSH agent first if it exists
+    if [[ -f "$target_dir/consumer-edge-machine" ]]; then
+        # -d deletes the key from the agent
+        ssh-add -d "$target_dir/consumer-edge-machine" 2>/dev/null || true
+    fi
+
     rm -f "$target_dir/consumer-edge-machine"
     rm -f "$target_dir/consumer-edge-machine.pub"
     rm -f "$target_dir/provisioning-gsa.json"
@@ -396,6 +402,7 @@ function hydrate_context() {
     # 1. SSH Keys
     local ssh_key=$(get_secret "ssh_key" "gdc-${cl_name}-ssh-key" "true" "$p_id" "$reg" "$ctx_name")
     if [[ -n "$ssh_key" ]]; then
+        rm -f "$target_dir/consumer-edge-machine"
         echo "$ssh_key" > "$target_dir/consumer-edge-machine"
         trim_key_file "$target_dir/consumer-edge-machine"
         chmod 400 "$target_dir/consumer-edge-machine"
@@ -403,6 +410,7 @@ function hydrate_context() {
 
     local ssh_pub_key=$(get_secret "ssh_pub_key" "gdc-${cl_name}-ssh-key-pub" "true" "$p_id" "$reg" "$ctx_name")
     if [[ -n "$ssh_pub_key" ]]; then
+        rm -f "$target_dir/consumer-edge-machine.pub"
         echo "$ssh_pub_key" > "$target_dir/consumer-edge-machine.pub"
         trim_key_file "$target_dir/consumer-edge-machine.pub"
         chmod 644 "$target_dir/consumer-edge-machine.pub"
@@ -993,6 +1001,7 @@ function generate_context() {
     local existing_ssh=$(gsm_get "gdc-${cl_name}-ssh-key" "$p_id" "$reg")
     if [[ -n "$existing_ssh" ]]; then
         pretty_print "Existing SSH key found in GSM, using it." "INFO"
+        rm -f "$target/consumer-edge-machine" "$target/consumer-edge-machine.pub"
         echo "$existing_ssh" > "$target/consumer-edge-machine"
         trim_key_file "$target/consumer-edge-machine"
         chmod 400 "$target/consumer-edge-machine"
