@@ -36,7 +36,7 @@ function usage() {
     pretty_print "  -v, --verbose\tEnable verbose output for errors"
     pretty_print "  -c name\tCreate a new context with the given name"
     pretty_print "  -d name\tDownload a context configuration from GSM"
-    pretty_print "  -g file\tGenerate a new context from a local YAML configuration"
+    pretty_print "  -g name\tGenerate a new context from a local config in configs/"
     pretty_print "  -l\t\tList available contexts"
     pretty_print "  -o\t\tOpen (Hydrate) the current context from GSM"
     pretty_print "  -x\t\tClose (Dehydrate) the context (wipes secrets)"
@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -c) ACTION="CREATE"; shift; CONTEXT_NAME="$1"; shift ;;
         -d) ACTION="DOWNLOAD"; shift; CONTEXT_NAME="$1"; shift ;;
-        -g) ACTION="GENERATE"; shift; YAML_FILE="$1"; shift ;;
+        -g) ACTION="GENERATE"; shift; CONTEXT_NAME="$1"; shift ;;
         -o) ACTION="OPEN"; shift ;;
         -x) ACTION="CLOSE"; shift ;;
         -i) ACTION="INGEST"; shift; INGEST_DIR="$1"; shift ;;
@@ -328,7 +328,7 @@ function dehydrate_context() {
     fi
 
     # Note: We NO LONGER delete configs/${name}-context.yaml here.
-    # The configuration YAML should persist locally so the user can 
+    # The configuration YAML should persist locally so the user can
     # view or edit non-sensitive values (like node IPs) while the context is dehydrated.
 }
 
@@ -710,24 +710,24 @@ function validate_gsm_secret() {
 }
 
 function generate_context() {
-    local yaml_file="$1"
+    local ctx_name="$1"
+    local yaml_file="configs/${ctx_name}-context.yaml"
 
     if ! command -v yq &> /dev/null; then
         pretty_print "Error: 'yq' is required. Please install it." "ERROR"
         exit 1
     fi
-    
+
     local yq_version=$(yq --version 2>&1)
     if echo "$yq_version" | grep -qv "mikefarah"; then
         pretty_print "Error: This script requires mikefarah/yq (v4+). Detected a different 'yq' (likely kislyuk/yq)." "ERROR"
         exit 1
     fi
     if [[ ! -f "$yaml_file" ]]; then
-        pretty_print "Error: YAML file '$yaml_file' not found." "ERROR"
+        pretty_print "Error: File path '$yaml_file' does not exist and cannot generate a new context folder." "ERROR"
         exit 1
     fi
 
-    local ctx_name=$(yq e '.context_name' "$yaml_file")
     local cl_name=$(yq e '.cluster_name' "$yaml_file")
     local p_id=$(yq e '.project_id' "$yaml_file")
 
@@ -800,7 +800,7 @@ function generate_context() {
             pretty_print "WARN: Required SCM secrets missing in GSM, but GSM_SKIP_VALIDATION is true. Bypassing check." "WARN"
         else
             pretty_print "Required SCM secrets are missing in GSM." "WARN"
-            
+
             if [[ "$scm_user_status" == "MISSING" ]]; then
                 echo -n "Enter the SCM User: "
                 read scm_user_input
@@ -849,13 +849,8 @@ function generate_context() {
     pretty_print "Region/Zone:\t\t$reg / $zn"
     echo ""
 
-    # 3. Ready to [create | update] context?
-    pretty_print "3. Ready to $action context '$ctx_name'? (y/N)"
-    read answer
-    if [[ "$answer" != "y" ]]; then
-        pretty_print "Aborted." "WARN"
-        exit 0
-    fi
+    # 3. Generating context
+    pretty_print "3. Generating context '$ctx_name'" "INFO"
 
     pretty_print "Generating $target in project $p_id..." "INFO"
 
@@ -877,7 +872,7 @@ function generate_context() {
         gsub(/export REGION=.*/, "export REGION=\""reg"\" # GCP Region (from YAML region)")
         gsub(/export ZONE=.*/, "export ZONE=\""zn"\" # GCP Zone (from YAML zone)")
         gsub(/export CLUSTER_ACM_NAME=.*/, "export CLUSTER_ACM_NAME=\""cl_name"\" # Cluster name used by ACM (from YAML cluster_name)")
-        
+
         if ($0 ~ /export ROOT_REPO_URL=/) {
             print "export ROOT_REPO_URL=\""r_url"\" # Root SCM Repo"
             if (!branch_added) {
@@ -886,7 +881,7 @@ function generate_context() {
             }
             next
         }
-        
+
         if ($0 ~ /export ROOT_REPO_BRANCH=/) {
             if (!branch_added) {
                 print "export ROOT_REPO_BRANCH=\""r_branch"\""
@@ -894,7 +889,7 @@ function generate_context() {
             }
             next
         }
-        
+
         print
     }
     ' "$target/envrc" > "$target/envrc.tmp" && mv "$target/envrc.tmp" "$target/envrc"
@@ -905,17 +900,18 @@ function generate_context() {
     fi
 
     # Rename root key and update basic vars
-    yq e -i ".[\"${cl_name}_cluster\"] = .[\"[[ cluster-name]]_cluster\"]" "$target/inventory.yaml"
-    yq e -i "del(.[\"[[ cluster-name]]_cluster\"])" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.cluster_name = \"${cl_name}\"" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.acm_cluster_name = \"${cl_name}\"" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.control_plane_vip = \"${cp_vip}\"" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.ingress_vip = \"${in_vip}\"" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.load_balancer_pool_cidr = [\"${lb_pool}\"]" "$target/inventory.yaml"
-    yq e -i "del(.[\"${cl_name}_cluster\"].hosts)" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].hosts = {}" "$target/inventory.yaml"
-    yq e -i "del(.[\"${cl_name}_cluster\"].vars.peer_node_ips)" "$target/inventory.yaml"
-    yq e -i ".[\"${cl_name}_cluster\"].vars.peer_node_ips = []" "$target/inventory.yaml"
+    local inv_cl_name=$(echo "$cl_name" | tr '-' '_')
+    yq e -i ".[\"${inv_cl_name}_cluster\"] = .edge_cluster" "$target/inventory.yaml"
+    yq e -i "del(.edge_cluster)" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.cluster_name = \"${cl_name}\"" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.acm_cluster_name = \"${cl_name}\"" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.control_plane_vip = \"${cp_vip}\"" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.ingress_vip = \"${in_vip}\"" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.load_balancer_pool_cidr = [\"${lb_pool}\"]" "$target/inventory.yaml"
+    yq e -i "del(.[\"${inv_cl_name}_cluster\"].hosts)" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].hosts = {}" "$target/inventory.yaml"
+    yq e -i "del(.[\"${inv_cl_name}_cluster\"].vars.peer_node_ips)" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.peer_node_ips = []" "$target/inventory.yaml"
 
     # Parse nodes for inventory hosts
     local num_nodes=$(yq e '.nodes | length' "$yaml_file")
@@ -928,16 +924,16 @@ function generate_context() {
         local n_ip=$(yq e ".nodes[$i].ip" "$yaml_file")
 
         # Add to inventory hosts
-        yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".node_ip = \"${n_ip}\"" "$target/inventory.yaml"
-        yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".machine_label = \"{{ inventory_hostname }}\"" "$target/inventory.yaml"
-        yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".ansible_host = \"{{ node_ip }}\"" "$target/inventory.yaml"
+        yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip = \"${n_ip}\"" "$target/inventory.yaml"
+        yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".machine_label = \"{{ inventory_hostname }}\"" "$target/inventory.yaml"
+        yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".ansible_host = \"{{ node_ip }}\"" "$target/inventory.yaml"
 
         if [ $i -eq 0 ]; then
-            yq e -i ".[\"${cl_name}_cluster\"].hosts.\"${n_name}\".primary_cluster_machine = true" "$target/inventory.yaml"
+            yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".primary_cluster_machine = true" "$target/inventory.yaml"
         fi
 
         # Add to peer_node_ips list
-        yq e -i ".[\"${cl_name}_cluster\"].vars.peer_node_ips += [\"${n_ip}\"]" "$target/inventory.yaml"
+        yq e -i ".[\"${inv_cl_name}_cluster\"].vars.peer_node_ips += [\"${n_ip}\"]" "$target/inventory.yaml"
 
         # Add to add-hosts
         echo "$n_ip    $n_name" >> "$target/add-hosts"
@@ -947,7 +943,7 @@ function generate_context() {
     if [[ ! -f "$target/instance-run-vars.yaml" ]]; then
         cp templates/instance-run-vars-template.yaml "$target/instance-run-vars.yaml"
     fi
-    
+
     if [[ -n "$storage_provider" && "$storage_provider" != "null" ]]; then
         storage_provider="$storage_provider" yq e -i '.storage_provider = env(storage_provider)' "$target/instance-run-vars.yaml"
 
@@ -1066,7 +1062,7 @@ function create_context() {
     fi
 
     # 4. GSM Sync
-    echo -n "Would you like to sync this config to GSM? (y/n): "
+    echo -n "Would you like to sync this scaffolding config to Google Secrets Manager? (y/n): "
     read answer
     if [[ "$answer" == "y" ]]; then
         # Use gsm_put if available, but we need project_id.
@@ -1102,7 +1098,9 @@ function create_context() {
     pretty_print "Context '${name}' created and linked as active." "SUCCESS"
     pretty_print "Location: ${target}"
     pretty_print "Config: ${config_yaml}"
-    pretty_print "\nPlease edit ${config_yaml} or the files in ${target} to match your environment." "INFO"
+    pretty_print "\nNext Steps:" "INFO"
+    pretty_print "1. Edit ${config_yaml} to match your environment's IPs and nodes."
+    pretty_print "2. Run './scripts/instance-context.sh -g ${name}' to apply changes and upload to GSM."
 }
 
 function download_context() {
@@ -1146,7 +1144,7 @@ function download_context() {
 
     mkdir -p configs || { pretty_print "Error: Failed to create configs directory." "ERROR"; exit 1; }
     local target_yaml="configs/${name}-context.yaml"
-    
+
     if ! echo "$content" > "$target_yaml"; then
         pretty_print "Error: Failed to write context configuration to ${target_yaml}." "ERROR"
         exit 1
@@ -1205,14 +1203,14 @@ function switch_context() {
 case "$ACTION" in
     CREATE) create_context "$CONTEXT_NAME" ;;
     DOWNLOAD) download_context "$CONTEXT_NAME" ;;
-    GENERATE) generate_context "$YAML_FILE" ;;
-    OPEN) 
+    GENERATE) generate_context "$CONTEXT_NAME" ;;
+    OPEN)
         if [[ -n "$CONTEXT_NAME" ]]; then
             switch_context "$CONTEXT_NAME"
         fi
-        hydrate_context "build-artifacts" 
+        hydrate_context "build-artifacts"
         ;;
-    CLOSE) 
+    CLOSE)
         if [[ -n "$CONTEXT_NAME" ]]; then
             dehydrate_context "build-artifacts-${CONTEXT_NAME}"
         else
