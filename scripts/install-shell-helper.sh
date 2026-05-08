@@ -73,6 +73,6 @@ function trim_key_file() {
     if [[ -f "$target_file" ]]; then
         sed -i "s/[[:space:]]*$//" "$target_file"
         local content=$(cat "$target_file")
-        echo -n "$content" > "$target_file"
+        echo "$content" > "$target_file"
     fi
 }

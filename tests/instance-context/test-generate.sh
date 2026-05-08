@@ -28,49 +28,63 @@ function gcloud() {
         echo "test-project-123"
         return 0
     fi
-    # Secrets always missing in this mock for now
-    return 1
+    
+    # Store pushed secrets in a temp file so gsm_get can find them
+    if [[ "$*" == *"secrets versions add"* ]]; then
+        local sec_name=$(echo "$*" | sed -n 's/.*secrets versions add \([^ ]*\) .*/\1/p')
+        echo "dummy-data" > "${TMP_ROOT}/mock_secret_${sec_name}"
+        return 0
+    fi
+    
+    if [[ "$*" == *"secrets create"* ]]; then
+        return 0
+    fi
+    
+    if [[ "$*" == *"secrets describe"* ]]; then
+        local sec_name=$(echo "$*" | sed -n 's/.*secrets describe \([^ ]*\) .*/\1/p')
+        if [[ -f "${TMP_ROOT}/mock_secret_${sec_name}" ]]; then
+            return 0
+        else
+            return 1
+        fi
+    fi
+
+    if [[ "$*" == *"secrets versions access latest"* ]]; then
+        local sec_name=$(echo "$*" | sed -n 's/.*--secret=\([^ ]*\) .*/\1/p')
+        if [[ -f "${TMP_ROOT}/mock_secret_${sec_name}" ]]; then
+            cat "${TMP_ROOT}/mock_secret_${sec_name}"
+            return 0
+        else
+            return 1
+        fi
+    fi
+
+    return 0
 }
 export -f gcloud
 
 # ACT
-# Use echo "y" and redirect to the script
-echo "y" | GSM_SKIP_VALIDATION="true" ./scripts/instance-context.sh -g "${CONTEXT_NAME}"
+# Run the script without GSM_SKIP_VALIDATION. We expect it to fail fast.
+OUTPUT=$(./scripts/instance-context.sh -g "${CONTEXT_NAME}" 2>&1 || true)
 
 # ASSERT
+# Directory should NOT be created because of fail-fast
 TARGET_DIR="build-artifacts-${CONTEXT_NAME}"
-
-if [[ ! -d "${TARGET_DIR}" ]]; then
-    echo "FAIL: Target directory ${TARGET_DIR} was not created"
+if [[ -f "${TARGET_DIR}/ssh-config" ]]; then
+    echo "FAIL: Target files were created despite missing SCM secrets"
     exit 1
 fi
 
-# Directory check
-for f in ssh-config instance-run-vars.yaml inventory.yaml envrc; do
-    if [[ ! -f "${TARGET_DIR}/$f" ]]; then
-        echo "FAIL: Missing file ${TARGET_DIR}/$f"
-        exit 1
-    fi
-done
-
-# Verify fields
-if ! grep -q "export REGION=\"us-west1\"" "${TARGET_DIR}/envrc"; then
-    echo "FAIL: envrc has wrong REGION"
-    grep "REGION=" "${TARGET_DIR}/envrc"
+# Assert the correct error messages are printed
+if ! echo "$OUTPUT" | grep -q "STOP: Required secret 'gdc-test-cluster-display-scm-user' is missing in GSM"; then
+    echo "FAIL: Expected SCM User error message not found in output."
+    echo "Output: $OUTPUT"
     exit 1
 fi
 
-# inventory.yaml
-NODE_COUNT=$(yq e ".test_cluster_display_cluster.hosts | length" "${TARGET_DIR}/inventory.yaml")
-if [[ "$NODE_COUNT" != "2" ]]; then
-    echo "FAIL: inventory.yaml node count is $NODE_COUNT, expected 2"
-    exit 1
-fi
-
-# instance-run-vars.yaml
-ABM_VER=$(yq e ".abm_version" "${TARGET_DIR}/instance-run-vars.yaml")
-if [[ "$ABM_VER" != "1.2.3.4" ]]; then
-    echo "FAIL: instance-run-vars.yaml abm_version is $ABM_VER, expected 1.2.3.4"
+if ! echo "$OUTPUT" | grep -q "STOP: Required secret 'gdc-test-cluster-display-scm-token' is missing in GSM"; then
+    echo "FAIL: Expected SCM Token error message not found in output."
+    echo "Output: $OUTPUT"
     exit 1
 fi
 

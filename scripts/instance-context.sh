@@ -355,26 +355,9 @@ function ensure_gsa_key() {
         return 0
     fi
 
-    # Missing in both, prompt user
-    pretty_print "$sa_description key ('$target_file') not found in GSM or locally." "WARN"
-    echo -n "Would you like to create a new key for a Google Service Account? (y/n): "
-    read answer
-    if [[ "$answer" == "y" ]]; then
-        echo -n "Enter the Service Account email for $sa_description: "
-        read sa_email
-        if [[ -n "$sa_email" ]]; then
-            gcloud iam service-accounts keys create "$target_file" \
-                --iam-account="$sa_email" \
-                --project="$p_id"
-
-            if [[ $? -eq 0 ]]; then
-                gsm_put "$secret_name" "$(cat "$target_file")" "$cl_name" "$p_id" "$reg"
-                pretty_print "Successfully created and uploaded $sa_description." "INFO"
-            else
-                pretty_print "Failed to create Service Account key." "ERROR"
-            fi
-        fi
-    fi
+    # Missing in both, fail fast
+    pretty_print "STOP: $sa_description key ('$target_file') not found in GSM, locally, or in secrets file." "ERROR"
+    exit 1
 }
 
 function hydrate_context() {
@@ -709,9 +692,49 @@ function validate_gsm_secret() {
     fi
 }
 
+function process_secrets_file() {
+    local secrets_file="$1"
+    local cl_name="$2"
+    local p_id="$3"
+    local reg="$4"
+
+    pretty_print "Pre-processing secrets from ${secrets_file}..." "INFO"
+
+    declare -A secret_map=(
+        ["scm_user"]="gdc-${cl_name}-scm-user"
+        ["scm_token"]="gdc-${cl_name}-scm-token"
+        ["prov_gsa"]="gdc-${cl_name}-prov-gsa"
+        ["node_gsa"]="gdc-${cl_name}-node-gsa"
+        ["ssh_key"]="gdc-${cl_name}-ssh-key"
+        ["ssh_pub_key"]="gdc-${cl_name}-ssh-key-pub"
+        ["oidc_id"]="gdc-${cl_name}-oidc-id"
+        ["oidc_secret"]="gdc-${cl_name}-oidc-secret"
+    )
+
+    for key in "${!secret_map[@]}"; do
+        local gsm_name="${secret_map[$key]}"
+        local val=$(yq e ".${key}" "$secrets_file")
+
+        if [[ -n "$val" && "$val" != "null" && "$val" != "" ]]; then
+            pretty_print "Pushing $key to GSM ($gsm_name)" "DEBUG"
+            gsm_put "$gsm_name" "$val" "$cl_name" "$p_id" "$reg"
+        fi
+    done
+}
+
 function generate_context() {
     local ctx_name="$1"
     local yaml_file="configs/${ctx_name}-context.yaml"
+    local secrets_file="configs/${ctx_name}-context-secrets.yaml"
+
+    pretty_print "Starting context generation for '${ctx_name}'" "INFO"
+    pretty_print "Context File:\t[${yaml_file}]" "INFO"
+    
+    if [[ -f "$secrets_file" ]]; then
+        pretty_print "Secrets File:\t[FOUND] ${secrets_file} to pair with context." "INFO"
+    else
+        pretty_print "Secrets File:\t[NOT FOUND] Proceeding without companion secrets file." "INFO"
+    fi
 
     if ! command -v yq &> /dev/null; then
         pretty_print "Error: 'yq' is required. Please install it." "ERROR"
@@ -762,6 +785,11 @@ function generate_context() {
         action="update"
     fi
 
+    # 0. Pre-process secrets if companion file exists
+    if [[ -f "$secrets_file" ]]; then
+        process_secrets_file "$secrets_file" "$cl_name" "$p_id" "$reg"
+    fi
+
     # 1. Validating Secrets
     pretty_print "1. Validating Secrets" "INFO"
     pretty_print "======================================="
@@ -799,32 +827,13 @@ function generate_context() {
         if [[ "$GSM_SKIP_VALIDATION" == "true" ]]; then
             pretty_print "WARN: Required SCM secrets missing in GSM, but GSM_SKIP_VALIDATION is true. Bypassing check." "WARN"
         else
-            pretty_print "Required SCM secrets are missing in GSM." "WARN"
-
             if [[ "$scm_user_status" == "MISSING" ]]; then
-                echo -n "Enter the SCM User: "
-                read scm_user_input
-                if [[ -n "$scm_user_input" ]]; then
-                    gsm_put "gdc-${cl_name}-scm-user" "$scm_user_input" "$cl_name" "$p_id" "$reg"
-                    scm_user_status="CREATED"
-                else
-                    pretty_print "STOP: SCM User is required." "ERROR"
-                    exit 1
-                fi
+                pretty_print "STOP: Required secret 'gdc-${cl_name}-scm-user' is missing in GSM." "ERROR"
             fi
-
             if [[ "$scm_token_status" == "MISSING" ]]; then
-                echo -n "Enter the SCM Token: "
-                read -s scm_token_input
-                echo ""
-                if [[ -n "$scm_token_input" ]]; then
-                    gsm_put "gdc-${cl_name}-scm-token" "$scm_token_input" "$cl_name" "$p_id" "$reg"
-                    scm_token_status="CREATED"
-                else
-                    pretty_print "STOP: SCM Token is required." "ERROR"
-                    exit 1
-                fi
+                pretty_print "STOP: Required secret 'gdc-${cl_name}-scm-token' is missing in GSM." "ERROR"
             fi
+            exit 1
         fi
     fi
 
@@ -854,11 +863,9 @@ function generate_context() {
 
     pretty_print "Generating $target in project $p_id..." "INFO"
 
-    if [[ "$action" == "create" ]]; then
-        mkdir -p "$target"
-        cp "build-artifacts-example/add-hosts-example" "$target/add-hosts" 2>/dev/null || touch "$target/add-hosts"
-        cp "build-artifacts-example/ssh-config" "$target/ssh-config" 2>/dev/null || touch "$target/ssh-config"
-    fi
+    mkdir -p "$target"
+    cp "build-artifacts-example/add-hosts-example" "$target/add-hosts" 2>/dev/null || touch "$target/add-hosts"
+    cp "build-artifacts-example/ssh-config" "$target/ssh-config" 2>/dev/null || touch "$target/ssh-config"
 
     # 1. Update envrc
     if [[ ! -f "$target/envrc" ]]; then

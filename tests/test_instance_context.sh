@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Test if the script exists and runs help
-if ! ./scripts/instance-context.sh -h | grep -q "Usage:"; then
+if ! ./scripts/instance-context.sh -h 2>&1 | grep -q "Usage:"; then
   echo "FAIL: instance-context.sh -h did not output Usage"
   exit 1
 fi
 echo "PASS: Script renamed and executable"
 
 # Test missing yq/yaml logic
-if ./scripts/instance-context.sh -g non_existent.yaml 2>&1 | grep -q "not found"; then
+if ./scripts/instance-context.sh -g non_existent 2>&1 | grep -q "does not exist"; then
   echo "PASS: Handled missing YAML"
 else
   echo "FAIL: Did not handle missing YAML"
@@ -46,8 +46,8 @@ line 2
 INNER_EOF
 trim_key_file test_key.txt
 cat -e test_key.txt > test_key_out.txt
-if ! grep -q "line 2$" test_key_out.txt; then
-    echo "FAIL: trim_key_file failed to trim trailing spaces and newlines"
+if ! grep -q 'line 2\$' test_key_out.txt; then
+    echo "FAIL: trim_key_file failed to trim trailing spaces or add newline"
     cat test_key_out.txt
     exit 1
 fi
