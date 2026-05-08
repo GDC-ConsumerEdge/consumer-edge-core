@@ -35,7 +35,7 @@ fi
 
 # Test trim_key_file function
 echo "Testing trim_key_file..."
-source scripts/install-shell-helper.sh
+source scripts/shell-install-helper.sh
 
 # Case 1: Trailing spaces and multiple newlines
 cat << 'INNER_EOF' > test_key.txt

@@ -38,7 +38,7 @@
 # Run installation (command could be run manually too or instead)
 # docker run -v "$(pwd):/var/consumer-edge-install:ro" -it gcr.io/${GCP_PROJECT}/consumer-edge-install:latest /bin/bash -c ansible-playbook -i inventory all-full-install.yaml
 
-source ./scripts/install-shell-helper.sh
+source ./scripts/shell-install-helper.sh
 
 # Used for String output directing user to add extra-vars file to the ansible-playbook run
 VAR_EXTRAS_STRING=""

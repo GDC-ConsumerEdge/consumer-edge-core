@@ -16,7 +16,7 @@
 # Take in 1 parameter (the name of the new build-artifacts Post-Fix Folder to use)
 
 PREFIX_DIR=$(dirname -- "$0")
-source ${PREFIX_DIR}/install-shell-helper.sh
+source ${PREFIX_DIR}/shell-install-helper.sh
 
 MARKER="*"
 

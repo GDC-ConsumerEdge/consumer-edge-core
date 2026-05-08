@@ -4,7 +4,7 @@
 
 **Goal:** Ensure that private and public key files do not contain trailing spaces and end with exactly one newline during context hydration and generation.
 
-**Architecture:** Create a shared shell helper function `trim_key_file` in `scripts/install-shell-helper.sh` that uses `sed` to remove trailing whitespace and trailing newlines, then appends exactly one newline. Update all key file handling locations in `scripts/instance-context.sh` and `setup.sh` to call this function.
+**Architecture:** Create a shared shell helper function `trim_key_file` in `scripts/shell-install-helper.sh` that uses `sed` to remove trailing whitespace and trailing newlines, then appends exactly one newline. Update all key file handling locations in `scripts/instance-context.sh` and `setup.sh` to call this function.
 
 **Tech Stack:** Bash, sed
 
@@ -13,12 +13,12 @@
 ### Task 1: Create shared trim function and write tests
 
 **Files:**
-- Modify: `scripts/install-shell-helper.sh`
+- Modify: `scripts/shell-install-helper.sh`
 - Modify: `tests/test_instance_context.sh` (or create a new test file if better suited)
 
 - [ ] **Step 1: Add trim function to helper script**
 
-Add the `trim_key_file` function to the end of `scripts/install-shell-helper.sh`.
+Add the `trim_key_file` function to the end of `scripts/shell-install-helper.sh`.
 
 ```bash
 function trim_key_file() {
@@ -41,7 +41,7 @@ Add a test section to `tests/test_instance_context.sh` to verify the trim functi
 ```bash
 # Test trim_key_file function
 echo "Testing trim_key_file..."
-source scripts/install-shell-helper.sh
+source scripts/shell-install-helper.sh
 
 # Case 1: Trailing spaces and multiple newlines
 cat << 'EOF' > test_key.txt
@@ -67,7 +67,7 @@ Expected: Output includes "Testing trim_key_file..." and "PASS: trim_key_file wo
 - [ ] **Step 4: Commit**
 
 ```bash
-git add scripts/install-shell-helper.sh tests/test_instance_context.sh
+git add scripts/shell-install-helper.sh tests/test_instance_context.sh
 git commit -m "feat: add robust trim_key_file function and tests"
 ```
 
@@ -130,9 +130,9 @@ git commit -m "fix: apply trim_key_file to instance-context hydration and genera
 **Files:**
 - Modify: `setup.sh`
 
-- [ ] **Step 1: Ensure install-shell-helper.sh is sourced**
+- [ ] **Step 1: Ensure shell-install-helper.sh is sourced**
 
-`setup.sh` already has `source scripts/install-shell-helper.sh` or equivalent at the top, so `trim_key_file` is available. Verify this visually.
+`setup.sh` already has `source scripts/shell-install-helper.sh` or equivalent at the top, so `trim_key_file` is available. Verify this visually.
 
 - [ ] **Step 2: Update setup.sh to trim keys**
 

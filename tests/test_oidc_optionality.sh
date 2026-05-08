@@ -1,6 +1,6 @@
 #!/bin/bash
 # tests/test_oidc_optionality.sh
-source scripts/install-shell-helper.sh
+source scripts/shell-install-helper.sh
 
 test_dir="build-artifacts-oidc-test"
 rm -rf "$test_dir"

@@ -69,7 +69,7 @@ RUN ansible-galaxy collection install community.general
 CMD direnv allow . \
   && export PATH=/var/google-cloud-sdk/bin:${PATH} \
   && /var/consumer-edge-install/docker-build/docker-cron-startup-script.sh >> /var/log/cron.log 2>&1 \
-  && source /var/consumer-edge-install/scripts/install-shell-helper.sh \
+  && source /var/consumer-edge-install/scripts/shell-install-helper.sh \
   && gcloud auth activate-service-account --key-file=./build-artifacts/provisioning-gsa.json --project ${PROJECT_ID} \
   && gcloud auth configure-docker --quiet --verbosity=critical \
   && /bin/bash

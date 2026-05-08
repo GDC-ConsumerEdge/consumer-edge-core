@@ -29,9 +29,9 @@ source ${PREFIX_DIR}/gce-helper.vars
 # and sourcing the pretty print library. If this script is run from some other
 # location, manually define pretty_print so this script doesn't fail.
 if [ "$BASE_DIR" = "core" ]; then
-  source scripts/install-shell-helper.sh
+  source scripts/shell-install-helper.sh
 elif [ "$BASE_DIR" = "cloud" ]; then
-  source ../install-shell-helper.sh
+  source ../shell-install-helper.sh
 else
   pretty_print() { echo -e "$1"; }
 fi
