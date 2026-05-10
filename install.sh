@@ -345,6 +345,26 @@ function get_var_value() {
     echo "$val"
 }
 
+STORAGE_PROVIDER=$(get_var_value 'storage_provider')
+if [[ "${STORAGE_PROVIDER,,}" == "robin" ]]; then
+    ROBIN_BUNDLE=$(get_var_value 'robin_install_bundle_file')
+    if [[ -n "${ROBIN_BUNDLE}" && ! -f "${ROBIN_BUNDLE}" ]]; then
+        pretty_print "ERROR: storage_provider is set to 'robin' but robin_install_bundle_file (${ROBIN_BUNDLE}) does not exist." "ERROR"
+        ERROR=1
+    elif [[ -z "${ROBIN_BUNDLE}" ]]; then
+        pretty_print "WARN: storage_provider is set to 'robin' but 'robin_install_bundle_file' variable is not defined." "WARN"
+    else
+        pretty_print "PASS: Robin bundle file found (${ROBIN_BUNDLE})"
+    fi
+fi
+
+if [[ "${ERROR}" -eq 1 ]]; then
+    echo ""
+    pretty_print "Required configurations are not present in their intended location. Please re-configure and re-try again." "ERROR"
+    echo ""
+    exit 1
+fi
+
 echo ""
 echo "==============================================="
 echo "🚀 CLUSTER INSTALLATION SUMMARY"
@@ -355,7 +375,6 @@ echo -e "GCP Region:\t\t${REGION:-$(get_var_value 'google_region')}"
 echo -e "Storage Provider:\t$(get_var_value 'storage_provider')"
 echo -e "Control Plane VIP:\t$(get_var_value 'control_plane_vip')"
 echo -e "Ingress VIP:\t\t$(get_var_value 'ingress_vip')"
-echo -e "LB Pool CIDR:\t\t$(get_var_value 'load_balancer_pool_cidr')"
 echo -e "Root Repo URL:\t\t${ROOT_REPO_URL:-$(get_var_value 'acm_root_repo')}"
 echo -e "Root Repo Branch:\t${ROOT_REPO_BRANCH:-$(get_var_value 'root_repository_branch')}"
 echo "==============================================="
