@@ -330,7 +330,7 @@ function extract_yaml_value() {
     local key=$1
     local file=$2
     if [[ -f "$file" ]]; then
-        grep "^${key}:" "$file" | head -n 1 | sed -E "s/^${key}:[[:space:]]*[\"']?([^\"']*)[\"']?.*$/\1/"
+        grep "^${key}:" "$file" | head -n 1 | sed -E 's/^[^:]*:[[:space:]]*([^#]*).*$/\1/' | sed -E 's/[[:space:]]*$//' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/"
     fi
 }
 
@@ -341,7 +341,7 @@ function get_var_value() {
     if [[ -n "$val" ]]; then echo "$val"; return 0; fi
     val=$(extract_yaml_value "$key" "inventory/group_vars/all.yaml")
     if [[ -n "$val" ]]; then echo "$val"; return 0; fi
-    val=$(grep -r "^${key}:" inventory/group_vars/ 2>/dev/null | head -n 1 | sed -E "s/^.*${key}:[[:space:]]*[\"']?([^\"']*)[\"']?.*$/\1/")
+    val=$(grep -r --include="*.yaml" "^${key}:" inventory/group_vars/ 2>/dev/null | head -n 1 | sed -E 's/^[^:]*:[[:space:]]*([^#]*).*$/\1/' | sed -E 's/[[:space:]]*$//' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/")
     echo "$val"
 }
 
@@ -359,18 +359,14 @@ echo -e "LB Pool CIDR:\t\t$(get_var_value 'load_balancer_pool_cidr')"
 echo -e "Root Repo URL:\t\t${ROOT_REPO_URL:-$(get_var_value 'acm_root_repo')}"
 echo -e "Root Repo Branch:\t${ROOT_REPO_BRANCH:-$(get_var_value 'root_repository_branch')}"
 echo "==============================================="
-echo ""
-echo "INFO: Installation will proceed automatically in 5 seconds."
-echo "      Press Ctrl+C to abort."
-for i in {5..1}; do
-    echo -ne "Starting in $i...\033[0K\r"
-    sleep 1
-done
+echo "(Note: Values showing '{{...}}' are Ansible templates that resolve at runtime)"
 echo ""
 
-pretty_print "Starting the installation"
+read -p "Check the values above and if correct. This will mutate the state of GCP Project ${PROJECT_ID}, are you ready to proceed? (y/N): " proceed
+if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    pretty_print "Starting the installation"
 
-pretty_print "Pulling docker install image...(please be patient, can be 1-2 minutes on first image pull)"
+    pretty_print "Pulling docker install image...(please be patient, can be 1-2 minutes on first image pull)"
 
     IMAGE_PATH="gcr.io/${PROVISIONING_IMAGE_PROJECT_ID}/consumer-edge-install:latest"
     RESULT=$(docker pull ${IMAGE_PATH})
@@ -394,3 +390,7 @@ pretty_print "Pulling docker install image...(please be patient, can be 1-2 minu
         pretty_print "ERROR: Docker container cannot open." "ERROR"
         exit 1
     fi
+else
+    echo "Installation aborted by user."
+    exit 0
+fi
