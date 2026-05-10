@@ -608,16 +608,16 @@ function ingest_context() {
     if [[ -n "$reg" ]]; then reg="$reg" yq e -i '.region = env(reg)' "$yaml_out"; fi
     if [[ -n "$zn" ]]; then zn="$zn" yq e -i '.zone = env(zn)' "$yaml_out"; fi
 
-    if [[ -n "$cp_vip" && "$cp_vip" != "null" ]]; then cp_vip="$cp_vip" yq e -i '.control_plane_vip = env(cp_vip)' "$yaml_out"; fi
-    if [[ -n "$in_vip" && "$in_vip" != "null" ]]; then in_vip="$in_vip" yq e -i '.ingress_vip = env(in_vip)' "$yaml_out"; fi
-    if [[ -n "$lb_pool" && "$lb_pool" != "null" ]]; then lb_pool="$lb_pool" yq e -i '.load_balancer_pool_cidr = env(lb_pool)' "$yaml_out"; fi
+    if [[ -n "$cp_vip" && "$cp_vip" != "null" ]]; then cp_vip="$cp_vip" yq e -i '.control_plane_vip = env(cp_vip) | .control_plane_vip style=""' "$yaml_out"; fi
+    if [[ -n "$in_vip" && "$in_vip" != "null" ]]; then in_vip="$in_vip" yq e -i '.ingress_vip = env(in_vip) | .ingress_vip style=""' "$yaml_out"; fi
+    if [[ -n "$lb_pool" && "$lb_pool" != "null" ]]; then lb_pool="$lb_pool" yq e -i '.load_balancer_pool_cidr = env(lb_pool) | .load_balancer_pool_cidr style=""' "$yaml_out"; fi
 
     if [[ -n "$repo_url" && "$repo_url" != "null" ]]; then repo_url="$repo_url" yq e -i '.root_repo_url = env(repo_url)' "$yaml_out"; fi
     if [[ -n "$repo_branch" && "$repo_branch" != "null" ]]; then repo_branch="$repo_branch" yq e -i '.root_repo_branch = env(repo_branch)' "$yaml_out"; fi
 
-    if [[ -n "$storage" && "$storage" != "null" ]]; then storage="$storage" yq e -i '.storage_provider = env(storage)' "$yaml_out"; fi
-    if [[ -n "$abm_ver" && "$abm_ver" != "null" ]]; then abm_ver="$abm_ver" yq e -i '.abm_version = env(abm_ver)' "$yaml_out"; fi
-    if [[ -n "$acm_ver" && "$acm_ver" != "null" ]]; then acm_ver="$acm_ver" yq e -i '.acm_version = env(acm_ver)' "$yaml_out"; fi
+    if [[ -n "$storage" && "$storage" != "null" ]]; then storage="$storage" yq e -i '.storage_provider = env(storage) | .storage_provider style=""' "$yaml_out"; fi
+    if [[ -n "$abm_ver" && "$abm_ver" != "null" ]]; then abm_ver="$abm_ver" yq e -i '.abm_version = env(abm_ver) | .abm_version style=""' "$yaml_out"; fi
+    if [[ -n "$acm_ver" && "$acm_ver" != "null" ]]; then acm_ver="$acm_ver" yq e -i '.acm_version = env(acm_ver) | .acm_version style=""' "$yaml_out"; fi
 
     # Handle Robin disk paths (if Robin is the storage provider)
     if [[ "$storage" == "robin" ]]; then
@@ -627,13 +627,13 @@ function ingest_context() {
             yq e -i '.robin_disk_paths = []' "$yaml_out"
             for (( i=0; i<$num_disks; i++ )); do
                 local disk_path=$(yq e ".robin_disk_paths[$i]" "$target_dir/instance-run-vars.yaml")
-                yq e -i ".robin_disk_paths += [\"${disk_path}\"]" "$yaml_out"
+                disk_path="$disk_path" yq e -i '.robin_disk_paths += [env(disk_path)] | .robin_disk_paths[-1] style=""' "$yaml_out"
             done
         fi
 
         local robin_bundle=$(yq e '.robin_install_bundle_file' "$target_dir/instance-run-vars.yaml" 2>/dev/null)
         if [[ -n "$robin_bundle" && "$robin_bundle" != "null" ]]; then
-             robin_bundle="$robin_bundle" yq e -i '.robin_install_bundle_file = env(robin_bundle)' "$yaml_out"
+             robin_bundle="$robin_bundle" yq e -i '.robin_install_bundle_file = env(robin_bundle) | .robin_install_bundle_file style=""' "$yaml_out"
         fi
     fi
 
@@ -646,7 +646,7 @@ function ingest_context() {
         for n_name in $node_names; do
             local n_ip=$(yq e ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip" "$target_dir/inventory.yaml" 2>/dev/null)
             # Append object to nodes array
-            yq e -i ".nodes += [{\"name\": \"${n_name}\", \"ip\": \"${n_ip}\"}]" "$yaml_out"
+            n_name="$n_name" n_ip="$n_ip" yq e -i '.nodes += [{"name": env(n_name), "ip": env(n_ip)}] | .nodes[-1].ip style=""' "$yaml_out"
         done
     fi
 
@@ -925,9 +925,9 @@ function generate_context() {
     yq e -i "del(.edge_cluster)" "$target/inventory.yaml"
     yq e -i ".[\"${inv_cl_name}_cluster\"].vars.cluster_name = \"${cl_name}\"" "$target/inventory.yaml"
     yq e -i ".[\"${inv_cl_name}_cluster\"].vars.acm_cluster_name = \"${cl_name}\"" "$target/inventory.yaml"
-    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.control_plane_vip = \"${cp_vip}\"" "$target/inventory.yaml"
-    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.ingress_vip = \"${in_vip}\"" "$target/inventory.yaml"
-    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.load_balancer_pool_cidr = [\"${lb_pool}\"]" "$target/inventory.yaml"
+    cp_vip="$cp_vip" yq e -i ".[\"${inv_cl_name}_cluster\"].vars.control_plane_vip = env(cp_vip) | .[\"${inv_cl_name}_cluster\"].vars.control_plane_vip style=\"\"" "$target/inventory.yaml"
+    in_vip="$in_vip" yq e -i ".[\"${inv_cl_name}_cluster\"].vars.ingress_vip = env(in_vip) | .[\"${inv_cl_name}_cluster\"].vars.ingress_vip style=\"\"" "$target/inventory.yaml"
+    lb_pool="$lb_pool" yq e -i ".[\"${inv_cl_name}_cluster\"].vars.load_balancer_pool_cidr = [env(lb_pool)] | .[\"${inv_cl_name}_cluster\"].vars.load_balancer_pool_cidr[0] style=\"\"" "$target/inventory.yaml"
     yq e -i "del(.[\"${inv_cl_name}_cluster\"].hosts)" "$target/inventory.yaml"
     yq e -i ".[\"${inv_cl_name}_cluster\"].hosts = {}" "$target/inventory.yaml"
     yq e -i "del(.[\"${inv_cl_name}_cluster\"].vars.peer_node_ips)" "$target/inventory.yaml"
@@ -944,7 +944,7 @@ function generate_context() {
         local n_ip=$(yq e ".nodes[$i].ip" "$yaml_file")
 
         # Add to inventory hosts
-        yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip = \"${n_ip}\"" "$target/inventory.yaml"
+        n_ip="$n_ip" yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip = env(n_ip) | .[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip style=\"\"" "$target/inventory.yaml"
         yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".machine_label = \"{{ inventory_hostname }}\"" "$target/inventory.yaml"
         yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".ansible_host = \"{{ node_ip }}\"" "$target/inventory.yaml"
 
@@ -953,7 +953,7 @@ function generate_context() {
         fi
 
         # Add to peer_node_ips list
-        yq e -i ".[\"${inv_cl_name}_cluster\"].vars.peer_node_ips += [\"${n_ip}\"]" "$target/inventory.yaml"
+        n_ip="$n_ip" yq e -i ".[\"${inv_cl_name}_cluster\"].vars.peer_node_ips += [env(n_ip)] | .[\"${inv_cl_name}_cluster\"].vars.peer_node_ips[-1] style=\"\"" "$target/inventory.yaml"
 
         # Add to add-hosts
         echo "$n_ip    $n_name" >> "$target/add-hosts"
@@ -965,7 +965,7 @@ function generate_context() {
     fi
 
     if [[ -n "$storage_provider" && "$storage_provider" != "null" ]]; then
-        storage_provider="$storage_provider" yq e -i '.storage_provider = env(storage_provider)' "$target/instance-run-vars.yaml"
+        storage_provider="$storage_provider" yq e -i '.storage_provider = env(storage_provider) | .storage_provider style=""' "$target/instance-run-vars.yaml"
 
         if [[ "$storage_provider" == "robin" ]]; then
             local num_disks=$(yq e '.robin_disk_paths | length' "$yaml_file")
@@ -973,22 +973,22 @@ function generate_context() {
                 yq e -i '.robin_disk_paths = []' "$target/instance-run-vars.yaml"
                 for (( i=0; i<$num_disks; i++ )); do
                     local disk_path=$(yq e ".robin_disk_paths[$i]" "$yaml_file")
-                    disk_path="$disk_path" yq e -i '.robin_disk_paths += [env(disk_path)]' "$target/instance-run-vars.yaml"
+                    disk_path="$disk_path" yq e -i '.robin_disk_paths += [env(disk_path)] | .robin_disk_paths[-1] style=""' "$target/instance-run-vars.yaml"
                 done
             fi
         fi
     fi
 
     if [[ -n "$abm_version" && "$abm_version" != "null" ]]; then
-        abm_version="$abm_version" yq e -i '.abm_version = env(abm_version)' "$target/instance-run-vars.yaml"
+        abm_version="$abm_version" yq e -i '.abm_version = env(abm_version) | .abm_version style=""' "$target/instance-run-vars.yaml"
     fi
 
     if [[ -n "$acm_version" && "$acm_version" != "null" ]]; then
-        acm_version="$acm_version" yq e -i '.acm_version = env(acm_version)' "$target/instance-run-vars.yaml"
+        acm_version="$acm_version" yq e -i '.acm_version = env(acm_version) | .acm_version style=""' "$target/instance-run-vars.yaml"
     fi
 
     if [[ "$storage_provider" == "robin" && -n "$robin_bundle" && "$robin_bundle" != "null" ]]; then
-        robin_bundle="$robin_bundle" yq e -i '.robin_install_bundle_file = env(robin_bundle)' "$target/instance-run-vars.yaml"
+        robin_bundle="$robin_bundle" yq e -i '.robin_install_bundle_file = env(robin_bundle) | .robin_install_bundle_file style=""' "$target/instance-run-vars.yaml"
     fi
 
     # 4. Handle SSH Keys

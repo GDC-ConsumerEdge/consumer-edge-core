@@ -417,6 +417,7 @@
       chdir: "{{ tools_base_path }}"
     environment:
       PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+      GOOGLE_APPLICATION_CREDENTIALS: "{{ remote_keys_folder }}/provisioning-gsa.json"
     when: optional_tools is true
     tags:
     - optional
