@@ -322,37 +322,55 @@ if [[ "${ERROR}" -eq 1 ]]; then
     exit 1
 fi
 
-ACCEPT_OSS_MESSAGE=`cat <<EOF
-This solution uses Open Source tools that are not explicity covered by Google Support.
+pretty_print "WARNING: This solution uses Open Source tools that are not explicitly covered by Google Support." "WARN"
+pretty_print "         OSS solutions: External Secrets, Ansible Community" "WARN"
+pretty_print "         Optional Tooling: kubens & kubectx, kubestr, K9s" "WARN"
 
-OSS solutions used but not supported:
-* External Secrets
-* Ansible Community (Ansible Playbook and Ansible Pull)
+function extract_yaml_value() {
+    local key=$1
+    local file=$2
+    if [[ -f "$file" ]]; then
+        grep "^${key}:" "$file" | head -n 1 | sed -E "s/^${key}:[[:space:]]*[\"']?([^\"']*)[\"']?.*$/\1/"
+    fi
+}
 
-Optional Tooling (config setting in all.yaml under flag "optional_tools")
-* kubens & kubectx
-* kubestr
-* K9s
-
-Do you accept the responsiblity of supporting these OSS tools as listed do you want to proceed? (y/N):
-EOF`
+function get_var_value() {
+    local key=$1
+    local val=""
+    val=$(extract_yaml_value "$key" "build-artifacts/instance-run-vars.yaml")
+    if [[ -n "$val" ]]; then echo "$val"; return 0; fi
+    val=$(extract_yaml_value "$key" "inventory/group_vars/all.yaml")
+    if [[ -n "$val" ]]; then echo "$val"; return 0; fi
+    val=$(grep -r "^${key}:" inventory/group_vars/ 2>/dev/null | head -n 1 | sed -E "s/^.*${key}:[[:space:]]*[\"']?([^\"']*)[\"']?.*$/\1/")
+    echo "$val"
+}
 
 echo ""
-read -p "$ACCEPT_OSS_MESSAGE " proceed
-
-if [[ -z "${proceed}" || "${proceed}" =~ ^([nN][oO]|[nN])$ ]]; then
-    echo "Aborting."
-    exit 0
-fi
-
+echo "==============================================="
+echo "🚀 CLUSTER INSTALLATION SUMMARY"
+echo "==============================================="
+echo -e "Cluster Name:\t\t$(get_var_value 'cluster_name')"
+echo -e "GCP Project ID:\t\t${PROJECT_ID:-$(get_var_value 'google_project_id')}"
+echo -e "GCP Region:\t\t${REGION:-$(get_var_value 'google_region')}"
+echo -e "Storage Provider:\t$(get_var_value 'storage_provider')"
+echo -e "Control Plane VIP:\t$(get_var_value 'control_plane_vip')"
+echo -e "Ingress VIP:\t\t$(get_var_value 'ingress_vip')"
+echo -e "LB Pool CIDR:\t\t$(get_var_value 'load_balancer_pool_cidr')"
+echo -e "Root Repo URL:\t\t${ROOT_REPO_URL:-$(get_var_value 'acm_root_repo')}"
+echo -e "Root Repo Branch:\t${ROOT_REPO_BRANCH:-$(get_var_value 'root_repository_branch')}"
+echo "==============================================="
 echo ""
-read -p "Check the values above and if correct. This will mutate the state of GCP Project ${PROJECT_ID}, are you ready to proceed? (y/N): " proceed
+echo "INFO: Installation will proceed automatically in 5 seconds."
+echo "      Press Ctrl+C to abort."
+for i in {5..1}; do
+    echo -ne "Starting in $i...\033[0K\r"
+    sleep 1
+done
+echo ""
 
-if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+pretty_print "Starting the installation"
 
-    pretty_print "Starting the installation"
-
-    pretty_print "Pulling docker install image...(please be patient, can be 1-2 minutes on first image pull)"
+pretty_print "Pulling docker install image...(please be patient, can be 1-2 minutes on first image pull)"
 
     IMAGE_PATH="gcr.io/${PROVISIONING_IMAGE_PROJECT_ID}/consumer-edge-install:latest"
     RESULT=$(docker pull ${IMAGE_PATH})
@@ -376,8 +394,3 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
         pretty_print "ERROR: Docker container cannot open." "ERROR"
         exit 1
     fi
-
-else
-    echo "Aborting."
-    exit 0
-fi
