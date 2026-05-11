@@ -93,7 +93,8 @@ else
 fi
 
 if [[ ! -x $(command -v yq) ]]; then
-    pretty_print "WARN: yq command is recommended for accurate configuration parsing, but not installed." "WARN"
+    pretty_print "ERROR: yq command is required for configuration validation, but not installed." "ERROR"
+    ERROR=1
 else
     pretty_print "PASS: yq command found"
 fi
@@ -186,6 +187,18 @@ else
         pretty_print "PASS: add-hosts file found"
     fi
 fi
+
+# Validate all YAML files in build-artifacts/
+pretty_print "INFO: Validating YAML files in build-artifacts/..." "INFO"
+for yaml_file in ./build-artifacts/*.{yaml,yml}; do
+    if [[ -f "$yaml_file" ]]; then
+        if ! yq e . "$yaml_file" >/dev/null 2>&1; then
+            pretty_print "ERROR: Invalid YAML file found: $yaml_file" "ERROR"
+            exit 1
+        fi
+        pretty_print "PASS: $yaml_file is valid YAML"
+    fi
+done
 
 # Check for GCR docker credentials helper
 HAS_GCR=$(cat ${HOME}/.docker/config.json | grep "gcloud")

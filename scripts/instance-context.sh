@@ -640,7 +640,7 @@ function ingest_context() {
         for n_name in $node_names; do
             local n_ip=$(yq e ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip" "$target_dir/inventory.yaml" 2>/dev/null)
             # Append object to nodes array
-            n_name="$n_name" n_ip="$n_ip" yq e -i '.nodes += [{"name": env(n_name), "ip": env(n_ip)}] | .nodes[-1].ip style=""' "$yaml_out"
+            n_name="$n_name" n_ip="$n_ip" yq e -i '.nodes += [{"name": env(n_name), "ip": env(n_ip)}] | .nodes[-1] style=""' "$yaml_out"
         done
     fi
 
@@ -736,11 +736,19 @@ function generate_context() {
 
     pretty_print "Starting context generation for '${ctx_name}'" "INFO"
     pretty_print "Context File:\t[${yaml_file}]" "INFO"
-    
+
     if [[ -f "$secrets_file" ]]; then
         pretty_print "Secrets File:\t[FOUND] ${secrets_file} to pair with context." "INFO"
     else
-        pretty_print "Secrets File:\t[NOT FOUND] Proceeding without companion secrets file." "INFO"
+        pretty_print "Secrets File:\t[NOT FOUND] No companion secrets file found." "WARN"
+        read -p "Would you like to create a Secrets File from template? (y/N): " create_secrets
+        if [[ "${create_secrets}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+            cp templates/context-config-secrets-template.yaml "$secrets_file"
+            pretty_print "Created $secrets_file from template." "SUCCESS"
+            pretty_print "Please fill out the variables in the new $secrets_file secrets file and re-run this command." "INFO"
+            exit 0
+        fi
+        pretty_print "Proceeding without companion secrets file." "INFO"
     fi
 
     if ! command -v yq &> /dev/null; then
@@ -923,9 +931,9 @@ function generate_context() {
     in_vip="$in_vip" yq e -i ".[\"${inv_cl_name}_cluster\"].vars.ingress_vip = env(in_vip) | .[\"${inv_cl_name}_cluster\"].vars.ingress_vip style=\"\"" "$target/inventory.yaml"
     lb_pool="$lb_pool" yq e -i ".[\"${inv_cl_name}_cluster\"].vars.load_balancer_pool_cidr = [env(lb_pool)] | .[\"${inv_cl_name}_cluster\"].vars.load_balancer_pool_cidr[0] style=\"\"" "$target/inventory.yaml"
     yq e -i "del(.[\"${inv_cl_name}_cluster\"].hosts)" "$target/inventory.yaml"
-    yq e -i ".[\"${inv_cl_name}_cluster\"].hosts = {}" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].hosts = {} | .[\"${inv_cl_name}_cluster\"].hosts style=\"\"" "$target/inventory.yaml"
     yq e -i "del(.[\"${inv_cl_name}_cluster\"].vars.peer_node_ips)" "$target/inventory.yaml"
-    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.peer_node_ips = []" "$target/inventory.yaml"
+    yq e -i ".[\"${inv_cl_name}_cluster\"].vars.peer_node_ips = [] | .[\"${inv_cl_name}_cluster\"].vars.peer_node_ips style=\"\"" "$target/inventory.yaml"
 
     # Parse nodes for inventory hosts
     local num_nodes=$(yq e '.nodes | length' "$yaml_file")
@@ -938,7 +946,7 @@ function generate_context() {
         local n_ip=$(yq e ".nodes[$i].ip" "$yaml_file")
 
         # Add to inventory hosts
-        n_ip="$n_ip" yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip = env(n_ip) | .[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip style=\"\"" "$target/inventory.yaml"
+        n_ip="$n_ip" yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip = env(n_ip) | .[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\" style=\"\" | .[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".node_ip style=\"\"" "$target/inventory.yaml"
         yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".machine_label = \"{{ inventory_hostname }}\"" "$target/inventory.yaml"
         yq e -i ".[\"${inv_cl_name}_cluster\"].hosts.\"${n_name}\".ansible_host = \"{{ node_ip }}\"" "$target/inventory.yaml"
 
@@ -952,6 +960,9 @@ function generate_context() {
         # Add to add-hosts
         echo "$n_ip    $n_name" >> "$target/add-hosts"
     done
+
+    # Final pretty-print of inventory.yaml to ensure block style throughout
+    yq -i -P e . "$target/inventory.yaml"
 
     # 3. Update instance-run-vars.yaml
     if [[ ! -f "$target/instance-run-vars.yaml" ]]; then
