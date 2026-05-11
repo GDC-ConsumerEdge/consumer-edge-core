@@ -56,3 +56,13 @@
     enabled: yes
   tags:
   - time-sync-setup
+
+- name: Wait for system clock to synchronize
+  command: timedatectl status
+  register: timedatectl_out
+  until: "'System clock synchronized: yes' in timedatectl_out.stdout"
+  retries: 30
+  delay: 2
+  changed_when: false
+  tags:
+  - time-sync-setup
