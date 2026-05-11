@@ -736,11 +736,19 @@ function generate_context() {
 
     pretty_print "Starting context generation for '${ctx_name}'" "INFO"
     pretty_print "Context File:\t[${yaml_file}]" "INFO"
-    
+
     if [[ -f "$secrets_file" ]]; then
         pretty_print "Secrets File:\t[FOUND] ${secrets_file} to pair with context." "INFO"
     else
-        pretty_print "Secrets File:\t[NOT FOUND] Proceeding without companion secrets file." "INFO"
+        pretty_print "Secrets File:\t[NOT FOUND] No companion secrets file found." "WARN"
+        read -p "Would you like to create a Secrets File from template? (y/N): " create_secrets
+        if [[ "${create_secrets}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+            cp templates/context-config-secrets-template.yaml "$secrets_file"
+            pretty_print "Created $secrets_file from template." "SUCCESS"
+            pretty_print "Please fill out the variables in the new $secrets_file secrets file and re-run this command." "INFO"
+            exit 0
+        fi
+        pretty_print "Proceeding without companion secrets file." "INFO"
     fi
 
     if ! command -v yq &> /dev/null; then
