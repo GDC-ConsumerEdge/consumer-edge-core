@@ -98,6 +98,12 @@ else
     pretty_print "PASS: yq command found"
 fi
 
+if [[ ! -x $(command -v jq) ]]; then
+    pretty_print "WARN: jq command is recommended for GSA key validation, but not installed." "WARN"
+else
+    pretty_print "PASS: jq command found"
+fi
+
 if [[ ! -x $(command -v ssh-keygen) ]]; then
     pretty_print "ERROR: ssh-keygen (SSH) command is required, but not installed. Please install OpenSSH" "ERROR"
     ERROR=1
@@ -205,6 +211,14 @@ elif [[ ! -f $PROVISIONING_GSA_FILE ]]; then
     ERROR=1
 else
     pretty_print "PASS: Provisioning GSA key (${PROVISIONING_GSA_FILE})"
+    if [[ -x $(command -v jq) ]]; then
+        if ! jq -e . "$PROVISIONING_GSA_FILE" >/dev/null 2>&1; then
+            pretty_print "ERROR: Provisioning GSA key file is not a valid JSON file." "ERROR"
+            ERROR=1
+        else
+            pretty_print "PASS: Provisioning GSA key file is valid JSON"
+        fi
+    fi
 fi
 
 if [[ -z "${NODE_GSA_FILE}" ]]; then
@@ -215,11 +229,14 @@ elif [[ ! -f $NODE_GSA_FILE ]]; then
     ERROR=1
 else
     pretty_print "PASS: Node GSA key (${NODE_GSA_FILE})"
-fi
-
-# Display if robin.io license was detected
-if [[ -f "./build-artifacts/robinio-sds.json.license" ]]; then
-    pretty_print "INFO: RobinIO License file detected" "INFO"
+    if [[ -x $(command -v jq) ]]; then
+        if ! jq -e . "$NODE_GSA_FILE" >/dev/null 2>&1; then
+            pretty_print "ERROR: Node GSA key file is not a valid JSON file." "ERROR"
+            ERROR=1
+        else
+            pretty_print "PASS: Node GSA key file is valid JSON"
+        fi
+    fi
 fi
 
 # SDS
@@ -374,6 +391,8 @@ if [[ "${STORAGE_PROVIDER,,}" == "robin" ]]; then
     ROBIN_BUNDLE=$(get_var_value 'robin_install_bundle_file')
     if [[ -n "${ROBIN_BUNDLE}" && ! -f "${ROBIN_BUNDLE}" ]]; then
         pretty_print "ERROR: storage_provider is set to 'robin' but robin_install_bundle_file (${ROBIN_BUNDLE}) does not exist." "ERROR"
+		pretty_print "--(NO PUBLIC ACCESS)-- gcloud storage ls gs://r****-partners/release/" "ERROR"
+		pretty_print "--(NO PUBLIC ACCESS)-- gcloud storage cp gs://r****-partners/release/*****-install-[VERSION].tar ./build-artifacts" "ERROR"
         ERROR=1
     elif [[ -z "${ROBIN_BUNDLE}" ]]; then
         pretty_print "WARN: storage_provider is set to 'robin' but 'robin_install_bundle_file' variable is not defined." "WARN"
