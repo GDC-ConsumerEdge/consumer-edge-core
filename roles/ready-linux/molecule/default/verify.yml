@@ -19,6 +19,26 @@
   hosts: all
   gather_facts: false
   tasks:
-  - name: Example assertion
-    assert:
-      that: true
+  - name: Check if chrony is installed
+    package:
+      name: chrony
+      state: present
+    check_mode: yes
+    register: chrony_install
+    failed_when: chrony_install.changed
+
+  - name: Check if chrony service is running
+    service:
+      name: chrony
+      state: started
+    check_mode: yes
+    register: chrony_service
+    failed_when: chrony_service.changed
+
+  - name: Verify systemd-timesyncd is stopped
+    service:
+      name: systemd-timesyncd
+      state: stopped
+    check_mode: yes
+    register: timesyncd_service
+    failed_when: timesyncd_service.changed

@@ -31,33 +31,33 @@ edge_cluster:
     acm_cluster_name: "{{ lookup('env', 'CLUSTER_ACM_NAME') | default('edge-1', True) }}"
     # The other IPs in the cluster. If the cluster is a 1-node cluster, only 1 IP should be included. The solution does not support a 2-node, so 1 or 3 IPs are required here
     peer_node_ips: [
-      "192.168.3.11",
-      "192.168.3.12",
-      "192.168.3.13"
+      192.168.3.11,
+      192.168.3.12,
+      192.168.3.13
     ]
     # KubeAPI IP address. This is a VIP and cannot be already in-use
-    control_plane_vip: "192.168.3.100"
+    control_plane_vip: 192.168.3.100
     # Ingress (k8s) address, must be in LoadBalancer pool below. This is a VIP and cannot be already in-use
-    ingress_vip: "192.168.3.20"
+    ingress_vip: 192.168.3.20
     # Load balancers created in this range. These are VIPs and cannot be already in-use
     load_balancer_pool_cidr: [
-      "192.168.3.20-192.168.3.30" # 9 IPs for LB + 1 Ingress
+      192.168.3.20-192.168.3.30 # 9 IPs for LB + 1 Ingress
     ]
     # Labels applied to the cluster
     fleet_cluster_labels: ["type=development", "location=stanwood", "country=usa", "earlyaccess=false"] # Examples, need to be key=value comma separated
   hosts:
     # Definition of each hosts in the cluster
     edge-1:                                   # host name for first machine
-      node_ip: "192.168.3.11"                 # IP of the host
+      node_ip: 192.168.3.11                 # IP of the host
       primary_cluster_machine: true           # Identify the first machine to act as the "primary" while provisioning. Primary machine is one of the machines to perform one-machine only commands like kubectl and gcloud commands.
       machine_label: "edge-1"                 # Label to be used in CloudOps logging
       ansible_host: "{{ node_ip }}"           # Specific host IP to avoid needing `/etc/hosts` file
     edge-2:                                   # host name for second machine
-      node_ip: "192.168.3.12"
+      node_ip: 192.168.3.12
       machine_label: "edge-2"
       ansible_host: "{{ node_ip }}"
     edge-3:                                   # host name for third machine
-      node_ip: "192.168.3.13"
+      node_ip: 192.168.3.13
       machine_label: "edge-3"
       ansible_host: "{{ node_ip }}"
 
@@ -71,29 +71,29 @@ edge_cluster:
 #     acm_cluster_name: "example-second-cluster"
 #     # The other IPs in the cluster
 #     peer_node_ips: [
-#       "192.168.1.11",
-#       "192.168.1.12",
-#       "192.168.1.13"
+#       192.168.1.11,
+#       192.168.1.12,
+#       192.168.1.13
 #     ]
 #     # KubeAPI IP address
-#     control_plane_vip: "192.168.1.100"
+#     control_plane_vip: 192.168.1.100
 #     # Ingress (k8s) address, must be in LoadBalancer pool below
-#     ingress_vip: "192.168.1.20"
+#     ingress_vip: 192.168.1.20
 #     # Load balancers created in this range
 #     load_balancer_pool_cidr: [
-#       "192.168.1.20-192.168.1.30" # 9 IPs for LB + 1 Ingress
+#       192.168.1.20-192.168.1.30 # 9 IPs for LB + 1 Ingress
 #     ]
 #   hosts:
 #     example-host-1:
-#       node_ip: "192.168.1.11"
+#       node_ip: 192.168.1.11
 #       primary_cluster_machine: true
 #       machine_label: "example-host-1"
 #       ansible_host: "{{ node_ip }}"
 #     example-host-2:
-#       node_ip: "192.168.1.12"
+#       node_ip: 192.168.1.12
 #       machine_label: "example-host-2"
 #       ansible_host: "{{ node_ip }}"
 #     example-host-3:
-#       node_ip: "192.168.1.13"
+#       node_ip: 192.168.1.13
 #       machine_label: "example-host-3"
 #       ansible_host: "{{ node_ip }}"

@@ -92,6 +92,18 @@ else
     pretty_print "PASS: envsubst command found"
 fi
 
+if [[ ! -x $(command -v yq) ]]; then
+    pretty_print "WARN: yq command is recommended for accurate configuration parsing, but not installed." "WARN"
+else
+    pretty_print "PASS: yq command found"
+fi
+
+if [[ ! -x $(command -v jq) ]]; then
+    pretty_print "WARN: jq command is recommended for GSA key validation, but not installed." "WARN"
+else
+    pretty_print "PASS: jq command found"
+fi
+
 if [[ ! -x $(command -v ssh-keygen) ]]; then
     pretty_print "ERROR: ssh-keygen (SSH) command is required, but not installed. Please install OpenSSH" "ERROR"
     ERROR=1
@@ -199,6 +211,14 @@ elif [[ ! -f $PROVISIONING_GSA_FILE ]]; then
     ERROR=1
 else
     pretty_print "PASS: Provisioning GSA key (${PROVISIONING_GSA_FILE})"
+    if [[ -x $(command -v jq) ]]; then
+        if ! jq -e . "$PROVISIONING_GSA_FILE" >/dev/null 2>&1; then
+            pretty_print "ERROR: Provisioning GSA key file is not a valid JSON file." "ERROR"
+            ERROR=1
+        else
+            pretty_print "PASS: Provisioning GSA key file is valid JSON"
+        fi
+    fi
 fi
 
 if [[ -z "${NODE_GSA_FILE}" ]]; then
@@ -209,11 +229,14 @@ elif [[ ! -f $NODE_GSA_FILE ]]; then
     ERROR=1
 else
     pretty_print "PASS: Node GSA key (${NODE_GSA_FILE})"
-fi
-
-# Display if robin.io license was detected
-if [[ -f "./build-artifacts/robinio-sds.json.license" ]]; then
-    pretty_print "INFO: RobinIO License file detected" "INFO"
+    if [[ -x $(command -v jq) ]]; then
+        if ! jq -e . "$NODE_GSA_FILE" >/dev/null 2>&1; then
+            pretty_print "ERROR: Node GSA key file is not a valid JSON file." "ERROR"
+            ERROR=1
+        else
+            pretty_print "PASS: Node GSA key file is valid JSON"
+        fi
+    fi
 fi
 
 # SDS
@@ -322,34 +345,87 @@ if [[ "${ERROR}" -eq 1 ]]; then
     exit 1
 fi
 
-ACCEPT_OSS_MESSAGE=`cat <<EOF
-This solution uses Open Source tools that are not explicity covered by Google Support.
+pretty_print "WARNING: This solution uses Open Source tools that are not explicitly covered by Google Support." "WARN"
+pretty_print "         OSS solutions: External Secrets, Ansible Community" "WARN"
+pretty_print "         Optional Tooling: kubens & kubectx, kubestr, K9s" "WARN"
 
-OSS solutions used but not supported:
-* External Secrets
-* Ansible Community (Ansible Playbook and Ansible Pull)
+function extract_yaml_value() {
+    local key=$1
+    local file=$2
+    if [[ -f "$file" ]]; then
+        # Use yq if available for accurate parsing
+        if command -v yq >/dev/null 2>&1; then
+            local val=$(yq e ".${key}" "$file" 2>/dev/null)
+            # If not found at root, search recursively in any 'vars' block (common for inventory.yaml)
+            if [[ "$val" == "null" || -z "$val" ]]; then
+                val=$(yq e ".. | select(has(\"vars\")) | .vars.${key}" "$file" | head -n 1 2>/dev/null)
+            fi
+            if [[ "$val" != "null" && -n "$val" ]]; then echo "$val"; return 0; fi
+        else
+            # Fallback to sed/grep with better regex to handle indentation and strip keys/quotes
+            grep -E "^[[:space:]]*${key}:" "$file" | head -n 1 | sed -E 's/^[[:space:]]*[^:]*:[[:space:]]*([^#]*).*$/\1/' | sed -E 's/[[:space:]]*$//' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/"
+        fi
+    fi
+}
 
-Optional Tooling (config setting in all.yaml under flag "optional_tools")
-* kubens & kubectx
-* kubestr
-* K9s
+function get_var_value() {
+    local key=$1
+    local val=""
+    # Priority 1: Instance Run Variables (Context-specific overrides)
+    val=$(extract_yaml_value "$key" "build-artifacts/instance-run-vars.yaml")
+    if [[ -n "$val" ]]; then echo "$val"; return 0; fi
 
-Do you accept the responsiblity of supporting these OSS tools as listed do you want to proceed? (y/N):
-EOF`
+    # Priority 2: Inventory File (Context-specific cluster settings)
+    val=$(extract_yaml_value "$key" "build-artifacts/inventory.yaml")
+    if [[ -n "$val" ]]; then echo "$val"; return 0; fi
 
-echo ""
-read -p "$ACCEPT_OSS_MESSAGE " proceed
+    # Priority 3: Global Variables
+    val=$(extract_yaml_value "$key" "inventory/group_vars/all.yaml")
+    if [[ -n "$val" ]]; then echo "$val"; return 0; fi
 
-if [[ -z "${proceed}" || "${proceed}" =~ ^([nN][oO]|[nN])$ ]]; then
-    echo "Aborting."
-    exit 0
+    echo ""
+}
+
+STORAGE_PROVIDER=$(get_var_value 'storage_provider')
+if [[ "${STORAGE_PROVIDER,,}" == "robin" ]]; then
+    ROBIN_BUNDLE=$(get_var_value 'robin_install_bundle_file')
+    if [[ -n "${ROBIN_BUNDLE}" && ! -f "${ROBIN_BUNDLE}" ]]; then
+        pretty_print "ERROR: storage_provider is set to 'robin' but robin_install_bundle_file (${ROBIN_BUNDLE}) does not exist." "ERROR"
+		pretty_print "--(NO PUBLIC ACCESS)-- gcloud storage ls gs://r****-partners/release/" "ERROR"
+		pretty_print "--(NO PUBLIC ACCESS)-- gcloud storage cp gs://r****-partners/release/*****-install-[VERSION].tar ./build-artifacts" "ERROR"
+        ERROR=1
+    elif [[ -z "${ROBIN_BUNDLE}" ]]; then
+        pretty_print "WARN: storage_provider is set to 'robin' but 'robin_install_bundle_file' variable is not defined." "WARN"
+    else
+        pretty_print "PASS: Robin bundle file found (${ROBIN_BUNDLE})"
+    fi
+fi
+
+if [[ "${ERROR}" -eq 1 ]]; then
+    echo ""
+    pretty_print "Required configurations are not present in their intended location. Please re-configure and re-try again." "ERROR"
+    echo ""
+    exit 1
 fi
 
 echo ""
-read -p "Check the values above and if correct. This will mutate the state of GCP Project ${PROJECT_ID}, are you ready to proceed? (y/N): " proceed
+echo "==============================================="
+echo "🚀 CLUSTER INSTALLATION SUMMARY"
+echo "==============================================="
+echo -e "Cluster Name:\t\t${CLUSTER_ACM_NAME:-$(get_var_value 'cluster_name')}"
+echo -e "GCP Project ID:\t\t${PROJECT_ID:-$(get_var_value 'google_project_id')}"
+echo -e "GCP Region:\t\t${REGION:-$(get_var_value 'google_region')}"
+echo -e "Storage Provider:\t${STORAGE_PROVIDER:-$(get_var_value 'storage_provider')}"
+echo -e "Control Plane VIP:\t${CONTROL_PLANE_VIP:-$(get_var_value 'control_plane_vip')}"
+echo -e "Ingress VIP:\t\t${INGRESS_VIP:-$(get_var_value 'ingress_vip')}"
+echo -e "Root Repo URL:\t\t${ROOT_REPO_URL:-$(get_var_value 'acm_root_repo')}"
+echo -e "Root Repo Branch:\t${ROOT_REPO_BRANCH:-$(get_var_value 'root_repository_branch')}"
+echo "==============================================="
+echo "(Note: Values showing '{{...}}' are Ansible templates that resolve at runtime)"
+echo ""
 
+read -p "Check the values above and if correct. This will install a cluster into GCP Project ${PROJECT_ID}, are you ready to proceed? (y/N): " proceed
 if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-
     pretty_print "Starting the installation"
 
     pretty_print "Pulling docker install image...(please be patient, can be 1-2 minutes on first image pull)"
@@ -376,8 +452,7 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
         pretty_print "ERROR: Docker container cannot open." "ERROR"
         exit 1
     fi
-
 else
-    echo "Aborting."
+    echo "Installation aborted by user."
     exit 0
 fi
