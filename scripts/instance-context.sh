@@ -749,7 +749,7 @@ function generate_context() {
     fi
 
     local yq_version=$(yq --version 2>&1)
-    if echo "$yq_version" | grep -qv "mikefarah"; then
+    if echo "$yq_version" | grep -qv "4."; then
         pretty_print "Error: This script requires mikefarah/yq (v4+). Detected a different 'yq' (likely kislyuk/yq)." "ERROR"
         exit 1
     fi
