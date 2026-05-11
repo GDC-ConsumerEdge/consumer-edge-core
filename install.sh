@@ -92,6 +92,12 @@ else
     pretty_print "PASS: envsubst command found"
 fi
 
+if [[ ! -x $(command -v yq) ]]; then
+    pretty_print "WARN: yq command is recommended for accurate configuration parsing, but not installed." "WARN"
+else
+    pretty_print "PASS: yq command found"
+fi
+
 if [[ ! -x $(command -v ssh-keygen) ]]; then
     pretty_print "ERROR: ssh-keygen (SSH) command is required, but not installed. Please install OpenSSH" "ERROR"
     ERROR=1
@@ -330,19 +336,37 @@ function extract_yaml_value() {
     local key=$1
     local file=$2
     if [[ -f "$file" ]]; then
-        grep "^${key}:" "$file" | head -n 1 | sed -E 's/^[^:]*:[[:space:]]*([^#]*).*$/\1/' | sed -E 's/[[:space:]]*$//' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/"
+        # Use yq if available for accurate parsing
+        if command -v yq >/dev/null 2>&1; then
+            local val=$(yq e ".${key}" "$file" 2>/dev/null)
+            # If not found at root, search recursively in any 'vars' block (common for inventory.yaml)
+            if [[ "$val" == "null" || -z "$val" ]]; then
+                val=$(yq e ".. | select(has(\"vars\")) | .vars.${key}" "$file" | head -n 1 2>/dev/null)
+            fi
+            if [[ "$val" != "null" && -n "$val" ]]; then echo "$val"; return 0; fi
+        else
+            # Fallback to sed/grep with better regex to handle indentation and strip keys/quotes
+            grep -E "^[[:space:]]*${key}:" "$file" | head -n 1 | sed -E 's/^[[:space:]]*[^:]*:[[:space:]]*([^#]*).*$/\1/' | sed -E 's/[[:space:]]*$//' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/"
+        fi
     fi
 }
 
 function get_var_value() {
     local key=$1
     local val=""
+    # Priority 1: Instance Run Variables (Context-specific overrides)
     val=$(extract_yaml_value "$key" "build-artifacts/instance-run-vars.yaml")
     if [[ -n "$val" ]]; then echo "$val"; return 0; fi
+
+    # Priority 2: Inventory File (Context-specific cluster settings)
+    val=$(extract_yaml_value "$key" "build-artifacts/inventory.yaml")
+    if [[ -n "$val" ]]; then echo "$val"; return 0; fi
+
+    # Priority 3: Global Variables
     val=$(extract_yaml_value "$key" "inventory/group_vars/all.yaml")
     if [[ -n "$val" ]]; then echo "$val"; return 0; fi
-    val=$(grep -r --include="*.yaml" "^${key}:" inventory/group_vars/ 2>/dev/null | head -n 1 | sed -E 's/^[^:]*:[[:space:]]*([^#]*).*$/\1/' | sed -E 's/[[:space:]]*$//' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/")
-    echo "$val"
+
+    echo ""
 }
 
 STORAGE_PROVIDER=$(get_var_value 'storage_provider')
@@ -369,19 +393,19 @@ echo ""
 echo "==============================================="
 echo "🚀 CLUSTER INSTALLATION SUMMARY"
 echo "==============================================="
-echo -e "Cluster Name:\t\t$(get_var_value 'cluster_name')"
+echo -e "Cluster Name:\t\t${CLUSTER_ACM_NAME:-$(get_var_value 'cluster_name')}"
 echo -e "GCP Project ID:\t\t${PROJECT_ID:-$(get_var_value 'google_project_id')}"
 echo -e "GCP Region:\t\t${REGION:-$(get_var_value 'google_region')}"
-echo -e "Storage Provider:\t$(get_var_value 'storage_provider')"
-echo -e "Control Plane VIP:\t$(get_var_value 'control_plane_vip')"
-echo -e "Ingress VIP:\t\t$(get_var_value 'ingress_vip')"
+echo -e "Storage Provider:\t${STORAGE_PROVIDER:-$(get_var_value 'storage_provider')}"
+echo -e "Control Plane VIP:\t${CONTROL_PLANE_VIP:-$(get_var_value 'control_plane_vip')}"
+echo -e "Ingress VIP:\t\t${INGRESS_VIP:-$(get_var_value 'ingress_vip')}"
 echo -e "Root Repo URL:\t\t${ROOT_REPO_URL:-$(get_var_value 'acm_root_repo')}"
 echo -e "Root Repo Branch:\t${ROOT_REPO_BRANCH:-$(get_var_value 'root_repository_branch')}"
 echo "==============================================="
 echo "(Note: Values showing '{{...}}' are Ansible templates that resolve at runtime)"
 echo ""
 
-read -p "Check the values above and if correct. This will mutate the state of GCP Project ${PROJECT_ID}, are you ready to proceed? (y/N): " proceed
+read -p "Check the values above and if correct. This will install a cluster into GCP Project ${PROJECT_ID}, are you ready to proceed? (y/N): " proceed
 if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     pretty_print "Starting the installation"
 
