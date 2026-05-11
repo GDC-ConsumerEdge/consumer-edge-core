@@ -18,7 +18,7 @@
 PREFIX_DIR=$(dirname -- "$0")
 source ${PREFIX_DIR}/shell-install-helper.sh
 
-MARKER="*"
+MARKER=""
 
 ACTION="SWITCH" # Default
 CONTEXT_NAME=""
@@ -106,27 +106,21 @@ function display_folders() {
             state="[INCOMPLETE]"
             color="ERROR"
         elif [[ -f "$target_dir/consumer-edge-machine" ]]; then
-            state="[OPENED]"
+            state="[OPENED] 📂"
         fi
 
         local display_name="$folder"
         if [[ $folder == $active ]]; then
-            display_name="${folder}${MARKER}"
-            if [[ "$state" == "[OPENED]" ]]; then
+            state="${state/\]/\/CURRENT]}"
+            if [[ "$state" == "[OPENED/CURRENT] 📂" ]]; then
                 color="SUCCESS"
-            elif [[ "$state" == "[CLOSED]" ]]; then
+            elif [[ "$state" == "[CLOSED/CURRENT]" ]]; then
                 color="WARN"
             fi
         fi
 
         printf -v padded_name "%-*s" $max_len "$display_name"
-        if [[ $folder == $active ]]; then
-            printf "${BOLD}"
-            pretty_print "${padded_name}${state}" "$color"
-            printf "${ENDCOLOR}"
-        else
-            pretty_print "${padded_name}${state}" "$color"
-        fi
+        pretty_print "${padded_name}${state}" "$color"
     done
 }
 
