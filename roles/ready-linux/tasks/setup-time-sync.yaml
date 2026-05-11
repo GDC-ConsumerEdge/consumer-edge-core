@@ -2,20 +2,31 @@
 ### Setup Time Sync using Datetime Config
 ###
 
-- name: Remove NTP Pacakger
+- name: Remove NTP Package
   apt:
     pkg:
     - ntp
     state: absent
-    autoclean: yes
   tags:
   - time-sync-setup
   when:
   - target_os == "ubuntu"
 
-- name: Reinstall of package by command.
-  command:
-    cmd: "apt --reinstall install systemd-timesyncd -y"
+- name: Disable systemd-timesyncd
+  systemd:
+    name: systemd-timesyncd
+    enabled: no
+    state: stopped
+  tags:
+  - time-sync-setup
+  when:
+  - target_os == "ubuntu"
+
+- name: Install chrony
+  apt:
+    name: chrony
+    state: present
+    update_cache: yes
   tags:
   - time-sync-setup
   when:
@@ -27,20 +38,21 @@
   tags:
   - time-sync-setup
 
-- name: Template timesyncd.conf
+- name: Template chrony.conf
   template:
-    src: timesyncd.conf.j2
-    dest: /etc/systemd/timesyncd.conf
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
     owner: root
     group: root
-    mode: 0644
+    mode: '0644'
+  notify: Reload chrony
   tags:
   - time-sync-setup
 
-- name: Reload service systemd-timesyncd
-  ansible.builtin.systemd:
-    name: systemd-timesyncd
-    state: restarted
-    daemon_reload: true
+- name: Ensure chrony is started and enabled
+  systemd:
+    name: chrony
+    state: started
+    enabled: yes
   tags:
   - time-sync-setup
