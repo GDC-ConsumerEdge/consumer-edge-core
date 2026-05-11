@@ -1,0 +1,12 @@
+# Created by Ansible
+# Chrony configuration for robust time sync
+
+{% for server in timesync_servers %}
+pool {{ server }} iburst
+{% endfor %}
+
+driftfile /var/lib/chrony/chrony.drift
+logdir /var/log/chrony
+maxupdateskew 100.0
+rtcsync
+makestep 1 3
