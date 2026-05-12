@@ -48,17 +48,25 @@ EOF
 # For now, we expect this test to fail until Task 2 is complete
 # Since hydrate_context isn't updated yet, we just check if the test environment is ready
 echo "Verifying hydration logic..."
+
+# Ensure symlink exists to avoid direnv errors and simulate an active context
+rm -f build-artifacts
+ln -s "$test_dir" build-artifacts
+
 # Reset mocks for specific test case
 function gsm_get() {
     case "$1" in
         *oidc-id) echo ""; ;;
         *oidc-secret) echo ""; ;;
+        *prov-gsa) echo '{"valid": "json"}'; ;;
+        *node-gsa) echo '{"valid": "json"}'; ;;
         *) echo "some-value"; ;;
     esac
 }
 export -f gsm_get
 
-hydrate_context "$test_dir"
+# Provide '3' to skip the sync prompt
+echo "3" | hydrate_context "$test_dir"
 
 if grep -q "^# export OIDC_CLIENT_ID=\"\"" "$test_dir/envrc" && grep -q "export OIDC_ENABLED=\"false\"" "$test_dir/envrc"; then
     echo "PASS: OIDC commented out and disabled when missing from GSM"

@@ -5,6 +5,15 @@
 # Used in: Directory naming
 context_name: "my-cluster-context"
 
+# Labels applied to the cluster membership.
+# Provide as a list of "key=value" strings.
+# Used in: inventory.yaml (fleet_cluster_labels)
+labels:
+  - "type=development"
+  - "location=stanwood"
+  - "country=usa"
+  - "earlyaccess=false"
+
 # The human-readable name of the cluster.
 # Used in: envrc (CLUSTER_ACM_NAME), inventory.yaml (root key and cluster_name var)
 cluster_name: "edge-cluster-1"

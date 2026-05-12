@@ -16,20 +16,26 @@ else
 fi
 
 # Test full generation
-GSM_SKIP_VALIDATION="true" ./scripts/instance-context.sh -g tests/sample-cluster.yaml << 'EOF'
-y
+cp tests/sample-cluster.yaml configs/test-cluster-context.yaml
+
+# Test requires the yes input to be 'n' for creating secrets file otherwise it exits 0
+GSM_SKIP_VALIDATION="true" ./scripts/instance-context.sh -g test-cluster << 'EOF'
+n
 EOF
 
 if [[ -d "build-artifacts-test-cluster" ]]; then
   if grep -q "test-gcp-project" build-artifacts-test-cluster/envrc; then
     echo "PASS: Context generated successfully"
     rm -rf build-artifacts-test-cluster
+    rm -f configs/test-cluster-context.yaml configs/test-cluster-context-secrets.yaml
   else
     echo "FAIL: envrc not templated correctly"
+    rm -f configs/test-cluster-context.yaml configs/test-cluster-context-secrets.yaml
     exit 1
   fi
 else
   echo "FAIL: Context directory not created"
+  rm -f configs/test-cluster-context.yaml configs/test-cluster-context-secrets.yaml
   exit 1
 fi
 

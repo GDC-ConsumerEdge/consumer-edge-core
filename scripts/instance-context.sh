@@ -119,8 +119,19 @@ function display_folders() {
             fi
         fi
 
+        local labels=""
+        if [[ -f "configs/${folder}-context.yaml" ]]; then
+            labels=$(yq e '.labels | join(", ")' "configs/${folder}-context.yaml" 2>/dev/null)
+            if [[ "$labels" == "null" ]]; then labels=""; fi
+        fi
+
+        local label_display=""
+        if [[ -n "$labels" ]]; then
+            label_display=" ($labels)"
+        fi
+
         printf -v padded_name "%-*s" $max_len "$display_name"
-        pretty_print "${padded_name}${state}" "$color"
+        pretty_print "${padded_name}${state}${label_display}" "$color"
     done
 }
 
@@ -193,10 +204,14 @@ function get_secret() {
                 gsm_put "$gsm_name" "$value1" "" "$p_id" "$reg"
                 echo "$value1"
                 return 0
+            elif [[ "$value1" == "$value2" && -z "$value1" && ( "$secret_key" == "ssh_key" || "$secret_key" == "ssh_pub_key" ) ]]; then
+                gsm_put "$gsm_name" "--not-set--" "" "$p_id" "$reg"
+                echo "--not-set--"
+                return 0
             else
                 pretty_print "Values do not match or are empty. Try again." "ERROR" >&2
             fi
-        done
+            done
     fi
 
     echo ""
@@ -344,12 +359,20 @@ function ensure_gsa_key() {
     local key_content=$(gsm_get "$secret_name" "$p_id" "$reg")
 
     if [[ -n "$key_content" ]]; then
+        if ! echo "$key_content" | jq -e . >/dev/null 2>&1; then
+             pretty_print "STOP: Invalid JSON found in GSM secret '$secret_name'." "ERROR"
+             exit 1
+        fi
         echo "$key_content" > "$target_file"
         return 0
     fi
 
     # Not in GSM, check local filesystem
     if [[ -f "$target_file" ]]; then
+        if ! jq -e . "$target_file" >/dev/null 2>&1; then
+             pretty_print "STOP: Invalid JSON found in local file '$target_file'." "ERROR"
+             exit 1
+        fi
         # If local but missing in GSM, push it
         gsm_put "$secret_name" "$(cat "$target_file")" "$cl_name" "$p_id" "$reg"
         return 0
@@ -413,11 +436,19 @@ function hydrate_context() {
     # 2. GSA Keys
     local prov_gsa=$(get_secret "prov_gsa" "gdc-${cl_name}-prov-gsa" "true" "$p_id" "$reg" "$ctx_name")
     if [[ -n "$prov_gsa" ]]; then
+        if ! echo "$prov_gsa" | jq -e . >/dev/null 2>&1; then
+             pretty_print "STOP: Invalid JSON found for Provisioning GSA." "ERROR"
+             exit 1
+        fi
         echo "$prov_gsa" > "$target_dir/provisioning-gsa.json"
     fi
 
     local node_gsa=$(get_secret "node_gsa" "gdc-${cl_name}-node-gsa" "true" "$p_id" "$reg" "$ctx_name")
     if [[ -n "$node_gsa" ]]; then
+        if ! echo "$node_gsa" | jq -e . >/dev/null 2>&1; then
+             pretty_print "STOP: Invalid JSON found for Node GSA." "ERROR"
+             exit 1
+        fi
         echo "$node_gsa" > "$target_dir/node-gsa.json"
     fi
 
@@ -631,6 +662,16 @@ function ingest_context() {
         fi
     fi
 
+    # Handle fleet_cluster_labels
+    local num_labels=$(yq e ".[\"${inv_cl_name}_cluster\"].vars.fleet_cluster_labels | length" "$target_dir/inventory.yaml" 2>/dev/null)
+    if [[ "$num_labels" -gt 0 && "$num_labels" != "null" ]]; then
+        yq e -i '.labels = []' "$yaml_out"
+        for (( i=0; i<$num_labels; i++ )); do
+            local label=$(yq e ".[\"${inv_cl_name}_cluster\"].vars.fleet_cluster_labels[$i]" "$target_dir/inventory.yaml")
+            yq e -i ".labels += [\"${label}\"]" "$yaml_out"
+        done
+    fi
+
     # Handle Nodes Array
     local num_nodes=$(yq e ".[\"${inv_cl_name}_cluster\"].hosts | length" "$target_dir/inventory.yaml" 2>/dev/null)
     if [[ "$num_nodes" -gt 0 && "$num_nodes" != "null" ]]; then
@@ -763,6 +804,12 @@ function generate_context() {
     fi
     if [[ ! -f "$yaml_file" ]]; then
         pretty_print "Error: File path '$yaml_file' does not exist and cannot generate a new context folder." "ERROR"
+        exit 1
+    fi
+
+    # Validate YAML format
+    if ! yq e '.' "$yaml_file" >/dev/null 2>&1; then
+        pretty_print "Error: Invalid YAML format in '$yaml_file'." "ERROR"
         exit 1
     fi
 
@@ -934,6 +981,18 @@ function generate_context() {
     yq e -i ".[\"${inv_cl_name}_cluster\"].hosts = {} | .[\"${inv_cl_name}_cluster\"].hosts style=\"\"" "$target/inventory.yaml"
     yq e -i "del(.[\"${inv_cl_name}_cluster\"].vars.peer_node_ips)" "$target/inventory.yaml"
     yq e -i ".[\"${inv_cl_name}_cluster\"].vars.peer_node_ips = [] | .[\"${inv_cl_name}_cluster\"].vars.peer_node_ips style=\"\"" "$target/inventory.yaml"
+
+    # Update fleet_cluster_labels
+    local num_labels=$(yq e '.labels | length' "$yaml_file")
+    if [[ "$num_labels" -gt 0 && "$num_labels" != "null" ]]; then
+        yq e -i ".[\"${inv_cl_name}_cluster\"].vars.fleet_cluster_labels = []" "$target/inventory.yaml"
+        for (( i=0; i<$num_labels; i++ )); do
+            local label=$(yq e ".labels[$i]" "$yaml_file")
+            yq e -i ".[\"${inv_cl_name}_cluster\"].vars.fleet_cluster_labels += [\"${label}\"]" "$target/inventory.yaml"
+        done
+    else
+        yq e -i ".[\"${inv_cl_name}_cluster\"].vars.fleet_cluster_labels = []" "$target/inventory.yaml"
+    fi
 
     # Parse nodes for inventory hosts
     local num_nodes=$(yq e '.nodes | length' "$yaml_file")
