@@ -13,6 +13,7 @@
   - target_os == "ubuntu"
 
 - name: Disable systemd-timesyncd
+  ignore_errors: true
   systemd:
     name: systemd-timesyncd
     enabled: no
