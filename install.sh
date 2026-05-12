@@ -467,8 +467,6 @@ if [[ "${proceed}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
         exit 1
     fi
 
-    display_help # print helper text
-
     # Running docker image
     CONTAINER_WRITE_MODE="ro"
     if [[ $DEBUG_MODE == true ]]; then

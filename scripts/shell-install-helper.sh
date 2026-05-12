@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2023 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,19 +55,31 @@ function pretty_print() {
 }
 
 function display_help() {
+	VAR_EXTRAS_STRING=""
+	if [[ -f "./build-artifacts/instance-run-vars.yaml" ]]; then
+		VAR_EXTRAS_STRING="--extra-vars=\"@build-artifacts/instance-run-vars.yaml\""
+	fi
+
     pretty_print "\n=============================="
-    pretty_print "Starting the docker container. You will need to run the following 2 commands (cut-copy-paste)"
+    pretty_print "Starting the docker container. You can run the following commands (cut-copy-paste):"
     pretty_print "=============================="
-    pretty_print "1: ./scripts/health-check.sh"
-    pretty_print "2: ansible-playbook all-full-install.yml -i inventory ${VAR_EXTRAS_STRING}"
-    pretty_print "3: Type 'exit' to exit the Docker shell after installation"
+	pretty_print "===        INSTALL         ==="
+	pretty_print "=============================="
+    pretty_print "1: Check Health: \n\n${WARN_COLOR}./scripts/health-check.sh${ENDCOLOR}\n"
+    pretty_print "2: Run Install: \n\n${WARN_COLOR}ansible-playbook all-full-install.yml -i inventory ${VAR_EXTRAS_STRING}${ENDCOLOR}\n"
+    pretty_print "3: Exit after install"
     pretty_print "=============================="
-    pretty_print "Thank you for using the quick helper script!"
-    pretty_print "(you are now inside the Docker shell)"
-    pretty_print "\nType "help-me" at any time to display this message\n"
+	pretty_print "===       UNINSTALL        ==="
+	pretty_print "=============================="
+    pretty_print "1. Uninstall cluster: \n\n${WARN_COLOR}ansible-playbook all-remove-abm-software.yml -i inventory ${VAR_EXTRAS_STRING} --tags never${ENDCOLOR}\n"
+    pretty_print "=============================="
+	pretty_print "===          SSH           ==="
+	pretty_print "=============================="
+	pretty_print "\n${WARN_COLOR}ssh -F build-artifacts/ssh-config [host-name]${ENDCOLOR}\n"
+	pretty_print "=============================="
+    pretty_print "\nType ${BOLD}${ERROR_COLOR}\"help-me\"${DEFAULT_COLOR} at any time to display this message\n"
 }
 
-alias "help-me"="display_help"
 function trim_key_file() {
     local target_file="$1"
     if [[ -f "$target_file" ]]; then
