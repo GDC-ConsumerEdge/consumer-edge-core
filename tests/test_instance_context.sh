@@ -8,7 +8,7 @@ fi
 echo "PASS: Script renamed and executable"
 
 # Test missing yq/yaml logic
-if ./scripts/instance-context.sh -g non_existent 2>&1 | grep -q "does not exist"; then
+if echo "" | ./scripts/instance-context.sh -g non_existent 2>&1 | grep -q "does not exist"; then
   echo "PASS: Handled missing YAML"
 else
   echo "FAIL: Did not handle missing YAML"

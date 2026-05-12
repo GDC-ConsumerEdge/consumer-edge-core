@@ -96,7 +96,14 @@ if [[ ! -x $(command -v yq) ]]; then
     pretty_print "ERROR: yq command is required for configuration validation, but not installed." "ERROR"
     ERROR=1
 else
-    pretty_print "PASS: yq command found"
+    # Check for mikefarah yq version 4+
+    YQ_VER=$(yq --version 2>&1)
+    if [[ ! "$YQ_VER" =~ "mikefarah" ]] && [[ ! "$YQ_VER" =~ yq\ \(https://github.com/mikefarah/yq/\) ]] && [[ ! "$YQ_VER" =~ yq.*version\ [456789] ]]; then
+        pretty_print "ERROR: yq version 4+ (mikefarah) is required. Found: $YQ_VER" "ERROR"
+        ERROR=1
+    else
+        pretty_print "PASS: yq command found (v4+)"
+    fi
 fi
 
 if [[ ! -x $(command -v jq) ]]; then
@@ -344,7 +351,7 @@ if [[ $ERROR -lt 1 ]]; then
         ;;
     "token")
         pretty_print "PASS: Using SCM Token User: ${SCM_TOKEN_USER}"
-        pretty_print "PASS: Using SCM Token Value: $(echo ${SCM_TOKEN_TOKEN} | sed 's/^....../******/')"
+        pretty_print "PASS: Using SCM Token Value: ******${SCM_TOKEN_TOKEN:6}"
         ;;
     esac
 
@@ -375,8 +382,17 @@ function extract_yaml_value() {
             fi
             if [[ "$val" != "null" && -n "$val" ]]; then echo "$val"; return 0; fi
         else
-            # Fallback to sed/grep with better regex to handle indentation and strip keys/quotes
-            grep -E "^[[:space:]]*${key}:" "$file" | head -n 1 | sed -E 's/^[[:space:]]*[^:]*:[[:space:]]*([^#]*).*$/\1/' | sed -E 's/[[:space:]]*$//' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/"
+            # Fallback to pure Bash string manipulation to handle indentation and strip keys/quotes
+            local line=$(grep -E "^[[:space:]]*${key}:" "$file" | head -n 1)
+            if [[ -n "$line" ]]; then
+                local val="${line#*:}"             # Strip everything up to first colon
+                val="${val#"${val%%[![:space:]]*}"}" # Trim leading whitespace
+                val="${val%%#*}"                   # Strip comments
+                val="${val%${val##*[![:space:]]}}" # Trim trailing whitespace
+                val="${val%\"}"; val="${val#\"}"   # Strip double quotes
+                val="${val%\'}"; val="${val#\'}"   # Strip single quotes
+                echo "$val"
+            fi
         fi
     fi
 }

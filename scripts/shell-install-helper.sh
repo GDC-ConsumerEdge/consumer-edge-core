@@ -71,8 +71,12 @@ alias "help-me"="display_help"
 function trim_key_file() {
     local target_file="$1"
     if [[ -f "$target_file" ]]; then
-        sed -i "s/[[:space:]]*$//" "$target_file"
-        local content=$(cat "$target_file")
-        echo "$content" > "$target_file"
+        local content=""
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            # Trim trailing whitespace using Bash parameter expansion
+            content+="${line%${line##*[![:space:]]}}"$'\n'
+        done < "$target_file"
+        # Strip trailing newline to match $(cat) behavior if needed, and write back
+        printf "%s\n" "${content%$'\n'}" > "$target_file"
     fi
 }
