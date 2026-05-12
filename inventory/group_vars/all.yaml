@@ -255,7 +255,7 @@ cert_rotation_cron_hour: "2"
 ###
 ### Storage providers are installed via Cluster Trait Repos. Configuration for CTR is done in this automation (where possible)
 ###
-storage_provider: "robin" # Current Options: longhorn, none & Future Options: openebs, portworx. NOTE: storage_provider_repo_url must match with storage_provider_repo_url
+storage_provider: "none" # Current Options: longhorn, none & Future Options: openebs, portworx. NOTE: storage_provider_repo_url must match with storage_provider_repo_url
 
 # Use the secret from the secret manager and apply during provisioning (default false, installs 90d trial license)
 robin-install-reporting-secret: false
