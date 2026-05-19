@@ -82,3 +82,21 @@
   - sds-common-setup
   - sds-bucket
   - gcloud-mutate
+
+# Create License Secret for Robin
+- name: "Create Robin GCP Secret (robin-sds-license)"
+  run_once: true
+  shell: |
+    EXISTS=$(gcloud secrets list --filter="{{ robin_gcp_secret_name }}" --format="value(name)" --project="{{ google_secret_project_id }}" || gcloud secrets list --filter="{{ robin_gcp_secret_name }}" --format="value(name)" --project="{{ google_secret_project_id }}" --location="{{ google_region }}")
+    if [ -z "${EXISTS}" ]; then
+      gcloud secrets create {{ robin_gcp_secret_name }} --replication-policy="automatic" --project="{{ google_secret_project_id }}" || gcloud secrets create {{ robin_gcp_secret_name }} --replication-policy="user-managed" --locations="{{ google_region }}" --project="{{ google_secret_project_id }}"
+      echo "ADDED"
+    fi
+  when:
+  - (primary_cluster_machine is defined)
+  - (primary_cluster_machine == true)
+  tags:
+  - robin-io
+  - robin-install
+  - robin-license
+  - gcloud-mutate

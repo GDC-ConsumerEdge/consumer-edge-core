@@ -1,0 +1,92 @@
+---
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Verify required GCP Services are enabled
+  delegate_to: localhost
+  run_once: true
+  command:
+    cmd: gcloud services list --enabled --filter="config.name:{{ item }}" --format="value(config.name)" --project="{{ google_project_id }}"
+  register: service_check
+  changed_when: false
+  failed_when: service_check.stdout | trim == ""
+  loop: "{{ gcp_services_required | default([]) }}"
+  when:
+  - gcp_services_required is defined
+  - gcp_services_required | length > 0
+  tags:
+  - verify
+  - gcp-verify
+
+- name: Verify GSAs exist
+  delegate_to: localhost
+  run_once: true
+  command:
+    cmd: gcloud iam service-accounts describe {{ item.name }}@{{ google_project_id }}.iam.gserviceaccount.com --project="{{ google_project_id }}"
+  register: gsa_check
+  changed_when: false
+  failed_when: gsa_check.rc != 0
+  loop: "{{ service_accounts | default([]) }}"
+  when:
+  - item.enabled | bool == true
+  tags:
+  - verify
+  - gcp-verify
+
+- name: Verify GSM Secrets have an active version
+  delegate_to: localhost
+  run_once: true
+  command:
+    cmd: gcloud secrets versions access latest --secret="{{ item.name }}" --project="{{ google_secret_project_id }}" --no-user-output-enabled
+  register: secret_check
+  changed_when: false
+  failed_when: secret_check.rc != 0
+  loop: "{{ service_accounts | default([]) }}"
+  when:
+  - item.enabled | bool == true
+  tags:
+  - verify
+  - gcp-verify
+
+- name: Verify GCS Snapshot Bucket exists
+  delegate_to: localhost
+  run_once: true
+  command:
+    cmd: gcloud storage ls gs://{{ snapshot_gcs_bucket_base }} --project="{{ google_project_id }}"
+  register: snapshot_bucket_check
+  changed_when: false
+  failed_when: snapshot_bucket_check.rc != 0
+  when:
+  - snapshot_gcs_bucket_base is defined
+  - snapshot_gcs_bucket_base | length > 0
+  tags:
+  - verify
+  - gcp-verify
+
+- name: Verify SDS GCS Backup Bucket exists
+  delegate_to: localhost
+  run_once: true
+  command:
+    cmd: gcloud storage ls gs://{{ storage_provider_gcs_bucket_name }} --project="{{ google_project_id }}"
+  register: sds_bucket_check
+  changed_when: false
+  failed_when: sds_bucket_check.rc != 0
+  when:
+  - storage_provider is defined
+  - storage_provider != "none"
+  - storage_provider_gcs_bucket_name is defined
+  - storage_provider_gcs_bucket_name | length > 0
+  tags:
+  - verify
+  - gcp-verify
