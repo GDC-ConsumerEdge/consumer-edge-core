@@ -17,28 +17,64 @@
 
 - name: Verify
   hosts: all
-  gather_facts: false
+  gather_facts: true
   tasks:
-  - name: Check if chrony is installed
+  # ==========================================
+  # Debian/Ubuntu Assertions (NTP)
+  # ==========================================
+  - name: Check if ntp is installed (Ubuntu)
     package:
-      name: chrony
+      name: ntp
       state: present
     check_mode: yes
-    register: chrony_install
-    failed_when: chrony_install.changed
+    register: ntp_install
+    failed_when: ntp_install.changed
+    when: ansible_os_family == 'Debian'
 
-  - name: Check if chrony service is running
+  - name: Check if ntp service is running (Ubuntu)
     service:
-      name: chrony
+      name: ntp
       state: started
     check_mode: yes
-    register: chrony_service
-    failed_when: chrony_service.changed
+    register: ntp_service
+    failed_when: ntp_service.changed
+    when: ansible_os_family == 'Debian'
 
-  - name: Verify systemd-timesyncd is stopped
+  - name: Verify systemd-timesyncd is stopped (Ubuntu)
     service:
       name: systemd-timesyncd
       state: stopped
     check_mode: yes
     register: timesyncd_service
     failed_when: timesyncd_service.changed
+    when: ansible_os_family == 'Debian'
+
+  - name: Verify chrony is absent (Ubuntu)
+    package:
+      name: chrony
+      state: absent
+    check_mode: yes
+    register: chrony_uninstall
+    failed_when: chrony_uninstall.changed
+    when: ansible_os_family == 'Debian'
+
+  # ==========================================
+  # RedHat/CentOS Assertions (Chrony Fallback)
+  # ==========================================
+  - name: Check if chrony is installed (RedHat)
+    package:
+      name: chrony
+      state: present
+    check_mode: yes
+    register: chrony_install_rhel
+    failed_when: chrony_install_rhel.changed
+    when: ansible_os_family == 'RedHat'
+
+  - name: Check if chrony service is running (RedHat)
+    service:
+      name: chronyd
+      state: started
+    check_mode: yes
+    register: chrony_service_rhel
+    failed_when: chrony_service_rhel.changed
+    when: ansible_os_family == 'RedHat'

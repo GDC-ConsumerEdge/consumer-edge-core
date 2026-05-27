@@ -1,0 +1,28 @@
+# Created by Ansible
+# NTP configuration for robust time sync
+
+# Disable panic threshold (forces ntp to step/align time even with massive gaps)
+tinker panic 0
+
+# Drift file location
+driftfile /var/lib/ntp/ntp.drift
+
+# Define logging/statistics parameters
+statsdir /var/log/ntpstats/
+statistics loopstats peerstats clockstats
+filegen loopstats file loopstats type day enable
+filegen peerstats file peerstats type day enable
+filegen clockstats file clockstats type day enable
+
+# Secure restrictive permissions config
+restrict -4 default kod notrap nomodify nopeer noquery limited
+restrict -6 default kod notrap nomodify nopeer noquery limited
+
+# Allow local socket access and full queries interface
+restrict 127.0.0.1
+restrict ::1
+
+# Dynamic client servers list configuration
+{% for server in timesync_servers | default(['0.pool.ntp.org', '1.pool.ntp.org', '2.pool.ntp.org', '3.pool.ntp.org']) %}
+server {{ server }} iburst
+{% endfor %}
