@@ -85,12 +85,18 @@ spec:
     lvpShare:
       path: {{ local_share_pvc_mount }}
       storageClassName: local-shared
-      numPVUnderSharedPath: 5
+      numPVUnderSharedPath: {{ local_share_pvc_count }}
   # NodeConfig specifies the configuration that applies to all nodes in the cluster.
   nodeConfig:
     podDensity:
       maxPodsPerNode: 110
     containerRuntime: {{ container_runtime }}
+  # GKEOnPremAPI (Optional) Specify if you wish to explicitly enable/disable the cloud hosted gkeonprem
+  # API to enable/disable cluster lifecycle management from gcloud UI and Terraform.
+  # gkeOnPremAPI:
+    # enabled: false
+    # location is the Cloud location for the cluster resource metadata where the cluster will be enrolled.
+    # location: us-central1
 
   # Authentication; uncomment this section if you wish to enable authentication to the cluster with OpenID Connect.
   # authentication:

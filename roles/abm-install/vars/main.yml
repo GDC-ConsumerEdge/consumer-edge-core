@@ -44,6 +44,7 @@ services_cidr: "192.168.30.0/23"
 # Cluster Persistant Volumes (outside of overlay storage options)
 local_pvc_mount: "/opt/pvc-disk"
 local_share_pvc_mount: "/opt/localpv-share" # Default value
+local_share_pvc_count: 5
 
 # Cluster runtime
 container_runtime: "containerd" # docker or containerd
