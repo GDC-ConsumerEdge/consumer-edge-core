@@ -59,8 +59,6 @@
     - unattended-upgrades
     - apt-listchanges
     - nfs-common
-    # This is needed for TODO: Move this to Robin install only
-    # - linux-modules-extra-{{ uname_r }}
     state: latest
     update_cache: yes
     autoclean: yes
@@ -82,11 +80,8 @@
     - logrotate
     - python3
     - python3-pip
-    # This is needed for TODO: Move this to Robin install only
-    # - linux-modules-extra-{{ uname_r }}
     state: latest
     update_cache: yes
-    #autoclean: yes
   tags:
     - update-dependencies
   when:
@@ -194,7 +189,7 @@
 
 - name: Save current time sync status
   set_fact:
-    time_sync_is_synchronized: false # "{{ timedatectl_out.stdout | trim | lower == 'yes' }}"
+    time_sync_is_synchronized: false #"{{ timedatectl_out.stdout | trim | lower == 'yes' }}"
   changed_when: false
   tags:
   - time-sync-setup
@@ -228,7 +223,7 @@
   - not time_sync_is_synchronized
   - ansible_distribution == "RedHat" or
     (ansible_distribution == "Ubuntu" and
-     ansible_distribution_version is version('24.04', '>='))
+     ansible_distribution_version is version('22.04', '>='))
 
 # ==========================================
 # Time Post-Sync Verification
