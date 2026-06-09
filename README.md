@@ -53,6 +53,35 @@ gcloud builds submit \
     --config ./docker-build/cloudbuild.yaml .
 ```
 
+## GCP Log Streaming & Customization
+
+The installation container automatically streams structured execution events (playbook starts, task successes, task failures) directly to **Google Cloud Logging (Stackdriver)** inside your `$PROJECT_ID`.
+
+To find these logs in your Google Cloud Console, open the **Logs Explorer** and use the following query:
+```query
+logName="projects/<your-project-id>/logs/ansible-playbook-runs"
+```
+
+### Customization Environment Variables
+
+You can control the stream destination, custom tagging, and logging verbosity inside your container by setting the following environment variables:
+
+| Environment Variable | Default Value | Description |
+| :--- | :--- | :--- |
+| `ANSIBLE_GCP_LOG_NAME` | `ansible-playbook-runs` | Controls the log bucket/stream name in GCP Logging. |
+| `ANSIBLE_GCP_LOG_LEVEL` | `INFO` | Controls logging verbosity. Supported: `INFO` (all events), `NOTICE` (playbook runs & failures), `ERROR` (failures only). |
+| `ANSIBLE_GCP_LOG_LABELS` | *(none)* | Comma-separated labels applied directly to each log entry in GCP (e.g., `env=production,site=east`). |
+
+#### Example Usage:
+```bash
+# Inside the docker container, run with custom name and verbosity:
+export ANSIBLE_GCP_LOG_NAME="edge-production-deploys"
+export ANSIBLE_GCP_LOG_LEVEL="NOTICE"
+export ANSIBLE_GCP_LOG_LABELS="env=prod,site=east_nuc"
+
+ansible-playbook -i inventory site.yml
+```
+
 ## Features & Capabilities
 
 * **Automated Infrastructure Provisioning**: Deploy Anthos Bare Metal consistently across Google Cloud VMs and physical bare-metal hardware.
