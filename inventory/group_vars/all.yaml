@@ -182,10 +182,10 @@ machine_timezone: "UTC" # Default to UTC
 
 # List of Time Servers to use for time sync (in ascending order, top is most preferred)
 timesync_servers: [
-  "0.pool.ntp.org",
-  "1.pool.ntp.org",
-  "2.pool.ntp.org",
-  "3.pool.ntp.org"
+  "time.google.com",
+  "time1.google.com",
+  "time2.google.com",
+  "time3.google.com"
 ]
 
 ###

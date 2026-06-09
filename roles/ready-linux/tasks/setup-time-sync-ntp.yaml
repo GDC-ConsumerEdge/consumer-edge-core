@@ -1,0 +1,97 @@
+###
+### Setup Time Sync using Datetime Config
+###
+
+# ==========================================
+# Ubuntu: NTP Transition
+# ==========================================
+
+- name: "NTP::Disable systemd-timesyncd (Ubuntu)"
+  ignore_errors: true
+  systemd:
+    name: systemd-timesyncd
+    enabled: no
+    state: stopped
+    masked: yes
+  tags:
+    - time-sync-setup
+
+- name: Disable and stop conflicting chrony service (Ubuntu)
+  ignore_errors: true
+  systemd:
+    name: chrony
+    enabled: no
+    state: stopped
+  tags:
+    - time-sync-setup
+
+- name: Purge conflicting chrony package (Ubuntu)
+  apt:
+    name: chrony
+    state: absent
+    purge: yes
+  tags:
+    - time-sync-setup
+
+- name: "Ensure Ubuntu NTP Packages are installed"
+  apt:
+    pkg:
+      - ntp
+      - ntpdate
+    state: present
+    update_cache: yes
+  tags:
+    - time-sync-setup
+
+- name: Template ntp.conf (Ubuntu)
+  template:
+    src: ntp.conf.j2
+    dest: /etc/ntp.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart ntp
+  tags:
+    - time-sync-setup
+
+- name: Restart and verify with diagnostics
+  block:
+    - ansible.builtin.systemd:
+        name: "ntp"
+        state: restarted
+        enabled: true
+
+    - ansible.builtin.command: systemctl is-active ntp
+      register: service_active
+      changed_when: false
+      retries: 10
+      delay: 3
+      until: service_active.stdout == "active"
+  rescue:
+    - ansible.builtin.command: systemctl status ntp --no-pager
+      register: service_status
+      changed_when: false
+      failed_when: false
+
+    - ansible.builtin.command: journalctl -u ntp -n 100 --no-pager
+      register: service_logs
+      changed_when: false
+      failed_when: false
+
+    - ansible.builtin.fail:
+        msg: |
+          Service failed to come up.
+          STATUS:
+          {{ service_status.stdout }}
+          LOGS:
+          {{ service_logs.stdout }}
+  tags:
+    - time-sync-setup
+
+- name: Ensure ntp service is started and enabled (Ubuntu)
+  systemd:
+    name: ntp
+    state: started
+    enabled: yes
+  tags:
+    - time-sync-setup
