@@ -1,4 +1,4 @@
-#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+#jinja2: lstrip_blocks: True, trim_blocks: True
 
 sshPrivateKeyPath: {{ ssh_key_path }} # Created for access to worker nodes
 gcrKeyPath: {{ remote_keys_folder }}/{{ (service_accounts | selectattr('id', 'equalto', 'abm-gcr-agent') | first ).keyfile }}

@@ -20,24 +20,24 @@
   gather_facts: true
   tasks:
   # ==========================================
-  # Debian/Ubuntu Assertions (NTP)
+  # Debian/Ubuntu Assertions (Chrony)
   # ==========================================
-  - name: Check if ntp is installed (Ubuntu)
+  - name: Check if chrony is installed (Ubuntu)
     package:
-      name: ntp
+      name: chrony
       state: present
     check_mode: yes
-    register: ntp_install
-    failed_when: ntp_install.changed
+    register: chrony_install
+    failed_when: chrony_install.changed
     when: ansible_os_family == 'Debian'
 
-  - name: Check if ntp service is running (Ubuntu)
+  - name: Check if chrony service is running (Ubuntu)
     service:
-      name: ntp
+      name: chrony
       state: started
     check_mode: yes
-    register: ntp_service
-    failed_when: ntp_service.changed
+    register: chrony_service
+    failed_when: chrony_service.changed
     when: ansible_os_family == 'Debian'
 
   - name: Verify systemd-timesyncd is stopped (Ubuntu)
@@ -49,13 +49,13 @@
     failed_when: timesyncd_service.changed
     when: ansible_os_family == 'Debian'
 
-  - name: Verify chrony is absent (Ubuntu)
+  - name: Verify ntp is absent (Ubuntu)
     package:
-      name: chrony
+      name: ntp
       state: absent
     check_mode: yes
-    register: chrony_uninstall
-    failed_when: chrony_uninstall.changed
+    register: ntp_uninstall
+    failed_when: ntp_uninstall.changed
     when: ansible_os_family == 'Debian'
 
   # ==========================================

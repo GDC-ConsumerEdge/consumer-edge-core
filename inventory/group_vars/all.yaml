@@ -28,6 +28,7 @@ ansible_control_path_dir: "/tmp/ansible-cp"
 ansible_ssh_priv_key_secret: "ssh-priv-key-{{ cluster_name }}"
 ansible_async_dir: "/tmp/.ansible_async"
 ansible_ssh_transfer_method: scp # smart|sftp|scp|piped
+ansible_python_interpreter: /usr/bin/python3
 #######
 
 ####
@@ -182,10 +183,10 @@ machine_timezone: "UTC" # Default to UTC
 
 # List of Time Servers to use for time sync (in ascending order, top is most preferred)
 timesync_servers: [
-  "0.pool.ntp.org",
-  "1.pool.ntp.org",
-  "2.pool.ntp.org",
-  "3.pool.ntp.org"
+  "time.google.com",
+  "time1.google.com",
+  "time2.google.com",
+  "time3.google.com"
 ]
 
 ###
@@ -502,6 +503,6 @@ franchises: [
 
 
 ## Setting up Redhat or Ubuntu #NOTE: This is not a comprehesive solution that can/may provide other OSes in the future (ternary is not the right choice when 3 options)
-is_redhat: "{{ (ansible_distribution == 'RedHat') and (ansible_distribution_major_version == '8' or ansible_distribution_major_version == '9') }}"
-is_ubuntu: "{{ (ansible_distribution == 'Ubuntu') and (ansible_distribution_version == '18.04' or ansible_distribution_version == '20.04' or ansible_distribution_version == '22.04')}}"
+is_redhat: "{{ (ansible_facts['distribution'] == 'RedHat') and (ansible_facts['distribution_major_version'] == '8' or ansible_facts['distribution_major_version'] == '9') }}"
+is_ubuntu: "{{ (ansible_facts['distribution'] == 'Ubuntu') and (ansible_facts['distribution_version'] == '18.04' or ansible_facts['distribution_version'] == '20.04' or ansible_facts['distribution_version'] == '22.04')}}"
 target_os: "{{ (is_ubuntu == true) | ternary('ubuntu', 'redhat') }}"

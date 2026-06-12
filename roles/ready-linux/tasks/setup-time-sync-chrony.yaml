@@ -1,0 +1,145 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+###
+### Setup Time Sync using Datetime Config
+###
+
+# ==========================================
+# Ubuntu: Chrony Transition
+# ==========================================
+
+- name: Disable systemd-timesyncd (Ubuntu)
+  ignore_errors: true
+  systemd:
+    name: systemd-timesyncd
+    enabled: no
+    state: stopped
+    masked: yes
+  tags:
+  - time-sync-setup
+
+- name: Disable and stop conflicting ntp service (Ubuntu)
+  ignore_errors: true
+  systemd:
+    name: ntp
+    enabled: no
+    state: stopped
+    masked: yes
+  tags:
+  - time-sync-setup
+
+- name: Purge conflicting ntp packages (Ubuntu)
+  apt:
+    pkg:
+    - ntp
+    - ntpdate
+    state: absent
+    purge: yes
+  tags:
+  - time-sync-setup
+
+- name: Ensure Ubuntu chrony package is installed
+  apt:
+    pkg:
+    - chrony
+    state: present
+    update_cache: yes
+  tags:
+  - time-sync-setup
+
+- name: Template chrony.conf (Ubuntu)
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload chrony
+  tags:
+  - time-sync-setup
+
+- name: Restart and verify chrony with diagnostics (Ubuntu)
+  block:
+  - ansible.builtin.systemd:
+      name: chrony
+      state: restarted
+      enabled: true
+
+  - ansible.builtin.command: systemctl is-active chrony
+    register: service_active
+    changed_when: false
+    retries: 10
+    delay: 3
+    until: service_active.stdout == "active"
+
+  - ansible.builtin.command: chronyc makestep
+    register: chrony_makestep
+    changed_when: false
+    failed_when: chrony_makestep.rc != 0
+  rescue:
+  - ansible.builtin.command: systemctl status chrony --no-pager
+    register: service_status
+    changed_when: false
+    failed_when: false
+
+  - ansible.builtin.command: journalctl -u chrony -n 100 --no-pager
+    register: service_logs
+    changed_when: false
+    failed_when: false
+
+  - ansible.builtin.fail:
+      msg: |
+        Chrony failed to come up.
+        STATUS:
+        {{ service_status.stdout }}
+        LOGS:
+        {{ service_logs.stdout }}
+
+  tags:
+  - time-sync-setup
+
+- name: Ensure chrony service is started and enabled (Ubuntu)
+  shell: |
+    chronyc tracking
+  register: chrony_tracking
+  changed_when: false
+  failed_when: chrony_tracking.rc != 0
+  tags:
+  - time-sync-setup
+
+- name: Ensure chrony service is started and enabled (Ubuntu)
+  systemd:
+    name: chrony
+    state: started
+    enabled: yes
+  tags:
+  - time-sync-setup
+  when:
+  - ansible_distribution == "Ubuntu"
+  - ansible_distribution_version == "24.04"
+
+# ==========================================
+# RedHat/CentOS: Chronyd Safe Fallback
+# ==========================================
+
+- name: Ensure chrony is started and enabled (RedHat)
+  systemd:
+    name: chronyd
+    state: started
+    enabled: yes
+  when:
+  - target_os == "redhat"
+  tags:
+  - time-sync-setup

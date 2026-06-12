@@ -38,7 +38,11 @@ b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
         fi
         
         # Provide dummy values for all other required secrets to avoid prompts
-        echo "dummy-value-for-${sec_name}"
+        if [[ "$sec_name" == *"prov-gsa"* || "$sec_name" == *"node-gsa"* ]]; then
+            echo '{"client_email": "dummy@gcp.com"}'
+        else
+            echo "dummy-value-for-${sec_name}"
+        fi
         return 0
     fi
     return 0
@@ -75,6 +79,11 @@ rm -f "$MOCK_LOG"
 
 function gcloud() {
     if [[ "$*" == *"secrets versions access latest"* ]]; then
+        local sec_name=$(echo "$*" | sed -n 's/.*--secret=\([^ ]*\) .*/\1/p')
+        if [[ "$sec_name" == *"prov-gsa"* || "$sec_name" == *"node-gsa"* ]]; then
+            echo '{"client_email": "dummy@gcp.com"}'
+            return 0
+        fi
         echo "gsm-content"
         return 0
     fi
@@ -94,4 +103,60 @@ if ! grep -q "context-${CONTEXT_NAME}" "${TMP_ROOT}/gsm_upload_test.log"; then
     exit 1
 fi
 
-echo "PASS: consumer-edge-machine formatting and YAML sync options verified."
+# TEST CASE: Missing required secret prints the GSM secret name attempted to be found
+echo "Testing Missing Required Secret Warning..."
+CONTEXT_NAME_MISSING="test-missing-secret"
+TARGET_DIR_MISSING="build-artifacts-${CONTEXT_NAME_MISSING}"
+rm -rf "${TARGET_DIR_MISSING}"
+mkdir -p "${TARGET_DIR_MISSING}"
+
+cat << EOF > "${TARGET_DIR_MISSING}/envrc"
+export CLUSTER_ACM_NAME="mock-cluster-missing"
+export PROJECT_ID="mock-project"
+export REGION="us-central1"
+EOF
+
+rm -f build-artifacts
+ln -s "${TARGET_DIR_MISSING}" build-artifacts
+
+# We mock gcloud to return empty for EVERYTHING, making required secrets missing.
+function gcloud() {
+    return 1 # Simulates all secrets are missing/access denied
+}
+export -f gcloud
+
+STDERR_OUT="${TMP_ROOT}/test_missing_stderr.log"
+rm -f "$STDERR_OUT"
+
+# Generate inputs to feed all the prompts
+rm -f "${TMP_ROOT}/inputs.txt"
+# ssh_key -> enter, enter
+echo "" >> "${TMP_ROOT}/inputs.txt"
+echo "" >> "${TMP_ROOT}/inputs.txt"
+# ssh_pub_key -> enter, enter
+echo "" >> "${TMP_ROOT}/inputs.txt"
+echo "" >> "${TMP_ROOT}/inputs.txt"
+# prov_gsa -> json, json
+echo '{"client_email": "dummy@gcp.com"}' >> "${TMP_ROOT}/inputs.txt"
+echo '{"client_email": "dummy@gcp.com"}' >> "${TMP_ROOT}/inputs.txt"
+# node_gsa -> json, json
+echo '{"client_email": "dummy@gcp.com"}' >> "${TMP_ROOT}/inputs.txt"
+echo '{"client_email": "dummy@gcp.com"}' >> "${TMP_ROOT}/inputs.txt"
+# scm_user -> val, val
+echo "scm_user" >> "${TMP_ROOT}/inputs.txt"
+echo "scm_user" >> "${TMP_ROOT}/inputs.txt"
+# scm_token -> val, val
+echo "scm_token" >> "${TMP_ROOT}/inputs.txt"
+echo "scm_token" >> "${TMP_ROOT}/inputs.txt"
+
+./scripts/instance-context.sh -o < "${TMP_ROOT}/inputs.txt" 2> "$STDERR_OUT"
+
+# Verify that the warning is printed for ssh_key
+if ! grep -q "Missing required variable 'ssh_key'. Attempted to find GSM secret: 'gdc-mock-cluster-missing-ssh-key'" "$STDERR_OUT"; then
+    echo "FAIL: Expected warning about missing 'ssh_key' and its GSM secret was not found in stderr"
+    echo "Stderr output was:"
+    cat "$STDERR_OUT"
+    exit 1
+fi
+
+echo "PASS: consumer-edge-machine formatting, YAML sync options, and missing secret warnings verified."

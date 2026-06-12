@@ -162,6 +162,41 @@ function print_context() {
     echo "" # blank line
 }
 
+function read_secret() {
+    local prompt_msg="$1"
+    local secret_val=""
+    pretty_print "$prompt_msg" "INPUT" >&2
+
+    # Save stty settings and disable echo for passwords/secrets
+    local restore_stty=$(stty -g 2>/dev/null)
+    stty -echo 2>/dev/null
+
+    while IFS= read -r line; do
+        if [[ -z "$secret_val" ]]; then
+            secret_val="$line"
+        else
+            secret_val="${secret_val}"$'\n'"${line}"
+        fi
+
+        # Check for single-line vs multi-line based on the first line
+        local clean_val="${secret_val#"${secret_val%%[![:space:]]*}"}"
+        if [[ "$clean_val" != "{"* && "$clean_val" != "-----BEGIN"* ]]; then
+            break
+        fi
+
+        # Check for ending of multi-line block
+        local clean_line="${line#"${line%%[![:space:]]*}"}"
+        clean_line="${clean_line%"${clean_line##*[![:space:]]}"}"
+        if [[ "$clean_line" == *"-----END "* || "$clean_line" == "}" ]]; then
+            break
+        fi
+    done
+
+    eval "$restore_stty" 2>/dev/null
+    echo >&2
+    echo "$secret_val"
+}
+
 function get_secret() {
     local secret_key="$1"    # e.g., "scm_user"
     local gsm_name="$2"      # e.g., "gdc-my-cluster-scm-user"
@@ -191,15 +226,12 @@ function get_secret() {
 
     # 3. Interactive Prompt (only if required)
     if [[ "$is_required" == "true" ]]; then
+        pretty_print "Missing required variable '${secret_key}'. Attempted to find GSM secret: '${gsm_name}'" "WARN"
         local value1=""
         local value2=""
         while true; do
-            pretty_print "Enter value for ${secret_key}: " "INPUT" >&2
-            read -s value1
-            echo >&2
-            pretty_print "Confirm value for ${secret_key}: " "INPUT" >&2
-            read -s value2
-            echo >&2
+            value1=$(read_secret "Enter value for ${secret_key}: ")
+            value2=$(read_secret "Confirm value for ${secret_key}: ")
             if [[ "$value1" == "$value2" && -n "$value1" ]]; then
                 gsm_put "$gsm_name" "$value1" "" "$p_id" "$reg"
                 echo "$value1"
@@ -211,7 +243,7 @@ function get_secret() {
             else
                 pretty_print "Values do not match or are empty. Try again." "ERROR" >&2
             fi
-            done
+        done
     fi
 
     echo ""

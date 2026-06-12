@@ -59,8 +59,6 @@
     - unattended-upgrades
     - apt-listchanges
     - nfs-common
-    # This is needed for TODO: Move this to Robin install only
-    # - linux-modules-extra-{{ uname_r }}
     state: latest
     update_cache: yes
     autoclean: yes
@@ -82,11 +80,8 @@
     - logrotate
     - python3
     - python3-pip
-    # This is needed for TODO: Move this to Robin install only
-    # - linux-modules-extra-{{ uname_r }}
     state: latest
     update_cache: yes
-    #autoclean: yes
   tags:
     - update-dependencies
   when:
@@ -101,6 +96,42 @@
     - update-dependencies
   when:
     - target_os == "ubuntu"
+
+#### Stop and disable apparmor
+- name: Stop apparmor
+  systemd:
+    state: stopped
+    name: apparmor
+  tags:
+  - remove
+  when:
+  - target_os == "ubuntu"
+
+- name: Disable apparmor
+  systemd:
+    name: apparmor
+    enabled: no
+  tags:
+  - remove
+  when:
+  - target_os == "ubuntu"
+
+#### Disable ufw
+- name: Disable wfw
+  command: ufw disable
+  register: ufw
+  tags:
+  - remove
+  when:
+  - target_os == "ubuntu"
+
+- name: Show output for firewall stopping
+  debug:
+    msg: "{{ ufw.stdout }}"
+  tags:
+  - remove
+  when:
+  - target_os == "ubuntu"
 
 ## Update inotify watchers
 - name: "Copy script to update fs.inotify handlers"
@@ -138,47 +169,79 @@
   when:
   - target_os == "ubuntu"
 
-## Setup Time Sync
-- name: "Include tasks for Time Synchronization"
-  import_tasks: setup-time-sync.yaml
+# ==========================================
+# Time Start Verification
+# ==========================================
+- name: Setup TimeZone Data
+  community.general.timezone:
+    name: "{{ machine_timezone }}"
   tags:
-  - time-sync
+  - time-sync-setup
 
-#### Stop and disable apparmor
-- name: Stop apparmor
-  systemd:
-    state: stopped
-    name: apparmor
+- name: "Check for current time sync status"
+  command: timedatectl show -p NTPSynchronized --value
+  register: timedatectl_out
+  failed_when: timedatectl_out.rc != 0
+  changed_when: timedatectl_out.stdout | trim | lower != 'yes'
   tags:
-  - remove
-  when:
-  - target_os == "ubuntu"
+  - time-sync-setup
+  - time-sync-check
 
-- name: Disable apparmor
-  systemd:
-    name: apparmor
-    enabled: no
+- name: Save current time sync status
+  set_fact:
+    time_sync_is_synchronized: false #"{{ timedatectl_out.stdout | trim | lower == 'yes' }}"
+  changed_when: false
   tags:
-  - remove
-  when:
-  - target_os == "ubuntu"
+  - time-sync-setup
+  - time-sync-check
 
-#### Disable ufw
-- name: Disable wfw
-  command: ufw disable
-  register: ufw
-  tags:
-  - remove
-  when:
-  - target_os == "ubuntu"
-
-- name: Show output for firewall stopping
+- name: "Time Sync Status"
   debug:
-    msg: "{{ ufw.stdout }}"
-  tags:
-  - remove
+    msg: "Time Sync Status: {{ time_sync_is_synchronized }}"
   when:
   - target_os == "ubuntu"
+  tags:
+  - time-sync-setup
+  - time-sync-check
+
+## Setup Time Sync (NTP)
+- name: "Include tasks for Time Synchronization (NTP)"
+  import_tasks: setup-time-sync-ntp.yaml
+  tags:
+  - time-sync-setup
+  when:
+  - not time_sync_is_synchronized
+  - ansible_distribution == "Ubuntu"
+  - ansible_distribution_version is version('22.04', '<')
+
+## Setup Time Sync (Chrony)
+- name: "Include tasks for Time Synchronization (Chrony)"
+  import_tasks: setup-time-sync-chrony.yaml
+  tags:
+  - time-sync-setup
+  when:
+  - not time_sync_is_synchronized
+  - ansible_distribution == "RedHat" or
+    (ansible_distribution == "Ubuntu" and
+     ansible_distribution_version is version('22.04', '>='))
+
+# ==========================================
+# Time Post-Sync Verification
+# ==========================================
+
+- name: Wait for system clock to synchronize
+  command: timedatectl show -p NTPSynchronized --value
+  register: timedatectl_out
+  until: timedatectl_out.stdout | trim | lower == 'yes'
+  retries: 30
+  delay: 5
+  failed_when: timedatectl_out.rc != 0
+  changed_when: false
+  tags:
+  - time-sync-setup
+  when:
+  - target_os == "ubuntu"
+  - not time_sync_is_synchronized
 
 ## Create the user that builds and communicates across cluster machines
 ## TODO: Create a group for the two users for file permissions later

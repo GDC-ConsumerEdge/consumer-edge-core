@@ -35,11 +35,11 @@
 - name: Create localhost temporary file
   become: no
   run_once: true # run-once becasue it is local-action
-  local_action:
-    module: ansible.builtin.tempfile
+  ansible.builtin.tempfile:
     state: file
     suffix: temp
     path: "${HOME}"
+  delegate_to: localhost
   register: tempfile_1
   tags:
   - abm-ssh
@@ -48,11 +48,11 @@
 
 - name: Create authorized_keys into temp file with Public keys
   become: no
-  local_action:
-    module: lineinfile
+  ansible.builtin.lineinfile:
     line: "{{ item.value }}"
     dest: "{{ tempfile_1.path }}"
     create: true
+  delegate_to: localhost
   loop:
     - "{{ lookup('dict', keys) }}"
   tags:
@@ -72,10 +72,10 @@
   - abm-authorized-keys
 
 - name: Remove the temp file after copying
-  local_action:
-    module: ansible.builtin.file
+  ansible.builtin.file:
     path: "{{ tempfile_1.path }}"
     state: absent
+  delegate_to: localhost
   when: tempfile_1.path is defined
   tags:
   - abm-ssh

@@ -36,7 +36,7 @@ function gcloud() {
         local sec_name=$(echo "$*" | sed -n 's/.*secrets versions add \([^ ]*\) .*/\1/p')
         echo "PUSHED_VERSION: $sec_name" >> "$MOCK_LOG"
         # Store state in a temp file so we can retrieve it
-        echo "dummy-data" > "${TMP_ROOT}/mock_secret_${sec_name}"
+        cat - > "${TMP_ROOT}/mock_secret_${sec_name}"
         return 0
     fi
     
