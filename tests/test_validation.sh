@@ -126,6 +126,31 @@ else
     exit 1
 fi
 
+# 6. Verify backtick sanitization works for GSA keys
+echo "Testing backtick sanitization for GSA keys during hydrate..."
+cat << 'EOF' > configs/context-validation-test-secrets.yaml
+ssh_key: "dummy-key"
+ssh_pub_key: "dummy-pub-key"
+prov_gsa: '`{"valid": "json"}'
+node_gsa: '{"valid": "json"}`'
+scm_user: "dummy-user"
+scm_token: "dummy-token"
+EOF
+
+output=$(./scripts/instance-context.sh -o validation-test 2>&1 << 'EOF'
+3
+EOF
+)
+
+if echo "$output" | grep -q "State: \[opened\]"; then
+    echo "PASS: Backtick sanitization worked successfully during hydrate"
+else
+    echo "FAIL: Backtick sanitization failed during hydrate"
+    echo "$output"
+    export PATH="$ORIG_PATH"
+    exit 1
+fi
+
 # Cleanup
 export PATH="$ORIG_PATH"
 rm -rf "$test_dir" configs/validation-test-context.yaml configs/context-validation-test-secrets.yaml mock_bin

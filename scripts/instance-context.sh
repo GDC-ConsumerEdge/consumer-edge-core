@@ -210,6 +210,9 @@ function get_secret() {
     if [[ -f "$override_file" ]]; then
         local val=$(yq e ".${secret_key}" "$override_file")
         if [[ "$val" != "null" ]]; then
+            if [[ "$secret_key" == "prov_gsa" || "$secret_key" == "node_gsa" ]]; then
+                val=$(echo "$val" | sed 's/^[[:space:]]*`[[:space:]]*{/{/' | sed 's/}[[:space:]]*`[[:space:]]*$/}/')
+            fi
             # Found in override! Push to GSM if missing or different
             gsm_put "$gsm_name" "$val" "" "$p_id" "$reg"
             echo "$val"
@@ -391,6 +394,7 @@ function ensure_gsa_key() {
     local key_content=$(gsm_get "$secret_name" "$p_id" "$reg")
 
     if [[ -n "$key_content" ]]; then
+        key_content=$(echo "$key_content" | sed 's/^[[:space:]]*`[[:space:]]*{/{/' | sed 's/}[[:space:]]*`[[:space:]]*$/}/')
         if ! echo "$key_content" | jq -e . >/dev/null 2>&1; then
              pretty_print "STOP: Invalid JSON found in GSM secret '$secret_name'." "ERROR"
              exit 1
@@ -401,12 +405,14 @@ function ensure_gsa_key() {
 
     # Not in GSM, check local filesystem
     if [[ -f "$target_file" ]]; then
-        if ! jq -e . "$target_file" >/dev/null 2>&1; then
+        local local_content=$(cat "$target_file" | sed 's/^[[:space:]]*`[[:space:]]*{/{/' | sed 's/}[[:space:]]*`[[:space:]]*$/}/')
+        if ! echo "$local_content" | jq -e . >/dev/null 2>&1; then
              pretty_print "STOP: Invalid JSON found in local file '$target_file'." "ERROR"
              exit 1
         fi
         # If local but missing in GSM, push it
-        gsm_put "$secret_name" "$(cat "$target_file")" "$cl_name" "$p_id" "$reg"
+        gsm_put "$secret_name" "$local_content" "$cl_name" "$p_id" "$reg"
+        echo "$local_content" > "$target_file"
         return 0
     fi
 
@@ -468,6 +474,7 @@ function hydrate_context() {
     # 2. GSA Keys
     local prov_gsa=$(get_secret "prov_gsa" "gdc-${cl_name}-prov-gsa" "true" "$p_id" "$reg" "$ctx_name")
     if [[ -n "$prov_gsa" ]]; then
+        prov_gsa=$(echo "$prov_gsa" | sed 's/^[[:space:]]*`[[:space:]]*{/{/' | sed 's/}[[:space:]]*`[[:space:]]*$/}/')
         if ! echo "$prov_gsa" | jq -e . >/dev/null 2>&1; then
              pretty_print "STOP: Invalid JSON found for Provisioning GSA." "ERROR"
              exit 1
@@ -477,6 +484,7 @@ function hydrate_context() {
 
     local node_gsa=$(get_secret "node_gsa" "gdc-${cl_name}-node-gsa" "true" "$p_id" "$reg" "$ctx_name")
     if [[ -n "$node_gsa" ]]; then
+        node_gsa=$(echo "$node_gsa" | sed 's/^[[:space:]]*`[[:space:]]*{/{/' | sed 's/}[[:space:]]*`[[:space:]]*$/}/')
         if ! echo "$node_gsa" | jq -e . >/dev/null 2>&1; then
              pretty_print "STOP: Invalid JSON found for Node GSA." "ERROR"
              exit 1
@@ -796,6 +804,9 @@ function process_secrets_file() {
         local val=$(yq e ".${key}" "$secrets_file")
 
         if [[ -n "$val" && "$val" != "null" && "$val" != "" ]]; then
+            if [[ "$key" == "prov_gsa" || "$key" == "node_gsa" ]]; then
+                val=$(echo "$val" | sed 's/^[[:space:]]*`[[:space:]]*{/{/' | sed 's/}[[:space:]]*`[[:space:]]*$/}/')
+            fi
             pretty_print "Pushing $key to GSM ($gsm_name)" "DEBUG"
             gsm_put "$gsm_name" "$val" "$cl_name" "$p_id" "$reg"
         fi
