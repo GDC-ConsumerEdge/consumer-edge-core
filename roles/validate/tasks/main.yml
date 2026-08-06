@@ -13,6 +13,12 @@
 # limitations under the License.
 
 
+- name: Verify GCP Infrastructure
+  import_tasks: gcp-checks.yml
+  tags:
+  - verify
+  - gcp-verify
+
 - name: Verify IP address resolves
   debug:
     msg: "{{ cluster_name }} is {{ node_ip }}"
