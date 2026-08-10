@@ -7,7 +7,7 @@
 ansible==8.5.0 \
     --hash=sha256:2749032e26b0dbc9a694528b85fd89e7f950b8c7b53606f17dd997f23ac7cc88 \
     --hash=sha256:327c509bdaf5cdb2489d85c09d2c107e9432f9874c8bb5c0702a731160915f2d
-    # via -r requirements.in
+    # via -r docker-build/requirements.in
 ansible-compat==3.0.2 \
     --hash=sha256:1c051fb7cedd7a067c5b8fca86e76109bff69cdd31115dea751e3166296a73da \
     --hash=sha256:a10ea191f9efe08590ff64cb46a31af1f8142c08618db1a4bc827ed257c68230
@@ -24,7 +24,7 @@ ansible-core==2.15.12 \
 ansible-lint==6.9.0 \
     --hash=sha256:14ef919920c4acc980547ded0bd423a7a27a0b2327738e593343f446f3b126c6 \
     --hash=sha256:f070bf1ef1ca2cb815f79abb58d6183dc70870f1f896e0586f43b10f02f48d7e
-    # via -r requirements.in
+    # via -r docker-build/requirements.in
 arrow==1.2.3 \
     --hash=sha256:3934b30ca1b9f292376d9db15b19446088d12ec58629bc3f0da28fd55fb633a1 \
     --hash=sha256:5a49ab92e3b7b71d96cd6bfcc4df14efefc9dfa96ea19045815914a6ab6b1fe2
@@ -96,7 +96,7 @@ cachetools==5.3.1 \
     # via google-auth
 cerberus==1.3.2 \
     --hash=sha256:302e6694f206dd85cb63f13fd5025b31ab6d38c99c50c6d769f8fa0b0f299589
-    # via -r requirements.in
+    # via -r docker-build/requirements.in
 certifi==2024.7.4 \
     --hash=sha256:5a1e7645bc0ec61a09e26c36f6106dd4cf40c6db3a1fb6352b0244e7fb057c7b \
     --hash=sha256:c198e21b1289c2ab85ee4e67bb4b4ef3ead0892059901a8d5b622f24a1101e90
@@ -348,7 +348,7 @@ distro==1.8.0 \
 dnspython==2.6.1 \
     --hash=sha256:5ef3b9680161f6fa89daf8ad451b5f1a33b18ae8a1c6778cdf4b43f08c0a6e50 \
     --hash=sha256:e8f0f9c23a7b7cb99ded64e6c3a6f3e701d78f50c55e002b839dea7225cff7cc
-    # via -r requirements.in
+    # via -r docker-build/requirements.in
 docker==6.1.3 \
     --hash=sha256:aa6d17830045ba5ef0168d5eaa34d37beeb113948c413affe1d5991fc11f9a20 \
     --hash=sha256:aecd2277b8bf8e506e484f6ab7aec39abe0038e29fa4a6d3ba86c3fe01844ed9
@@ -403,6 +403,10 @@ iniconfig==2.0.0 \
     --hash=sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3 \
     --hash=sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374
     # via pytest
+invoke==3.0.3 \
+    --hash=sha256:437b6a622223824380bfb4e64f612711a6b648c795f565efc8625af66fb57f0c \
+    --hash=sha256:f11327165e5cbb89b2ad1d88d3292b5113332c43b8553b494da435d6ec6f5053
+    # via paramiko
 jinja2==3.1.4 \
     --hash=sha256:4a3aee7acbbe7303aede8e9648d13b8bf88a429282aa6122a993f0ac800cb369 \
     --hash=sha256:bc5dd2abb727a5319567b7a813e6a2e7318c39f4f487cfe6c89c6f9c7d25197d
@@ -495,11 +499,11 @@ molecule==4.0.4 \
 molecule-docker==2.1.0 \
     --hash=sha256:195b97673cbc2335cfa6810816de5cbf807507bf350a9d16ca98b224b1647145 \
     --hash=sha256:d439b075789be700b6594ed73f3254e2a25ed61dcf312d80ab6e718d13bf150e
-    # via -r requirements.in
+    # via -r docker-build/requirements.in
 molecule-gce==0.3.1 \
     --hash=sha256:272780f603d46ac4663285a11f2365a347fba59bd597e0479b416bdfce84711f \
     --hash=sha256:6f4601c617ea1b2aedeccc04dcc475c301b1d9f14bc7bee3affd74b14e795768
-    # via -r requirements.in
+    # via -r docker-build/requirements.in
 mypy-extensions==1.0.0 \
     --hash=sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d \
     --hash=sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782
@@ -515,10 +519,10 @@ packaging==23.1 \
     #   docker
     #   molecule
     #   pytest
-paramiko==2.12.0 \
-    --hash=sha256:376885c05c5d6aa6e1f4608aac2a6b5b0548b1add40274477324605903d9cd49 \
-    --hash=sha256:b2df1a6325f6996ef55a8789d0462f5b502ea83b3c990cbb5bbe57345c6812c4
-    # via -r requirements.in
+paramiko==5.0.0 \
+    --hash=sha256:36763b5b95c2a0dcfdf1abc48e48156ee425b21efe2f0e787c2dd5a95c0e5e79 \
+    --hash=sha256:b7044611c30140d9a75261653210e2002977b71a0497ff3ba0d98d7edbf62f7c
+    # via -r docker-build/requirements.in
 pathspec==0.11.2 \
     --hash=sha256:1d6ed233af05e679efb96b1851550ea95bbb64b7c490b0f5aa52996c11e92a20 \
     --hash=sha256:e0d8d0ac2f12da61956eb2306b69f9469b42f4deb0f3cb6ed47b9cce9996ced3
@@ -641,7 +645,7 @@ pyspnego==0.9.2 \
 pytest==9.0.3 \
     --hash=sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9 \
     --hash=sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c
-    # via -r requirements.in
+    # via -r docker-build/requirements.in
 python-dateutil==2.8.2 \
     --hash=sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86 \
     --hash=sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9
@@ -904,7 +908,6 @@ six==1.16.0 \
     # via
     #   google-auth
     #   google-auth-httplib2
-    #   paramiko
     #   python-dateutil
     #   pywinrm
 subprocess-tee==0.4.1 \
@@ -961,6 +964,6 @@ setuptools==70.0.0 \
     --hash=sha256:54faa7f2e8d2d11bcd2c07bed282eef1046b5c080d1c32add737d7b5817b1ad4 \
     --hash=sha256:f211a66637b8fa059bb28183da127d4e86396c991a942b028c6650d4319c3fd0
     # via
-    #   -r requirements.in
+    #   -r docker-build/requirements.in
     #   cerberus
     #   selinux
