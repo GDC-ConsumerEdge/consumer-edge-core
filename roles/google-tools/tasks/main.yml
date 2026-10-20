@@ -120,7 +120,7 @@
 
   - name: Install kubectl, nomos, kustomize and gcloud storage
     command:
-      cmd: gcloud components install kubectl kustomize anthos-auth kpt nomos gsutil kubectl-oidc alpha beta -q
+      cmd: gcloud components install kubectl kustomize anthos-auth kpt nomos kubectl-oidc alpha beta -q
       creates: "{{ tools_base_path }}/google-cloud-sdk/bin/kubectl"
     environment: # NOTE: This environment is needed until the components are all installed and added to /usr/local/bin
       PATH: "{{ tools_base_path }}/google-cloud-sdk/bin:{{ ansible_env.PATH }}"
