@@ -136,7 +136,6 @@
     loop:
       - { app: gcloud }
       - { app: nomos }
-      - { app: gcloud storage }
       - { app: kustomize }
       - { app: kubectl }
       - { app: kubectl-oidc }
@@ -153,7 +152,6 @@
     loop:
       - { app: gcloud }
       - { app: nomos }
-      - { app: gcloud storage }
       - { app: kustomize }
       - { app: kubectl }
       - { app: kubectl-oidc }
