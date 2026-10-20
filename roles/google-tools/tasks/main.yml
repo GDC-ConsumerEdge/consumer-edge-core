@@ -118,7 +118,7 @@
     - tool-install
     - tool-update
 
-  - name: Install kubectl, nomos, kustomize and gsutil
+  - name: Install kubectl, nomos, kustomize and gcloud storage
     command:
       cmd: gcloud components install kubectl kustomize anthos-auth kpt nomos gsutil kubectl-oidc alpha beta -q
       creates: "{{ tools_base_path }}/google-cloud-sdk/bin/kubectl"
@@ -136,7 +136,7 @@
     loop:
       - { app: gcloud }
       - { app: nomos }
-      - { app: gsutil }
+      - { app: gcloud storage }
       - { app: kustomize }
       - { app: kubectl }
       - { app: kubectl-oidc }
@@ -153,7 +153,7 @@
     loop:
       - { app: gcloud }
       - { app: nomos }
-      - { app: gsutil }
+      - { app: gcloud storage }
       - { app: kustomize }
       - { app: kubectl }
       - { app: kubectl-oidc }

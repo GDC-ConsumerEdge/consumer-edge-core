@@ -44,7 +44,7 @@ Keeping the docker container used in `./install.sh` can be achieved by running `
 
 ```
 # Create a regional bucket
-gsutil mb -l ${REGION} gs://${PROJECT_ID}-cloudbuild-staging
+gcloud storage buckets create --location=${REGION} gs://${PROJECT_ID}-cloudbuild-staging
 
 # Kickoff the build
 gcloud builds submit \
