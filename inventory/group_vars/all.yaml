@@ -104,8 +104,6 @@ proxy_has_https_proxy: "{{ proxy_https_addr | length > 0 }}"
 #     kubestr
 #     kubectx
 #     kubens
-#     kustomize
-#     kpt
 #     nomos
 #     virtctl
 optional_tools: true # defaults to true

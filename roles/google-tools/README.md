@@ -1,7 +1,7 @@
 Role Name
 =========
 
-Installs gcloud, kubectl, nomos, kustomize, bmctl and a few other commands
+Installs gcloud, kubectl, nomos, bmctl and a few other commands
 
 Requirements
 ------------
