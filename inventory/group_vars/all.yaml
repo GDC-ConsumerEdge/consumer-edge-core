@@ -501,6 +501,7 @@ franchises: [
 
 
 ## Setting up Redhat or Ubuntu #NOTE: This is not a comprehesive solution that can/may provide other OSes in the future (ternary is not the right choice when 3 options)
-is_redhat: "{{ (ansible_facts['distribution'] == 'RedHat') and (ansible_facts['distribution_major_version'] == '8' or ansible_facts['distribution_major_version'] == '9') }}"
-is_ubuntu: "{{ (ansible_facts['distribution'] == 'Ubuntu') and (ansible_facts['distribution_version'] == '18.04' or ansible_facts['distribution_version'] == '20.04' or ansible_facts['distribution_version'] == '22.04')}}"
-target_os: "{{ (is_ubuntu == true) | ternary('ubuntu', 'redhat') }}"
+
+is_redhat: "{{ (ansible_facts['distribution'] == 'RedHat') and (ansible_facts['distribution_major_version'] in ['8', '9']) }}"
+is_ubuntu: "{{ (ansible_facts['distribution'] == 'Ubuntu') and (ansible_facts['distribution_version'] in ['18.04', '20.04', '22.04', '24.04']) }}"
+target_os: "{{ 'ubuntu' if is_ubuntu else ('redhat' if is_redhat else 'unsupported') }}"
