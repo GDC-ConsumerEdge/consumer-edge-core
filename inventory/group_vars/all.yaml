@@ -504,4 +504,4 @@ franchises: [
 
 is_redhat: "{{ (ansible_facts['distribution'] == 'RedHat') and (ansible_facts['distribution_major_version'] in ['8', '9']) }}"
 is_ubuntu: "{{ (ansible_facts['distribution'] == 'Ubuntu') and (ansible_facts['distribution_version'] in ['18.04', '20.04', '22.04', '24.04']) }}"
-target_os: "{{ 'ubuntu' if is_ubuntu else ('redhat' if is_redhat else 'unsupported') }}"
+target_os: "{{ 'ubuntu' if is_ubuntu else ('redhat' if is_redhat else undef('Unsupported OS')) }}"
